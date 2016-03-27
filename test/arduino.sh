@@ -8,10 +8,12 @@ mkdir -p /tmp/arduino
 curl -sS http://downloads.arduino.cc/arduino-$VERSION-linux64.tar.xz | tar xJ -C /tmp/arduino --strip 1 ||
 curl -sS http://downloads.arduino.cc/arduino-$VERSION-linux64.tgz | tar xz -C /tmp/arduino --strip 1 
 export PATH=$PATH:/tmp/arduino/
-  
-ln -s $PWD /tmp/arduino/libraries/lobaro-coap
+
+cd ${TRAVIS_BUILD_DIR}/src
+echo $PWD
+ln -s $PWD /tmp/arduino/libraries/wakaama
 
 for TESTNAME in ArduinoBuildTest
 do
-	arduino --verify --board $BOARD $PWD/test/$TESTNAME/$TESTNAME.ino
+        arduino --verify --board $BOARD ${TRAVIS_BUILD_DIR}/test/$TESTNAME/$TESTNAME.ino
 done
