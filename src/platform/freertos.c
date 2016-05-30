@@ -18,7 +18,9 @@ void lwm2m_free(void * p)
 
 char * lwm2m_strdup(const char * str)
 {
-    return (char*)pvPortMalloc(strlen(str));
+    char *dupStr = (char*)pvPortMalloc(sizeof(str));
+    strcpy(dupStr, str);
+	return dupStr;
 }
 
 int lwm2m_strncmp(const char * s1,
