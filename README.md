@@ -1,3 +1,8 @@
+# Disclaimer
+This library is in development and not feature complete and the continous integration is not fully integrated yet.
+Because of this it may take some time to accept contributions.
+Expect a feature complete and platformio registered library on 4th of June, 2016.
+
 # libWakaamaEmb [![Build Status](https://travis-ci.org/Openhab-Nodes/libWakaamaEmb.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/libWakaamaEmb)
 
 This repository serves as an Arduino and PlattformIO library and provides easy access to Wakaama.
