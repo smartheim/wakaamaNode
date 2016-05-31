@@ -25,7 +25,7 @@ uint8_t decode_uri(char* uri, char** host, char** port)
     } else {
         // split strings
         **port = 0;
-        *port++;
+        (*port)++;
 
     }
 
