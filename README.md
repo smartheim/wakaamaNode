@@ -1,9 +1,9 @@
 # Disclaimer
 This library is in development and not feature complete and the continous integration is not fully integrated yet.
-Because of this it may take some time to accept contributions.
-Expect a feature complete and platformio registered library on 4th of June, 2016.
+Because of this it may take some time to accept contributions. Please keep an eye on the github issues/roadmap.
 
-# libWakaamaEmb [![Build Status](https://travis-ci.org/Openhab-Nodes/libWakaamaEmb.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/libWakaamaEmb)
+
+# libWakaamaNodes [![Build Status](https://travis-ci.org/Openhab-Nodes/libWakaamaEmb.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/libWakaamaEmb)
 
 This repository serves as an Arduino and PlattformIO library and provides easy access to Wakaama.
 Wakaama is a C implementation of the Open Mobile Alliance's LightWeight M2M protocol (LWM2M).
@@ -19,39 +19,38 @@ Some LWM2M object identifiers are standardised via the OMA Object & Resource Reg
 
 For example object 3311 is for light controls.
 
-This library targets resource constrained devices, therefore the name libWakaamaEmb(edded).
-
 ## Features
-* Always up-to-date/in-sync Wakaama code
+* Always up-to-date/in-sync Wakaama code (uses https://nightli.es/)
 * Platform integrations (posix/win32, esp8266-sdk, freertos)
 * Network stack integration (posix, lwip)
 * Firmware update integration (esp8266-sdk) _WIP_
 * Easy lwm2m object definition API
-* Use it as your client API. All necessary lwm2m objects are defined (security, server and device objects).
-
-All functionallity is covered by tests.
+* Use it in addition to the wakaama client API. All necessary lwm2m objects are defined for you (security, server and device objects).
+* This library targets resource constrained devices, no unnecessary heap allocations.
+* All API functionallity and libWakaamaNodes<-->wakaama server communication is covered by tests.
 
 ## Target device requirements
 A target device needs 5kb RAM and 30kb ROM for the library and some additional objects. An UDP
 capable network stack, a basic understanding of expired time and a periodic call into the
 library about every minute is required.
 
-This library uses dynamic memory allocation, but will not cause
-heap fragmentation if it is executed in the same thread, used as documented and does not have to
+This library uses dynamic memory allocation, because wakaama does, but will not cause
+heap fragmentation as long as it is executed in the same thread, used as documented and does not have to
 share the heap with other consumers.
 You may influence the memory access by implementing ``lwm2m_malloc``, ``lwm2m_free`` and ``lwm2m_strdup``
 accordingly.
 
 ## Continous integration and automatic synchronisation to the latest Wakaama sources
-Travis CI is executed on every commit and additionally every week. The
+Travis CI is executed on every commit and additionally every day by https://nightli.es/. The
 CI script syncs the ``src/wakaama`` directory to the latest code found in the core directory of
-https://github.com/eclipse/wakaama.git if all tests pass.
+https://github.com/eclipse/wakaama.git. This may cause tests to fail, please use an older version
+of this library, wait for a fix to appear or contribute a fix yourself. :)
 
 ## Demo/Example
 * An example for the ESP8266 and for linux is located in examples/.
 
 ## Usage
-First you have to configure which features should be enabled.
+First you have to compile-time configure which features should be enabled.
 Create a config_wakama.h file. Add one or more of the following features:
 
 * LWM2M_DEV_INFO_BATTERY: Add a battery field to the device information. You have to update that field regulary.
@@ -65,10 +64,11 @@ Without any custom objects, without error handling and without reducing cpu usag
 arrive a fully functional client could look like this:
 
 ```
-lwm2m_context_t * lwm2mH = lwm2m_client_init("testClient");
+lwm2m_context_t * lwm2mH = lwm2m_client_init("testClient"); // The name towards the lwm2m server.
 lwm2m_network_init(lwm2mH, NULL);
 
 while(1) {
+    // tv will be used as output variable. Wakaama tells us about the next required call to lwm2m_step().
     struct timeval tv = {5,0};
     uint8_t result = lwm2m_step(lwm2mH, &tv.tv_sec);
     lwm2m_network_process(lwm2mH);
