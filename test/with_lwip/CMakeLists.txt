@@ -5,7 +5,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-project(Lwm2mCLientLibWithLwIP C)
+project(Lwm2mCLientLibWithLwIP CXX C)
 
 SET(REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 set(TEST_DIR ${REPO_ROOT}/test)

@@ -4,7 +4,7 @@
 ## performs many gtest testcases.
 
 cmake_minimum_required(VERSION 3.1)
-project(Lwm2mClientTests CXX)
+project(Lwm2mClientTests CXX C)
 
 SET(REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/../..)
 set(TEST_DIR ${REPO_ROOT}/test)
@@ -32,9 +32,8 @@ endif()
 # All cpp files in this directory are considered testcase files.
 file(GLOB TESTS_FILES ${TEST_DIR}/*.cpp ${TEST_DIR}/*.c ${TEST_DIR}/*.h)
 
-add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES} ${TEST_DIR}/utils/posix_network_helper.c ${TEST_DIR}/utils/network_helper.h ${WAKAAMA_SIMPLE_CLIENT_SOURCES})
+add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES} ${CMAKE_CURRENT_LIST_DIR}/posix_network_helper.c ${TEST_DIR}/network_helper.h ${WAKAAMA_SIMPLE_CLIENT_SOURCES})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_range_for)
-target_link_libraries(${PROJECT_NAME} Lwm2mCLientLib)
 target_include_directories(${PROJECT_NAME} PRIVATE ${GTEST_INCLUDE_DIRS} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS} -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON)
 
