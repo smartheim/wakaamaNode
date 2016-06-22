@@ -105,6 +105,10 @@ void lwm2m_data_free(int size,
             {
                 lwm2m_free(dataP[i].value.asBuffer.buffer);
             }
+
+        default:
+            // do nothing
+            break;
         }
     }
     lwm2m_free(dataP);
@@ -210,7 +214,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
 
     case LWM2M_TYPE_OPAQUE:
         result = utils_opaqueToInt(dataP->value.asBuffer.buffer, dataP->value.asBuffer.length, valueP);
-        if (result == dataP->value.asBuffer.length)
+        if (result == (int)dataP->value.asBuffer.length)
         {
             result = 1;
         }
@@ -257,7 +261,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
 
     case LWM2M_TYPE_OPAQUE:
         result = utils_opaqueToFloat(dataP->value.asBuffer.buffer, dataP->value.asBuffer.length, valueP);
-        if (result == dataP->value.asBuffer.length)
+        if (result == (int)dataP->value.asBuffer.length)
         {
             result = 1;
         }
@@ -265,6 +269,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
         {
             result = 0;
         }
+        break;
 
     default:
         return 0;
@@ -373,17 +378,19 @@ int lwm2m_data_parse(lwm2m_uri_t * uriP,
     switch (format)
     {
     case LWM2M_CONTENT_TEXT:
+        if (!LWM2M_URI_IS_SET_RESOURCE(uriP)) return 0;
         *dataP = lwm2m_data_new(1);
         if (*dataP == NULL) return 0;
-        (*dataP)->type = LWM2M_TYPE_STRING;
         (*dataP)->id = uriP->resourceId;
+        (*dataP)->type = LWM2M_TYPE_STRING;
         return prv_setBuffer(*dataP, buffer, bufferLen);
 
     case LWM2M_CONTENT_OPAQUE:
+        if (!LWM2M_URI_IS_SET_RESOURCE(uriP)) return 0;
         *dataP = lwm2m_data_new(1);
         if (*dataP == NULL) return 0;
-        (*dataP)->type = LWM2M_TYPE_OPAQUE;
         (*dataP)->id = uriP->resourceId;
+        (*dataP)->type = LWM2M_TYPE_OPAQUE;
         return prv_setBuffer(*dataP, buffer, bufferLen);
 
     case LWM2M_CONTENT_TLV:
@@ -442,7 +449,7 @@ size_t lwm2m_data_serialize(lwm2m_uri_t * uriP,
 
     case LWM2M_CONTENT_TLV:
         {
-            char baseUriStr[URI_MAX_STRING_LEN];
+            uint8_t baseUriStr[URI_MAX_STRING_LEN];
             size_t baseUriLen;
             uri_depth_t rootLevel;
             bool isResourceInstance;

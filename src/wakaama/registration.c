@@ -292,12 +292,22 @@ int lwm2m_update_registration(lwm2m_context_t * contextP,
             if (targetP->shortID == shortServerID)
             {
                 // found the server, trigger the update transaction
-                return prv_updateRegistration(contextP, targetP, withObjects);
+                if (targetP->status == STATE_REGISTERED)
+                {
+                    return prv_updateRegistration(contextP, targetP, withObjects);
+                }
+                else
+                {
+                    return COAP_400_BAD_REQUEST;
+                }
             }
         }
         else
         {
-            result = prv_updateRegistration(contextP, targetP, withObjects);
+            if (targetP->status == STATE_REGISTERED)
+            {
+                result = prv_updateRegistration(contextP, targetP, withObjects);
+            }
         }
         targetP = targetP->next;
     }
@@ -662,7 +672,6 @@ static int prv_getId(uint8_t * data,
 {
     int value;
     uint16_t limit;
-    uint16_t end;
 
     // Expecting application/link-format (RFC6690)
     // leading space were removed before. Remove trailing spaces.
@@ -1095,7 +1104,9 @@ void registration_step(lwm2m_context_t * contextP,
     targetP = contextP->serverList;
     while (targetP != NULL)
     {
-        if (targetP->status == STATE_REGISTERED)
+        switch (targetP->status)
+        {
+        case STATE_REGISTERED:
         {
             time_t nextUpdate;
             time_t interval;
@@ -1116,6 +1127,19 @@ void registration_step(lwm2m_context_t * contextP,
             {
                 *timeoutP = interval;
             }
+        }
+        break;
+
+        case STATE_REG_FAILED:
+            if (targetP->sessionH != NULL)
+            {
+                lwm2m_close_connection(targetP->sessionH, contextP->userData);
+                targetP->sessionH = NULL;
+            }
+            break;
+
+        default:
+            break;
         }
         targetP = targetP->next;
     }

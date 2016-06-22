@@ -204,12 +204,6 @@ void lwm2m_handle_packet(lwm2m_context_t * contextP,
     static coap_packet_t response[1];
 
     coap_error_code = coap_parse_message(message, buffer, (uint16_t)length);
-
-    if (message[0].uri_path && message[0].uri_path->next &&
-            (message[0].uri_path->next->is_static != 0 && message[0].uri_path->next->is_static != 1)) {
-        printf("BLA\n");
-    }
-
     if (coap_error_code == NO_ERROR)
     {
         LOG("  Parsed: ver %u, type %u, tkl %u, code %u.%.2u, mid %u\r\n", message->version, message->type, message->token_len, message->code >> 5, message->code & 0x1F, message->mid);
@@ -256,7 +250,6 @@ void lwm2m_handle_packet(lwm2m_context_t * contextP,
                     LOG("Block1 NOT IMPLEMENTED\n");
 
                     coap_error_code = COAP_501_NOT_IMPLEMENTED;
-                    coap_error_message = "NoBlock1Support";
                 }
                 else if ( IS_OPTION(message, COAP_OPTION_BLOCK2) )
                 {
