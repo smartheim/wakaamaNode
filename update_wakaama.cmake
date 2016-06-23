@@ -21,7 +21,7 @@ endif()
 execute_process(COMMAND ${GIT_EXECUTABLE} add src/wakaama)
 execute_process(COMMAND ${GIT_EXECUTABLE} commit --author="Wakaama Update <david.graeff@web.de>" -m "Update wakaama source to revision ${DESCRIBE_REVISION}")
 
-execute_process(OUTPUT_VARIABLE OUT COMMAND ${GIT_EXECUTABLE} git diff HEAD origin/HEAD --quiet --)
+execute_process(OUTPUT_VARIABLE OUT COMMAND ${GIT_EXECUTABLE} diff HEAD origin/HEAD --quiet --)
 if (NOT ${OUT} EQUAL 0)
     execute_process(COMMAND ${GIT_EXECUTABLE} push "https://${GH_TOKEN}@${GH_REF}" master:master  )
 endif()
