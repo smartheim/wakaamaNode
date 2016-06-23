@@ -27,7 +27,7 @@ matrix:
         - libgtest-dev
         - cmake
     script:
-        - test/cmake.sh
+        - test/testall_posix.sh
   - compiler: gcc
     env: CMAKE_CXX_COMPILER=g++-4.9 CMAKE_C_COMPILER=gcc-4.9
     addons:
@@ -41,7 +41,7 @@ matrix:
         - libgtest-dev
         - cmake
     script:
-        - test/cmake.sh
+        - test/testall_posix.sh
   - compiler: gcc
     env: CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
     addons:
@@ -56,7 +56,7 @@ matrix:
         - cmake
     script:
         - test/cmake.sh
-  - compiler: clang
+  - compiler: testall_posix
     env: CMAKE_CXX_COMPILER=clang++-3.5 CMAKE_C_COMPILER=clang-3.5 
     addons:
       apt:
@@ -66,7 +66,7 @@ matrix:
         - clang-3.5
         - libgtest-dev
         - cmake
-    script: test/cmake.sh
+    script: test/testall_posix.sh
 #  - compiler: clang
 #    env: CMAKE_CXX_COMPILER=clang++-3.6 
 #    addons:
@@ -95,6 +95,20 @@ matrix:
 #        - cmake
 #    script:
 #        - test/cmake.sh
+  - compiler: gcc
+    env: CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
+    addons:
+      apt:
+        sources:
+        - sourceline: ppa:george-edison55/cmake-3.x
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-5
+        - gcc-5
+        - libgtest-dev
+        - cmake
+    script:
+        - test/testall_lwip.sh
 
   - env: WITH_ARDUINO=1 BOARD=arduino:avr:mega:cpu=atmega1280 VERSION=1.6.9 
     script: test/arduino.sh
