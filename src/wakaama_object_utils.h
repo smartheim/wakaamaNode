@@ -71,13 +71,21 @@ typedef struct _lwm2m_object_meta_information_ {
     lwm2m_object_res_item_t ressources[];     ///< Describe your instance_t / your ressources.
 } lwm2m_object_meta_information_t;
 
+#ifdef __cplusplus
+#define STATIC_ASSERT static_assert
+#elif __STDC_VERSION__ >= 201112L
+#define STATIC_ASSERT _Static_assert
+#else
+#define STATIC_ASSERT(a, b)
+#endif
+
 /**
   * See documentation of lwm2m_object_create.
   */
 #define OBJECT_META(object_instance_t, variable_name, write_cb, ...) \
  static lwm2m_object_meta_information_t variable_name = \
  { sizeof(object_instance_t), write_cb, sizeof((lwm2m_object_res_item_t[]){__VA_ARGS__})/sizeof(lwm2m_object_res_item_t), {__VA_ARGS__} }; \
-static_assert(sizeof(object_instance_t)>sizeof(uint8_t),"Object utils can only be used for object structs smaller than 256 bytes!");
+STATIC_ASSERT(sizeof(object_instance_t)>sizeof(uint8_t),"Object utils can only be used for object structs smaller than 256 bytes!");
 
 /**
   * Usually you define and work with an lwm2m_object_t object.
@@ -90,7 +98,7 @@ typedef struct  __attribute__((__packed__))  {
     lwm2m_object_meta_information_t* meta;
 } lwm2m_object_with_meta_t;
 
-static_assert(sizeof(lwm2m_object_with_meta_t)==sizeof(lwm2m_object_t)+sizeof(lwm2m_object_meta_information_t*),
+STATIC_ASSERT(sizeof(lwm2m_object_with_meta_t)==sizeof(lwm2m_object_t)+sizeof(lwm2m_object_meta_information_t*),
               "lwm2m_object_with_meta_t packing failed. The object meta data pointer have to follow the object data immediatelly");
 
 /**

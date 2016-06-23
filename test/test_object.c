@@ -43,6 +43,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 
