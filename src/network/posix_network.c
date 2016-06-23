@@ -40,6 +40,7 @@ typedef struct _connection_t_
 
 connection_t * connection_find(connection_t * connList, struct sockaddr_storage * addr, size_t addrLen);
 connection_t * connection_create(network_t * network, char * host, char * port);
+void connection_free(connection_t * connList);
 
 uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
     // The network can only be initialized once. We also need the userdata pointer
@@ -125,6 +126,7 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
     return network->open_listen_sockets;
 }
 
+#ifdef WITH_LOGS
 void prv_log_addr(connection_t * connP, size_t length, bool sending)
 {
     char s[INET6_ADDRSTRLEN];
@@ -152,6 +154,7 @@ void prv_log_addr(connection_t * connP, size_t length, bool sending)
 
     //output_buffer(stderr, buffer, length, 0);
 }
+#endif
 
 bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
     network_t* network = (network_t*)contextP->userData;
@@ -281,6 +284,13 @@ void * lwm2m_connect_server(uint16_t secObjInstID,
     }
 
     return (void *)newConnP;
+}
+
+void lwm2m_close_connection(void * sessionH,
+                            void * userData)
+{
+    network_t* network = (network_t*)userData;
+    connection_free(network->connection_list);
 }
 
 void lwm2m_network_force_interface(lwm2m_context_t * contextP, void* interface)

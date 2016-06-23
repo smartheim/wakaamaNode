@@ -36,7 +36,7 @@ uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets)
     }
 
     uint8_t result = lwm2m_step(lwm2mH, &tv.tv_sec);
-    if (result != 0)
+    if (result != 0 && result != COAP_503_SERVICE_UNAVAILABLE)
     {
         fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
     }

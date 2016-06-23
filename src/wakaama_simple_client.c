@@ -25,7 +25,7 @@ void lwm2m_device_res_has_changed(uint16_t res_id) {
 }
 
 bool lwm2m_get_server_uri(uint16_t security_instance_id, char* uriBuffer, size_t buffer_len) {
-    lwm2m_object_t * securityObjP = contextP->objectList[0];
+    lwm2m_object_t * securityObjP = contextP->objectList;
     security_instance_t * securityInstance;
     securityInstance = (security_instance_t *)LWM2M_LIST_FIND(securityObjP->instanceList, security_instance_id);
 
@@ -51,8 +51,8 @@ void lwm2m_unregister_server(uint16_t security_instance_id)
 
 void lwm2m_remove_unregistered_servers()
 {
-    lwm2m_object_t * securityObjP = contextP->objectList[0];
-    lwm2m_object_t * serverObjP = contextP->objectList[1];
+    lwm2m_object_t * securityObjP = contextP->objectList;
+    lwm2m_object_t * serverObjP = securityObjP->next;
 
     lwm2m_server_t * serverListEntry = contextP->serverList;
 
@@ -93,8 +93,8 @@ void lwm2m_remove_unregistered_servers()
 uint8_t lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifetime, bool storing,
                          const char* publicId, const char* psk, size_t pskLen)
 {
-    lwm2m_object_t * securityObjP = contextP->objectList[0];
-    lwm2m_object_t * serverObjP = contextP->objectList[1];
+    lwm2m_object_t * securityObjP = contextP->objectList;
+    lwm2m_object_t * serverObjP = securityObjP->next;
 
     security_instance_t * securityInstance = (security_instance_t *)lwm2m_malloc(sizeof(security_instance_t));
     server_instance_t * serverInstance = (server_instance_t *)lwm2m_malloc(sizeof(server_instance_t));

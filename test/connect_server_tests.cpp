@@ -37,21 +37,6 @@ extern "C" {
 #include "internals.h"
 }
 
-static lwm2m_object_t * prv_findObject(lwm2m_context_t * contextP,
-                                       uint16_t Id)
-{
-    int i;
-
-    for (i = 0 ; i < contextP->numObject ; i++)
-    {
-        if (contextP->objectList[i]->objID == Id)
-        {
-            return contextP->objectList[i];
-        }
-    }
-
-    return NULL;
-}
 
 class ConnectServerTests : public testing::Test {
 public:
@@ -93,11 +78,12 @@ public:
         client_context = lwm2m_client_init(client_name);
         ASSERT_TRUE(client_context) << "Failed to initialize wakaama\r\n";
 
-        securityObj = prv_findObject(client_context, 0);
-        serverObj   = prv_findObject(client_context, 1);
-
+        securityObj = client_context->objectList;
+        ASSERT_EQ(securityObj->objID, 0);
         ASSERT_TRUE(securityObj);
+        serverObj   = securityObj->next;
         ASSERT_TRUE(serverObj);
+        ASSERT_EQ(serverObj->objID, 1);
 
         client_bound_sockets = lwm2m_network_init(client_context, NULL);
         ASSERT_GE(client_bound_sockets, 1);

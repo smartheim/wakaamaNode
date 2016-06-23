@@ -62,7 +62,7 @@ public:
 
         lwm2m_add_object(lwm2mH, test_object);
 
-        lwm2m_object_t* o = lwm2mH->objectList[3];
+        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)lwm2mH->objectList, 1024);
         ASSERT_EQ(o, test_object);
 
 
@@ -72,7 +72,7 @@ public:
 };
 
 TEST_F(ObjectUtilsTests, Reading) {
-    lwm2m_uri_t uri = {0, 1024, 10, 0};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
     lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
     char* buffer;
     size_t buffer_len;
@@ -89,13 +89,13 @@ TEST_F(ObjectUtilsTests, Reading) {
 }
 
 TEST_F(ObjectUtilsTests, ExecutingNonExecutable) {
-    lwm2m_uri_t uri = {0, 1024, 10, 0};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
     coap_status_t s = object_execute(lwm2mH,&uri,NULL, 0);
     ASSERT_EQ(s, METHOD_NOT_ALLOWED_4_05);
 }
 
 TEST_F(ObjectUtilsTests, ExecutingFunction) {
-    lwm2m_uri_t uri = {0, 1024, 10, 13};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 13};
     executed = false;
     coap_status_t s = object_execute(lwm2mH,&uri,NULL, 0);
     ASSERT_EQ(s, CHANGED_2_04);
@@ -103,7 +103,7 @@ TEST_F(ObjectUtilsTests, ExecutingFunction) {
 }
 
 TEST_F(ObjectUtilsTests, Discover) {
-    lwm2m_uri_t uri = {0, 1024, 10, 0};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
     char* buffer;
     size_t buffer_len;
     coap_status_t s = object_discover(lwm2mH,&uri,(uint8_t**)&buffer, &buffer_len);
@@ -120,7 +120,7 @@ TEST_F(ObjectUtilsTests, Discover) {
 }
 
 TEST_F(ObjectUtilsTests, WriteIntBoolDouble) {
-    lwm2m_uri_t uri = {0, 1024, 10, 0};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 0};
     const char* valueInt = "10"; size_t len = strlen(valueInt);
     test_object_instance_t * targetP = (test_object_instance_t *)test_object->instanceList;
     coap_status_t s;
@@ -130,7 +130,7 @@ TEST_F(ObjectUtilsTests, WriteIntBoolDouble) {
     for (int i = 0; i < 7; ++i)
     {
         uri.resourceId = i;
-        ASSERT_TRUE(object_checkNumeric(lwm2mH,&uri));
+        ASSERT_EQ(COAP_205_CONTENT, object_checkNumeric(lwm2mH,&uri));
         s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
         ASSERT_EQ(s, CHANGED_2_04);
     }
@@ -165,7 +165,7 @@ TEST_F(ObjectUtilsTests, WriteIntBoolDouble) {
 }
 
 TEST_F(ObjectUtilsTests, WriteString) {
-    lwm2m_uri_t uri = {0, 1024, 10, 0};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 0};
     const char* value = "newcontent"; size_t len = strlen(value);
     test_object_instance_t * targetP = (test_object_instance_t *)test_object->instanceList;
     lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)test_object)->meta;
@@ -188,7 +188,7 @@ TEST_F(ObjectUtilsTests, WriteString) {
 
 
 TEST_F(ObjectUtilsTests, WriteOpaque) {
-    lwm2m_uri_t uri = {0, 1024, 10, 0};
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 0};
     const char* value = "newcontent"; size_t len = strlen(value);
     test_object_instance_t * targetP = (test_object_instance_t *)test_object->instanceList;
     lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)test_object)->meta;

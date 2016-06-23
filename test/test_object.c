@@ -13,9 +13,26 @@
  *
  *  Ressources:
  *              Supported    Multiple
- *  Name | ID | Operations | Instances | Mandatory |  Type   | Range | Units |      Description      |
- *  test |  0 |    R/W     |    No     |    Yes    | Integer | 0-128 |       |                       |
- *  exec |  1 |     E      |    No     |    Yes    |         |       |       |                       |
+ *  Name        | ID | Operations | Instances | Mandatory |  Type   | Range | Units |      Description      |
+ *  test_u8     |  0 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_i8     |  1 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_u16    |  2 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_i16    |  3 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_u32    |  4 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_i32    |  5 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_i64    |  6 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+ *  test_double |  7 |    R/W     |    No     |    Yes    | Float   |       |       |                       |
+ *  test_bool   |  8 |    R/W     |    No     |    Yes    | Bool    |       |       |                       |
+ *  test_str    |  9 |    R/W     |    No     |    Yes    | String  |       |       | Static string         |
+ *  test_str    | 10 |    R/W     |    No     |    Yes    | String  |       |       | Static string         |
+ *  test_str_pre| 11 |    R/W     |    No     |    Yes    | String  |       |       | prealloc string       |
+ *  test_opaque | 12 |    R/W     |    No     |    Yes    | String  |       |       | Opaque string         |
+ *  exec        | 13 |     E      |    No     |    Yes    |         |       |       |                       |
+ *  exec_callbac| 13 |     E      |    No     |    Yes    |         |       |       | Callback execute      |
+ *  test_i8_fun | 14 |    R       |    No     |    Yes    | Integer |       |       | int8 from function    |
+ *  test_u32_fun| 15 |    R       |    No     |    Yes    | Integer |       |       | int32 from function   |
+ *  test_str_fun| 16 |    R       |    No     |    Yes    | String  |       |       | string from function  |
+
  *  dec  |  2 |    R/W     |    No     |    Yes    |  Float  |       |       |                       |
  *  sig  |  3 |    R/W     |    No     |    Yes    | Integer |       |       | 16-bit signed integer |
  *

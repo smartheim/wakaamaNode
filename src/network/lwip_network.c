@@ -31,6 +31,7 @@ typedef struct _connection_t
 
 connection_t * connection_find(connection_t * connList, const ip_addr_t * addr);
 connection_t * connection_create(network_t *network, char * host, char * port);
+void connection_free(connection_t * connList);
 void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
 uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char* localPort)
@@ -202,6 +203,13 @@ void * lwm2m_connect_server(uint16_t secObjInstID,
     }
 
     return (void *)newConnP;
+}
+
+void lwm2m_close_connection(void * sessionH,
+                            void * userData)
+{
+    network_t* network = (network_t*)userData;
+    connection_free(network->connection_list);
 }
 
 connection_t * connection_find(connection_t * connList, const ip_addr_t * addr)
