@@ -23,6 +23,7 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - g++-4.8
+        - gcc-4.8
         - libgtest-dev
         - cmake
     script:
@@ -36,6 +37,7 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - g++-4.9
+        - gcc-4.9
         - libgtest-dev
         - cmake
     script:
@@ -49,6 +51,7 @@ matrix:
         - ubuntu-toolchain-r-test
         packages:
         - g++-5
+        - gcc-5
         - libgtest-dev
         - cmake
     script:
@@ -93,13 +96,13 @@ matrix:
 #    script:
 #        - test/cmake.sh
 
-  - env: WITH_ARDUINO=1 VERSION=1.6.9 BOARD=arduino:avr:mega:cpu=atmega1280
+  - env: WITH_ARDUINO=1 BOARD=arduino:avr:mega:cpu=atmega1280 VERSION=1.6.9 
     script: test/arduino.sh
 
-  - env: WITH_PIO=megaatmega1280 BOARD=megaatmega1280
+  - env: WITH_PIO=1 BOARD=megaatmega1280
     script: test/platformio.sh
 
-  - env: WITH_PIO=esp01 BOARD=esp01
+  - env: WITH_PIO=1 BOARD=esp01
     script: test/platformio.sh
 
 cache:
