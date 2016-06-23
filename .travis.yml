@@ -15,7 +15,7 @@ matrix:
   fast_finish: true
   include:
   - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-4.8 
+    env: CMAKE_CXX_COMPILER=g++-4.8 CMAKE_C_COMPILER=gcc-4.8 
     addons:
       apt:
         sources:
@@ -28,7 +28,7 @@ matrix:
     script:
         - test/cmake.sh
   - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-4.9 
+    env: CMAKE_CXX_COMPILER=g++-4.9 CMAKE_C_COMPILER=gcc-4.9
     addons:
       apt:
         sources:
@@ -41,7 +41,7 @@ matrix:
     script:
         - test/cmake.sh
   - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-5 
+    env: CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
     addons:
       apt:
         sources:
@@ -54,59 +54,58 @@ matrix:
     script:
         - test/cmake.sh
   - compiler: clang
-    env: CMAKE_CXX_COMPILER=clang++-3.5 
+    env: CMAKE_CXX_COMPILER=clang++-3.5 CMAKE_C_COMPILER=clang-3.5 
     addons:
       apt:
         sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
         - ubuntu-toolchain-r-test
-        - llvm-toolchain-precise-3.5
         packages:
         - clang-3.5
         - libgtest-dev
         - cmake
     script: test/cmake.sh
-  - compiler: clang
-    env: CMAKE_CXX_COMPILER=clang++-3.6 
-    addons:
-      apt:
-        sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-precise-3.6
-        packages:
-        - clang-3.6
-        - libgtest-dev
-        - cmake
-    script:
-        - test/cmake.sh
-  - compiler: clang
-    env: CMAKE_CXX_COMPILER=clang++-3.7 
-    addons:
-      apt:
-        sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
-        - ubuntu-toolchain-r-test
-        - llvm-toolchain-precise-3.7
-        packages:
-        - clang-3.7
-        - libgtest-dev
-        - cmake
-    script:
-        - test/cmake.sh
+#  - compiler: clang
+#    env: CMAKE_CXX_COMPILER=clang++-3.6 
+#    addons:
+#      apt:
+#        sources:
+#        - sourceline: ppa:george-edison55/cmake-3.x
+#        - ubuntu-toolchain-r-test
+#        - llvm-toolchain-precise-3.6
+#        packages:
+#        - clang-3.6
+#        - libgtest-dev
+#        - cmake
+#    script:
+#        - test/cmake.sh
+#  - compiler: clang
+#    env: CMAKE_CXX_COMPILER=clang++-3.7 
+#    addons:
+#      apt:
+#        sources:
+#        - sourceline: ppa:george-edison55/cmake-3.x
+#        - ubuntu-toolchain-r-test
+#        - llvm-toolchain-precise-3.7
+#        packages:
+#        - clang-3.7
+#        - libgtest-dev
+#        - cmake
+#    script:
+#        - test/cmake.sh
 
-  - env: WITH_ARDUINO=1
-    script: cd test && arduino VERSION=1.6.7 BOARD=arduino:avr:mega:cpu=atmega1280
+  - env: WITH_ARDUINO=1 VERSION=1.6.9 BOARD=arduino:avr:mega:cpu=atmega1280
+    script: test/arduino.sh
 
-  - env: WITH_PIO=megaatmega1280
-    script: cd test && platformio BOARD=megaatmega1280
+  - env: WITH_PIO=megaatmega1280 BOARD=megaatmega1280
+    script: test/platformio.sh
 
-  - env: WITH_PIO=esp01
-    script: cd test && platformio BOARD=esp01
+  - env: WITH_PIO=esp01 BOARD=esp01
+    script: test/platformio.sh
 
 cache:
   apt: true
   directories:
   - "~/.platformio"
+  - "~/arduino"
   - "~/gtest"
 
