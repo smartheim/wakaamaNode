@@ -10,7 +10,7 @@ if [ ! -d ~/arduino-$VERSION ]; then
     curl -sS http://downloads.arduino.cc/arduino-$VERSION-linux64.tgz | tar xz -C ~/arduino-$VERSION --strip 1 
 fi
 
-if [ ! -d ~/Arduino/libraries ]
+if [ ! -d ~/Arduino/libraries ]; then
     mkdir -p ~/Arduino
     mkdir -p ~/Arduino/libraries
 fi
