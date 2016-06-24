@@ -470,6 +470,7 @@ sys_check_timeouts(void)
         }
 #endif /* LWIP_DEBUG_TIMERNAMES */
         memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
+        next_timeout = NULL;
         if (handler != NULL) {
           handler(arg);
         }
