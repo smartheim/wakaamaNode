@@ -45,7 +45,6 @@
 #include <stdint.h>
 #include <stddef.h> /* for size_t */
 
-#include <signal.h>
 #include <time.h>
 
 /*

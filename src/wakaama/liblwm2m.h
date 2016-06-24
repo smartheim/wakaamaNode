@@ -68,6 +68,10 @@ extern "C" {
 #endif
 #endif
 
+#if !defined(LWM2M_BOOTSTRAP) && !defined(LWM2M_BOOTSTRAP_SERVER_MODE) && !defined(LWM2M_CLIENT_MODE) && !defined(LWM2M_SERVER_MODE)
+#error "Neither LWM2M_BOOTSTRAP or LWM2M_BOOTSTRAP_SERVER_MODE or LWM2M_CLIENT_MODE or LWM2M_SERVER_MODE are defined!"
+#endif
+
 #if defined(LWM2M_BOOTSTRAP) && defined(LWM2M_BOOTSTRAP_SERVER_MODE)
 #error "LWM2M_BOOTSTRAP and LWM2M_BOOTSTRAP_SERVER_MODE cannot be defined at the same time!"
 #endif
