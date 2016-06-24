@@ -3,7 +3,7 @@
 #include "wakaama_network.h"
 #include "wakaama_simple_client.h"
 #include "network_utils.h"
-#include "internals.h"
+#include "../wakaama/internals.h"
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -63,7 +63,7 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char* localPort)
 
     network->socket_handle = (int*)udp_new();
     udp_bind((udp_pcb_t*)network->socket_handle, IP_ADDR_ANY, localPort==NULL ? 12873 : atoi(localPort));
-    udp_recv((udp_pcb_t*)network->socket_handle, udp_raw_recv, contextP);
+    udp_recv((udp_pcb_t*)network->socket_handle, (udp_recv_fn)udp_raw_recv, contextP);
     network->open_listen_sockets = 1;
 
     return network->open_listen_sockets;
@@ -209,7 +209,7 @@ void lwm2m_close_connection(void * sessionH,
                             void * userData)
 {
     network_t* network = (network_t*)userData;
-    connection_free(network->connection_list);
+    connection_free((connection_t*)network->connection_list);
 }
 
 connection_t * connection_find(connection_t * connList, const ip_addr_t * addr)

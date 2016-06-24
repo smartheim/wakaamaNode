@@ -33,6 +33,7 @@ typedef enum _lwm2m_object_util_access_ {
 } lwm2m_object_util_access_t;
 
 typedef struct _lwm2m_object_res_item_t_ {
+    uint16_t ressource_id;
     uint8_t type_and_access;
     uint8_t struct_member_offset;
 } lwm2m_object_res_item_t;
@@ -75,7 +76,7 @@ typedef struct _lwm2m_object_meta_information_ {
 #define STATIC_ASSERT static_assert
 #elif __STDC_VERSION__ >= 201112L
 #define STATIC_ASSERT _Static_assert
-#else
+#else // For C89, C99
 #define STATIC_ASSERT(a, b)
 #endif
 
@@ -108,7 +109,6 @@ STATIC_ASSERT(sizeof(lwm2m_object_with_meta_t)==sizeof(lwm2m_object_t)+sizeof(lw
  */
 void lwm2m_object_free(lwm2m_object_t * objectP);
 
-// If you want to allow new instances to be created by the server, set the create_cb.
 /**
  * @brief Helps you with creating a new lwm2m object.
  *
@@ -213,6 +213,15 @@ extern lwm2m_object_t* lwm2m_object_create(
                                     bool allow_dynamic_instance_creation,
                                     lwm2m_object_meta_information_t* meta_information);
 
+/**
+ * @brief Similar to lwm2m_object_create
+ * Instead of allocating an object on the heap for you like in lwm2m_object_create, with this method
+ * you have to provide a pointer to the memory where the the object data should be stored.
+ * @param object
+ * @param object_id
+ * @param allow_dynamic_instance_creation
+ * @param meta_information
+ */
 void lwm2m_object_create_preallocated(lwm2m_object_with_meta_t* object,
                                       uint16_t object_id,
                                       bool allow_dynamic_instance_creation,
@@ -220,11 +229,12 @@ void lwm2m_object_create_preallocated(lwm2m_object_with_meta_t* object,
 
 /**
  * @brief Add an instance to an object.
- * This can only be done before you have connected to a server.
- * @param object
- * @param instance
+ * Ideally you do this before you have connected to a server. Otherwise you
+ * have to notify the server with lwm2m_update_registration(..., true) about the changed object.
+ * @param object The lwm2m_object.
+ * @param instance One or more linked instances.
  */
-void lwm2m_object_instance_add(lwm2m_object_t* object, lwm2m_list_t* instance);
+void lwm2m_object_instances_add(lwm2m_object_t* object, lwm2m_list_t* instance);
 
 #ifdef __cplusplus
 }

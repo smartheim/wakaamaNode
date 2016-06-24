@@ -1,5 +1,5 @@
 #include "wakaama/liblwm2m.h"
-#include "internals.h"
+#include "wakaama/internals.h"
 
 void print_state(lwm2m_context_t * lwm2mH)
 {

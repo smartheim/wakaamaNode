@@ -7,6 +7,10 @@
 typedef char* (*readFunc) (void);
 typedef void  (*execFunc) (uint8_t * buffer, int length);
 
+static lwm2m_object_res_item_t* prv_find_ressource(lwm2m_object_meta_information_t* metaP, uint16_t id) {
+    return &metaP->ressources[id];
+}
+
 // For opaque fields we always expect to find a size_t member with the length information
 // right after the data pointer.
 #define OPAQUE_SIZE_MEMBER_P(memberP) ((size_t*)(memberP+sizeof(void*)))
@@ -30,11 +34,11 @@ static uint8_t prv_read(uint16_t instanceId,
         int readable = 0;
         for(unsigned i=0;i<metaP->ressources_len;++i)
         {
-            lwm2m_object_res_item_t* resP = &metaP->ressources[i];
+            lwm2m_object_res_item_t* resP = &(metaP->ressources[i]);
             if (!(resP->type_and_access & O_RES_R) || resP->struct_member_offset==0)
                 continue;
             lwm2m_data_t* dataP = &(*dataArrayP)[readable];
-            dataP->id = i;
+            dataP->id = resP->ressource_id;
             ++readable;
         }
         *numDataP = readable;
@@ -45,10 +49,10 @@ static uint8_t prv_read(uint16_t instanceId,
         lwm2m_data_t* dataP = &(*dataArrayP)[i];
 
         unsigned res_id = dataP->id;
-        if (res_id > metaP->ressources_len)
-            return COAP_404_NOT_FOUND;
 
-        lwm2m_object_res_item_t* resP = &metaP->ressources[res_id];
+        lwm2m_object_res_item_t* resP = prv_find_ressource(metaP, res_id);
+        if (!resP)
+            return COAP_404_NOT_FOUND;
 
         if (!(resP->type_and_access & O_RES_R) || resP->struct_member_offset==0)
             return COAP_405_METHOD_NOT_ALLOWED;
@@ -127,10 +131,10 @@ static uint8_t prv_write(uint16_t instanceId,
     for (unsigned i = 0 ; i < numData ; ++i)
     {
         unsigned res_id = dataArray[i].id;
-        if (res_id > metaP->ressources_len)
-            return COAP_404_NOT_FOUND;
 
-        lwm2m_object_res_item_t* resP = &metaP->ressources[res_id];
+        lwm2m_object_res_item_t* resP = prv_find_ressource(metaP, res_id);
+        if (!resP)
+            return COAP_404_NOT_FOUND;
 
         // Check for write access and if offset is set
         if (!(resP->type_and_access & O_RES_W) || resP->struct_member_offset==0)
@@ -277,10 +281,9 @@ uint8_t prv_execute(uint16_t instanceId,
     lwm2m_list_t* instanceP = (lwm2m_list_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == instanceP) return COAP_404_NOT_FOUND;
 
-    if (resourceId > metaP->ressources_len)
+    lwm2m_object_res_item_t* resP = prv_find_ressource(metaP, resourceId);
+    if (!resP)
         return COAP_404_NOT_FOUND;
-
-    lwm2m_object_res_item_t* resP = &metaP->ressources[resourceId];
 
     if (!(resP->type_and_access & O_RES_E))
         return COAP_405_METHOD_NOT_ALLOWED;
@@ -324,7 +327,7 @@ static uint8_t prv_discover(uint16_t instanceId,
             if (!(resP->type_and_access & O_RES_RWE))
                 continue;
             lwm2m_data_t* dataP = &(*dataArrayP)[readable];
-            dataP->id = i;
+            dataP->id = resP->ressource_id;
             ++readable;
         }
         *numDataP = readable;
@@ -422,7 +425,7 @@ void lwm2m_object_create_preallocated(lwm2m_object_with_meta_t * object,
     }
 }
 
-void lwm2m_object_instance_add(lwm2m_object_t* object, lwm2m_list_t* instance) {
+void lwm2m_object_instances_add(lwm2m_object_t* object, lwm2m_list_t* instance) {
     object->instanceList = lwm2m_list_add(object->instanceList, instance);
 }
 

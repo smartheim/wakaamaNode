@@ -1,6 +1,6 @@
 #include "wakaama_simple_client.h"
 #include "wakaama_client_internal.h"
-#include "internals.h"
+#include "wakaama/internals.h"
 
 static lwm2m_context_t * contextP;
 

@@ -40,7 +40,7 @@
  * Here we implement a very basic LWM2M Security Object which only knows NoSec security mode.
  */
 
-#include "liblwm2m.h"
+#include "wakaama/liblwm2m.h"
 #include "wakaama_client_internal.h"
 
 #include <stdlib.h>

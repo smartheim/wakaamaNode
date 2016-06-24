@@ -34,7 +34,7 @@
  *
  */
 
-#include "liblwm2m.h"
+#include "wakaama/liblwm2m.h"
 #include "wakaama_client_internal.h"
 #include "wakaama_object_utils.h"
 
@@ -43,15 +43,15 @@ static lwm2m_object_with_meta_t server_object = {0};
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 
 OBJECT_META(server_instance_t, server_object_meta, server_object_write_verify_cb,
-        {O_RES_R|O_RES_UINT16                 ,  offsetof(server_instance_t,shortServerId)},
-        {O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,lifetime)},
-        {O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,defaultMinPeriod)},
-        {O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,defaultMaxPeriod)},
-        {O_RES_E                                     ,  0},
-        {O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,disableTimeout)},
-        {O_RES_R|O_RES_W|O_RES_BOOL  ,  offsetof(server_instance_t,storing)},
-        {O_RES_R|O_RES_W|O_RES_STRING_PREALLOC,  offsetof(server_instance_t,binding)},
-        {O_RES_E                                     ,  0}
+        {0, O_RES_R|O_RES_UINT16                 ,  offsetof(server_instance_t,shortServerId)},
+        {1, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,lifetime)},
+        {2, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,defaultMinPeriod)},
+        {3, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,defaultMaxPeriod)},
+        {4, O_RES_E                                     ,  0},
+        {5, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,disableTimeout)},
+        {6, O_RES_R|O_RES_W|O_RES_BOOL  ,  offsetof(server_instance_t,storing)},
+        {7, O_RES_R|O_RES_W|O_RES_STRING_PREALLOC,  offsetof(server_instance_t,binding)},
+        {8, O_RES_E                                     ,  0}
 );
 
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {

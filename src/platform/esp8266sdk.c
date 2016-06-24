@@ -2,17 +2,22 @@
 
 #include <string.h>
 #include <stdarg.h>
-
-#include <esp_common.h>
+#include <stdlib.h>
+#include <time.h>
+#include "ets_sys.h"
+#include "osapi.h"
+#include "gpio.h"
+#include "os_type.h"
+#include "user_interface.h"
 
 void * lwm2m_malloc(size_t s)
 {
-    return os_malloc(s);
+    return (void*)malloc(s);
 }
 
 void lwm2m_free(void * p)
 {
-    return os_free(p);
+    free(p);
 }
 
 char * lwm2m_strdup(const char * str)
