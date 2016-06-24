@@ -124,7 +124,7 @@ TEST_F(AddRemoveServerTests, RemoveServer) {
 
     // Unregister now
     lwm2m_unregister_server(secInstance->instanceId);
-    ASSERT_EQ(serverListEntry->status, STATE_DEREG_PENDING);
+    ASSERT_EQ(STATE_DEREG_PENDING, serverListEntry->status);
     serverListEntry->status = STATE_DEREGISTERED;
 
     lwm2m_remove_unregistered_servers();

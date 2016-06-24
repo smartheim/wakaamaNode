@@ -1,13 +1,23 @@
 #!/bin/bash -eux
 
-export PATH=${TRAVIS_BUILD_DIR}/cmake/bin:${PATH}
+: ${GTEST_DIR:=~/gtest}
 
 # GTest files
 if [ ! -d "${GTEST_DIR}" ]; then
     mkdir ${GTEST_DIR}
+    if [ -d "/usr/src/gtest/" ]; then
+        cp -r /usr/src/gtest/* ${GTEST_DIR}
+    fi
 fi
-cp -r /usr/src/gtest/* ${GTEST_DIR}
 
+# Remove 
+sudo brctl delbr tap0tap1
+sudo ip a del dev tap0 192.168.7.1/24
+sudo ip a del dev tap1 192.168.7.2/24
+sudo ip tuntap del dev tap0 mode tap
+sudo ip tuntap del dev tap1 mode tap
+
+# Add
 sudo ip tuntap add dev tap0 mode tap user $(id -u)
 sudo ip tuntap add dev tap1 mode tap user $(id -u)
 sudo ip a a dev tap0 192.168.7.1/24
@@ -17,6 +27,17 @@ sudo brctl addbr tap0tap1
 sudo brctl addif tap0tap1 tap0
 sudo brctl addif tap0tap1 tap1
 
+# Activate
+sudo ifconfig tap0tap1 up
+sudo ifconfig tap0 up
+sudo ifconfig tap1 up
+
+: ${TRAVIS_BUILD_DIR:=$(pwd)}
+
+if [ ! -d "${TRAVIS_BUILD_DIR}/src" ]; then
+    echo "Call this script from the repository root directory!"
+    exit 1
+fi
 
 # Create a build dir and change to that.
 if [ ! -d "${TRAVIS_BUILD_DIR}/buildtestlwip" ]; then
@@ -31,6 +52,7 @@ make test
 
 cd ${TRAVIS_BUILD_DIR}
 
+# Remove 
 sudo brctl delbr tap0tap1
 sudo ip a del dev tap0 192.168.7.1/24
 sudo ip a del dev tap1 192.168.7.2/24

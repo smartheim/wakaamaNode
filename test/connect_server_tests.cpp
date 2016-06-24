@@ -85,6 +85,17 @@ public:
         ASSERT_TRUE(serverObj);
         ASSERT_EQ(serverObj->objID, 1);
 
+        // The meta data pointer is not an official member of the lwm2m_object_t struct.
+        lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)serverObj)->meta;
+
+        for(unsigned i=0;i<metaP->ressources_len;++i)
+        {
+            lwm2m_object_res_item_t* resP = &(metaP->ressources[i]);
+            if ((resP->type_and_access & O_RES_E))
+                continue;
+            ASSERT_TRUE(resP->struct_member_offset);
+        }
+
         client_bound_sockets = lwm2m_network_init(client_context, NULL);
         ASSERT_GE(client_bound_sockets, 1);
 
@@ -183,7 +194,8 @@ TEST_F(ConnectServerTests, ConnectServer) {
     ASSERT_STREQ(connected_client_name, client_name);
 
     //// client: deregister from server ////
-    lwm2m_unregister_server(((security_instance_t*)securityObj->instanceList)->instanceId);
+    security_instance_t* instances = (security_instance_t*)securityObj->instanceList;
+    lwm2m_unregister_server(instances->instanceId);
 
     steps = 0;
     while (steps++ < 10) {
@@ -200,5 +212,5 @@ TEST_F(ConnectServerTests, ConnectServer) {
 
     ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
     ASSERT_EQ(STATE_BOOTSTRAP_REQUIRED, client_context->state);
-    ASSERT_EQ(connected_client_name, nullptr);
+    ASSERT_EQ(nullptr, connected_client_name);
 }

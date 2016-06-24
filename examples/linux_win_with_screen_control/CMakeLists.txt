@@ -11,9 +11,9 @@ add_definitions(${WAKAAMA_DEFINITIONS})
 include_directories (${WAKAAMA_SOURCES_DIR} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS})
 
 SET(SOURCES
-    lightclient.c
-    test_object.c
-    test_object.h
+    main.c
+    screen_object.c
+    screen_object.h
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${WAKAAMA_SIMPLE_CLIENT_SOURCES})

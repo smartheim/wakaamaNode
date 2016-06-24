@@ -14,7 +14,7 @@ include("${REPO_ROOT}/src/wakaama_simple_client.cmake")
 enable_testing()
 
 ## Prepare gtest
-if(EXISTS "${GTEST_DIR}")
+if(EXISTS "${GTEST_DIR}/src/gtest-all.cc")
     set(GTEST_DIR $ENV{GTEST_DIR} CACHE PATH "")
     set(GTEST_FILES ${GTEST_DIR}/src/gtest-all.cc ${GTEST_DIR}/src/gtest_main.cc)
     set(GTEST_INCLUDE_DIRS ${GTEST_DIR} ${GTEST_DIR}/include)
@@ -44,7 +44,7 @@ if (UNIX)
     target_link_libraries(${PROJECT_NAME} pthread)
 endif()
 
-if(NOT EXISTS "${GTEST_DIR}")
+if(GTEST_FOUND)
     target_link_libraries(${PROJECT_NAME} ${GTEST_BOTH_LIBRARIES})
 endif()
 

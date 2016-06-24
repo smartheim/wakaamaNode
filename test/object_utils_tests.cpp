@@ -54,7 +54,7 @@ public:
 
     virtual void SetUp() {
         test_object = lwm2m_object_create(1024, true, test_object_get_meta());
-        lwm2m_object_instance_add(test_object, test_object_create_instance(10,
+        lwm2m_object_instances_add(test_object, test_object_create_instance(10,
                                                (void*)readFun8,(void*)readFun32,(void*)readFunStr,(void*)executeFun));
 
         lwm2mH = lwm2m_client_init("testClient");

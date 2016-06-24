@@ -2,7 +2,7 @@
 #include "wakaama_object_utils.h"
 #include "wakaama_client_debug.h"
 #include "wakaama_network.h"
-#include "test_object.h"
+#include "screen_object.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -42,9 +42,8 @@ int main(int argc, char *argv[])
     }
 
     // Create object
-    lwm2m_object_t* test_object = lwm2m_object_create(1024, true, test_object_get_meta());
-    lwm2m_object_instance_add(test_object, test_object_create_instance(10));
-    test_object->executeFunc = test_object_execute_cb;
+    lwm2m_object_t* test_object = lwm2m_object_create(1024, true, screen_object_get_meta());
+    lwm2m_object_instances_add(test_object, screen_object_create_instances());
     lwm2m_add_object(lwm2mH, test_object);
 
     uint8_t bound_sockets = lwm2m_network_init(lwm2mH, NULL);
@@ -68,10 +67,10 @@ int main(int argc, char *argv[])
         print_state(lwm2mH);
 
         uint8_t result = lwm2m_step(lwm2mH, &tv.tv_sec);
-        if (result != 0)
-        {
+        if (result == COAP_503_SERVICE_UNAVAILABLE)
+            printf("No server found so far\r\n");
+        else if (result != 0)
             fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
-        }
 
         /*
          * This part wait for an event on the socket until "tv" timed out (set

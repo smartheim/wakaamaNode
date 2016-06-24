@@ -48,29 +48,29 @@
 bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 
 OBJECT_META(test_object_instance_t, test_object_meta, test_object_write_verify_cb,
-    {O_RES_RW|O_RES_UINT8,  offsetof(test_object_instance_t,test_u8)},
-    {O_RES_RW|O_RES_INT8,   offsetof(test_object_instance_t,test_i8)},
-    {O_RES_RW|O_RES_UINT16,  offsetof(test_object_instance_t,test_u16)},
-    {O_RES_RW|O_RES_INT16,   offsetof(test_object_instance_t,test_i16)},
-    {O_RES_RW|O_RES_UINT32,  offsetof(test_object_instance_t,test_u32)},
-    {O_RES_RW|O_RES_INT32,   offsetof(test_object_instance_t,test_i32)},
-    {O_RES_RW|O_RES_INT64,   offsetof(test_object_instance_t,test_i64)},
+    { 0, O_RES_RW|O_RES_UINT8,  offsetof(test_object_instance_t,test_u8)},
+    { 1, O_RES_RW|O_RES_INT8,   offsetof(test_object_instance_t,test_i8)},
+    { 2, O_RES_RW|O_RES_UINT16,  offsetof(test_object_instance_t,test_u16)},
+    { 3, O_RES_RW|O_RES_INT16,   offsetof(test_object_instance_t,test_i16)},
+    { 4, O_RES_RW|O_RES_UINT32,  offsetof(test_object_instance_t,test_u32)},
+    { 5, O_RES_RW|O_RES_INT32,   offsetof(test_object_instance_t,test_i32)},
+    { 6, O_RES_RW|O_RES_INT64,   offsetof(test_object_instance_t,test_i64)},
 
-    {O_RES_RW|O_RES_DOUBLE, offsetof(test_object_instance_t,test_double)},
+    { 7, O_RES_RW|O_RES_DOUBLE, offsetof(test_object_instance_t,test_double)},
 
-    {O_RES_RW|O_RES_BOOL, offsetof(test_object_instance_t,test_bool)},
+    { 8, O_RES_RW|O_RES_BOOL, offsetof(test_object_instance_t,test_bool)},
 
-    {O_RES_RW|O_RES_STRING_STATIC,  offsetof(test_object_instance_t,test_str)},
-    {O_RES_RW|O_RES_STRING_PREALLOC,  offsetof(test_object_instance_t,test_str_prealloc)},
-    {O_RES_RW|O_RES_OPAQUE_STATIC,  offsetof(test_object_instance_t,test_opaque)},
+    { 9, O_RES_RW|O_RES_STRING_STATIC,  offsetof(test_object_instance_t,test_str)},
+    {10, O_RES_RW|O_RES_STRING_PREALLOC,  offsetof(test_object_instance_t,test_str_prealloc)},
+    {11, O_RES_RW|O_RES_OPAQUE_STATIC,  offsetof(test_object_instance_t,test_opaque)},
 
-    {O_RES_E                       ,  0},
+    {12, O_RES_E                       ,  0},
 
-    {O_RES_E|O_RES_FUNCTION        ,  offsetof(test_object_instance_t,test_execute_fun)},
+    {13, O_RES_E|O_RES_FUNCTION        ,  offsetof(test_object_instance_t,test_execute_fun)},
 
-    {O_RES_R|O_RES_INT8|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_int8)},
-    {O_RES_R|O_RES_UINT32|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_uint32)},
-    {O_RES_R|O_RES_STRING|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_string)}
+    {14, O_RES_R|O_RES_INT8|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_int8)},
+    {15, O_RES_R|O_RES_UINT32|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_uint32)},
+    {16, O_RES_R|O_RES_STRING|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_string)}
 );
 
 lwm2m_object_meta_information_t *test_object_get_meta() {
