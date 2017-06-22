@@ -45,8 +45,6 @@
 #include <stdint.h>
 #include <stddef.h> /* for size_t */
 
-#include <time.h>
-
 /*
  * The maximum buffer size that is provided for resource responses and must be respected due to the limited IP buffer.
  * Larger data must be handled by the resource and will be sent chunk-wise through a TCP stream or CoAP blocks.
@@ -58,6 +56,13 @@
 #define COAP_DEFAULT_MAX_AGE                 60
 #define COAP_RESPONSE_TIMEOUT                2
 #define COAP_MAX_RETRANSMIT                  4
+#define COAP_ACK_RANDOM_FACTOR               1.5
+#define COAP_MAX_LATENCY                     100
+#define COAP_PROCESSING_DELAY                COAP_RESPONSE_TIMEOUT
+
+#define COAP_MAX_TRANSMIT_WAIT               ((COAP_RESPONSE_TIMEOUT * ( (1 << (COAP_MAX_RETRANSMIT + 1) ) - 1) * COAP_ACK_RANDOM_FACTOR))
+#define COAP_MAX_TRANSMIT_SPAN               ((COAP_RESPONSE_TIMEOUT * ( (1 << COAP_MAX_RETRANSMIT) - 1) * COAP_ACK_RANDOM_FACTOR))
+#define COAP_EXCHANGE_LIFETIME               (COAP_MAX_TRANSMIT_SPAN + (2 * COAP_MAX_LATENCY) + COAP_PROCESSING_DELAY)
 
 #define COAP_HEADER_LEN                      4 /* | version:0x03 type:0x0C tkl:0xF0 | code | mid:0x00FF | mid:0xFF00 | */
 #define COAP_ETAG_LEN                        8 /* The maximum number of bytes for the ETag */
@@ -173,6 +178,7 @@ typedef enum {
   COAP_OPTION_BLOCK1 = 27,        /* 1-3 B */
   COAP_OPTION_SIZE = 28,          /* 0-4 B */
   COAP_OPTION_PROXY_URI = 35,     /* 1-270 B */
+  OPTION_MAX_VALUE = 0xFFFF
 } coap_option_t;
 
 /* CoAP Content-Types */
@@ -198,7 +204,8 @@ typedef enum {
   APPLICATION_FASTINFOSET = 48,
   APPLICATION_SOAP_FASTINFOSET = 49,
   APPLICATION_JSON = 50,
-  APPLICATION_X_OBIX_BINARY = 51
+  APPLICATION_X_OBIX_BINARY = 51,
+  CONTENT_MAX_VALUE = 0xFFFF
 } coap_content_type_t;
 
 typedef struct _multi_option_t {
@@ -303,8 +310,8 @@ typedef struct {
 #define COAP_SERIALIZE_BLOCK_OPTION(number, field, text)      \
     if (IS_OPTION(coap_pkt, number)) \
     { \
-      PRINTF(text" [%lu%s (%u B/blk)]\n", coap_pkt->field##_num, coap_pkt->field##_more ? "+" : "", coap_pkt->field##_size); \
       uint32_t block = coap_pkt->field##_num << 4; \
+      PRINTF(text" [%lu%s (%u B/blk)]\n", coap_pkt->field##_num, coap_pkt->field##_more ? "+" : "", coap_pkt->field##_size); \
       if (coap_pkt->field##_more) block |= 0x8; \
       block |= 0xF & coap_log_2(coap_pkt->field##_size/16); \
       PRINTF(text" encoded: 0x%lX\n", block); \
