@@ -12,8 +12,9 @@
 #include <stdio.h>
 #include <errno.h>
 
-void network_init()
+bool network_init()
 {
+    return true;
 }
 
 void network_close()
@@ -26,7 +27,7 @@ void* network_get_interface(int id)
 
 uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets)
 {
-    struct timeval tv = {2,0};
+    struct timeval tv = {0,1000*50}; // wait 50ms for an incoming packet
     fd_set readfds = {0};
     for (uint8_t c = 0; c < bound_sockets; ++c) {
         int sock = lwm2m_network_native_sock(lwm2mH, c);
@@ -60,7 +61,9 @@ uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets)
             return COAP_500_INTERNAL_SERVER_ERROR;
         if (select_result > 0 && FD_ISSET(sock, &readfds))
         {
-            lwm2m_network_process(lwm2mH);
+            if (!lwm2m_network_process(lwm2mH)) {
+                return COAP_500_INTERNAL_SERVER_ERROR;
+            }
         }
     }
 

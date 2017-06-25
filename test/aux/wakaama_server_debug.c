@@ -1,4 +1,5 @@
 #include "wakaama_server_debug.h"
+#include "wakaama_simple_client.h" // for simple_lwm2m_printf
 #include "wakaama/liblwm2m.h"
 #include "wakaama/internals.h"
 
@@ -30,7 +31,7 @@ static const char* prv_status_to_string(int status)
 
 void print_status(uint8_t status)
 {
-    LOG("%d.%02d (%s)", (status&0xE0)>>5, status&0x1F, prv_status_to_string(status));
+    simple_lwm2m_printf("%d.%02d (%s)", (status&0xE0)>>5, status&0x1F, prv_status_to_string(status));
 }
 
 void prv_print_error(uint8_t status)

@@ -13,6 +13,7 @@
 #include "netif/etharp.h"
 #include "lwipopts.h"
 
+#include "wakaama_simple_client.h" // for simple_lwm2m_printf
 #include "network_helper.h"
 #include "internals.h"
 
@@ -124,7 +125,7 @@ err_t tapif_real_init(int netIfNo)
     netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP;
 
     netif->state = (void*)(intptr_t)open(DEVTAP, O_RDWR);
-    LWIP_DEBUGF(TAPIF_DEBUG, ("tapif_init: fd %d\n", tapif->fd));
+    LWIP_DEBUGF(TAPIF_DEBUG, ("tapif_init: fd %c%c\n", netif->name[0], netif->name[1]));
     if ((intptr_t)netif->state == -1) {
       perror("tapif_init: try running \"modprobe tun\" or rebuilding your kernel with CONFIG_TUN; cannot open "DEVTAP);
       exit(1);
@@ -138,20 +139,20 @@ err_t tapif_real_init(int netIfNo)
     ifr.ifr_flags = IFF_TAP|IFF_NO_PI;
     if (ioctl((intptr_t)netif->state, TUNSETIFF, (void *) &ifr) < 0) {
         perror("tapif_init: "DEVTAP" ioctl TUNSETIFF");
-        exit(1);
+        return ERR_ABRT;
     }
 
     netif_set_link_up(netif);
     return ERR_OK;
 }
 
-void network_init()
+bool network_init()
 {
     // LwIP can only be initialited once
     static bool lwip_init_done = false;
     if (lwip_init_done) {
         sys_restart_timeouts();
-        return;
+        return true;
     }
     lwip_init_done = true;
 
@@ -172,15 +173,19 @@ void network_init()
       strncpy(nm_str, ip4addr_ntoa(&netmask), sizeof(nm_str));
       strncpy(gw_str, ip4addr_ntoa(&gw), sizeof(gw_str));
 
-      LOG("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
+      simple_lwm2m_printf("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
 
-      netif_add(&netifs[tapDevices], &ipaddr, &netmask, &gw, NULL, tapif_init, ethernet_input);
-      tapif_real_init(tapDevices);
+        netif_add(&netifs[tapDevices], &ipaddr, &netmask, &gw, NULL, tapif_init, ethernet_input);
+      err_t tapIfOK = tapif_real_init(tapDevices);
+      if (tapIfOK != ERR_OK) {
+        simple_lwm2m_printf("tapif_real_init failed with %i\n", tapIfOK);
+        lwip_init_done = false;
+        return false;
+      }
       netif_set_up(&netifs[tapDevices]);
       netif_create_ip6_linklocal_address(&netifs[tapDevices], 1);
-
   }
-
+  return true;
   //netif_set_default(&netifs[tapDevices]);
 }
 

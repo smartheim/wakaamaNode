@@ -40,9 +40,9 @@ extern "C" {
 
 class ConnectServerTests : public testing::Test {
 public:
-    lwm2m_context_t * client_context;
-    lwm2m_object_t * securityObj;
-    lwm2m_object_t * serverObj;
+    lwm2m_context_t * client_context = nullptr;
+    lwm2m_object_t * securityObj = nullptr;
+    lwm2m_object_t * serverObj = nullptr;
     std::unique_ptr<std::thread> serverThread;
     volatile bool server_running = false;
 
@@ -56,6 +56,8 @@ public:
 
  protected:
     virtual void TearDown() {
+        if (!client_context) return;
+
         lwm2m_network_close(client_context);
         lwm2m_client_close();
 
@@ -74,7 +76,7 @@ public:
     }
 
     virtual void SetUp() {
-        network_init();
+        ASSERT_TRUE(network_init());
         client_context = lwm2m_client_init(client_name);
         ASSERT_TRUE(client_context) << "Failed to initialize wakaama\r\n";
 
@@ -102,7 +104,6 @@ public:
         server_context = nullptr;
     }
 };
-
 
 static void prv_monitor_callback(uint16_t clientID,
                                  lwm2m_uri_t * uriP,
@@ -148,7 +149,7 @@ TEST_F(ConnectServerTests, ConnectServer) {
 
     lwm2m_set_monitoring_callback(server_context, prv_monitor_callback, this);
     server_bound_sockets = lwm2m_network_init(server_context, LWM2M_DEFAULT_SERVER_PORT);
-    ASSERT_GE(server_bound_sockets, 1);
+    ASSERT_LE(1, server_bound_sockets);
 
     client_updated = 0;
     connected_client_name = nullptr;
@@ -165,8 +166,7 @@ TEST_F(ConnectServerTests, ConnectServer) {
     }));
 
     //// client: add server and register ////
-    uint8_t s = lwm2m_add_server(123,LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0);
-    ASSERT_EQ(s, COAP_205_CONTENT);
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
 
     uint8_t steps = 0;
     uint8_t result;
@@ -182,11 +182,11 @@ TEST_F(ConnectServerTests, ConnectServer) {
             if (client_context->state == STATE_READY)
                 break;
         } else {
-            #ifdef WITH_LOGS
-            print_status(result);
+            prv_print_error(result);
+            // print_status(result);
             print_state(client_context);
-            #endif
         }
+        usleep(1000*20);
     }
 
     ASSERT_EQ(COAP_NO_ERROR, result);
@@ -195,20 +195,26 @@ TEST_F(ConnectServerTests, ConnectServer) {
 
     //// client: deregister from server ////
     security_instance_t* instances = (security_instance_t*)securityObj->instanceList;
-    lwm2m_unregister_server(instances->instanceId);
+    ASSERT_TRUE(lwm2m_unregister_server(instances->instanceId));
 
+    // One network_step_blocking is necessary to send/receive the unregister request
+    // All further steps make sure, the result does not change.
     steps = 0;
     while (steps++ < 10) {
         result = network_step_blocking(client_context,client_bound_sockets);
-        lwm2m_remove_unregistered_servers();
         if (result == COAP_503_SERVICE_UNAVAILABLE) {
             if (client_context->state == STATE_BOOTSTRAP_REQUIRED)
                 break;
         } else {
-            print_status(result);
+            prv_print_error(result);
             print_state(client_context);
+            ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
         }
+        usleep(1000*20);
     }
+
+    lwm2m_remove_unregistered_servers();
+    result = network_step_blocking(client_context,client_bound_sockets);
 
     ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
     ASSERT_EQ(STATE_BOOTSTRAP_REQUIRED, client_context->state);

@@ -103,14 +103,25 @@ TEST_F(ObjectUtilsTests, ExecutingFunction) {
 }
 
 TEST_F(ObjectUtilsTests, Discover) {
+    #define LWM2M_SERVER_ADDR "coap://127.0.0.1"
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
+    
+    lwm2m_server_t  server;
+    server.next = 0;
+    server.secObjInstID = 0;
+    server.shortID = 1;
+    server.registration = 1;
+    server.binding = BINDING_U;
+    server.sessionH = lwm2mH;
+    server.status = STATE_REGISTERED;
+
     lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
     char* buffer;
     size_t buffer_len;
-    coap_status_t s = object_discover(lwm2mH,&uri,(uint8_t**)&buffer, &buffer_len);
+    coap_status_t s = object_discover(lwm2mH,&uri,&server,(uint8_t**)&buffer, &buffer_len);
     ASSERT_EQ(s, CONTENT_2_05);
 
-    const char* expect = "</1024/10/0>,</1024/10/1>,</1024/10/2>,</1024/10/3>,</1024/10/4>,</1024/10/5>,</1024/10/6>,</1024/10/7>,</1024/10/8>,</1024/10/9>,</1024/10/10>,</1024/10/11>,</1024/10/12>,</1024/10/13>,</1024/10/14>,</1024/10/15>,</1024/10/16>";
-
+    const char* expect = "</1024/10>,</1024/10/0>,</1024/10/1>,</1024/10/2>,</1024/10/3>,</1024/10/4>,</1024/10/5>,</1024/10/6>,</1024/10/7>,</1024/10/8>,</1024/10/9>,</1024/10/10>,</1024/10/11>,</1024/10/12>,</1024/10/13>,</1024/10/14>,</1024/10/15>,</1024/10/16>";
     ASSERT_EQ(strlen(expect), buffer_len);
     buffer = (char*)realloc(buffer, buffer_len+1);
     buffer[buffer_len] = 0;

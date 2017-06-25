@@ -19,6 +19,7 @@
 #include "wakaama_server_debug.h"
 #include "wakaama_network.h"
 #include "wakaama_client_internal.h"
+#include "network_helper.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -56,9 +57,14 @@ public:
         }
 
         lwm2m_network_close(client_context);
+
+        network_close();
     }
 
     virtual void SetUp() {
+        // Necessary for lwip to initialize the memory module
+        ASSERT_TRUE(network_init());
+
         client_context = lwm2m_client_init(client_name);
         ASSERT_TRUE(client_context) << "Failed to initialize wakaama\r\n";
 
@@ -71,14 +77,13 @@ public:
 
         server_context = nullptr;
 
-        lwm2m_network_init(client_context, "12345");
+        ASSERT_GE(lwm2m_network_init(client_context, "12345"), 1);
     }
 };
 
 
 TEST_F(AddRemoveServerTests, AddServer) {
-    uint8_t s = lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0);
-    ASSERT_EQ(s, COAP_205_CONTENT);
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
 
     ASSERT_EQ(client_context->state, STATE_INITIAL);
 
@@ -106,8 +111,7 @@ TEST_F(AddRemoveServerTests, RemoveServer) {
     uint8_t result;
     time_t timeout;
 
-    uint8_t s = lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0);
-    ASSERT_EQ(s, COAP_205_CONTENT);
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
 
     security_instance_t* secInstance = (security_instance_t*)securityObj->instanceList;
 
@@ -123,7 +127,7 @@ TEST_F(AddRemoveServerTests, RemoveServer) {
     serverListEntry->location = (char*)lwm2m_malloc(1);
 
     // Unregister now
-    lwm2m_unregister_server(secInstance->instanceId);
+    ASSERT_TRUE(lwm2m_unregister_server(secInstance->instanceId));
     ASSERT_EQ(STATE_DEREG_PENDING, serverListEntry->status);
     serverListEntry->status = STATE_DEREGISTERED;
 
