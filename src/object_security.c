@@ -396,11 +396,11 @@ static uint8_t prv_security_create(uint16_t instanceId,
 
     return result;
 }
-#endif
+#endif // LWM2M_BOOTSTRAP
 
+#ifdef LWM2M_WITH_LOGS
 void display_security_object(lwm2m_object_t * object)
 {
-#ifdef WITH_LOGS
     fprintf(stdout, "  /%u: Security object, instances:\r\n", object->objID);
     security_instance_t * instance = (security_instance_t *)object->instanceList;
     while (instance != NULL)
@@ -411,8 +411,8 @@ void display_security_object(lwm2m_object_t * object)
                 instance->shortID, instance->clientHoldOffTime);
         instance = (security_instance_t *)instance->next;
     }
-#endif
 }
+#endif
 
 lwm2m_object_t * init_security_object()
 {

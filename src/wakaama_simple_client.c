@@ -13,8 +13,6 @@ void lwm2m_client_close() {
     contextP = NULL;
 }
 
-
-
 void lwm2m_device_res_has_changed(uint16_t res_id) {
     lwm2m_uri_t uri;
     uri.flag = 0;
@@ -37,7 +35,7 @@ bool lwm2m_get_server_uri(uint16_t security_instance_id, char* uriBuffer, size_t
     return true;
 }
 
-void lwm2m_unregister_server(uint16_t security_instance_id)
+bool lwm2m_unregister_server(uint16_t security_instance_id)
 {
     lwm2m_server_t * serverListEntry;
     serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(contextP->serverList, security_instance_id);
@@ -45,7 +43,9 @@ void lwm2m_unregister_server(uint16_t security_instance_id)
     {
         registration_deregister(contextP, serverListEntry);
         serverListEntry->dirty = true;
+        return true;
     }
+    return false;
     //contextP->state = STATE_INITIAL;
 }
 
@@ -90,7 +90,7 @@ void lwm2m_remove_unregistered_servers()
         contextP->state = STATE_INITIAL;
 }
 
-uint8_t lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifetime, bool storing,
+bool lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifetime, bool storing,
                          const char* publicId, const char* psk, size_t pskLen)
 {
     lwm2m_object_t * securityObjP = contextP->objectList;
@@ -103,7 +103,7 @@ uint8_t lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifet
     {
         lwm2m_free(securityInstance);
         lwm2m_free(serverInstance);
-        return COAP_500_INTERNAL_SERVER_ERROR;
+        return false;
     }
 
     memset(securityInstance, 0, sizeof(security_instance_t));
@@ -136,7 +136,7 @@ uint8_t lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifet
     serverObjP->instanceList = LWM2M_LIST_ADD(serverObjP->instanceList, serverInstance);
 
     contextP->state = STATE_INITIAL;
-    return COAP_205_CONTENT;
+    return true;
 }
 
 bool lwm2m_is_connected() {
@@ -168,7 +168,7 @@ lwm2m_context_t * lwm2m_client_init(const char * endpointName)
     int result = lwm2m_configure(contextP, endpointName, NULL, NULL, 3, objArray);
     if (result != 0)
     {
-        LOG("lwm2m_configure() failed: 0x%X\r\n", result);
+        simple_lwm2m_printf("lwm2m_configure() failed: 0x%X\r\n", result);
         return NULL;
     }
     return contextP;

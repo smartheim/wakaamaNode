@@ -62,6 +62,13 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char* localPort)
     }
 
     network->socket_handle = (int*)udp_new();
+    if (network->socket_handle == NULL)
+    {
+        contextP->userData = 0;
+        lwm2m_free(network);
+        return 0;
+    }
+
     udp_bind((udp_pcb_t*)network->socket_handle, IP_ADDR_ANY, localPort==NULL ? 12873 : atoi(localPort));
     udp_recv((udp_pcb_t*)network->socket_handle, (udp_recv_fn)udp_raw_recv, contextP);
     network->open_listen_sockets = 1;
@@ -83,7 +90,7 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
         connP = (connection_t *)malloc(sizeof(connection_t));
         if (connP != NULL)
         {
-            LOG("Server: Add client connection\n");
+            simple_lwm2m_printf("Server: Add client connection\n");
             connP->sock = (udp_pcb_t*)network->socket_handle;
             connP->port = port;
             memcpy(&(connP->addr), addr, sizeof(ip_addr_t));
@@ -93,15 +100,15 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
     }
 
     if (connP != NULL) {
-        #ifdef WITH_LOGS
-        const char* a = connP->addr.type==IPADDR_TYPE_V4 ?
+        simple_lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
+                    p->tot_len,
+                    connP->addr.type==IPADDR_TYPE_V4 ?
                     ip4addr_ntoa(&connP->addr.u_addr.ip4) :
-                    ip6addr_ntoa(&connP->addr.u_addr.ip6);
-        LOG("Receiving %d bytes from [%s]:%hu\r\n", p->tot_len, a, connP->port);
-        #endif
+                    ip6addr_ntoa(&connP->addr.u_addr.ip6),
+                    connP->port);
         lwm2m_handle_packet(contextP, (char*)p->payload, p->tot_len, connP);
     } else {
-        LOG("received bytes ignored!\r\n");
+        simple_lwm2m_printf("received bytes ignored!\r\n");
     }
 
     pbuf_free(p);
@@ -113,7 +120,12 @@ bool lwm2m_network_client_process(lwm2m_context_t * contextP) {
 
 void lwm2m_network_close(lwm2m_context_t * contextP) {
     network_t* network = (network_t*)contextP->userData;
-    udp_remove((udp_pcb_t*)network->socket_handle);
+    if (!network) return;
+
+    if (network->socket_handle) {
+        udp_remove((udp_pcb_t*)network->socket_handle);
+    }
+
     network->socket_handle = NULL;
     network->open_listen_sockets = 0;
 }
@@ -128,11 +140,11 @@ uint8_t __attribute__((weak)) lwm2m_buffer_send(void * sessionH,
 
     if (connP == NULL)
     {
-        LOG("#> failed sending %lu bytes, missing connection\r\n", length);
+        simple_lwm2m_printf("#> failed sending %lu bytes, missing connection\r\n", length);
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 
-    #ifdef WITH_LOGS
+    #ifdef LWM2M_WITH_LOGS
     const char* a = connP->addr.type==IPADDR_TYPE_V4 ?
                 ip4addr_ntoa(&connP->addr.u_addr.ip4) :
                 ip6addr_ntoa(&connP->addr.u_addr.ip6);
@@ -148,7 +160,7 @@ uint8_t __attribute__((weak)) lwm2m_buffer_send(void * sessionH,
         b = "N/A";
     }
 
-    LOG("Sending %d bytes to [%s]:%hu. Interface IP: %s. Is Server: %i\r\n", length, a,
+    simple_lwm2m_printf("Sending %d bytes to [%s]:%hu. Interface IP: %s. Is Server: %i\r\n", length, a,
         connP->port, b, network->type==NET_SERVER_PROCESS);
     #endif
 
@@ -165,7 +177,7 @@ uint8_t __attribute__((weak)) lwm2m_buffer_send(void * sessionH,
 
     if (err != ERR_OK)
     {
-        LOG("#> failed sending %lu bytes\r\n", length);
+        simple_lwm2m_printf("#> failed sending %lu bytes\r\n", length);
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 
@@ -191,12 +203,12 @@ void * lwm2m_connect_server(uint16_t secObjInstID,
 
     decode_uri(uri, &host, &port);
 
-    LOG("Connecting to %s %s\r\n", host, port);
+    simple_lwm2m_printf("Connecting to %s %s\r\n", host, port);
 
     network_t* network = (network_t*)userData;
     connection_t * newConnP = connection_create(network, host, port);
     if (newConnP == NULL) {
-        LOG("Connection creation failed.\r\n");
+        simple_lwm2m_printf("Connection creation failed.\r\n");
     }
     else {
         network->connection_list = (struct _connection_t_*)newConnP;

@@ -126,7 +126,7 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
     return network->open_listen_sockets;
 }
 
-#ifdef WITH_LOGS
+#ifdef LWM2M_WITH_LOGS
 void prv_log_addr(connection_t * connP, size_t length, bool sending)
 {
     char s[INET6_ADDRSTRLEN];
@@ -154,6 +154,8 @@ void prv_log_addr(connection_t * connP, size_t length, bool sending)
 
     //output_buffer(stderr, buffer, length, 0);
 }
+#else
+#define prv_log_addr(...) {}
 #endif
 
 bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
@@ -169,7 +171,7 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
 
         if (numBytes < 0)
         {
-            LOG("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+            simple_lwm2m_printf("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
             continue;
         } else if (numBytes == 0)
             continue; // no new data
@@ -180,7 +182,7 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
             connP = (connection_t *)malloc(sizeof(connection_t));
             if (connP == NULL)
             {
-                LOG("memory alloc for new connection failed");
+                simple_lwm2m_printf("memory alloc for new connection failed");
                 continue;
             }
 
@@ -192,16 +194,14 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
         }
 
         if (connP != NULL) {
-            #ifdef WITH_LOGS
             prv_log_addr(connP, numBytes, false);
-            #endif
             lwm2m_handle_packet(contextP, buffer, numBytes, connP);
         } else {
-            LOG("received bytes ignored!\r\n");
+            simple_lwm2m_printf("received bytes ignored!\r\n");
         }
     }
 
-    return network->open_listen_sockets;
+    return network->open_listen_sockets >= 1;
 }
 
 void __attribute__((weak)) lwm2m_network_close(lwm2m_context_t * contextP) {
@@ -230,9 +230,7 @@ uint8_t lwm2m_buffer_send(void * sessionH,
         return COAP_500_INTERNAL_SERVER_ERROR ;
     }
 
-    #ifdef WITH_LOGS
     prv_log_addr(connP, length, true);
-    #endif
 
     int nbSent;
     size_t offset = 0;
@@ -268,9 +266,7 @@ void * lwm2m_connect_server(uint16_t secObjInstID,
     if (!lwm2m_get_server_uri(secObjInstID, uri, sizeof(uri)))
         return NULL;
 
-    #ifdef WITH_LOG
-    LOG("Connecting to %s\r\n", uri);
-    #endif
+    simple_lwm2m_printf("Connecting to %s\r\n", uri);
 
     decode_uri(uri, &host, &port);
 
