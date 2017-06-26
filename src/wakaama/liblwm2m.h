@@ -54,6 +54,7 @@
 
 #ifndef _LWM2M_CLIENT_H_
 #define _LWM2M_CLIENT_H_
+#include "wakaama_config.h"
 
 #ifdef __cplusplus
 extern "C" {
