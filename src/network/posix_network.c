@@ -14,20 +14,21 @@
 #endif
 
 #ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include <Winsock2.h>
-#include <ws2tcpip.h>
-#define LOG_ERR 3
-typedef uint16_t in_port_t;
-#define close(s) closesocket(s)
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
+    #include <Winsock2.h>
+    #include <ws2tcpip.h>
+    #define LOG_ERR 3
+    typedef uint16_t in_port_t;
+    #define close(s) closesocket(s)
 #else
-#include <unistd.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/select.h>
+    #include <unistd.h>
+    #include <netinet/in.h>
+    #include <arpa/inet.h>
+    #include <sys/types.h>
+    #include <sys/socket.h>
+    #include <sys/select.h>
+    #include <netdb.h>
 #endif
 
 typedef struct _connection_t_

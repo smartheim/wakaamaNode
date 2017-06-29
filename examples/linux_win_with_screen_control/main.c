@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <signal.h>
 

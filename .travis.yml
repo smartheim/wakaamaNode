@@ -18,17 +18,18 @@ install:
 after_success: test/teardown_test_network.sh || echo ""
 after_failure: test/teardown_test_network.sh || echo ""
 
-apt:
-  sources:
-  - sourceline: ppa:george-edison55/cmake-3.x
-  - ubuntu-toolchain-r-test
-  - llvm-toolchain-precise-3.6
-  packages:
-  - g++-6
-  - gcc-6
-  - clang-3.6
-  - libgtest-dev
-  - cmake
+addons:
+  apt:
+    sources:
+    - sourceline: ppa:george-edison55/cmake-3.x
+    - ubuntu-toolchain-r-test
+    - llvm-toolchain-precise-3.6
+    packages:
+    - g++-6
+    - gcc-6
+    - clang-3.6
+    - libgtest-dev
+    - cmake
 
 #  - SCRIPT=examples/arduino_example/build.sh BOARD=arduino:avr:mega:cpu=atmega1280 VERSION=1.8.3
 env:
