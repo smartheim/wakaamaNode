@@ -1,5 +1,6 @@
 #pragma once
 #include "wakaama/liblwm2m.h"
+#include "wakaama_object_utils.h"
 
 #include <string.h>
 #include <stdint.h>
@@ -97,3 +98,20 @@ lwm2m_object_t* init_security_object();
 lwm2m_object_t* init_server_object();
 lwm2m_object_t* init_device_object();
 
+/**
+ * If you plan to implement a read-callback method, you need to be prepared for the case where the
+ * server asks for all object ressources. Use this method to allocate memory and assign ressource
+ * IDs to the array lwm2m_data_t elements.
+ * @param dataArrayP This method will allocate memory that needs needs to be freed with lwm2m_free() again after use.
+ * @param metaP The lwm2m object meta information.
+ * @return Returns the count of ressources in metaP and therefore allocated lwm2m_data_t objects of dataArrayP or -1 if an error occured (no memory could be acquired). Can return 0 if there are no readable ressources in the object described by the meta object.
+ */
+int lwm2m_object_prepare_full_response(lwm2m_data_t** dataArrayP, lwm2m_object_meta_information_t* metaP);
+
+/**
+ *
+ * @param destination The destination lwm2m_data_t
+ * @param resP A meta ressource description (one of lwm2m_object_meta_information_t::ressources)
+ * @param instanceP An lwm2m object instance
+ */
+uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object_res_item_t* resP, void* instanceP);

@@ -35,6 +35,9 @@ else()
     set(GTEST_FILES "")
 endif()
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic")
+
 ## Prepare for coverage measuring
 if(${COVERAGE})
 	set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")

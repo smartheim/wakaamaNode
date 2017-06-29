@@ -6,30 +6,33 @@
 extern "C" {
 #endif
 
+typedef char* (*readFunc) (void);
+typedef void  (*execFunc) (uint8_t * buffer, int length);
+
 typedef enum _lwm2m_object_util_type_ {
-    O_RES_BOOL   = 1,
-    O_RES_DOUBLE = 2,
-    O_RES_INT8   = 3,
-    O_RES_UINT8  = 4,
-    O_RES_INT16  = 5,
-    O_RES_UINT16 = 6,
-    O_RES_INT32  = 7,
-    O_RES_UINT32 = 8,
-    O_RES_INT64  = 9,
+    O_RES_BOOL   = 1, ///< A boolean value
+    O_RES_DOUBLE = 2, ///< A floating point decimal value
+    O_RES_INT8   = 3, ///< Int with range [-128,127]
+    O_RES_UINT8  = 4, ///< Int with range [0,255]
+    O_RES_INT16  = 5, ///< Int with range [-32000,32000]
+    O_RES_UINT16 = 6, ///< Int with range [0,65500]
+    O_RES_INT32  = 7, ///< Int with range [-2^31,2^31-1]
+    O_RES_UINT32 = 8, ///< Int with range [0, 2^32-1]
+    O_RES_INT64  = 9, ///< Int with range [-2^63, 2^63-1]
     O_RES_STRING          = 10, ///< free + strdub for an entry
     O_RES_STRING_STATIC   = 11, ///< assign pointer, no free
     O_RES_STRING_PREALLOC = 12, ///< preallocated space. In the write verify cb make sure the incoming string fits into the allocated space.
     O_RES_OPAQUE          = 13, ///< free + memcpy with length for an antry
-    O_RES_OPAQUE_STATIC   = 14  ///< assign pointer and length, no free
+    O_RES_OPAQUE_STATIC   = 14 ///< assign pointer and length, no free
 } lwm2m_object_util_type_t;
 
 typedef enum _lwm2m_object_util_access_ {
-    O_RES_R  = (1 << 4),
-    O_RES_W  = (1 << 5),
-    O_RES_RW = (1 << 4)|(1 << 5),
-    O_RES_E  = (1 << 6),
-    O_RES_RWE = (1 << 4)|(1 << 5)|(1 << 6),
-    O_RES_FUNCTION = (1 << 7)
+    O_RES_R  = (1 << 4), ///< Read only access
+    O_RES_W  = (1 << 5), ///< Write only access
+    O_RES_RW = (1 << 4)|(1 << 5), ///< Read/Write only access
+    O_RES_E  = (1 << 6), ///< Execute only
+    O_RES_RWE = (1 << 4)|(1 << 5)|(1 << 6), ///< Read/Write and executable ressource
+    O_RES_FUNCTION = (1 << 7) ///< Executable and a function is provided
 } lwm2m_object_util_access_t;
 
 typedef struct _lwm2m_object_res_item_t_ {
@@ -69,7 +72,7 @@ typedef struct _lwm2m_object_meta_information_ {
     uint16_t instance_object_size;            ///< sizeof(instance_t) otherwise.
     object_write_verify_cb_t write_verify_cb; ///< Verify or react to write in this callback. Optional.
     uint8_t ressources_len;                   ///< Of how many ressources does your ressource instances consists of.
-    lwm2m_object_res_item_t ressources[];     ///< Describe your instance_t / your ressources.
+    lwm2m_object_res_item_t ressources[1];     ///< Describe your instance_t / your ressources.
 } lwm2m_object_meta_information_t;
 
 #ifdef __cplusplus
@@ -84,19 +87,27 @@ typedef struct _lwm2m_object_meta_information_ {
   * See documentation of lwm2m_object_create.
   */
 #define OBJECT_META(object_instance_t, variable_name, write_cb, ...) \
- static lwm2m_object_meta_information_t variable_name = \
- { sizeof(object_instance_t), write_cb, sizeof((lwm2m_object_res_item_t[]){__VA_ARGS__})/sizeof(lwm2m_object_res_item_t), {__VA_ARGS__} }; \
-STATIC_ASSERT(sizeof(object_instance_t)>sizeof(uint8_t),"Object utils can only be used for object structs smaller than 256 bytes!");
+    typedef struct            \
+    {                                                                \
+        uint16_t instance_object_size;                               \
+        object_write_verify_cb_t write_verify_cb;                    \
+        uint8_t ressources_len;                                      \
+        lwm2m_object_res_item_t ressources[sizeof((lwm2m_object_res_item_t[]){__VA_ARGS__}) / sizeof (lwm2m_object_res_item_t)];                        \
+    } lwm2m_object_meta_information_custom_t;                        \
+    static lwm2m_object_meta_information_custom_t meta_object =    \
+    {sizeof(object_instance_t), write_cb, sizeof((lwm2m_object_res_item_t[]){__VA_ARGS__}) / sizeof (lwm2m_object_res_item_t), {__VA_ARGS__}}; \
+    STATIC_ASSERT(sizeof(object_instance_t) > sizeof(uint8_t), "Object utils can only be used for object structs smaller than 256 bytes!"); \
+    lwm2m_object_meta_information_t* variable_name = (lwm2m_object_meta_information_t*)&meta_object;
 
 /**
-  * Usually you define and work with an lwm2m_object_t object.
-  * If you use these wakaama object helper methods, additionally
-  * to the data in lwm2m_object_t there is also the pointer to the
-  * linked object meta data required.
+  * Usually you define and only work with an lwm2m_object_t object.
+  * If you use these lwm2m object helper methods, additionally
+  * to lwm2m_object_t there is also meta data required.
   */
-typedef struct  __attribute__((__packed__))  {
+typedef struct __attribute__((__packed__))
+{
     lwm2m_object_t obj;
-    lwm2m_object_meta_information_t* meta;
+    lwm2m_object_meta_information_t *meta;
 } lwm2m_object_with_meta_t;
 
 STATIC_ASSERT(sizeof(lwm2m_object_with_meta_t)==sizeof(lwm2m_object_t)+sizeof(lwm2m_object_meta_information_t*),
@@ -117,8 +128,6 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  * An lwm2m object consists of an object id and none, one or more object instances. Wakaama
  * allows you to add user data to an object by using the object->userdata member.
  *
- * The very last argument have to be always 0.
- *
  * A lwm2m object instance consists of one ore more ressources identified by their ressource ids.
  * A ressource may be an uint8, int8, uint16, int16, uint32, int32, uint64, int64, double, c-string.
  * If you implement any object with an id registered at
@@ -135,8 +144,12 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  *    ... Your members are defined here...
  * } your_object_instance_t;
  *
- * To allow wakaama to query from your object instances, write to it, and execute on it, you have to provide
- * a description of an instance as a lwm2m_object_meta_information_t. An example for the following object definition:
+ * To allow wakaama to
+ * - query from your object instances,
+ * - write to it and
+ * - execute on it
+ * you have to provide a machine readable description. You do this by definining a
+ * lwm2m_object_meta_information_t. Hereby an example for the following object definition is given:
  *
  *                 Multiple
  * Object |  ID  | Instances | Mandatoty |
@@ -158,12 +171,12 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  *    double   dec;    // For Res id 3
  * } your_object_instance_t;
  *
- * Ue OBJECT_META() and create a corresponding meta object like this:
+ * Use OBJECT_META() and create a corresponding meta object like this:
  *
- * OBJECT_META(test_object_instance_t, test_object_meta, test_object_write_verify_cb,
- *     {O_RES_RW|O_RES_UINT8 , offsetof(your_object_instance_t,test)},
- *     {O_RES_E                   , 0},
- *     {O_RES_RW|O_RES_DOUBLE, offsetof(your_object_instance_t,dec)}
+ * OBJECT_META(your_object_instance_t, test_object_meta, test_object_write_verify_cb,
+ *     {0, O_RES_RW|O_RES_UINT8 , offsetof(your_object_instance_t,test)},
+ *     {1, O_RES_E                   , 0},
+ *     {2, O_RES_RW|O_RES_DOUBLE, offsetof(your_object_instance_t,dec)}
  * );
  *
  * You provide the object instance structure and the variable name for the meta object via
@@ -173,13 +186,12 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  * a write to your object instance. You may react on a write in this method and you may deny the write if the new value
  * is not in range of your allowed values. See object_write_verify_cb_t for more information.
  *
- * The following arguments describe the ressources of your object instances. The position is relevant and
- * defines the ressources id (beginning from 0).  Each entry consists of
- * two values:
- * 1) The first one describes the access (O_RES_RW for read/write etc) and the type (O_RES_UINT8 for uint8 etc).
+ * The following arguments describe the ressources of your object instances. Each entry consists of three values:
+ * 1) The id of the ressource
+ * 2) Describes the access (O_RES_RW for read/write etc) and the type (O_RES_UINT8 for uint8 etc).
  * Additionally to the type the O_RES_FUNCTION flag can be set for read only ressource items. The value will not be read
  * from the struct but a function call result is used instead.
- * 2) The second value points to the position of the related member in the struct or 0 for execute-only ressources.
+ * 3) Points to the position of the related member in the struct or 0 for execute-only ressources.
  *
  * If you have an OPAQUE field in your struct you have to define it as a pointer, directly followed by a size_t struct member,
  * where the length information is stored. An example:
@@ -216,11 +228,11 @@ extern lwm2m_object_t* lwm2m_object_create(
 /**
  * @brief Similar to lwm2m_object_create
  * Instead of allocating an object on the heap for you like in lwm2m_object_create, with this method
- * you have to provide a pointer to the memory where the the object data should be stored.
- * @param object
- * @param object_id
- * @param allow_dynamic_instance_creation
- * @param meta_information
+ * you have to provide a pointer to the memory where the object data should be stored.
+ * @param object The object memory, doesn't need to be initialized.
+ * @param object_id The object ID (coap ressource id)
+ * @param allow_dynamic_instance_creation Allows or disallows the use of lwm2m_object_instances_add(). Heap memory will be used.
+ * @param meta_information The objects meta data.
  */
 void lwm2m_object_create_preallocated(lwm2m_object_with_meta_t* object,
                                       uint16_t object_id,

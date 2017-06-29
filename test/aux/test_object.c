@@ -71,10 +71,10 @@ OBJECT_META(test_object_instance_t, test_object_meta, test_object_write_verify_c
     {14, O_RES_R|O_RES_INT8|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_int8)},
     {15, O_RES_R|O_RES_UINT32|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_uint32)},
     {16, O_RES_R|O_RES_STRING|O_RES_FUNCTION,  offsetof(test_object_instance_t,test_read_fun_string)}
-);
+)
 
 lwm2m_object_meta_information_t *test_object_get_meta() {
-    return &test_object_meta;
+    return test_object_meta;
 }
 
 lwm2m_list_t* test_object_create_instance(uint16_t instance_id, void* readFun8, void* readFun32, void* readFunStr, void* execFun) {
@@ -99,7 +99,7 @@ lwm2m_list_t* test_object_create_instance(uint16_t instance_id, void* readFun8, 
     targetP->test_str = "test";
     strncpy(targetP->test_str_prealloc, "test", 5);
 
-    targetP->test_opaque = "test";
+    targetP->test_opaque = (uint8_t*)"test";
     targetP->test_opaque_len = 4;
 
     targetP->test_read_fun_int8 = readFun8;

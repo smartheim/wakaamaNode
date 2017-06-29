@@ -94,7 +94,7 @@ bool lwm2m_get_server_uri(uint16_t security_instance_id, char* uriBuffer, size_t
  */
 bool lwm2m_is_connected();
 
-#ifndef LWM2M_WITH_LOGS
+#ifdef LWM2M_WITH_LOGS
 #define simple_lwm2m_printf(...) fprintf(stdout, __VA_ARGS__)
 #else
 #define simple_lwm2m_printf(...) {}

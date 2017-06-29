@@ -67,15 +67,15 @@ static uint8_t prv_get_value(lwm2m_data_t * dataP,
 
 #ifdef LWM2M_WITH_DTLS
     case LWM2M_SECURITY_PUBLIC_KEY_ID:
-        lwm2m_data_encode_opaque(targetP->publicIdentity, targetP->publicIdLen, dataP);
+        lwm2m_data_encode_opaque((uint8_t*)targetP->publicIdentity, (size_t)targetP->publicIdLen, dataP);
         return COAP_205_CONTENT;
 
     case LWM2M_SECURITY_SERVER_PUBLIC_KEY_ID:
-        lwm2m_data_encode_opaque(targetP->serverPublicKey, targetP->serverPublicKeyLen, dataP);
+        lwm2m_data_encode_opaque((uint8_t*)targetP->serverPublicKey, (size_t)targetP->serverPublicKeyLen, dataP);
         return COAP_205_CONTENT;
 
     case LWM2M_SECURITY_SECRET_KEY_ID:
-        lwm2m_data_encode_opaque(targetP->secretKey, targetP->secretKeyLen, dataP);
+        lwm2m_data_encode_opaque((uint8_t*)targetP->secretKey, (size_t)targetP->secretKeyLen, dataP);
         return COAP_205_CONTENT;
 #endif
 #ifdef LWM2M_WITH_SMS

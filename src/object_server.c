@@ -52,7 +52,7 @@ OBJECT_META(server_instance_t, server_object_meta, server_object_write_verify_cb
         {6, O_RES_R|O_RES_W|O_RES_BOOL  ,  offsetof(server_instance_t,storing)},
         {7, O_RES_R|O_RES_W|O_RES_STRING_PREALLOC,  offsetof(server_instance_t,binding)},
         {8, O_RES_E                                     ,  0}
-);
+)
 
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {
     server_instance_t* i = (server_instance_t*)instance;
@@ -71,31 +71,8 @@ static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t chang
     return true;
 }
 
-static uint8_t object_execute_cb(uint16_t instanceId,
-                        uint16_t resourceId,
-                        uint8_t * buffer,
-                        int length,
-                        lwm2m_object_t * objectP)
-{
-    server_instance_t * targetP;
-
-    targetP = (server_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
-    if (NULL == targetP)
-        return COAP_404_NOT_FOUND;
-
-    switch (resourceId)
-    {
-    case LWM2M_SERVER_DISABLE_ID:
-    case LWM2M_SERVER_UPDATE_ID:
-        // executed in core, if COAP_204_CHANGED is returned
-        return COAP_204_CHANGED;
-    default:
-        return COAP_405_METHOD_NOT_ALLOWED;
-    }
-}
-
 lwm2m_object_t * init_server_object()
 {
-    lwm2m_object_create_preallocated(&server_object, 1, false, &server_object_meta);
+    lwm2m_object_create_preallocated(&server_object, 1, false, server_object_meta);
     return (lwm2m_object_t*)&server_object;
 }

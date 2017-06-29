@@ -13,6 +13,7 @@
 
 #include <time.h>
 
+#include "wakaama_config.h"
 #include "wakaama_simple_client.h"
 #include "wakaama_network.h"
 #include "wakaama_object_utils.h"

@@ -2,6 +2,9 @@
 
 #include <stdint.h>
 
+// Configures the lwm2m device object instance
+#include "wakaama_config.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,49 +45,6 @@ typedef struct _device_data_
     const char* firmware_ver;  //  3
     const char* device_type;   // 17
 
-    #ifdef LWM2M_DEVICE_WITH_REBOOT
-    // Reboot.                     4
-    // Implement lwm2m_reboot()
-    #endif
-    #ifdef LWM2M_DEVICE_WITH_FACTORY_RESET
-    // Factory reset               5
-    // Implement lwm2m_factory_reset()
-    #endif
-
-    // power and current info / not implemented
-    // RES_O_AVL_POWER_SOURCES     6
-    // RES_O_POWER_SOURCE_VOLTAGE  7
-    // RES_O_POWER_SOURCE_CURRENT  8
-
-    // Battery
-    #ifdef LWM2M_DEVICE_INFO_WITH_BATTERY
-    // uint8_t battery_level;  //  9
-    // uint8_t battery_status; // 20
-    // Implement these functions:
-    // - uint8_t lwm2m_get_bat_level()
-    // - uint8_t lwm2m_get_bat_status()
-    #endif
- 
-    // Memory info
-    #ifdef LWM2M_DEVICE_INFO_WITH_MEMINFO
-    // int64_t free_memory;    // 10
-    // int64_t total_memory;   // 21
-    // Implement these functions:
-    // - int64_t lwm2m_get_free_mem()
-    // - int64_t lwm2m_get_total_mem()
-    #endif
-
-    // Global error code
-    #ifdef LWM2M_DEVICE_INFO_WITH_ERRCODE
-    // int64_t error;          // 11
-    // RES_O_RESET_ERROR_CODE     12
-    // Implement these functions:
-    // - int64_t lwm2m_get_last_error()
-    // - void lwm2m_reset_last_error()
-    #endif
-
-    // Time info
-    // Implement: lwm2m_gettime() 13
     #ifdef LWM2M_DEVICE_INFO_WITH_TIME
     // Maximal "+HH:MM\0"
     char time_offset[7];       // 14

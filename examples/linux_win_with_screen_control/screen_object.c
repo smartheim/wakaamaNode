@@ -49,13 +49,13 @@ bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id
 
 // Always do this in an implementation file not a header file
 OBJECT_META(test_object_instance_t, test_object_meta, test_object_write_verify_cb,
-    {O_RES_RW|O_RES_BOOL,  offsetof(test_object_instance_t,state)},
-    {O_RES_RW|O_RES_STRING_STATIC, offsetof(test_object_instance_t,host)},
-    {O_RES_RW|O_RES_STRING_STATIC,  offsetof(test_object_instance_t,name)}
-);
+    {0, O_RES_RW|O_RES_BOOL,          offsetof(test_object_instance_t,state)},
+    {1, O_RES_RW|O_RES_STRING_STATIC, offsetof(test_object_instance_t,host)},
+    {2, O_RES_RW|O_RES_STRING_STATIC, offsetof(test_object_instance_t,name)}
+)
 
 lwm2m_object_meta_information_t *screen_object_get_meta() {
-    return &test_object_meta;
+    return (lwm2m_object_meta_information_t*)&test_object_meta;
 }
 
 lwm2m_list_t* screen_object_create_instances() {

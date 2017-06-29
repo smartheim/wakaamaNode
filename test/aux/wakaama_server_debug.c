@@ -7,6 +7,7 @@
 
 #define CODE_TO_STRING(X)   case X : return #X
 
+#ifdef LWM2M_WITH_LOGS
 static const char* prv_status_to_string(int status)
 {
     switch(status)
@@ -28,6 +29,7 @@ static const char* prv_status_to_string(int status)
     default: return "";
     }
 }
+#endif
 
 void print_status(uint8_t status)
 {

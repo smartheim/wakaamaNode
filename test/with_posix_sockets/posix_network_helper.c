@@ -23,6 +23,7 @@ void network_close()
 
 void* network_get_interface(int id)
 {
+    return 0;
 }
 
 uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets)

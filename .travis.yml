@@ -1,5 +1,5 @@
 language: cpp
-sudo: false
+sudo: true
 dist: trusty
 env:
   global:
@@ -42,14 +42,15 @@ apt:
 env:
   - SCRIPT=test/testall.sh USE_LWIP=OFF CMAKE_CXX_COMPILER=clang++-3.6 CMAKE_C_COMPILER=clang-3.6 
   - SCRIPT=test/testall.sh USE_LWIP=ON CMAKE_CXX_COMPILER=clang++-3.6 CMAKE_C_COMPILER=clang-3.6 
-  - SCRIPT="pio -c" WITH_ARDUINO=1 BOARD=arduino:avr:mega:cpu=atmega1280 VERSION=1.6.9 
-  - SCRIPT="pio -c" BOARD=megaatmega1280
-  - SCRIPT="pio -c" BOARD=esp01
+  - SCRIPT="pio run -e native"
+  - SCRIPT="pio run -e nodemcu"
+  - SCRIPT="pio run -e esp01"
+#  - SCRIPT=examples/arduino_example/build.sh BOARD=arduino:avr:mega:cpu=atmega1280 VERSION=1.8.3
 
 script: ${script}
 
 matrix:
-  fast_finish: true
+  fast_finish: false
 
 cache:
   apt: true
@@ -57,4 +58,3 @@ cache:
   - "~/.platformio"
   - "~/arduino"
   - "~/gtest"
-

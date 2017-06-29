@@ -32,7 +32,7 @@ uint8_t decode_uri(char* uri, char** host, char** port)
     // remove brackets
     if (*host[0] == '[')
     {
-        *host++;
+        *host = *host + 1;
         if (*(afterHost - 1) == ']')
         {
             *(afterHost - 1) = 0;

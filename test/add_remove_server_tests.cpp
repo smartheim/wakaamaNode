@@ -108,7 +108,6 @@ TEST_F(AddRemoveServerTests, AddServer) {
 }
 
 TEST_F(AddRemoveServerTests, RemoveServer) {
-    uint8_t result;
     time_t timeout;
 
     ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
@@ -116,7 +115,8 @@ TEST_F(AddRemoveServerTests, RemoveServer) {
     security_instance_t* secInstance = (security_instance_t*)securityObj->instanceList;
 
     // Add server to serverlist
-    result = lwm2m_step(client_context, &timeout);
+    uint8_t result = lwm2m_step(client_context, &timeout);
+    ASSERT_EQ(COAP_NO_ERROR, result);
 
     lwm2m_server_t * serverListEntry;
     serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(client_context->serverList, secInstance->instanceId);
@@ -139,6 +139,7 @@ TEST_F(AddRemoveServerTests, RemoveServer) {
 
     ASSERT_EQ(client_context->state, STATE_INITIAL);
     result = lwm2m_step(client_context, &timeout);
+    ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
 
     ASSERT_EQ(client_context->state, STATE_BOOTSTRAP_REQUIRED);
     ASSERT_FALSE(client_context->serverList);

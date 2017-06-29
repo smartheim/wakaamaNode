@@ -7,17 +7,17 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
-void * lwm2m_malloc(size_t s)
+void* lwm2m_malloc(size_t s)
 {
     return malloc(s);
 }
 
 void lwm2m_free(void * p)
 {
-    return free(p);
+    free(p);
 }
 
-char * lwm2m_strdup(const char * str)
+char* lwm2m_strdup(const char * str)
 {
     return strdup(str);
 }
@@ -29,7 +29,7 @@ int lwm2m_strncmp(const char * s1,
     return strncmp(s1, s2, n);
 }
 
-time_t lwm2m_gettime(void)
+time_t __attribute__((weak)) lwm2m_gettime(void)
 {
     struct timeval tv;
 

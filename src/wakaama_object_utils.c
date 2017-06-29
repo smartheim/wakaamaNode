@@ -4,16 +4,89 @@
 #include <stdarg.h>
 #include <string.h>
 
-typedef char* (*readFunc) (void);
-typedef void  (*execFunc) (uint8_t * buffer, int length);
-
 static lwm2m_object_res_item_t* prv_find_ressource(lwm2m_object_meta_information_t* metaP, uint16_t id) {
     return &metaP->ressources[id];
 }
 
 // For opaque fields we always expect to find a size_t member with the length information
 // right after the data pointer.
-#define OPAQUE_SIZE_MEMBER_P(memberP) ((size_t*)(memberP+sizeof(void*)))
+#define OPAQUE_SIZE_MEMBER_P(memberP) ((size_t*)((char*)memberP+sizeof(void*)))
+
+int lwm2m_object_prepare_full_response(lwm2m_data_t ** dataArrayP, lwm2m_object_meta_information_t* metaP)
+{
+    *dataArrayP = lwm2m_data_new(metaP->ressources_len);
+    if (*dataArrayP == NULL) return -1;
+    int readable = 0;
+    for(unsigned i=0;i<metaP->ressources_len;++i)
+    {
+        lwm2m_object_res_item_t* resP = &(metaP->ressources[i]);
+        if (!(resP->type_and_access & O_RES_R))
+            continue;
+        lwm2m_data_t* dataP = &(*dataArrayP)[readable];
+        dataP->id = resP->ressource_id;
+        ++readable;
+    }
+    return readable;
+}
+
+uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object_res_item_t* resP, void* instanceP)
+{
+    lwm2m_object_util_type_t res_type = resP->type_and_access & 0x0f;
+
+    void* memberP = (void*)((char*)instanceP + resP->struct_member_offset);
+
+    /// Support for function results as value ///
+    if (resP->type_and_access & O_RES_FUNCTION)
+    {
+        // The following is equal to this: readFunc f = (readFunc)(*(void**)memberP);
+        // But the -pedantic switch forces us to use this union construct.
+        readFunc f = ((union {readFunc to; void *from;} *)memberP)->to;
+        // We do not know the result type of f() yet and use a generic "void*"
+        void* fdata = f();
+        // Make memberP point to the address of fData.
+        // The dereferenced memberP will contain the real data.
+        memberP = &fdata;
+    }
+    ///////////////////////////////////////////////////////////////////////
+
+    switch (res_type)
+    {
+    case O_RES_STRING:
+    case O_RES_STRING_STATIC:
+        lwm2m_data_encode_string(*((char**)memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_STRING_PREALLOC:
+        lwm2m_data_encode_string((char*)memberP, destination);
+        return COAP_205_CONTENT;
+    case O_RES_OPAQUE:
+    case O_RES_OPAQUE_STATIC:
+        lwm2m_data_encode_opaque(*((uint8_t**)memberP),*OPAQUE_SIZE_MEMBER_P(memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_BOOL:
+        lwm2m_data_encode_bool(*((bool*)memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_DOUBLE:
+        lwm2m_data_encode_float(*((double*)memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_INT8:
+    case O_RES_UINT8:
+        lwm2m_data_encode_int(*((int8_t*)memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_INT16:
+    case O_RES_UINT16:
+        lwm2m_data_encode_int(*((int16_t*)memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_INT32:
+    case O_RES_UINT32:
+        lwm2m_data_encode_int(*((int32_t*)memberP), destination);
+        return COAP_205_CONTENT;
+    case O_RES_INT64:
+        lwm2m_data_encode_int(*((int64_t*)memberP), destination);
+        return COAP_205_CONTENT;
+    }
+
+    return COAP_404_NOT_FOUND;
+}
 
 static uint8_t prv_read(uint16_t instanceId,
                         int * numDataP,
@@ -27,29 +100,15 @@ static uint8_t prv_read(uint16_t instanceId,
     lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)objectP)->meta;
 
     if (*numDataP == 0)
-    {
-        *dataArrayP = lwm2m_data_new(metaP->ressources_len);
-        if (*dataArrayP == NULL)
-            return COAP_500_INTERNAL_SERVER_ERROR;
-        int readable = 0;
-        for(unsigned i=0;i<metaP->ressources_len;++i)
-        {
-            lwm2m_object_res_item_t* resP = &(metaP->ressources[i]);
-            if (!(resP->type_and_access & O_RES_R) || resP->struct_member_offset==0)
-                continue;
-            lwm2m_data_t* dataP = &(*dataArrayP)[readable];
-            dataP->id = resP->ressource_id;
-            ++readable;
-        }
-        *numDataP = readable;
-    }
+        *numDataP = lwm2m_object_prepare_full_response(dataArrayP, metaP);
+
+    if (*numDataP < 0)
+        return COAP_500_INTERNAL_SERVER_ERROR;
 
     for (int i = 0 ; i < *numDataP ; i++)
     {
         lwm2m_data_t* dataP = &(*dataArrayP)[i];
-
         unsigned res_id = dataP->id;
-
         lwm2m_object_res_item_t* resP = prv_find_ressource(metaP, res_id);
         if (!resP)
             return COAP_404_NOT_FOUND;
@@ -57,58 +116,7 @@ static uint8_t prv_read(uint16_t instanceId,
         if (!(resP->type_and_access & O_RES_R) || resP->struct_member_offset==0)
             return COAP_405_METHOD_NOT_ALLOWED;
 
-        lwm2m_object_util_type_t res_type = resP->type_and_access & 0x0f;
-
-        void* memberP = (void*)instanceP + resP->struct_member_offset;
-
-        /// Support for function results as value ///
-        void* fdata;
-        if (resP->type_and_access & O_RES_FUNCTION)
-        {
-            readFunc f = (readFunc)(*(void**)memberP);
-            // We do not know the result type of f() yet and use a generic "void*"
-            fdata = f();
-            // We let point memberP to the address of fData.
-            // The dereferenced memberP will contain the real data.
-            memberP = &fdata;
-        }
-        ///////////////////////////////////////////////////////////////////////
-
-        switch (res_type)
-        {
-        case O_RES_STRING:
-        case O_RES_STRING_STATIC:
-            lwm2m_data_encode_string(*((char**)memberP), dataP);
-            break;
-        case O_RES_STRING_PREALLOC:
-            lwm2m_data_encode_string((char*)memberP, dataP);
-            break;
-        case O_RES_OPAQUE:
-        case O_RES_OPAQUE_STATIC:
-            lwm2m_data_encode_opaque(*((char**)memberP),*OPAQUE_SIZE_MEMBER_P(memberP), dataP);
-            break;
-        case O_RES_BOOL:
-            lwm2m_data_encode_bool(*((bool*)memberP), dataP);
-            break;
-        case O_RES_DOUBLE:
-            lwm2m_data_encode_float(*((double*)memberP), dataP);
-            break;
-        case O_RES_INT8:
-        case O_RES_UINT8:
-            lwm2m_data_encode_int(*((int8_t*)memberP), dataP);
-            break;
-        case O_RES_INT16:
-        case O_RES_UINT16:
-            lwm2m_data_encode_int(*((int16_t*)memberP), dataP);
-            break;
-        case O_RES_INT32:
-        case O_RES_UINT32:
-            lwm2m_data_encode_int(*((int32_t*)memberP), dataP);
-            break;
-        case O_RES_INT64:
-            lwm2m_data_encode_int(*((int64_t*)memberP), dataP);
-            break;
-        }
+        lwm2m_object_assign_single_value(dataP, resP, instanceP);
     }
 
     return COAP_205_CONTENT;
@@ -142,7 +150,7 @@ static uint8_t prv_write(uint16_t instanceId,
 
         // Extract ressource type and member pointer from meta object
         lwm2m_object_util_type_t res_type = resP->type_and_access & 0x0f;
-        void* memberP = (void*)copy_of_entry + resP->struct_member_offset;
+        void* memberP = (void*)((char*)copy_of_entry + resP->struct_member_offset);
 
         union {
             int64_t i;
@@ -201,7 +209,7 @@ static uint8_t prv_write(uint16_t instanceId,
 
             break;
         case O_RES_STRING_PREALLOC: // this is post processed after write verify callback returns true
-            *((char**)memberP) = dataArray[i].value.asBuffer.buffer;
+            *((char**)memberP) = (char*)dataArray[i].value.asBuffer.buffer;
             break;
         case O_RES_BOOL:
             if (1 != lwm2m_data_decode_bool(&dataArray[i], ((bool*)memberP)))
@@ -257,7 +265,7 @@ static uint8_t prv_write(uint16_t instanceId,
             // We do not know the exact size of the allocated space in the structure. We leave it to the
             // developer to check for this in the verify write callback.
             if (res_type == O_RES_STRING_PREALLOC) {
-                strncpy(memberP, dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
+                strncpy((char*)memberP, (char*)dataArray[i].value.asBuffer.buffer, dataArray[i].value.asBuffer.length);
             }
             memcpy(instanceP, copy_of_entry, metaP->instance_object_size);
         } else {
@@ -289,11 +297,12 @@ uint8_t prv_execute(uint16_t instanceId,
         return COAP_405_METHOD_NOT_ALLOWED;
 
     /// Support for function pointers ///
-    void* fdata;
     if (resP->type_and_access & O_RES_FUNCTION)
     {
-        void* memberP = (void*)instanceP + resP->struct_member_offset;
-        execFunc f = (execFunc)(*(void**)memberP);
+        void* memberP = (void*)((char*)instanceP + resP->struct_member_offset);
+        // The following is equal to this: execFunc f = (execFunc)(*(void**)memberP);
+        // But the -pedantic switch forces us to use this union construct.
+        execFunc f = ((union {execFunc to; void *from;} *)memberP)->to;
         f(buffer, length);
         return COAP_204_CHANGED;
     }
