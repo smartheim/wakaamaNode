@@ -12,7 +12,7 @@ before_script:
     fi;
 
 install:
-  - pip install -U platformio
+  - pio --version || pip install -U platformio
   - test/setup_test_network.sh || echo "Network bridge setup failed!"
 
 after_success: test/teardown_test_network.sh || echo ""
