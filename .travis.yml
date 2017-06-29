@@ -10,6 +10,9 @@ before_script:
   - if [ "$TRAVIS_EVENT_TYPE" == "api" ]; then
        update_wakaama.sh;
     fi;
+  - if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+       update_wakaama.sh;
+    fi;
 
 install:
   - pio --version || pip install -U platformio

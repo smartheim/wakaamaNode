@@ -15,7 +15,7 @@ Some LWM2M object identifiers are standardised via the OMA Object & Resource Reg
 For example object 3311 is for light controls.
 
 ## Features
-* Always up-to-date/in-sync Wakaama code (uses https://nightli.es/)
+* Always up-to-date/in-sync Wakaama code (uses a Travis CI daily cron job)
 * Platform integrations (posix/win32, esp8266-sdk, freertos)
 * Network stack integration (posix, lwip)
 * Firmware update integration (esp8266-sdk) _WIP_
