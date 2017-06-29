@@ -13,10 +13,10 @@ before_script:
 
 install:
   - pip install -U platformio
-  - test/setup_test_network.sh
+  - test/setup_test_network.sh || echo "Network bridge setup failed!"
 
-after_success: test/teardown_test_network.sh
-after_failure: test/teardown_test_network.sh
+after_success: test/teardown_test_network.sh || echo ""
+after_failure: test/teardown_test_network.sh || echo ""
 
 apt:
   sources:
