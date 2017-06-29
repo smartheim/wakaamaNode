@@ -126,6 +126,7 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
 
 bool lwm2m_network_client_process(lwm2m_context_t * contextP) {
     sys_check_timeouts();
+    return true;
 }
 
 void lwm2m_network_close(lwm2m_context_t * contextP) {
