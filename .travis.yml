@@ -42,7 +42,7 @@ env:
     - SCRIPT="pio run -e nodemcu"
     - SCRIPT="pio run -e esp01"
 
-script: ${script}
+script: ${SCRIPT}
 
 matrix:
   fast_finish: false
