@@ -25,8 +25,8 @@ include("${REPO_ROOT}/src/wakaama_simple_client.cmake")
 enable_testing()
 
 ## Prepare gtest
+set(GTEST_DIR $ENV{GTEST_DIR} CACHE PATH "")
 if(EXISTS "${GTEST_DIR}/src/gtest-all.cc")
-    set(GTEST_DIR $ENV{GTEST_DIR} CACHE PATH "")
     set(GTEST_FILES ${GTEST_DIR}/src/gtest-all.cc ${GTEST_DIR}/src/gtest_main.cc)
     set(GTEST_INCLUDE_DIRS ${GTEST_DIR} ${GTEST_DIR}/include)
     add_definitions(-DGTEST_HAS_PTHREAD=0)
