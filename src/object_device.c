@@ -217,12 +217,16 @@ uint8_t prv_device_execute(uint16_t instanceId,
 
     switch(resP->ressource_id)
     {
+        #ifdef LWM2M_DEVICE_WITH_REBOOT
         case RES_M_REBOOT:
             lwm2m_reboot();
             return COAP_205_CONTENT;
+        #endif
+        #ifdef LWM2M_DEVICE_WITH_FACTORY_RESET
         case RES_O_FACTORY_RESET:
             lwm2m_factory_reset();
             return COAP_205_CONTENT;
+        #endif
     }
     return COAP_405_METHOD_NOT_ALLOWED;
 }
