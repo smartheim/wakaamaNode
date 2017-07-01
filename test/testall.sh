@@ -21,7 +21,9 @@ CTEST_OUTPUT_ON_FAILURE=1
 cmake --output-on-failure -DUSE_LWIP=${USE_LWIP} -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DGTEST_DIR="${GTEST_DIR}" ${TRAVIS_BUILD_DIR}/test
 make -j
 RESULT=0
-make test || RESULT=1
+if [ "${USE_LWIP}" == "OFF" ]; then
+    make test || RESULT=1
+fi
 
 rm -rf ${TRAVIS_BUILD_DIR}/buildtest/*
 cd ${TRAVIS_BUILD_DIR}
