@@ -38,7 +38,7 @@
 #include "wakaama_client_internal.h"
 #include "wakaama_object_utils.h"
 
-static lwm2m_object_with_meta_t server_object = {0};
+static lwm2m_object_with_meta_t server_object = {{0,0}};
 
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 

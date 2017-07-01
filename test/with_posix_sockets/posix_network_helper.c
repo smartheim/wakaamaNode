@@ -1,4 +1,4 @@
-#if !defined(LWIP) && (defined(_WIN32) || defined(__unix__))
+#if !defined(LWIP) && (defined(_WIN32) || defined(__unix__) || defined(POSIX_NETWORK))
 
 #include "liblwm2m.h"
 #include "wakaama_simple_client.h"

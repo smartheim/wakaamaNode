@@ -1,4 +1,4 @@
-#if defined(_WIN32) || defined(__unix__) || defined(POSIX)
+#if (defined(_WIN32) || defined(__unix__) || defined(POSIX))
 
 #include <liblwm2m.h>
 #include <stdlib.h>

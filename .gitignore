@@ -33,3 +33,4 @@ CMakeLists.txt.user
 .piolibdeps
 .vscode
 lib/readme.txt
+buildtest/

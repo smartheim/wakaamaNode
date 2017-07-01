@@ -43,6 +43,11 @@ of the library, wait for a fix to appear or contribute a fix yourself. :)
 This library is published to the PlatformIO library registry and Arduino library registry
 and available on Github. TODO links.
 
+The examples can be build with plattformIO `pio run`. Some build flags need to be provided to enable certain platform codes.
+
+- Network stack: Compile with *POSIX_NETWORK* for posix network sockets or with *LWIP* for the lwIP stack support. Windows and Unix/Linux builds automatically pick the posix/bsd socket API if *LWIP* is not set.
+- Platform (memory, time): Compile with *ESP8266* for ESP8266 SDK support, *POSIX* for posix/windows system functions, *FREERTOS* for freeRTOS support. Windows and Unix/Linux builds automatically pick the posix/windows API.
+
 ### Arduino
 The Arduino platform is not supported out of the box right now. The wakaama library needs
 compile time definitions and they are not availabe for libraries so far (version 1.8.3).
