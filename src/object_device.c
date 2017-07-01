@@ -18,7 +18,7 @@
 #include <string.h>
 #include <ctype.h>
 
-static lwm2m_object_with_meta_t device_object = {0};
+static lwm2m_object_with_meta_t device_object = {{0,0}};
 static device_instance_t device_instance = {0};
 
 #ifdef LWM2M_DEVICE_WITH_REBOOT

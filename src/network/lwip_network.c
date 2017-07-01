@@ -79,6 +79,7 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char* localPort)
 bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
     // NOOP for lwip, because udp_recv() registers a callback for incoming packets
     // and they are processed in udp_raw_recv()
+    return true;
 }
 
 void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port)
@@ -105,18 +106,21 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
     }
 
     if (connP != NULL) {
+        #if (LWIP_IPV4 && LWIP_IPV6)
         simple_lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
                     p->tot_len,
-                    #if (LWIP_IPV4 && LWIP_IPV6)
                     connP->addr.type==IPADDR_TYPE_V4 ?
                     ip4addr_ntoa(&connP->addr.u_addr.ip4) :
                     ip6addr_ntoa(&connP->addr.u_addr.ip6),
-                    #endif
-                    #ifdef LWIP_IPV4
-                    ip4addr_ntoa(&connP->addr.u_addr.ip4)
-                    #endif
                     connP->port);
-        lwm2m_handle_packet(contextP, (char*)p->payload, p->tot_len, connP);
+        #endif
+        #ifdef LWIP_IPV4
+        simple_lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
+                    p->tot_len,
+                    ip4addr_ntoa(&connP->addr.u_addr.ip4)
+                    connP->port);
+        #endif
+        lwm2m_handle_packet(contextP, p->payload, p->tot_len, connP);
     } else {
         simple_lwm2m_printf("received bytes ignored!\r\n");
     }
