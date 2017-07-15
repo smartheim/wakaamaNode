@@ -98,7 +98,7 @@ TEST_F(DeviceInfoObjectTests, ReadAll) {
     lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
     char* buffer;
     size_t buffer_len;
-    coap_status_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
+    uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
 
     const char expect[] = "{\"bn\":\"/3/0/\",\"e\":[{\"n\":\"0\",\"sv\":\"manufacturer\"},{\"n\":\"1\",\"sv\":\"model_name\"},{\"n\":\"2\",\"sv\":\"serial_number\"},{\"n\":\"3\",\"sv\":\"firmware_ver\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"11\",\"v\":-12},{\"n\":\"13\",\"v\":1498765432},{\"n\":\"16\",\"sv\":\"U\"},{\"n\":\"14\",\"sv\":\"+11:12\"},{\"n\":\"15\",\"sv\":\"Europe/+2\"},{\"n\":\"17\",\"sv\":\"device_type\"},{\"n\":\"18\",\"sv\":\"hardware1.0\"},{\"n\":\"19\",\"sv\":\"software1.0\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"10\",\"v\":12},{\"n\":\"21\",\"v\":12}]}";
 
@@ -114,8 +114,8 @@ TEST_F(DeviceInfoObjectTests, ExecuteReboot) {
     uint8_t* buffer=0;
     size_t buffer_len=0;
     ASSERT_FALSE(reboot_executed);
-    coap_status_t s =  object_execute(lwm2mH,&uri,buffer,buffer_len);
-    ASSERT_EQ(CONTENT_2_05, s);
+    uint8_t s =  object_execute(lwm2mH,&uri,buffer,buffer_len);
+    ASSERT_EQ(COAP_205_CONTENT, s);
     ASSERT_TRUE(reboot_executed);
 }
 
@@ -124,7 +124,7 @@ TEST_F(DeviceInfoObjectTests, ExecuteFactoryReset) {
     uint8_t* buffer=0;
     size_t buffer_len=0;
     ASSERT_FALSE(factory_reset);
-    coap_status_t s =  object_execute(lwm2mH,&uri,buffer,buffer_len);
-    ASSERT_EQ(CONTENT_2_05, s);
+    uint8_t s =  object_execute(lwm2mH,&uri,buffer,buffer_len);
+    ASSERT_EQ(COAP_205_CONTENT, s);
     ASSERT_TRUE(factory_reset);
 }
