@@ -17,6 +17,7 @@
  *    Benjamin Cabé - Please refer to git log
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
+ *    Scott Bertin - Please refer to git log
  *    
  *******************************************************************************/
 
@@ -62,7 +63,7 @@
 uint8_t object_checkReadable(lwm2m_context_t * contextP,
                              lwm2m_uri_t * uriP)
 {
-    coap_status_t result;
+    uint8_t result;
     lwm2m_object_t * targetP;
     lwm2m_data_t * dataP = NULL;
     int size;
@@ -93,7 +94,7 @@ uint8_t object_checkReadable(lwm2m_context_t * contextP,
 uint8_t object_checkNumeric(lwm2m_context_t * contextP,
                             lwm2m_uri_t * uriP)
 {
-    coap_status_t result;
+    uint8_t result;
     lwm2m_object_t * targetP;
     lwm2m_data_t * dataP = NULL;
     int size;
@@ -129,12 +130,12 @@ uint8_t object_checkNumeric(lwm2m_context_t * contextP,
     return result;
 }
 
-coap_status_t object_readData(lwm2m_context_t * contextP,
-                               lwm2m_uri_t * uriP,
-                               int * sizeP,
-                               lwm2m_data_t ** dataP)
+uint8_t object_readData(lwm2m_context_t * contextP,
+                        lwm2m_uri_t * uriP,
+                        int * sizeP,
+                        lwm2m_data_t ** dataP)
 {
-    coap_status_t result;
+    uint8_t result;
     lwm2m_object_t * targetP;
 
     LOG_URI(uriP);
@@ -198,13 +199,13 @@ coap_status_t object_readData(lwm2m_context_t * contextP,
     return result;
 }
 
-coap_status_t object_read(lwm2m_context_t * contextP,
-                          lwm2m_uri_t * uriP,
-                          lwm2m_media_type_t * formatP,
-                          uint8_t ** bufferP,
-                          size_t * lengthP)
+uint8_t object_read(lwm2m_context_t * contextP,
+                    lwm2m_uri_t * uriP,
+                    lwm2m_media_type_t * formatP,
+                    uint8_t ** bufferP,
+                    size_t * lengthP)
 {
-    coap_status_t result;
+    uint8_t result;
     lwm2m_data_t * dataP = NULL;
     int size = 0;
     int res;
@@ -231,13 +232,13 @@ coap_status_t object_read(lwm2m_context_t * contextP,
     return result;
 }
 
-coap_status_t object_write(lwm2m_context_t * contextP,
-                           lwm2m_uri_t * uriP,
-                           lwm2m_media_type_t format,
-                           uint8_t * buffer,
-                           size_t length)
+uint8_t object_write(lwm2m_context_t * contextP,
+                     lwm2m_uri_t * uriP,
+                     lwm2m_media_type_t format,
+                     uint8_t * buffer,
+                     size_t length)
 {
-    coap_status_t result = NO_ERROR;
+    uint8_t result = NO_ERROR;
     lwm2m_object_t * targetP;
     lwm2m_data_t * dataP = NULL;
     int size = 0;
@@ -271,10 +272,10 @@ coap_status_t object_write(lwm2m_context_t * contextP,
     return result;
 }
 
-coap_status_t object_execute(lwm2m_context_t * contextP,
-                             lwm2m_uri_t * uriP,
-                             uint8_t * buffer,
-                             size_t length)
+uint8_t object_execute(lwm2m_context_t * contextP,
+                       lwm2m_uri_t * uriP,
+                       uint8_t * buffer,
+                       size_t length)
 {
     lwm2m_object_t * targetP;
 
@@ -287,11 +288,11 @@ coap_status_t object_execute(lwm2m_context_t * contextP,
     return targetP->executeFunc(uriP->instanceId, uriP->resourceId, buffer, length, targetP);
 }
 
-coap_status_t object_create(lwm2m_context_t * contextP,
-                            lwm2m_uri_t * uriP,
-                            lwm2m_media_type_t format,
-                            uint8_t * buffer,
-                            size_t length)
+uint8_t object_create(lwm2m_context_t * contextP,
+                      lwm2m_uri_t * uriP,
+                      lwm2m_media_type_t format,
+                      uint8_t * buffer,
+                      size_t length)
 {
     lwm2m_object_t * targetP;
     lwm2m_data_t * dataP = NULL;
@@ -353,11 +354,11 @@ exit:
     return result;
 }
 
-coap_status_t object_delete(lwm2m_context_t * contextP,
-                            lwm2m_uri_t * uriP)
+uint8_t object_delete(lwm2m_context_t * contextP,
+                      lwm2m_uri_t * uriP)
 {
     lwm2m_object_t * objectP;
-    coap_status_t result;
+    uint8_t result;
 
     LOG_URI(uriP);
     objectP = (lwm2m_object_t *)LWM2M_LIST_FIND(contextP->objectList, uriP->objectId);
@@ -400,13 +401,13 @@ coap_status_t object_delete(lwm2m_context_t * contextP,
     return result;
 }
 
-coap_status_t object_discover(lwm2m_context_t * contextP,
-                              lwm2m_uri_t * uriP,
-                              lwm2m_server_t * serverP,
-                              uint8_t ** bufferP,
-                              size_t * lengthP)
+uint8_t object_discover(lwm2m_context_t * contextP,
+                        lwm2m_uri_t * uriP,
+                        lwm2m_server_t * serverP,
+                        uint8_t ** bufferP,
+                        size_t * lengthP)
 {
-    coap_status_t result;
+    uint8_t result;
     lwm2m_object_t * targetP;
     lwm2m_data_t * dataP = NULL;
     int size = 0;
@@ -522,6 +523,76 @@ static int prv_getObjectTemplate(uint8_t * buffer,
     return index;
 }
 
+int object_getRegisterPayloadBufferLength(lwm2m_context_t * contextP)
+{
+    size_t index;
+    int result;
+    lwm2m_object_t * objectP;
+    char buffer[REG_OBJECT_MIN_LEN + 5];
+
+    LOG("Entering");
+    index = strlen(REG_START);
+
+    if ((contextP->altPath != NULL)
+     && (contextP->altPath[0] != 0))
+    {
+        index += strlen(contextP->altPath);
+    }
+    else
+    {
+        index += strlen(REG_DEFAULT_PATH);
+    }
+
+    index += strlen(REG_LWM2M_RESOURCE_TYPE);
+
+    for (objectP = contextP->objectList; objectP != NULL; objectP = objectP->next)
+    {
+        size_t start;
+        size_t length;
+
+        if (objectP->objID == LWM2M_SECURITY_OBJECT_ID) continue;
+
+        start = index;
+        result = prv_getObjectTemplate(buffer, sizeof(buffer), objectP->objID);
+        if (result < 0) return 0;
+        length = result;
+        index += length;
+
+        if (objectP->instanceList == NULL)
+        {
+            index -= 1;
+            index += strlen(REG_PATH_END);
+        }
+        else
+        {
+            lwm2m_list_t * targetP;
+            for (targetP = objectP->instanceList ; targetP != NULL ; targetP = targetP->next)
+            {
+                if (index != start + length)
+                {
+                    index += length;
+                }
+
+                result = utils_intToText(targetP->id, buffer, sizeof(buffer));
+                if (result == 0) return 0;
+                index += result;
+
+                index += strlen(REG_PATH_END);
+            }
+        }
+    }
+
+    index += 1;  // account for trailing null
+
+    // Note that object_getRegisterPayload() has REG_PATH_END added after each
+    // object or instance, and then the trailing comma is replaced by null. The
+    // trailing nulls are not counted as part of the payload length, so this
+    // will return a size two bytes greater than what
+    // object_getRegisterPayload() returns.
+
+    return index;
+}
+
 int object_getRegisterPayload(lwm2m_context_t * contextP,
                            uint8_t * buffer,
                            size_t bufferLen)
@@ -579,10 +650,9 @@ int object_getRegisterPayload(lwm2m_context_t * contextP,
             lwm2m_list_t * targetP;
             for (targetP = objectP->instanceList ; targetP != NULL ; targetP = targetP->next)
             {
-                if (bufferLen - index <= length) return 0;
-
                 if (index != start + length)
                 {
+                    if (bufferLen - index <= length) return 0;
                     memcpy(buffer + index, buffer + start, length);
                     index += length;
                 }
@@ -686,7 +756,7 @@ static int prv_getMandatoryInfo(lwm2m_object_t * objectP,
     return 0;
 }
 
-int object_getServers(lwm2m_context_t * contextP)
+int object_getServers(lwm2m_context_t * contextP, bool checkOnly)
 {
     lwm2m_object_t * objectP;
     lwm2m_object_t * securityObjP = NULL;
@@ -772,7 +842,14 @@ int object_getServers(lwm2m_context_t * contextP)
                 // lifetime of a bootstrap server is set to ClientHoldOffTime
                 targetP->lifetime = value;
 
-                contextP->bootstrapServerList = (lwm2m_server_t*)LWM2M_LIST_ADD(contextP->bootstrapServerList, targetP);
+                if (checkOnly)
+                {
+                    lwm2m_free(targetP);
+                }
+                else
+                {
+                    contextP->bootstrapServerList = (lwm2m_server_t*)LWM2M_LIST_ADD(contextP->bootstrapServerList, targetP);
+                }
             }
             else
             {
@@ -792,7 +869,14 @@ int object_getServers(lwm2m_context_t * contextP)
                         return -1;
                     }
                     targetP->status = STATE_DEREGISTERED;
-                    contextP->serverList = (lwm2m_server_t*)LWM2M_LIST_ADD(contextP->serverList, targetP);
+                    if (checkOnly)
+                    {
+                        lwm2m_free(targetP);
+                    }
+                    else
+                    {
+                        contextP->serverList = (lwm2m_server_t*)LWM2M_LIST_ADD(contextP->serverList, targetP);
+                    }
                 }
             }
             lwm2m_data_free(size, dataP);
@@ -803,7 +887,7 @@ int object_getServers(lwm2m_context_t * contextP)
     return 0;
 }
 
-coap_status_t object_createInstance(lwm2m_context_t * contextP,
+uint8_t object_createInstance(lwm2m_context_t * contextP,
                                     lwm2m_uri_t * uriP,
                                     lwm2m_data_t * dataP)
 {
@@ -821,7 +905,7 @@ coap_status_t object_createInstance(lwm2m_context_t * contextP,
     return targetP->createFunc(lwm2m_list_newId(targetP->instanceList), dataP->value.asChildren.count, dataP->value.asChildren.array, targetP);
 }
 
-coap_status_t object_writeInstance(lwm2m_context_t * contextP,
+uint8_t object_writeInstance(lwm2m_context_t * contextP,
                             lwm2m_uri_t * uriP,
                             lwm2m_data_t * dataP)
 {
