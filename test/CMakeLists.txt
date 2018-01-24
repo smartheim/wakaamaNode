@@ -46,20 +46,20 @@ endif()
 # All cpp files in this directory are considered testcase files.
 file(GLOB TESTS_FILES ${TEST_DIR}/*.cpp ${TEST_DIR}/*.c ${TEST_DIR}/*.h)
 if (USE_LWIP)
-    file(GLOB_RECURSE AUX_FILES ${LWIP_DIR}/api/*.c ${LWIP_DIR}/core/*.c ${LWIP_DIR}/include/*.h ${LWIP_DIR}/netif/*.c
+    file(GLOB_RECURSE DBG_FILES ${LWIP_DIR}/api/*.c ${LWIP_DIR}/core/*.c ${LWIP_DIR}/include/*.h ${LWIP_DIR}/netif/*.c
         ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.c ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.h
-        ${CMAKE_CURRENT_LIST_DIR}/aux/*.*)
-    set(AUX_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/with_lwip" "${LWIP_DIR}/include" "${CMAKE_CURRENT_LIST_DIR}/aux/")
+        ${CMAKE_CURRENT_LIST_DIR}/dbg/*.*)
+    set(DBG_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/with_lwip" "${LWIP_DIR}/include" "${CMAKE_CURRENT_LIST_DIR}/dbg/")
 else()
-    file(GLOB_RECURSE AUX_FILES ${CMAKE_CURRENT_LIST_DIR}/aux/*.*)
-    set(AUX_FILES ${AUX_FILES} ${CMAKE_CURRENT_LIST_DIR}/with_posix_sockets/posix_network_helper.c)
-    set(AUX_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/aux/")
+    file(GLOB_RECURSE DBG_FILES ${CMAKE_CURRENT_LIST_DIR}/dbg/*.*)
+    set(DBG_FILES ${DBG_FILES} ${CMAKE_CURRENT_LIST_DIR}/with_posix_sockets/posix_network_helper.c)
+    set(DBG_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/dbg/")
 endif()
 
-add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES} ${WAKAAMA_SIMPLE_CLIENT_SOURCES} ${AUX_FILES})
+add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES} ${WAKAAMA_SIMPLE_CLIENT_SOURCES} ${DBG_FILES})
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_range_for)
-target_include_directories(${PROJECT_NAME} PRIVATE ${GTEST_INCLUDE_DIRS} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS} ${AUX_INCLUDE_DIRS} ${TEST_DIR} ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${GTEST_INCLUDE_DIRS} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS} ${DBG_INCLUDE_DIRS} ${TEST_DIR} ${CMAKE_CURRENT_LIST_DIR})
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 11)
 
 # -DLWM2M_WITH_LOGS -DLWIP_DEBUG
