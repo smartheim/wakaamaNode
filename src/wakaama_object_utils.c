@@ -5,7 +5,13 @@
 #include <string.h>
 
 static lwm2m_object_res_item_t* prv_find_ressource(lwm2m_object_meta_information_t* metaP, uint16_t id) {
-    return &metaP->ressources[id];
+    for (int index = 0; index < metaP->ressources_len; index++) {
+        if (metaP->ressources[index].ressource_id == id) {
+            return &metaP->ressources[index];
+        }
+    }
+    
+    return NULL;
 }
 
 // For opaque fields we always expect to find a size_t member with the length information
