@@ -17,7 +17,6 @@
 #include "lwip/sys.h"
 #include "lwip/udp.h"
 #include "lwip/dns.h"
-#include "lwip/timers.h"
 
 typedef struct udp_pcb udp_pcb_t;
 
@@ -110,14 +109,14 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
         simple_lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
                     p->tot_len,
                     connP->addr.type==IPADDR_TYPE_V4 ?
-                    ip4addr_ntoa(&connP->addr.u_addr.ip4) :
-                    ip6addr_ntoa(&connP->addr.u_addr.ip6),
+                    ipaddr_ntoa(&connP->addr.u_addr.ip4) :
+                    ipaddr_ntoa(&connP->addr.u_addr.ip6),
                     connP->port);
         #endif
         #ifdef LWIP_IPV4
         simple_lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
                     p->tot_len,
-                    ip4addr_ntoa(&connP->addr.u_addr.ip4)
+                    ipaddr_ntoa(&connP->addr),
                     connP->port);
         #endif
         lwm2m_handle_packet(contextP, p->payload, p->tot_len, connP);
@@ -160,22 +159,39 @@ uint8_t __attribute__((weak)) lwm2m_buffer_send(void * sessionH,
     }
 
     #ifdef LWM2M_WITH_LOGS
+    #if LWIP_IPV4 && LWIP_IPV6
     const char* a = connP->addr.type==IPADDR_TYPE_V4 ?
-                ip4addr_ntoa(&connP->addr.u_addr.ip4) :
-                ip6addr_ntoa(&connP->addr.u_addr.ip6);
+                ipaddr_ntoa(&connP->addr.u_addr.ip4) :
+                ipaddr_ntoa(&connP->addr.u_addr.ip6);
     const char* b;
     if (network->net_if_out)
     {
         b = connP->addr.type==IPADDR_TYPE_V4 ?
-                ip4addr_ntoa(&netif_ip_addr4((struct netif *)network->net_if_out)->u_addr.ip4) :
-                ip6addr_ntoa(&netif_ip_addr6((struct netif *)network->net_if_out, 0)->u_addr.ip6);
+                ipaddr_ntoa(&netif_ip_addr4((struct netif *)network->net_if_out)->u_addr.ip4) :
+                ipaddr_ntoa(&netif_ip_addr6((struct netif *)network->net_if_out, 0)->u_addr.ip6);
     }
     else
     {
         b = "N/A";
     }
+    #elif LWIP_IPV4
+    const char* a = ipaddr_ntoa(&connP->addr.addr);
+    const char* b;
+    if (network->net_if_out)
+    {
+        b = ipaddr_ntoa(((const ip_addr_t*)&(((struct netif *)network->net_if_out)->ip_addr)));
+    }
+    else
+    {
+        b = "N/A";
+    }
+    #elif LWIP_IPV6
+    #else
+    const char* a = "N/A";
+    const char* b = "N/A";
+    #endif
 
-    simple_lwm2m_printf("Sending %d bytes to [%s]:%hu. Interface IP: %s. Is Server: %i\r\n", length, a,
+    simple_lwm2m_printf("Sending %d bytes to [%s]:%u. Interface IP: %s. Is Server: %d\r\n", length, a,
         connP->port, b, network->type==NET_SERVER_PROCESS);
     #endif
 
