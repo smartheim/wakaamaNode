@@ -4,7 +4,7 @@
   "description": "Complete lwm2m Implementation in C for embedded systems.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Openhab-Nodes/libWakaamaNodes.git"
+    "url": "https://github.com/Openhab-Nodes/libWakaamaEmb.git"
   },
   "version": "1.0",
   "authors": {
