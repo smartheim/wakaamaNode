@@ -169,7 +169,7 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
 
         if (numBytes < 0)
         {
-            LOG("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+            LOG_ARG("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
             continue;
         } else if (numBytes == 0)
             continue; // no new data

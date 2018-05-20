@@ -43,8 +43,8 @@ void print_state(lwm2m_context_t * lwm2mH)
         LOG("Bootstrap Servers:\r\n");
         for (targetP = lwm2mH->bootstrapServerList ; targetP != NULL ; targetP = targetP->next)
         {
-            LOG(" - Security Object ID %d", targetP->secObjInstID);
-            LOG("\tHold Off Time: %lu s", (unsigned long)targetP->lifetime);
+            LOG_ARG(" - Security Object ID %d", targetP->secObjInstID);
+            LOG_ARG("\tHold Off Time: %lu s", (unsigned long)targetP->lifetime);
             LOG("\tstatus: ");
             switch(targetP->status)
             {
@@ -67,7 +67,7 @@ void print_state(lwm2m_context_t * lwm2mH)
                 LOG("BOOTSTRAP FAILED\r\n");
                 break;
             default:
-                LOG("INVALID (%d)\r\n", (int)targetP->status);
+                LOG_ARG("INVALID (%d)\r\n", (int)targetP->status);
             }
             LOG("\r\n");
         }
@@ -82,7 +82,7 @@ void print_state(lwm2m_context_t * lwm2mH)
         LOG("LWM2M Servers:\r\n");
         for (targetP = lwm2mH->serverList ; targetP != NULL ; targetP = targetP->next)
         {
-            LOG(" - Server ID %d", targetP->shortID);
+            LOG_ARG(" - Server ID %d", targetP->shortID);
             LOG("\tstatus: ");
             switch(targetP->status)
             {
@@ -93,7 +93,7 @@ void print_state(lwm2m_context_t * lwm2mH)
                 LOG("REGISTRATION PENDING\r\n");
                 break;
             case STATE_REGISTERED:
-                LOG("REGISTERED\tlocation: \"%s\"\tLifetime: %lus\r\n", targetP->location, (unsigned long)targetP->lifetime);
+                LOG_ARG("REGISTERED\tlocation: \"%s\"\tLifetime: %lus\r\n", targetP->location, (unsigned long)targetP->lifetime);
                 break;
             case STATE_REG_UPDATE_PENDING:
                 LOG("REGISTRATION UPDATE PENDING\r\n");
@@ -105,7 +105,7 @@ void print_state(lwm2m_context_t * lwm2mH)
                 LOG("REGISTRATION FAILED\r\n");
                 break;
             default:
-                LOG("INVALID (%d)\r\n", (int)targetP->status);
+                LOG_ARG("INVALID (%d)\r\n", (int)targetP->status);
             }
             LOG("\r\n");
         }

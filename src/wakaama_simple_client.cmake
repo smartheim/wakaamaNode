@@ -23,7 +23,6 @@ set(PLATFORM_SOURCES
     ${WAKAAMA_SIMPLE_CLIENT_DIR}/platform/posix.c
     ${WAKAAMA_SIMPLE_CLIENT_DIR}/platform/esp8266sdk.c
     ${WAKAAMA_SIMPLE_CLIENT_DIR}/platform/freertos.c
-    ${WAKAAMA_SIMPLE_CLIENT_DIR}/firmware/esp8266sdk.c
     ${WAKAAMA_SIMPLE_CLIENT_DIR}/network/posix_network.c
     ${WAKAAMA_SIMPLE_CLIENT_DIR}/network/lwip_network.c
     ${WAKAAMA_SIMPLE_CLIENT_DIR}/network/network_utils.c

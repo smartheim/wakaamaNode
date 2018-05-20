@@ -1,128 +1,47 @@
-language: cpp
-sudo: required
 dist: trusty
+sudo: required
+language: cpp
+
 env:
   global:
-  - GTEST_DIR: ~/gtest
   - secure: fNOM2LUil0pumVEIzZ15MNmJUIyyYNPzlDmEpPQms9rG7UbnwC5LkJLKjOrGvrYBqCdBDYEVx/kbev8/RjPn2SivcdNRo4CVVWudr1rF6/Bi+9f+KSisRJbb8UDH91NGheLv3v6fzdTKrYMlMPpFzUONsBWKIf65+UDe8Px+BgL3lWzx3BISyPtSZoGarKmAwOZWVdpDEKeteJzQrPxxLSkdf9p+z0vz7NQR80rPaDcgz4Mh/AwbJl6o+4rQ+XZb8HibTPpfZBX32WAHA9JgBwlxDnHfcdsfcUypxlo+ocp4OM/rd7XqSxxqwHBPTMULDdhmptPdMiZh8U73GxNx9gBrrAgsH6RDpMMjbYhPL7Xq02Czbamg1/LJGmKvOtba9fADZeZEgldz09eWsrIbIDoNg6FB37FiBe4Q1W5s/Bg3uojp9ZoiecyQjcqNTN5osiJpWUj70z0kOm1DXWnPNhhYD2C5iJwAj+YomI1jOAGnhtm2zBmG3NinDTOuVNwC+JTO/TTimo6lAHIccoVhwBj+wRdMVc1dmElbYJA6OxTkj3d3Vhwfj/ODXY7w1CN80KKfbjRwMGbk0Bdh9qpnHYEtKeKEidr6IsY3m0/+RHFOu2yqbo1jv5MjwkV3TsymLqwW4ykuslDtLE/pNkmEYkPy2fKsA+emwwkYz2q0V2g=
+  
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - gcc-6
+      - g++-6
+      - cmake
+      - libgtest-dev
+      - clang-3.5
+
+before_script:
+  - pip install --user platformio
+
+matrix:
+  include:
+  - env: EXAMPLE_ESP8266=true
+    - cd examples/esp8266_with_led_object
+    - pio run
+  - env: EXAMPLE_LINUX=true
+    - cd examples/linux_win_with_screen_control
+    - pio run
+  - env: CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
+    script: test/testall_posix.sh
+  - env: CMAKE_CXX_COMPILER=clang++-3.5 CMAKE_C_COMPILER=clang-3.5 
+    script: test/testall_posix.sh
+  - env: WITH_LWIP=1 CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
+    script: test/testall_lwip.sh
 
 after_success:
   - if [ "$TRAVIS_EVENT_TYPE" == "api" ]; then
        cmake -P update_wakaama.cmake;
     fi;
 
-matrix:
-  fast_finish: true
-  include:
-  - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-4.8 CMAKE_C_COMPILER=gcc-4.8 
-    addons:
-      apt:
-        sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-4.8
-        - gcc-4.8
-        - libgtest-dev
-        - cmake
-    script:
-        - test/testall_posix.sh
-  - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-4.9 CMAKE_C_COMPILER=gcc-4.9
-    addons:
-      apt:
-        sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-4.9
-        - gcc-4.9
-        - libgtest-dev
-        - cmake
-    script:
-        - test/testall_posix.sh
-  - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
-    addons:
-      apt:
-        sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-5
-        - gcc-5
-        - libgtest-dev
-        - cmake
-    script:
-        - test/cmake.sh
-  - compiler: testall_posix
-    env: CMAKE_CXX_COMPILER=clang++-3.5 CMAKE_C_COMPILER=clang-3.5 
-    addons:
-      apt:
-        sources:
-        - ubuntu-toolchain-r-test
-        packages:
-        - clang-3.5
-        - libgtest-dev
-        - cmake
-    script: test/testall_posix.sh
-#  - compiler: clang
-#    env: CMAKE_CXX_COMPILER=clang++-3.6 
-#    addons:
-#      apt:
-#        sources:
-#        - sourceline: ppa:george-edison55/cmake-3.x
-#        - ubuntu-toolchain-r-test
-#        - llvm-toolchain-precise-3.6
-#        packages:
-#        - clang-3.6
-#        - libgtest-dev
-#        - cmake
-#    script:
-#        - test/cmake.sh
-#  - compiler: clang
-#    env: CMAKE_CXX_COMPILER=clang++-3.7 
-#    addons:
-#      apt:
-#        sources:
-#        - sourceline: ppa:george-edison55/cmake-3.x
-#        - ubuntu-toolchain-r-test
-#        - llvm-toolchain-precise-3.7
-#        packages:
-#        - clang-3.7
-#        - libgtest-dev
-#        - cmake
-#    script:
-#        - test/cmake.sh
-  - compiler: gcc
-    env: CMAKE_CXX_COMPILER=g++-5 CMAKE_C_COMPILER=gcc-5
-    addons:
-      apt:
-        sources:
-        - sourceline: ppa:george-edison55/cmake-3.x
-        - ubuntu-toolchain-r-test
-        packages:
-        - g++-5
-        - gcc-5
-        - libgtest-dev
-        - cmake
-    script:
-        - test/testall_lwip.sh
-
-  - env: WITH_ARDUINO=1 BOARD=arduino:avr:mega:cpu=atmega1280 VERSION=1.6.9 
-    script: test/arduino.sh
-
-  - env: WITH_PIO=1 BOARD=megaatmega1280
-    script: test/platformio.sh
-
-  - env: WITH_PIO=1 BOARD=esp01
-    script: test/platformio.sh
-
 cache:
   apt: true
   directories:
   - "~/.platformio"
-  - "~/arduino"
-  - "~/gtest"
 

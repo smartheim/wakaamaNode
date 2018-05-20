@@ -168,7 +168,7 @@ lwm2m_context_t * lwm2m_client_init(const char * endpointName)
     int result = lwm2m_configure(contextP, endpointName, NULL, NULL, 3, objArray);
     if (result != 0)
     {
-        LOG("lwm2m_configure() failed: 0x%X\r\n", result);
+        LOG_ARG("lwm2m_configure() failed: 0x%X\r\n", result);
         return NULL;
     }
     return contextP;
