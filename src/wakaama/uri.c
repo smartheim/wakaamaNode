@@ -54,7 +54,6 @@
 #include <string.h>
 #include <ctype.h>
 
-
 static int prv_parseNumber(uint8_t * uriString,
                             size_t uriLength,
                             size_t * headP)
@@ -95,10 +94,12 @@ int uri_getNumber(uint8_t * uriString,
 
 
 lwm2m_uri_t * uri_decode(char * altPath,
-                               multi_option_t *uriPath)
+                         multi_option_t *uriPath)
 {
     lwm2m_uri_t * uriP;
     int readNum;
+
+    LOG_ARG("altPath: \"%s\"", altPath);
 
     uriP = (lwm2m_uri_t *)lwm2m_malloc(sizeof(lwm2m_uri_t));
     if (NULL == uriP) return NULL;
@@ -192,9 +193,14 @@ lwm2m_uri_t * uri_decode(char * altPath,
     }
 
     // must be the last segment
-    if (NULL == uriPath->next) return uriP;
+    if (NULL == uriPath->next)
+    {
+        LOG_URI(uriP);
+        return uriP;
+    }
 
 error:
+    LOG("Exiting on error");
     lwm2m_free(uriP);
     return NULL;
 }
@@ -205,6 +211,8 @@ int lwm2m_stringToUri(const char * buffer,
 {
     size_t head;
     int readNum;
+
+    LOG_ARG("buffer_len: %u, buffer: \"%.*s\"", buffer_len, buffer_len, buffer);
 
     if (buffer == NULL || buffer_len == 0 || uriP == NULL) return 0;
 
@@ -230,7 +238,12 @@ int lwm2m_stringToUri(const char * buffer,
     uriP->flag |= LWM2M_URI_FLAG_OBJECT_ID;
 
     if (buffer[head] == '/') head += 1;
-    if (head >= buffer_len) return head;
+    if (head >= buffer_len)
+    {
+        LOG_ARG("Parsed characters: %u", head);
+        LOG_URI(uriP);
+        return head;
+    }
 
     readNum = prv_parseNumber((uint8_t *)buffer, buffer_len, &head);
     if (readNum < 0 || readNum >= LWM2M_MAX_ID) return 0;
@@ -238,7 +251,12 @@ int lwm2m_stringToUri(const char * buffer,
     uriP->flag |= LWM2M_URI_FLAG_INSTANCE_ID;
 
     if (buffer[head] == '/') head += 1;
-    if (head >= buffer_len) return head;
+    if (head >= buffer_len)
+    {
+        LOG_ARG("Parsed characters: %u", head);
+        LOG_URI(uriP);
+        return head;
+    }
 
     readNum = prv_parseNumber((uint8_t *)buffer, buffer_len, &head);
     if (readNum < 0 || readNum >= LWM2M_MAX_ID) return 0;
@@ -246,6 +264,9 @@ int lwm2m_stringToUri(const char * buffer,
     uriP->flag |= LWM2M_URI_FLAG_RESOURCE_ID;
 
     if (head != buffer_len) return 0;
+
+    LOG_ARG("Parsed characters: %u", head);
+    LOG_URI(uriP);
 
     return head;
 }
@@ -257,6 +278,9 @@ int uri_toString(lwm2m_uri_t * uriP,
 {
     size_t head;
     int res;
+
+    LOG_ARG("bufferLen: %u", bufferLen);
+    LOG_URI(uriP);
 
     buffer[0] = '/';
 
@@ -297,6 +321,8 @@ int uri_toString(lwm2m_uri_t * uriP,
 
     buffer[head] = '/';
     head++;
+
+    LOG_ARG("length: %u, buffer: \"%.*s\"", head, head, buffer);
 
     return head;
 }
