@@ -34,3 +34,4 @@ CMakeLists.txt.user
 .vscode
 lib/readme.txt
 buildtest/
+.directory

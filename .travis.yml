@@ -1,7 +1,9 @@
-language: cpp
+language: python
 sudo: false
 dist: trusty
 group: edge
+python:
+  - "2.7"
 
 before_install:
   - test/setup_gtest.sh
@@ -15,7 +17,8 @@ before_script:
     fi;
 
 install:
-  - pio --version || pip install -U platformio
+  - pip install --upgrade pip > /dev/null
+  - pio --version > /dev/null 2>&1 || pip install -U platformio > /dev/null
   - test/setup_test_network.sh || echo "Network bridge setup failed!"
 
 after_success: test/teardown_test_network.sh || echo ""
@@ -42,9 +45,7 @@ env:
   matrix:
     - SCRIPT=test/testall.sh USE_LWIP=OFF CMAKE_CXX_COMPILER=clang++-3.6 CMAKE_C_COMPILER=clang-3.6 
     - SCRIPT=test/testall.sh USE_LWIP=ON CMAKE_CXX_COMPILER=clang++-3.6 CMAKE_C_COMPILER=clang-3.6 
-    - SCRIPT="pio run -e native"
-    - SCRIPT="pio run -e nodemcu"
-    - SCRIPT="pio run -e esp01"
+    - SCRIPT="pio run"
 
 script: ${SCRIPT}
 

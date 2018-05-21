@@ -66,9 +66,9 @@ bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id
     test_object_instance_t* i = (test_object_instance_t*)instance;
     if(changed_res_id==0) {
         if (i->state)
-            digitalWrite(BUILTIN_LED, LED_ON);
+            digitalWrite(LED_BUILTIN, LED_ON);
         else
-            digitalWrite(BUILTIN_LED, LED_ON);
+            digitalWrite(LED_BUILTIN, LED_ON);
     }
 
     return true;

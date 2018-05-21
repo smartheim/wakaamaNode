@@ -8,12 +8,12 @@ add_definitions(-DLWM2M_CLIENT_MODE)
 add_definitions(${WAKAAMA_DEFINITIONS})
 
 
-include_directories (${WAKAAMA_SOURCES_DIR} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS})
+include_directories (${WAKAAMA_SOURCES_DIR} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS} src/)
 
 SET(SOURCES
-    main.c
-    screen_object.c
-    screen_object.h
+    src/main.c
+    src/screen_object.c
+    src/screen_object.h
     )
 
 add_executable(${PROJECT_NAME} ${SOURCES} ${WAKAAMA_SIMPLE_CLIENT_SOURCES})
