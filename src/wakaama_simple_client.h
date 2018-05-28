@@ -11,7 +11,7 @@ extern "C" {
  * Change this object before you connect to a server.
  * @return
  */
-device_instance_t * lwm2m_device_data_get();
+device_instance_t * lwm2m_device_data_get(void);
 
 /**
  * @brief Call this if you have changed a ressource in the device_instance_t object.
@@ -45,13 +45,13 @@ lwm2m_context_t * lwm2m_client_init(const char * endpointName);
  * @brief Return the context created by lwm2m_client_init().
  * @return A wakaama context.
  */
-lwm2m_context_t * lwm2m_client_get_context();
+lwm2m_context_t * lwm2m_client_get_context(void);
 
 /**
  * @brief Close the wakaama client context and release dynamically aquired ressources.
  * This will not release objects created by lwm2m_object_create.
  */
-void lwm2m_client_close();
+void lwm2m_client_close(void);
 
 /**
  * Adds a new server to the lwm2m client. The client statemachine will try to connect to this
@@ -78,7 +78,7 @@ bool lwm2m_unregister_server(uint16_t security_instance_id);
  * Removes all unregistered server, by removing all related security objects.
  * Puts the client back to STATE_INITIAL if the server list has been altered.
  */
-void lwm2m_remove_unregistered_servers();
+void lwm2m_remove_unregistered_servers(void);
 
 /**
  * Returns the uri of a server by providing the security object id of that server connection.
@@ -92,7 +92,7 @@ bool lwm2m_get_server_uri(uint16_t security_instance_id, char* uriBuffer, size_t
  * @brief Return true if wakaama is connected to a lwm2m server.
  * @return
  */
-bool lwm2m_is_connected();
+bool lwm2m_is_connected(void);
 
 #ifdef LWM2M_WITH_LOGS
 #define simple_lwm2m_printf(...) fprintf(stdout, __VA_ARGS__)

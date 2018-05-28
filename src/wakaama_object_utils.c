@@ -10,7 +10,7 @@ static lwm2m_object_res_item_t* prv_find_ressource(lwm2m_object_meta_information
             return &metaP->ressources[index];
         }
     }
-    
+
     return NULL;
 }
 
@@ -26,7 +26,7 @@ int lwm2m_object_prepare_full_response(lwm2m_data_t ** dataArrayP, lwm2m_object_
     for(unsigned i=0;i<metaP->ressources_len;++i)
     {
         lwm2m_object_res_item_t* resP = &(metaP->ressources[i]);
-        if (!(resP->type_and_access & O_RES_R))
+        if (!(resP->access & O_RES_R))
             continue;
         lwm2m_data_t* dataP = &(*dataArrayP)[readable];
         dataP->id = resP->ressource_id;
@@ -37,12 +37,12 @@ int lwm2m_object_prepare_full_response(lwm2m_data_t ** dataArrayP, lwm2m_object_
 
 uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object_res_item_t* resP, void* instanceP)
 {
-    lwm2m_object_util_type_t res_type = resP->type_and_access & 0x0f;
+    lwm2m_object_util_type_t res_type = resP->type;
 
     void* memberP = (void*)((char*)instanceP + resP->struct_member_offset);
 
     /// Support for function results as value ///
-    if (resP->type_and_access & O_RES_FUNCTION)
+    if (resP->access & O_RES_FUNCTION)
     {
         // The following is equal to this: readFunc f = (readFunc)(*(void**)memberP);
         // But the -pedantic switch forces us to use this union construct.
@@ -119,7 +119,7 @@ static uint8_t prv_read(uint16_t instanceId,
         if (!resP)
             return COAP_404_NOT_FOUND;
 
-        if (!(resP->type_and_access & O_RES_R) || resP->struct_member_offset==0)
+        if (!(resP->access & O_RES_R) || resP->struct_member_offset==0)
             return COAP_405_METHOD_NOT_ALLOWED;
 
         lwm2m_object_assign_single_value(dataP, resP, instanceP);
@@ -151,11 +151,11 @@ static uint8_t prv_write(uint16_t instanceId,
             return COAP_404_NOT_FOUND;
 
         // Check for write access and if offset is set
-        if (!(resP->type_and_access & O_RES_W) || resP->struct_member_offset==0)
+        if (!(resP->access & O_RES_W) || resP->struct_member_offset==0)
             return COAP_405_METHOD_NOT_ALLOWED;
 
         // Extract ressource type and member pointer from meta object
-        lwm2m_object_util_type_t res_type = resP->type_and_access & 0x0f;
+        lwm2m_object_util_type_t res_type = resP->type;
         void* memberP = (void*)((char*)copy_of_entry + resP->struct_member_offset);
 
         union {
@@ -180,7 +180,7 @@ static uint8_t prv_write(uint16_t instanceId,
             temp.c = *((char**)memberP);
 
             // A _STATIC string the user writes to is automatically converted to a non static variant.
-            resP->type_and_access = (0xf0 & resP->type_and_access) | O_RES_STRING;
+            resP->type = O_RES_STRING;
 
             temp.c = (char *)lwm2m_malloc(dataArray[i].value.asBuffer.length + 1);
             memset(temp.c, 0, dataArray[i].value.asBuffer.length + 1);
@@ -203,7 +203,7 @@ static uint8_t prv_write(uint16_t instanceId,
             temp.c = *((char**)memberP);
 
             // A _STATIC opaque field the user writes to is automatically converted to a non static variant.
-            resP->type_and_access = (0xf0 & resP->type_and_access) | O_RES_OPAQUE;
+            resP->type=  O_RES_OPAQUE;
 
             // Assign size and copy data
             *OPAQUE_SIZE_MEMBER_P(memberP) = dataArray[i].value.asBuffer.length;
@@ -299,11 +299,11 @@ uint8_t prv_execute(uint16_t instanceId,
     if (!resP)
         return COAP_404_NOT_FOUND;
 
-    if (!(resP->type_and_access & O_RES_E))
+    if (!(resP->access & O_RES_E))
         return COAP_405_METHOD_NOT_ALLOWED;
 
     /// Support for function pointers ///
-    if (resP->type_and_access & O_RES_FUNCTION)
+    if (resP->access & O_RES_FUNCTION)
     {
         void* memberP = (void*)((char*)instanceP + resP->struct_member_offset);
         // The following is equal to this: execFunc f = (execFunc)(*(void**)memberP);
@@ -339,7 +339,7 @@ static uint8_t prv_discover(uint16_t instanceId,
         for(unsigned i=0;i<metaP->ressources_len;++i)
         {
             lwm2m_object_res_item_t* resP = &metaP->ressources[i];
-            if (!(resP->type_and_access & O_RES_RWE))
+            if (!(resP->access & O_RES_RWE))
                 continue;
             lwm2m_data_t* dataP = &(*dataArrayP)[readable];
             dataP->id = resP->ressource_id;

@@ -15,7 +15,7 @@
  *    Julien Vermillard, Sierra Wireless
  *    Bosch Software Innovations GmbH - Please refer to git log
  *    Pascal Rieux - Please refer to git log
- *    
+ *
  *******************************************************************************/
 
 /*
@@ -38,27 +38,27 @@
 #include "wakaama_client_internal.h"
 #include "wakaama_object_utils.h"
 
-static lwm2m_object_with_meta_t server_object = {{0,0}};
+static lwm2m_object_with_meta_t server_object = {{0},0};
 
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 
 OBJECT_META(server_instance_t, server_object_meta, server_object_write_verify_cb,
-        {0, O_RES_R|O_RES_UINT16                 ,  offsetof(server_instance_t,shortServerId)},
-        {1, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,lifetime)},
-        {2, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,defaultMinPeriod)},
-        {3, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,defaultMaxPeriod)},
-        {4, O_RES_E                                     ,  0},
-        {5, O_RES_R|O_RES_W|O_RES_UINT32,  offsetof(server_instance_t,disableTimeout)},
-        {6, O_RES_R|O_RES_W|O_RES_BOOL  ,  offsetof(server_instance_t,storing)},
-        {7, O_RES_R|O_RES_W|O_RES_STRING_PREALLOC,  offsetof(server_instance_t,binding)},
-        {8, O_RES_E                                     ,  0}
+        {0, O_RES_R,O_RES_UINT16 ,  offsetof(server_instance_t,shortServerId)},
+        {1, O_RES_RW,O_RES_UINT32,  offsetof(server_instance_t,lifetime)},
+        {2, O_RES_RW,O_RES_UINT32,  offsetof(server_instance_t,defaultMinPeriod)},
+        {3, O_RES_RW,O_RES_UINT32,  offsetof(server_instance_t,defaultMaxPeriod)},
+        {4, O_RES_E,0            ,  0},
+        {5, O_RES_RW,O_RES_UINT32,  offsetof(server_instance_t,disableTimeout)},
+        {6, O_RES_RW,O_RES_BOOL  ,  offsetof(server_instance_t,storing)},
+        {7, O_RES_RW,O_RES_STRING_PREALLOC,  offsetof(server_instance_t,binding)},
+        {8, O_RES_E,0                     ,  0}
 )
 
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {
     server_instance_t* i = (server_instance_t*)instance;
 
     if(changed_res_id==7) {
-        int len = strlen(i->binding);
+        size_t len = strlen(i->binding);
         if (!(len > 0 && len <= 3)
                 && (strncmp(i->binding, "U",   len) == 0
                  || strncmp(i->binding, "UQ",  len) == 0

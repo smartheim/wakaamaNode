@@ -11,10 +11,10 @@ extern "C" {
 uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets);
 
 // Return true for success or if already initialized and false on error
-bool network_init();
+bool network_init(void);
 
 // Frees all network ressources, that were acquired in network_init()
-void network_close();
+void network_close(void);
 
 void* network_get_interface(int id);
 

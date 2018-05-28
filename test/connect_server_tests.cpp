@@ -57,20 +57,10 @@ public:
  protected:
     virtual void TearDown() {
         if (!client_context) return;
+        ASSERT_TRUE(client_context->userData);
 
         lwm2m_network_close(client_context);
         lwm2m_client_close();
-
-        server_running = false;
-        if (serverThread)
-            serverThread->join();
-
-        if (server_context)
-        {
-            lwm2m_network_close(server_context);
-            lwm2m_close(server_context);
-            server_context = nullptr;
-        }
 
         network_close();
     }
@@ -93,13 +83,14 @@ public:
         for(unsigned i=0;i<metaP->ressources_len;++i)
         {
             lwm2m_object_res_item_t* resP = &(metaP->ressources[i]);
-            if ((resP->type_and_access & O_RES_E))
+            if (resP->access & O_RES_E)
                 continue;
             ASSERT_TRUE(resP->struct_member_offset);
         }
 
         client_bound_sockets = lwm2m_network_init(client_context, NULL);
         ASSERT_GE(client_bound_sockets, 1);
+        ASSERT_TRUE(client_context->userData);
 
         server_context = nullptr;
     }
@@ -143,13 +134,14 @@ TEST_F(ConnectServerTests, ConnectServer) {
     int server_bound_sockets;
 
     //// init server thread ////
-    server_context = lwm2m_init(NULL);
+    server_context = lwm2m_init(nullptr);
     server_context->state = STATE_READY;
     ASSERT_TRUE(server_context);
 
     lwm2m_set_monitoring_callback(server_context, prv_monitor_callback, this);
     server_bound_sockets = lwm2m_network_init(server_context, LWM2M_DEFAULT_SERVER_PORT);
     ASSERT_LE(1, server_bound_sockets);
+    ASSERT_TRUE(server_context->userData);
 
     client_updated = 0;
     connected_client_name = nullptr;
@@ -219,4 +211,13 @@ TEST_F(ConnectServerTests, ConnectServer) {
     ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
     ASSERT_EQ(STATE_BOOTSTRAP_REQUIRED, client_context->state);
     ASSERT_EQ(nullptr, connected_client_name);
+
+
+    server_running = false;
+    if (serverThread)
+        serverThread->join();
+
+    lwm2m_network_close(server_context);
+    lwm2m_close(server_context);
+    server_context = nullptr;
 }

@@ -27,17 +27,18 @@ typedef enum _lwm2m_object_util_type_ {
 } lwm2m_object_util_type_t;
 
 typedef enum _lwm2m_object_util_access_ {
-    O_RES_R  = (1 << 4), ///< Read only access
-    O_RES_W  = (1 << 5), ///< Write only access
-    O_RES_RW = (1 << 4)|(1 << 5), ///< Read/Write only access
-    O_RES_E  = (1 << 6), ///< Execute only
-    O_RES_RWE = (1 << 4)|(1 << 5)|(1 << 6), ///< Read/Write and executable ressource
-    O_RES_FUNCTION = (1 << 7) ///< Executable and a function is provided
+    O_RES_R  = 1, ///< Read only access
+    O_RES_W  = 2, ///< Write only access
+    O_RES_RW = O_RES_R|O_RES_W, ///< Read/Write only access
+    O_RES_E  = 4, ///< Execute only
+    O_RES_RWE = O_RES_R|O_RES_W|O_RES_E, ///< Read/Write and executable ressource
+    O_RES_FUNCTION = 8 ///< Executable and a function is provided
 } lwm2m_object_util_access_t;
 
 typedef struct _lwm2m_object_res_item_t_ {
     uint16_t ressource_id;
-    uint8_t type_and_access;
+    uint8_t access:4;
+    uint8_t type:4;
     uint8_t struct_member_offset;
 } lwm2m_object_res_item_t;
 
@@ -174,9 +175,9 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  * Use OBJECT_META() and create a corresponding meta object like this:
  *
  * OBJECT_META(your_object_instance_t, test_object_meta, test_object_write_verify_cb,
- *     {0, O_RES_RW|O_RES_UINT8 , offsetof(your_object_instance_t,test)},
- *     {1, O_RES_E                   , 0},
- *     {2, O_RES_RW|O_RES_DOUBLE, offsetof(your_object_instance_t,dec)}
+ *     {0, O_RES_RW,O_RES_UINT8 , offsetof(your_object_instance_t,test)},
+ *     {1, O_RES_E ,0,          , 0},
+ *     {2, O_RES_RW,O_RES_DOUBLE, offsetof(your_object_instance_t,dec)}
  * );
  *
  * You provide the object instance structure and the variable name for the meta object via
@@ -188,10 +189,10 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  *
  * The following arguments describe the ressources of your object instances. Each entry consists of three values:
  * 1) The id of the ressource
- * 2) Describes the access (O_RES_RW for read/write etc) and the type (O_RES_UINT8 for uint8 etc).
- * Additionally to the type the O_RES_FUNCTION flag can be set for read only ressource items. The value will not be read
+ * 2) Describes the access (O_RES_RW for read/write etc). Additionally the O_RES_FUNCTION flag can be set for read only ressource items. The value will not be read
  * from the struct but a function call result is used instead.
- * 3) Points to the position of the related member in the struct or 0 for execute-only ressources.
+ * 3) Describes the type (O_RES_UINT8 for uint8 etc).
+ * 4) Points to the position of the related member in the struct or 0 for execute-only ressources.
  *
  * If you have an OPAQUE field in your struct you have to define it as a pointer, directly followed by a size_t struct member,
  * where the length information is stored. An example:
@@ -207,7 +208,7 @@ void lwm2m_object_free(lwm2m_object_t * objectP);
  * On each assignment to the normal variant, a series of free(), malloc() and strcpy() will be executed.
  * For the _STATIC variant the incoming data pointer will be assigned to the member variable directly and you have to
  * take care, that the assigned data is valid as long as that object instance is alive.
- * The _PREALLOC variant
+ * The _PREALLOC variant changes into a normal variant as soon as soon as the user assigns a different value.
  *
  * To add an instance use something like:
  * object->obj.instanceList = lwm2m_list_add(object->obj.instanceList, instanceP);

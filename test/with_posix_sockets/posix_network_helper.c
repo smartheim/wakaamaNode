@@ -19,6 +19,7 @@ bool network_init()
 
 void network_close()
 {
+
 }
 
 void* network_get_interface(int id)

@@ -79,7 +79,7 @@ TEST_F(ObjectUtilsTests, Reading) {
     uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
 
     const char* expect = "{\"bn\":\"/1024/10/\",\"e\":[{\"n\":\"0\",\"v\":15},{\"n\":\"1\",\"v\":-15},{\"n\":\"2\",\"v\":4095},{\"n\":\"3\",\"v\":-4095},{\"n\":\"4\",\"v\":268435455},{\"n\":\"5\",\"v\":-268435455},{\"n\":\"6\",\"v\":-281474976710655},{\"n\":\"7\",\"v\":0.12},{\"n\":\"8\",\"bv\":true},{\"n\":\"9\",\"sv\":\"test\"},{\"n\":\"10\",\"sv\":\"test\"},{\"n\":\"11\",\"sv\":\"dGVzdA==\"},{\"n\":\"14\",\"v\":-12},{\"n\":\"15\",\"v\":65535},{\"n\":\"16\",\"sv\":\"testFunction\"}]}";
-    int i = strlen(expect);
+    size_t i = strlen(expect);
 
     ASSERT_EQ(s, CONTENT_2_05);
     ASSERT_EQ(buffer_len, i);
@@ -90,14 +90,14 @@ TEST_F(ObjectUtilsTests, Reading) {
 
 TEST_F(ObjectUtilsTests, ExecutingNonExecutable) {
     lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
-    uint8_t s = object_execute(lwm2mH,&uri,NULL, 0);
+    uint8_t s = object_execute(lwm2mH,&uri,nullptr, 0);
     ASSERT_EQ(s, COAP_405_METHOD_NOT_ALLOWED);
 }
 
 TEST_F(ObjectUtilsTests, ExecutingFunction) {
     lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 13};
     executed = false;
-    uint8_t s = object_execute(lwm2mH,&uri,NULL, 0);
+    uint8_t s = object_execute(lwm2mH,&uri,nullptr, 0);
     ASSERT_EQ(s, COAP_204_CHANGED);
     ASSERT_TRUE(executed);
 }
@@ -105,7 +105,7 @@ TEST_F(ObjectUtilsTests, ExecutingFunction) {
 TEST_F(ObjectUtilsTests, Discover) {
     #define LWM2M_SERVER_ADDR "coap://127.0.0.1"
     ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
-    
+
     lwm2m_server_t  server;
     server.next = 0;
     server.secObjInstID = 0;
@@ -188,7 +188,7 @@ TEST_F(ObjectUtilsTests, WriteString) {
     ASSERT_STREQ(value, targetP->test_str);
 
     // Ressource 9 is a static string. after writing it should be a normal string
-    ASSERT_TRUE((metaP->ressources[9].type_and_access & 0x0f) & O_RES_STRING);
+    ASSERT_TRUE(metaP->ressources[9].type & O_RES_STRING);
 
     // Check prealloc string
     uri.resourceId = 10;
@@ -206,12 +206,12 @@ TEST_F(ObjectUtilsTests, WriteOpaque) {
     uint8_t s;
 
     uri.resourceId = 11;
-    ASSERT_TRUE((metaP->ressources[uri.resourceId].type_and_access & 0x0f) & O_RES_OPAQUE_STATIC);
+    ASSERT_TRUE(metaP->ressources[uri.resourceId].type & O_RES_OPAQUE_STATIC);
     s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
     ASSERT_EQ(s, COAP_204_CHANGED);
     ASSERT_EQ(len, targetP->test_opaque_len);
     ASSERT_TRUE(memcmp(value, targetP->test_opaque, len)==0);
 
     // Ressource 11 is a static opaque. after writing it should be a normal opaque value.
-    ASSERT_TRUE((metaP->ressources[uri.resourceId].type_and_access & 0x0f) & O_RES_OPAQUE);
+    ASSERT_TRUE(metaP->ressources[uri.resourceId].type & O_RES_OPAQUE);
 }

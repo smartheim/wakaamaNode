@@ -6,7 +6,7 @@ extern "C" {
 
 #include "wakaama_object_utils.h"
 
-lwm2m_object_meta_information_t* test_object_get_meta();
+lwm2m_object_meta_information_t* test_object_get_meta(void);
 lwm2m_list_t* test_object_create_instance(uint16_t instance_id, void *readFun8, void *readFun32, void *readFunStr, void *execFun);
 
 typedef struct _test_object_instance_

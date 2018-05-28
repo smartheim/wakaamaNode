@@ -22,22 +22,22 @@ static lwm2m_object_with_meta_t device_object = {{0,0}};
 static device_instance_t device_instance = {0};
 
 #ifdef LWM2M_DEVICE_WITH_REBOOT
-void lwm2m_reboot();
+void lwm2m_reboot(void);
 #endif
 
 #ifdef LWM2M_DEVICE_WITH_FACTORY_RESET
-void lwm2m_factory_reset();
+void lwm2m_factory_reset(void);
 #endif
 
 #ifdef LWM2M_DEVICE_INFO_WITH_BATTERY
     // uint8_t battery_level;  //  9
     // uint8_t battery_status; // 20
-    uint8_t lwm2m_get_bat_level();
-    uint8_t lwm2m_get_bat_status();
+    uint8_t lwm2m_get_bat_level(void);
+    uint8_t lwm2m_get_bat_status(void);
 
     #define DEVICE_INFO_WITH_BATTERY \
-    ,{RES_O_BATTERY_LEVEL, O_RES_R | O_RES_FUNCTION | O_RES_UINT8, 0} \
-    ,{RES_O_BATTERY_STATUS, O_RES_R | O_RES_FUNCTION | O_RES_UINT8, 0}
+    ,{RES_O_BATTERY_LEVEL, O_RES_R | O_RES_FUNCTION , O_RES_UINT8, 0} \
+    ,{RES_O_BATTERY_STATUS, O_RES_R | O_RES_FUNCTION , O_RES_UINT8, 0}
 #else
     #define DEVICE_INFO_WITH_BATTERY
 #endif
@@ -45,12 +45,12 @@ void lwm2m_factory_reset();
 #ifdef LWM2M_DEVICE_INFO_WITH_MEMINFO
     // int64_t free_memory;    // 10
     // int64_t total_memory;   // 21
-    int64_t lwm2m_get_free_mem();
-    int64_t lwm2m_get_total_mem();
+    int64_t lwm2m_get_free_mem(void);
+    int64_t lwm2m_get_total_mem(void);
 
     #define DEVICE_INFO_WITH_MEMINFO \
-    ,{RES_O_MEMORY_FREE,  O_RES_R | O_RES_FUNCTION | O_RES_INT64, 0} \
-    ,{RES_O_MEMORY_TOTAL, O_RES_R | O_RES_FUNCTION | O_RES_INT64, 0}
+    ,{RES_O_MEMORY_FREE,  O_RES_R | O_RES_FUNCTION , O_RES_INT64, 0} \
+    ,{RES_O_MEMORY_TOTAL, O_RES_R | O_RES_FUNCTION , O_RES_INT64, 0}
 
 #else
     #define DEVICE_INFO_WITH_MEMINFO
@@ -61,11 +61,11 @@ void lwm2m_factory_reset();
     // RES_O_RESET_ERROR_CODE     12
     // RES_O_RESET_ERROR_CODE
     // Implement these functions:
-    int64_t lwm2m_get_last_error();
-    void lwm2m_reset_last_error();
+    int64_t lwm2m_get_last_error(void);
+    void lwm2m_reset_last_error(void);
     #define DEVICE_INFO_WITH_ERRCODE \
-    ,{RES_M_ERROR_CODE, O_RES_R | O_RES_FUNCTION | O_RES_INT64, 0} \
-    ,{RES_O_RESET_ERROR_CODE, O_RES_E, 0} 
+    ,{RES_M_ERROR_CODE, O_RES_R | O_RES_FUNCTION , O_RES_INT64, 0} \
+    ,{RES_O_RESET_ERROR_CODE, O_RES_E,0 , 0}
 #else
     #define DEVICE_INFO_WITH_ERRCODE
 #endif
@@ -75,8 +75,8 @@ void lwm2m_factory_reset();
     // char* timezone;      // 15
     // Maximal "+HH:MM\0"
     #define DEVICE_INFO_WITH_TIME \
-    ,{RES_O_UTC_OFFSET, O_RES_R | O_RES_STRING_PREALLOC, offsetof(device_instance_t, time_offset)} \
-    ,{RES_O_TIMEZONE, O_RES_R | O_RES_STRING, offsetof(device_instance_t, timezone)}
+    ,{RES_O_UTC_OFFSET, O_RES_R , O_RES_STRING_PREALLOC, offsetof(device_instance_t, time_offset)} \
+    ,{RES_O_TIMEZONE, O_RES_R , O_RES_STRING, offsetof(device_instance_t, timezone)}
 #else
     #define DEVICE_INFO_WITH_TIME
 #endif
@@ -84,26 +84,26 @@ void lwm2m_factory_reset();
 #ifdef LWM2M_DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
      // 18 and 19
     #define DEVICE_INFO_WITH_ADDITIONAL_VERSIONS \
-    ,{RES_O_HARDWARE_VERSION, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, hardware_ver)}, \
-    { RES_O_SOFTWARE_VERSION, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, software_ver) }
+    ,{RES_O_HARDWARE_VERSION, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, hardware_ver)}, \
+    { RES_O_SOFTWARE_VERSION, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, software_ver) }
 #else
     #define DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
 #endif
 
 OBJECT_META(device_instance_t, device_object_meta, NULL,
-    {RES_O_MANUFACTURER, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, manufacturer)},
-    {RES_O_MODEL_NUMBER, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, model_name)},
-    {RES_O_SERIAL_NUMBER, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, serial_number)},
-    {RES_O_FIRMWARE_VERSION, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, firmware_ver)},
-    {RES_M_REBOOT, O_RES_E, 0},       // reboot 4
-    {RES_O_FACTORY_RESET, O_RES_E, 0} // factory reset 5
+    {RES_O_MANUFACTURER, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, manufacturer)},
+    {RES_O_MODEL_NUMBER, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, model_name)},
+    {RES_O_SERIAL_NUMBER, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, serial_number)},
+    {RES_O_FIRMWARE_VERSION, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, firmware_ver)},
+    {RES_M_REBOOT, O_RES_E,0, 0},       // reboot 4
+    {RES_O_FACTORY_RESET, O_RES_E,0, 0} // factory reset 5
     DEVICE_INFO_WITH_BATTERY
     DEVICE_INFO_WITH_ERRCODE
-    ,{RES_O_CURRENT_TIME, O_RES_RW | O_RES_FUNCTION | O_RES_INT64, 0} // Implement: lwm2m_gettime() 13
-    ,{RES_M_BINDING_MODES, O_RES_RW | O_RES_STRING_PREALLOC, offsetof(device_instance_t, binding)}
+    ,{RES_O_CURRENT_TIME, O_RES_RW | O_RES_FUNCTION , O_RES_INT64, 0} // Implement: lwm2m_gettime() 13
+    ,{RES_M_BINDING_MODES, O_RES_RW , O_RES_STRING_PREALLOC, offsetof(device_instance_t, binding)}
     DEVICE_INFO_WITH_TIME
     //  Binding mode. Always "U".  16
-    ,{ RES_O_DEVICE_TYPE, O_RES_R | O_RES_STRING_STATIC, offsetof(device_instance_t, device_type) } // 17
+    ,{ RES_O_DEVICE_TYPE, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, device_type) } // 17
     DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
     DEVICE_INFO_WITH_BATTERY
     DEVICE_INFO_WITH_MEMINFO
@@ -155,7 +155,7 @@ static uint8_t prv_device_read(uint16_t instanceId,
         if (!resP)
             return COAP_404_NOT_FOUND;
 
-        if (!(resP->type_and_access & O_RES_R))
+        if (!(resP->access & O_RES_R))
             return COAP_405_METHOD_NOT_ALLOWED;
 
         uint8_t result;
@@ -212,7 +212,7 @@ uint8_t prv_device_execute(uint16_t instanceId,
     if (!resP)
         return COAP_404_NOT_FOUND;
 
-    if (!(resP->type_and_access & O_RES_E))
+    if (!(resP->access & O_RES_E))
         return COAP_405_METHOD_NOT_ALLOWED;
 
     switch(resP->ressource_id)

@@ -97,7 +97,7 @@ TEST_F(DeviceInfoObjectTests, ReadAll) {
     lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, 0};
     lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
     char* buffer;
-    size_t buffer_len;
+    size_t buffer_len=0;
     uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
 
     const char expect[] = "{\"bn\":\"/3/0/\",\"e\":[{\"n\":\"0\",\"sv\":\"manufacturer\"},{\"n\":\"1\",\"sv\":\"model_name\"},{\"n\":\"2\",\"sv\":\"serial_number\"},{\"n\":\"3\",\"sv\":\"firmware_ver\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"11\",\"v\":-12},{\"n\":\"13\",\"v\":1498765432},{\"n\":\"16\",\"sv\":\"U\"},{\"n\":\"14\",\"sv\":\"+11:12\"},{\"n\":\"15\",\"sv\":\"Europe/+2\"},{\"n\":\"17\",\"sv\":\"device_type\"},{\"n\":\"18\",\"sv\":\"hardware1.0\"},{\"n\":\"19\",\"sv\":\"software1.0\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"10\",\"v\":12},{\"n\":\"21\",\"v\":12}]}";
