@@ -141,7 +141,9 @@ TEST_F(ObjectUtilsTests, WriteIntBoolDouble) {
     for (int i = 0; i < 7; ++i)
     {
         uri.resourceId = i;
-        ASSERT_EQ(COAP_205_CONTENT, object_checkNumeric(lwm2mH,&uri));
+        lwm2m_attributes_t attrP;
+        attrP.toSet = ATTR_FLAG_NUMERIC;
+        ASSERT_EQ(COAP_205_CONTENT, object_checkReadable(lwm2mH,&uri,&attrP));
         s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
         ASSERT_EQ(s, CHANGED_2_04);
     }
