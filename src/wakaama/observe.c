@@ -14,7 +14,7 @@
  *    David Navarro, Intel Corporation - initial API and implementation
  *    Toby Jaffey - Please refer to git log
  *    Bosch Software Innovations GmbH - Please refer to git log
- *    
+ *
  *******************************************************************************/
 
 /*
@@ -161,6 +161,7 @@ uint8_t observe_handleRequest(lwm2m_context_t * contextP,
                               coap_packet_t * message,
                               coap_packet_t * response)
 {
+    lwm2m_observed_t * observedP;
     lwm2m_watcher_t * watcherP;
     uint32_t count;
 
@@ -182,6 +183,7 @@ uint8_t observe_handleRequest(lwm2m_context_t * contextP,
         memcpy(watcherP->token, message->token, message->token_len);
         watcherP->active = true;
         watcherP->lastTime = lwm2m_gettime();
+        watcherP->lastMid = response->mid;
         if (IS_OPTION(message, COAP_OPTION_ACCEPT))
         {
             watcherP->format = utils_convertMediaType(message->accept[0]);
@@ -212,7 +214,15 @@ uint8_t observe_handleRequest(lwm2m_context_t * contextP,
 
     case 1:
         // cancellation
-        observe_cancel(contextP, LWM2M_MAX_ID, serverP->sessionH);
+        observedP = prv_findObserved(contextP, uriP);
+        if (observedP)
+        {
+            watcherP = prv_findWatcher(observedP, serverP);
+            if (watcherP)
+            {
+                observe_cancel(contextP, watcherP->lastMid, serverP->sessionH);
+            }
+        }
         return COAP_205_CONTENT;
 
     default:
@@ -234,7 +244,7 @@ void observe_cancel(lwm2m_context_t * contextP,
     {
         lwm2m_watcher_t * targetP = NULL;
 
-        if ((LWM2M_MAX_ID == mid || observedP->watcherList->lastMid == mid)
+        if (observedP->watcherList->lastMid == mid
          && lwm2m_session_is_equal(observedP->watcherList->server->sessionH, fromSessionH, contextP->userData))
         {
             targetP = observedP->watcherList;
@@ -247,7 +257,7 @@ void observe_cancel(lwm2m_context_t * contextP,
             parentP = observedP->watcherList;
             while (parentP->next != NULL
                 && (parentP->next->lastMid != mid
-                 || lwm2m_session_is_equal(parentP->next->server->sessionH, fromSessionH, contextP->userData)))
+                 || !lwm2m_session_is_equal(parentP->next->server->sessionH, fromSessionH, contextP->userData)))
             {
                 parentP = parentP->next;
             }
@@ -322,14 +332,8 @@ uint8_t observe_setParameters(lwm2m_context_t * contextP,
 
     if (!LWM2M_URI_IS_SET_INSTANCE(uriP) && LWM2M_URI_IS_SET_RESOURCE(uriP)) return COAP_400_BAD_REQUEST;
 
-    result = object_checkReadable(contextP, uriP);
+    result = object_checkReadable(contextP, uriP, attrP);
     if (COAP_205_CONTENT != result) return result;
-
-    if (0 != (attrP->toSet & ATTR_FLAG_NUMERIC))
-    {
-        result = object_checkNumeric(contextP, uriP);
-        if (COAP_205_CONTENT != result) return result;
-    }
 
     watcherP = prv_getWatcher(contextP, uriP, serverP);
     if (watcherP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
@@ -669,7 +673,7 @@ void observe_step(lwm2m_context_t * contextP,
                  && watcherP->parameters != NULL
                  && (watcherP->parameters->toSet & LWM2M_ATTR_FLAG_MAX_PERIOD) != 0)
                 {
-                    LOG_ARG("Checking maximal period (%d s)", watcherP->parameters->minPeriod);
+                    LOG_ARG("Checking maximal period (%d s)", watcherP->parameters->maxPeriod);
 
                     if (watcherP->lastTime + watcherP->parameters->maxPeriod <= currentTime)
                     {
@@ -906,8 +910,8 @@ int lwm2m_observe(lwm2m_context_t * contextP,
         if (uriP->objectId == observationP->uri.objectId
             && (LWM2M_URI_IS_SET_INSTANCE(uriP) == false
                 || observationP->uri.instanceId == uriP->instanceId)
-            && (LWM2M_URI_IS_SET_INSTANCE(uriP) == false
-                || observationP->uri.instanceId == uriP->instanceId))
+            && (LWM2M_URI_IS_SET_RESOURCE(uriP) == false
+                || observationP->uri.resourceId == uriP->resourceId))
         {
             break;
         }
