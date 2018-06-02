@@ -1,0 +1,1264 @@
+
+
+
+
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <meta http-equiv="x-ua-compatible" content="ie=edge">
+      
+        <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
+      
+      
+      
+        <meta name="author" content="David Gräff">
+      
+      
+        <meta name="lang:clipboard.copy" content="Copy to clipboard">
+      
+        <meta name="lang:clipboard.copied" content="Copied to clipboard">
+      
+        <meta name="lang:search.language" content="en">
+      
+        <meta name="lang:search.pipeline.stopwords" content="True">
+      
+        <meta name="lang:search.pipeline.trimmer" content="True">
+      
+        <meta name="lang:search.result.none" content="No matching documents">
+      
+        <meta name="lang:search.result.one" content="1 matching document">
+      
+        <meta name="lang:search.result.other" content="# matching documents">
+      
+        <meta name="lang:search.tokenizer" content="[\s\-]+">
+      
+      <link rel="shortcut icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-0.17.3, mkdocs-material-2.7.3">
+    
+    
+      
+        <title>Custom objects - WakaamaNode</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/application.8d40d89b.css">
+      
+        <link rel="stylesheet" href="../../assets/stylesheets/application-palette.6079476c.css">
+      
+    
+    
+      <script src="../../assets/javascripts/modernizr.1aa3b519.js"></script>
+    
+    
+      <link href="https://fonts.gstatic.com" rel="preconnect" crossorigin>
+      
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,400,400i,700|Roboto+Mono">
+        <style>body,input{font-family:"Roboto","Helvetica Neue",Helvetica,Arial,sans-serif}code,kbd,pre{font-family:"Roboto Mono","Courier New",Courier,monospace}</style>
+      
+      <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    
+    
+    
+  </head>
+  
+    
+    
+    <body dir="ltr" data-md-color-primary="red" data-md-color-accent="red">
+  
+    <svg class="md-svg">
+      <defs>
+        
+        
+          <svg xmlns="http://www.w3.org/2000/svg" width="416" height="448"
+    viewBox="0 0 416 448" id="github">
+  <path fill="currentColor" d="M160 304q0 10-3.125 20.5t-10.75 19-18.125
+        8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19 18.125-8.5
+        18.125 8.5 10.75 19 3.125 20.5zM320 304q0 10-3.125 20.5t-10.75
+        19-18.125 8.5-18.125-8.5-10.75-19-3.125-20.5 3.125-20.5 10.75-19
+        18.125-8.5 18.125 8.5 10.75 19 3.125 20.5zM360
+        304q0-30-17.25-51t-46.75-21q-10.25 0-48.75 5.25-17.75 2.75-39.25
+        2.75t-39.25-2.75q-38-5.25-48.75-5.25-29.5 0-46.75 21t-17.25 51q0 22 8
+        38.375t20.25 25.75 30.5 15 35 7.375 37.25 1.75h42q20.5 0
+        37.25-1.75t35-7.375 30.5-15 20.25-25.75 8-38.375zM416 260q0 51.75-15.25
+        82.75-9.5 19.25-26.375 33.25t-35.25 21.5-42.5 11.875-42.875 5.5-41.75
+        1.125q-19.5 0-35.5-0.75t-36.875-3.125-38.125-7.5-34.25-12.875-30.25-20.25-21.5-28.75q-15.5-30.75-15.5-82.75
+        0-59.25 34-99-6.75-20.5-6.75-42.5 0-29 12.75-54.5 27 0 47.5 9.875t47.25
+        30.875q36.75-8.75 77.25-8.75 37 0 70 8 26.25-20.5
+        46.75-30.25t47.25-9.75q12.75 25.5 12.75 54.5 0 21.75-6.75 42 34 40 34
+        99.5z" />
+</svg>
+        
+      </defs>
+    </svg>
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search" autocomplete="off">
+    <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
+    
+      <a href="#custom-lwm2m-objects" tabindex="1" class="md-skip">
+        Skip to content
+      </a>
+    
+    
+      <header class="md-header" data-md-component="header">
+  <nav class="md-header-nav md-grid">
+    <div class="md-flex">
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+          
+            <img src="../../assets/logo.png" width="24" height="24">
+          
+        </a>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        <label class="md-icon md-icon--menu md-header-nav__button" for="drawer"></label>
+      </div>
+      <div class="md-flex__cell md-flex__cell--stretch">
+        <div class="md-flex__ellipsis md-header-nav__title" data-md-component="title">
+          
+            
+              <span class="md-header-nav__topic">
+                WakaamaNode
+              </span>
+              <span class="md-header-nav__topic">
+                Custom objects
+              </span>
+            
+          
+        </div>
+      </div>
+      <div class="md-flex__cell md-flex__cell--shrink">
+        
+          
+            <label class="md-icon md-icon--search md-header-nav__button" for="search"></label>
+            
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="query" data-md-state="active">
+      <label class="md-icon md-search__icon" for="search"></label>
+      <button type="reset" class="md-icon md-search__icon" data-md-component="reset" tabindex="-1">
+        &#xE5CD;
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="result">
+          <div class="md-search-result__meta">
+            Type to start searching
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+          
+        
+      </div>
+      
+        <div class="md-flex__cell md-flex__cell--shrink">
+          <div class="md-header-nav__source">
+            
+
+
+  
+
+
+  <a href="https://github.com/Openhab-Nodes/wakaamaNode/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Openhab-Nodes/wakaamaNode
+    </div>
+  </a>
+
+          </div>
+        </div>
+      
+    </div>
+  </nav>
+</header>
+    
+    <div class="md-container">
+      
+        
+      
+      
+        
+
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  <li class="md-tabs__item">
+    
+      <a href="../.." title="Welcome" class="md-tabs__link">
+        Welcome
+      </a>
+    
+  </li>
+
+      
+        
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../connection-api/" title="Connection API" class="md-tabs__link">
+          Connection API
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../about/" title="Objects API" class="md-tabs__link md-tabs__link--active">
+          Objects API
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../advanced-usage/custom-platform/" title="Advanced usage" class="md-tabs__link">
+          Advanced usage
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
+          Others
+        </a>
+      
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+      
+      <main class="md-main">
+        <div class="md-main__inner md-grid" data-md-component="container">
+          
+            
+              <div class="md-sidebar md-sidebar--primary" data-md-component="navigation">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    <nav class="md-nav md-nav--primary" data-md-level="0">
+  <label class="md-nav__title md-nav__title--site" for="drawer">
+    <span class="md-nav__button md-logo">
+      
+        <img src="../../assets/logo.png" width="48" height="48">
+      
+    </span>
+    WakaamaNode
+  </label>
+  
+    <div class="md-nav__source">
+      
+
+
+  
+
+
+  <a href="https://github.com/Openhab-Nodes/wakaamaNode/" title="Go to repository" class="md-source" data-md-source="github">
+    
+      <div class="md-source__icon">
+        <svg viewBox="0 0 24 24" width="24" height="24">
+          <use xlink:href="#github" width="24" height="24"></use>
+        </svg>
+      </div>
+    
+    <div class="md-source__repository">
+      Openhab-Nodes/wakaamaNode
+    </div>
+  </a>
+
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../.." title="Welcome" class="md-nav__link">
+      Welcome
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item">
+    <a href="../../quickstart/getting-started/" title="Getting started" class="md-nav__link">
+      Getting started
+    </a>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-3" type="checkbox" id="nav-3">
+    
+    <label class="md-nav__link" for="nav-3">
+      Connection API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-3">
+        Connection API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../connection-api/" title="Connection API" class="md-nav__link">
+      Connection API
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-4" type="checkbox" id="nav-4" checked>
+    
+    <label class="md-nav__link" for="nav-4">
+      Objects API
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-4">
+        Objects API
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../about/" title="Introduction" class="md-nav__link">
+      Introduction
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../objects-registry/" title="Registry objects" class="md-nav__link">
+      Registry objects
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+      
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Custom objects
+      </label>
+    
+    <a href="./" title="Custom objects" class="md-nav__link md-nav__link--active">
+      Custom objects
+    </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#about-the-object-id-namespace" title="About the object ID namespace" class="md-nav__link">
+    About the object ID namespace
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-definition-c-api" title="Object definition C++ API" class="md-nav__link">
+    Object definition C++ API
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lwm2mobject-class" title="Lwm2mObject class" class="md-nav__link">
+    Lwm2mObject class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lwm2mobjectinstance-class" title="Lwm2mObjectInstance class" class="md-nav__link">
+    Lwm2mObjectInstance class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-class" title="Resource class" class="md-nav__link">
+    Resource class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executableresource-class" title="ExecutableResource class" class="md-nav__link">
+    ExecutableResource class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opaqueresource-class" title="OpaqueResource class" class="md-nav__link">
+    OpaqueResource class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pollingresource-class" title="PollingResource class" class="md-nav__link">
+    PollingResource class
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-definition-c-api_1" title="Object definition C API" class="md-nav__link">
+    Object definition C API
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object_meta" title="OBJECT_META" class="md-nav__link">
+    OBJECT_META
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executablereadablewritable-resources" title="Executable/Readable/Writable Resources" class="md-nav__link">
+    Executable/Readable/Writable Resources
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-types" title="Resource types" class="md-nav__link">
+    Resource types
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opaquepreallocated-resources" title="Opaque/Preallocated resources" class="md-nav__link">
+    Opaque/Preallocated resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+    
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../objects-custom-cpp-example/" title="Custom objects /CPP Example" class="md-nav__link">
+      Custom objects /CPP Example
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../objects-custom-c-example/" title="Custom objects /C Example" class="md-nav__link">
+      Custom objects /C Example
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-5" type="checkbox" id="nav-5">
+    
+    <label class="md-nav__link" for="nav-5">
+      Advanced usage
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-5">
+        Advanced usage
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/custom-platform/" title="Custom platform" class="md-nav__link">
+      Custom platform
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/custom-network/" title="Custom network stack" class="md-nav__link">
+      Custom network stack
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/ota/" title="Over-the-air updates" class="md-nav__link">
+      Over-the-air updates
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/deep-sleep/" title="Deep sleep" class="md-nav__link">
+      Deep sleep
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Others
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Others
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../others/limitations-and-known-issues/" title="Limitations and known issues" class="md-nav__link">
+      Limitations and known issues
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-nav__link">
+      Troubleshooting
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="toc">
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#about-the-object-id-namespace" title="About the object ID namespace" class="md-nav__link">
+    About the object ID namespace
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-definition-c-api" title="Object definition C++ API" class="md-nav__link">
+    Object definition C++ API
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#lwm2mobject-class" title="Lwm2mObject class" class="md-nav__link">
+    Lwm2mObject class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lwm2mobjectinstance-class" title="Lwm2mObjectInstance class" class="md-nav__link">
+    Lwm2mObjectInstance class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-class" title="Resource class" class="md-nav__link">
+    Resource class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executableresource-class" title="ExecutableResource class" class="md-nav__link">
+    ExecutableResource class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opaqueresource-class" title="OpaqueResource class" class="md-nav__link">
+    OpaqueResource class
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pollingresource-class" title="PollingResource class" class="md-nav__link">
+    PollingResource class
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-definition-c-api_1" title="Object definition C API" class="md-nav__link">
+    Object definition C API
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#object_meta" title="OBJECT_META" class="md-nav__link">
+    OBJECT_META
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#executablereadablewritable-resources" title="Executable/Readable/Writable Resources" class="md-nav__link">
+    Executable/Readable/Writable Resources
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resource-types" title="Resource types" class="md-nav__link">
+    Resource types
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opaquepreallocated-resources" title="Opaque/Preallocated resources" class="md-nav__link">
+    Opaque/Preallocated resources
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/Openhab-Nodes/wakaamaNode/edit/master/docs/api/objects-custom.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                
+                
+                <h1 id="custom-lwm2m-objects">Custom lwM2M objects<a class="headerlink" href="#custom-lwm2m-objects" title="Permanent link">&para;</a></h1>
+<p>The last chapter introducted you to objects of the OMA lwM2M registry. WakaamaNode allows you to define
+your own  custom lwm2m object. A unique object ID is necessary.</p>
+<p>The next section explains some background information about the object ID namespace.
+Thereafter you will find the C++ and C API for lwm2m object definitions.</p>
+<h2 id="about-the-object-id-namespace">About the object ID namespace<a class="headerlink" href="#about-the-object-id-namespace" title="Permanent link">&para;</a></h2>
+<p>The object id namespace is divided into several ObjectID Classes.</p>
+<table>
+<thead>
+<tr>
+<th>Category</th>
+<th>URN</th>
+<th>Object ID</th>
+<th>range</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>oma-label</td>
+<td>urn:oma:lwm2m:oma:&lt;id&gt;:&lt;version&gt;</td>
+<td>0 - 1023</td>
+<td>Objects Produced by OMA. Only OMA can use this range</td>
+<td></td>
+</tr>
+<tr>
+<td>reserved</td>
+<td></td>
+<td>1024 - 2047</td>
+<td>Reserved for future use</td>
+<td></td>
+</tr>
+<tr>
+<td>ext-label</td>
+<td>urn:oma:lwm2m:ext:&lt;id&gt;:&lt;version&gt;</td>
+<td>2048 - 10240</td>
+<td>Objects registered by 3<sup>rd</sup> party standards organisations or alliances</td>
+<td></td>
+</tr>
+<tr>
+<td>x-label</td>
+<td>urn:oma:lwm2m: x:&lt;id&gt;:&lt;version&gt;</td>
+<td>10241 - 26240<br><br>26241 - 32768<br><br>32769 - 42768</td>
+<td>Objects registered by companies or individuals.<br><br>Objects Produced by Vendors to re-use<br><br>Block of objects reserved by vendors (Max 50). Private range, Objects will not be published</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>If your use case is not yet considered within the registries objects, it is time to fill out an application for a new object.</p>
+<p>For testing purposes, you can use one of the undefined ids (range 42769..65000). If possible, you should at least
+make use of the <a href="http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html">predefined resource ids (range: 2048..26240)</a>.</p>
+<p>Define your custom objects either via C or the C++ interface.</p>
+<h2 id="object-definition-c-api">Object definition C++ API<a class="headerlink" href="#object-definition-c-api" title="Permanent link">&para;</a></h2>
+<p>Include <code class="codehilite">lwm2m_objects.hpp</code>.</p>
+<h3 id="lwm2mobject-class">Lwm2mObject class<a class="headerlink" href="#lwm2mobject-class" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObject</span><span class="o">&lt;</span><span class="n">ObjectID</span><span class="o">&gt;</span>
+</pre></div>
+
+<p>Lwm2mObject is not to be used directly.
+Inherit from Lwm2mObject to implement your own lwM2M object. Specify the <strong>ObjectID</strong>, for example "1024".
+Wrap your class in <code class="codehilite">#pragma pack(push, 1)</code> and <code class="codehilite">#pragma pack(pop)</code>.</p>
+<p>To allow WakaamaNode to handle all read/write/execute handling for you, you need to describe the available
+resources of an lwM2M object.
+Example:</p>
+<div class="codehilite"><pre><span></span><span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">push</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="kr">public</span><span class="o">:</span>
+    <span class="nx">Resource</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">test</span><span class="p">,</span> <span class="nx">O_RES_RW</span><span class="o">&gt;</span> <span class="nx">test</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">pop</span><span class="p">)</span>
+</pre></div>
+
+<p>Here a Readable/Writable(O_RES_RW) resource with ResourceID 0 is declared. It references the <code class="codehilite">&amp;MyObjectInstance::test</code> class variable of "MyObjectInstance"
+for reading the resource value and writing to it.
+The name of the class member is not relevant and should describe the resource, for example "power" or "volume".</p>
+<p>The exact syntax and semantic of <code class="codehilite">Resource</code> is described further down in the <a href="#resource-class">Resource class</a> section.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param instance The object instance to add. See Lwm2mObjectInstance. May not be null.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="n">addInstance</span><span class="p">(</span><span class="n">Lwm2mObjectInstance</span> <span class="o">*</span> <span class="n">instance</span><span class="p">);</span>
+</pre></div>
+
+<p>Add a <a href="#lwm2mobjectinstance-class">Lwm2mObjectInstance</a> to your object.
+The instance is automatically registered to the lwm2m server, if already connected.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param instance The instance ID for the instance to remove. See Lwm2mObjectInstance.</span>
+<span class="cm"> *        Nothing happens if the instance is not known to the object.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="n">removeInstance</span><span class="p">(</span><span class="n">uint16</span> <span class="n">instanceID</span><span class="p">);</span>
+</pre></div>
+
+<p>Removes a <a href="#lwm2mobjectinstance-class">Lwm2mObjectInstance</a> from your object.
+The instance is automatically unregistered from the lwm2m server, if already connected.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param lwm2mContext The Wakaama context.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="k">register</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">);</span>
+</pre></div>
+
+<p>Registers the object to Wakaama.
+The object is automatically registered to the lwM2M server, if already connected.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param lwm2mContext The Wakaama context.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="n">unregister</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">);</span>
+</pre></div>
+
+<p>Unregisters the object from Wakaama.</p>
+<h3 id="lwm2mobjectinstance-class">Lwm2mObjectInstance class<a class="headerlink" href="#lwm2mobjectinstance-class" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObjectInstance</span>
+</pre></div>
+
+<p>Lwm2mObjectInstance is not to be used directly.
+Inherit from this class to implement a data holder for an object instance.
+Example:
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
+    <span class="kt">uint8_t</span>  <span class="n">firstResource</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div></p>
+<p>Allowed data types are 8/16/32/64 bit unsigned/signed integers,
+floats and doubles, booleans, unsigned/signed c-strings.</p>
+<p><span id="opaqueExample"></span>
+CoAP and lwM2M support opaque resources.
+Declare a memory area as opaque type by defining an array with a specifc size:</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
+    <span class="kt">uint8_t</span> <span class="n">myOpaqueData</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>Resources can be executable. Declare a class member of type <code class="codehilite">void*</code> that will be used
+as function pointer. See <a href="">Executable Resource</a> for an example.</p>
+<p>The name of the class member is not relevant and should describe the resource, for example "power" or "volume".</p>
+<p>Lwm2mObjectInstance does not have any methods.</p>
+<h3 id="resource-class">Resource class<a class="headerlink" href="#resource-class" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Resource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="p">,</span> <span class="n">Operations</span><span class="o">&gt;</span>
+</pre></div>
+
+<p>Use the templated <code class="codehilite">Resource</code> class to describe the resource ID, reference to the member variable and supported operations in this order.</p>
+<p>Supported operations are O_RES_R (read only), O_RES_W (assign only), O_RES_RW (read/write).</p>
+<h3 id="executableresource-class">ExecutableResource class<a class="headerlink" href="#executableresource-class" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ExecutableResource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="o">&gt;</span>
+</pre></div>
+
+<p>For an executable resource, use the specialiced <code class="codehilite">ExecutableResource</code> class with the resource ID and reference to the function pointer.</p>
+<p>In the following example a constructor is used to force the <code class="codehilite">MyObjectInstance</code>
+user to assign a function:</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
+    <span class="kt">void</span><span class="o">*</span> <span class="n">exec</span><span class="p">;</span>
+
+    <span class="n">MyObjectInstance</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">anExecutableResourceFunction</span><span class="p">)</span> <span class="o">:</span> <span class="n">exec</span><span class="p">(</span><span class="n">anExecutableResourceFunction</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">}</span>
+</pre></div>
+
+<p>The corresponding object looks like this:</p>
+<div class="codehilite"><pre><span></span><span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">push</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="kr">public</span><span class="o">:</span>
+    <span class="nx">ExecutableResource</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">exec</span><span class="o">&gt;</span> <span class="nx">exec</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">pop</span><span class="p">)</span>
+</pre></div>
+
+<h3 id="opaqueresource-class">OpaqueResource class<a class="headerlink" href="#opaqueresource-class" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">OpaqueResource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="p">,</span> <span class="n">Operations</span><span class="o">&gt;</span>
+</pre></div>
+
+<p>For an opaque memory area like the 32 byte array in <a href="#opaqueExample"><code class="codehilite">MyObjectInstance</code></a>, use <code class="codehilite">OpaqueResource</code>.
+You should also use <code class="codehilite">OpaqueResource</code> for preallocated, maximum length c-string resources.
+Define the resource ID, reference to the member variable and supported operations in this order.</p>
+<h3 id="pollingresource-class">PollingResource class<a class="headerlink" href="#pollingresource-class" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">PollingResource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="o">&gt;</span>
+</pre></div>
+
+<p>It is possible to read a value for a read-only resource (O_RES_R) from a function instead of a classes member variable.
+Use <code class="codehilite">PollingResource</code> and define the resource ID point to a class member variable that does not hold the value,
+but is a pointer to a function instead.</p>
+<p>The library will crash, if the function pointer is dangling / not assigned to a valid function!</p>
+<h2 id="object-definition-c-api_1">Object definition C API<a class="headerlink" href="#object-definition-c-api_1" title="Permanent link">&para;</a></h2>
+<p>Include <code class="codehilite">lwm2m_objects.h</code>.</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param objectP The object. May not be NULL.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="nf">lwm2m_object_free</span><span class="p">(</span><span class="n">lwm2m_object_t</span> <span class="o">*</span> <span class="n">objectP</span><span class="p">);</span>
+</pre></div>
+Free an lwm2m object, you have created with <code class="codehilite">lwm2m_object_create</code>.
+The instances which are connected to this object are not freed!</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param object The object memory, doesn&#39;t need to be initialized.</span>
+<span class="cm"> * @param object_id The object ID (coap ressource id)</span>
+<span class="cm"> * @param allow_dynamic_instance_creation Allows or disallows the use of lwm2m_object_instances_add(). Heap memory will be used.</span>
+<span class="cm"> * @param meta_information The objects meta data.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="nf">lwm2m_object_create_preallocated</span><span class="p">(</span><span class="n">lwm2m_object_with_meta_t</span><span class="o">*</span> <span class="n">object</span><span class="p">,</span>
+                                      <span class="kt">uint16_t</span> <span class="n">object_id</span><span class="p">,</span>
+                                      <span class="kt">bool</span> <span class="n">allow_dynamic_instance_creation</span><span class="p">,</span>
+                                      <span class="n">lwm2m_object_meta_information_t</span><span class="o">*</span> <span class="n">meta_information</span><span class="p">);</span>
+</pre></div>
+Similar to lwm2m_object_create
+Instead of allocating an object on the heap for you like in <code class="codehilite">lwm2m_object_create</code>, with this method
+you have to provide a pointer to the memory where the object data should be stored.</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param object The lwm2m_object.</span>
+<span class="cm"> * @param instance One or more linked instances.</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="nf">lwm2m_object_instances_add</span><span class="p">(</span><span class="n">lwm2m_object_t</span><span class="o">*</span> <span class="n">object</span><span class="p">,</span> <span class="n">lwm2m_list_t</span><span class="o">*</span> <span class="n">instance</span><span class="p">);</span>
+</pre></div>
+Add an instance to an object.</p>
+<p>Ideally you do this before you have connected to a server. Otherwise you
+have to notify the server with <code class="codehilite">lwm2m_update_registration(..., true)</code> about the changed object.</p>
+<p>A lwm2m object instance consists of one ore more ressources identified by their ressource ids.
+A ressource may be an uint8, int8, uint16, int16, uint32, int32, uint64, int64, double, c-string.</p>
+<p>Please be aware that your object instance
+have to "inherit" lwm2m_list_t::next and lwm2m_list_t::id like in the following example:</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+   <span class="k">struct</span> <span class="n">_prv_instance_next</span><span class="p">;</span> <span class="c1">// matches lwm2m_list_t::next</span>
+   <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>             <span class="c1">// matches lwm2m_list_t::id</span>
+   <span class="p">...</span> <span class="n">Your</span> <span class="n">members</span> <span class="n">are</span> <span class="n">defined</span> <span class="n">here</span><span class="p">...</span>
+<span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
+</pre></div>
+
+<p>If you implement any object with an id registered at
+<a href="http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html">OMA Object &amp; Resource Registry</a>,
+your object instances have to provide all of the defined ressources</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param object_id The object id. Ids below 7 are forbidden. Ids &gt;=10241 are for custom objects.</span>
+<span class="cm"> *                  Look at http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html</span>
+<span class="cm"> *                  for predefined object definitions for ids 8-2047.</span>
+<span class="cm"> * @param allow_dynamic_instance_creation if you want a lwm2m server to be able to create new instances of your object.</span>
+<span class="cm"> * @param meta_information</span>
+<span class="cm"> * @return</span>
+<span class="cm"> */</span>
+<span class="k">extern</span> <span class="n">lwm2m_object_t</span><span class="o">*</span> <span class="nf">lwm2m_object_create</span><span class="p">(</span>
+                                    <span class="kt">uint16_t</span> <span class="n">object_id</span><span class="p">,</span>
+                                    <span class="kt">bool</span> <span class="n">allow_dynamic_instance_creation</span><span class="p">,</span>
+                                    <span class="n">lwm2m_object_meta_information_t</span><span class="o">*</span> <span class="n">meta_information</span><span class="p">);</span>
+</pre></div>
+Helps you with creating a new lwm2m object.</p>
+<p>You may create a custom object or any predefined objects, except
+already defined objects 1, 2, 3 and 5.</p>
+<p>An lwm2m object consists of an object id and none, one or more object instances. Wakaama
+allows you to add user data to an object by using the object-&gt;userdata member.</p>
+<h3 id="object_meta">OBJECT_META<a class="headerlink" href="#object_meta" title="Permanent link">&para;</a></h3>
+<p>To allow WakaamaNode to</p>
+<ul>
+<li>read from resources,</li>
+<li>write to resources and</li>
+<li>execute resources</li>
+</ul>
+<p>you have to provide a machine readable description. You do this by definining a
+lwm2m_object_meta_information_t. Use OBJECT_META() for this purpose like shown below:</p>
+<div class="codehilite"><pre><span></span><span class="n">OBJECT_META</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span> <span class="n">test_object_meta</span><span class="p">,</span> <span class="n">test_object_write_verify_cb</span><span class="p">,</span>
+    <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">,</span><span class="n">O_RES_UINT8</span> <span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">test</span><span class="p">)},</span>
+    <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="n">O_RES_E</span> <span class="p">,</span><span class="n">O_RES_EXEC</span>  <span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">exec</span><span class="p">)},</span>
+    <span class="p">{</span><span class="mi">2</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">,</span><span class="n">O_RES_DOUBLE</span><span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">dec</span><span class="p">)}</span>
+<span class="p">);</span>
+</pre></div>
+
+<p>You provide the object instance structure and the variable name for the meta object via
+the first and second argument.</p>
+<p>The third argument may be set to NULL. Otherwise set it to a callback method which is called on
+a write to your object instance. You may react on a write in this method and you may deny the write if the new value
+is not in range of your allowed values. The callback method needs this signature:</p>
+<p><code class="codehilite">bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);</code></p>
+<p>The subsequent arguments describe the ressources of your object instances. Each entry is enclosed in curly brackets and consists of these values:</p>
+<ol>
+<li>The id of the ressource</li>
+<li>The access modifier (O_RES_RW for read/write etc).</li>
+<li>The type (O_RES_UINT8 for uint8 etc, O_RES_EXEC for executables).</li>
+<li>Member pointer</li>
+</ol>
+<h3 id="executablereadablewritable-resources">Executable/Readable/Writable Resources<a class="headerlink" href="#executablereadablewritable-resources" title="Permanent link">&para;</a></h3>
+<p>You can use the following access modifiers:</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">_lwm2m_object_util_access_</span> <span class="p">{</span>
+    <span class="n">O_RES_R</span>  <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="c1">///&lt; Read only access</span>
+    <span class="n">O_RES_W</span>  <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="c1">///&lt; Write only access</span>
+    <span class="n">O_RES_RW</span> <span class="o">=</span> <span class="n">O_RES_R</span><span class="o">|</span><span class="n">O_RES_W</span><span class="p">,</span> <span class="c1">///&lt; Read/Write access</span>
+    <span class="n">O_RES_E</span>  <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="c1">///&lt; Standalone: Makes this resource executable. Combinded with O_RES_R: Reads the resource value from the function.</span>
+    <span class="n">O_RES_M</span>  <span class="o">=</span> <span class="mi">8</span>  <span class="c1">///&lt; Indicator for a resource modification. After a write this flag will be erased.</span>
+<span class="p">}</span> <span class="n">lwm2m_object_util_access_t</span><span class="p">;</span>
+</pre></div>
+
+<h3 id="resource-types">Resource types<a class="headerlink" href="#resource-types" title="Permanent link">&para;</a></h3>
+<p>You can use the following types:</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">_lwm2m_object_util_type_</span> <span class="p">{</span>
+    <span class="n">O_RES_EXEC</span>   <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="c1">///&lt; Executable resource == no type</span>
+    <span class="n">O_RES_BOOL</span>   <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="c1">///&lt; A boolean value</span>
+    <span class="n">O_RES_DOUBLE</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="c1">///&lt; A floating point decimal value</span>
+    <span class="n">O_RES_INT8</span>   <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="c1">///&lt; Int with range [-128,127]</span>
+    <span class="n">O_RES_UINT8</span>  <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="c1">///&lt; Int with range [0,255]</span>
+    <span class="n">O_RES_INT16</span>  <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="c1">///&lt; Int with range [-32000,32000]</span>
+    <span class="n">O_RES_UINT16</span> <span class="o">=</span> <span class="mi">6</span><span class="p">,</span> <span class="c1">///&lt; Int with range [0,65500]</span>
+    <span class="n">O_RES_INT32</span>  <span class="o">=</span> <span class="mi">7</span><span class="p">,</span> <span class="c1">///&lt; Int with range [-2^31,2^31-1]</span>
+    <span class="n">O_RES_UINT32</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="c1">///&lt; Int with range [0, 2^32-1]</span>
+    <span class="n">O_RES_INT64</span>  <span class="o">=</span> <span class="mi">9</span><span class="p">,</span> <span class="c1">///&lt; Int with range [-2^63, 2^63-1]</span>
+    <span class="n">O_RES_STRING</span>          <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="c1">///&lt; free + strdub for an entry</span>
+    <span class="n">O_RES_STRING_STATIC</span>   <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="c1">///&lt; assign pointer, no free</span>
+    <span class="n">O_RES_STRING_PREALLOC</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span> <span class="c1">///&lt; preallocated space. In the write verify cb make sure the incoming string fits into the allocated space.</span>
+    <span class="n">O_RES_OPAQUE</span>          <span class="o">=</span> <span class="mi">13</span><span class="p">,</span> <span class="c1">///&lt; free + memcpy with length for an antry</span>
+    <span class="n">O_RES_OPAQUE_STATIC</span>   <span class="o">=</span> <span class="mi">14</span> <span class="c1">///&lt; assign pointer and length, no free</span>
+<span class="p">}</span> <span class="n">lwm2m_object_util_type_t</span><span class="p">;</span>
+</pre></div>
+
+<h3 id="opaquepreallocated-resources">Opaque/Preallocated resources<a class="headerlink" href="#opaquepreallocated-resources" title="Permanent link">&para;</a></h3>
+<p>If you have an OPAQUE field in your struct you have to define it as a pointer, directly followed by a size_t struct member,
+where the length information is stored. An example:</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+   <span class="k">struct</span> <span class="n">_prv_instance_next</span><span class="p">;</span> <span class="c1">// matches lwm2m_list_t::next</span>
+   <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>             <span class="c1">// matches lwm2m_list_t::id</span>
+   <span class="kt">uint8_t</span><span class="o">*</span>  <span class="n">opaque_field</span><span class="p">;</span>
+   <span class="kt">size_t</span>    <span class="n">opaque_field_length</span><span class="p">;</span>  <span class="c1">// The length of the opaque_field buffer.</span>
+<span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
+</pre></div>
+
+<p>OPAQUE and STRING fields have two/three variants:</p>
+<ul>
+<li>normal: On each assignment to the normal variant, a series of free(), malloc() and strcpy() will be executed.</li>
+<li>_STATIC: the incoming data pointer will be assigned to the member variable directly and you have to take care, that the assigned data is valid as long as that object instance is alive.</li>
+<li>_PREALLOC: The _PREALLOC variant changes into a normal variant as soon as the user assigns a different value.</li>
+</ul>
+                
+                  
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+    <div class="md-footer-nav">
+      <nav class="md-footer-nav__inner md-grid">
+        
+          <a href="../objects-registry/" title="Registry objects" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
+            </div>
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Previous
+                </span>
+                Registry objects
+              </span>
+            </div>
+          </a>
+        
+        
+          <a href="../objects-custom-cpp-example/" title="Custom objects /CPP Example" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
+              <span class="md-flex__ellipsis">
+                <span class="md-footer-nav__direction">
+                  Next
+                </span>
+                Custom objects /CPP Example
+              </span>
+            </div>
+            <div class="md-flex__cell md-flex__cell--shrink">
+              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
+            </div>
+          </a>
+        
+      </nav>
+    </div>
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+        powered by
+        <a href="http://www.mkdocs.org">MkDocs</a>
+        and
+        <a href="https://squidfunk.github.io/mkdocs-material/">
+          Material for MkDocs</a>
+      </div>
+      
+        
+  <div class="md-footer-social">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    
+      <a href="http://openhab-nodes.github.io/wakaamaNode/" class="md-footer-social__link fa fa-cog"></a>
+    
+  </div>
+
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    
+      <script src="../../assets/javascripts/application.b438e6c5.js"></script>
+      
+      <script>app.initialize({version:"0.17.3",url:{base:"../.."}})</script>
+      
+    
+    
+      
+    
+  </body>
+</html>
