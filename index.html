@@ -108,7 +108,7 @@
       <div class="md-flex__cell md-flex__cell--shrink">
         <a href="." title="WakaamaNode" class="md-header-nav__button md-logo">
           
-            <img src="./assets/logo.png" width="24" height="24">
+            <img src="./assets/logo_s.webp" width="24" height="24">
           
         </a>
       </div>
@@ -278,7 +278,7 @@
   <label class="md-nav__title md-nav__title--site" for="drawer">
     <span class="md-nav__button md-logo">
       
-        <img src="./assets/logo.png" width="48" height="48">
+        <img src="./assets/logo_s.webp" width="48" height="48">
       
     </span>
     WakaamaNode
@@ -712,7 +712,11 @@
                   <a href="https://github.com/Openhab-Nodes/wakaamaNode/edit/master/docs/index.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <p><img alt="Logo" src="./assets/logo_s.png" /></p>
+                <p><picture>
+  <source srcset="assets/logo_s.webp" type="image/webp">
+  <source srcset="assets/logo_s.png" type="image/png"> 
+  <img src="assets/logo_s.png" alt="LwM2M logo">
+</picture></p>
 <h1 id="wakaamanode">WakaamaNode <a href="https://travis-ci.org/Openhab-Nodes/wakaamaNode"><img alt="Build Status" src="https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master" /></a><a class="headerlink" href="#wakaamanode" title="Permanent link">&para;</a></h1>
 <p>This is a Lightweight M2M library meant to be used for embedded/constrained devices with a convenient C and C++ API.</p>
 <blockquote>
@@ -754,9 +758,12 @@ A lot of common and not so common object and resource identifiers are standardis
 <p>A target device needs <strong>5kb RAM</strong> and <strong>10kb ROM</strong> for the library and some user defined  objects.</p>
 <p>Most of the API can be used in a staticly allocated memory environment.
 Wakaama on the other hand uses dynamic memory allocation for events like server
-connections, message receiving, message resends.
-You may influence the memory layout by implementing <code class="codehilite">lwm2m_malloc</code>, <code class="codehilite">lwm2m_free</code> and <code class="codehilite">lwm2m_strdup</code> accordingly.
+connections, message receiving, message resends. 
 The DTLS implementation that is included (mbedTLS) makes use of dynamic memory allocation.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>You may influence the memory layout by implementing <code class="codehilite">lwm2m_malloc</code>, <code class="codehilite">lwm2m_free</code> and <code class="codehilite">lwm2m_strdup</code> accordingly.</p>
+</div>
 <h2 id="automatic-synchronisation-to-the-latest-wakaamambed-tls-sources">Automatic synchronisation to the latest Wakaama/mbed TLS sources<a class="headerlink" href="#automatic-synchronisation-to-the-latest-wakaamambed-tls-sources" title="Permanent link">&para;</a></h2>
 <p>Travis CI is executed on every commit and additionally every day by a travis cron job.
 The CI script syncronizes:</p>

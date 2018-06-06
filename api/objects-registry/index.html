@@ -108,7 +108,7 @@
       <div class="md-flex__cell md-flex__cell--shrink">
         <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
           
-            <img src="../../assets/logo.png" width="24" height="24">
+            <img src="../../assets/logo_s.webp" width="24" height="24">
           
         </a>
       </div>
@@ -280,7 +280,7 @@
   <label class="md-nav__title md-nav__title--site" for="drawer">
     <span class="md-nav__button md-logo">
       
-        <img src="../../assets/logo.png" width="48" height="48">
+        <img src="../../assets/logo_s.webp" width="48" height="48">
       
     </span>
     WakaamaNode
@@ -695,21 +695,23 @@ and you should not use the auto generated ones.</p>
 
 <span class="k">using</span> <span class="k">namespace</span> <span class="n">KnownObjects</span><span class="p">;</span>
 
-<span class="n">id3311</span><span class="o">::</span><span class="n">object</span> <span class="n">lights</span><span class="p">(</span><span class="nb">false</span><span class="p">);</span>
-
+<span class="n">id3311</span><span class="o">::</span><span class="n">object</span> <span class="n">lights</span><span class="p">;</span>
 <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span> <span class="n">led</span><span class="p">;</span>
 
 <span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
     <span class="c1">// Overwrite the verifyFunction and &quot;abuse&quot; it as value changed event.</span>
-    <span class="n">led</span><span class="p">.</span><span class="n">power</span><span class="p">.</span><span class="n">verifyFunction</span> <span class="o">=</span> <span class="p">[](</span><span class="kt">bool</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span> <span class="n">inst</span> <span class="o">=</span> <span class="p">(</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span><span class="p">)</span><span class="n">instance</span><span class="p">;</span>
         <span class="c1">// Change the led pin depending on the power value</span>
-        <span class="n">digitalWrite</span><span class="p">(</span><span class="n">ledPin</span><span class="p">,</span> <span class="n">value</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">res_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">digitalWrite</span><span class="p">(</span><span class="n">ledPin</span><span class="p">,</span> <span class="n">inst</span><span class="o">-&gt;</span><span class="n">power</span><span class="p">);</span>
         <span class="c1">// Return true to accept the value and ACK to the server</span>
         <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
     <span class="p">};</span>
 
-    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="o">&amp;</span><span class="n">led</span><span class="p">);</span>
-    <span class="n">lights</span><span class="p">.</span><span class="k">register</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
+    <span class="n">led</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// set instance id</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">led</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 

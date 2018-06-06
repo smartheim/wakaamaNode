@@ -97,7 +97,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
     
-      <a href="#esp8266-adc-readings" tabindex="1" class="md-skip">
+      <a href="#limitations" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -108,7 +108,7 @@
       <div class="md-flex__cell md-flex__cell--shrink">
         <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
           
-            <img src="../../assets/logo.png" width="24" height="24">
+            <img src="../../assets/logo_s.webp" width="24" height="24">
           
         </a>
       </div>
@@ -280,7 +280,7 @@
   <label class="md-nav__title md-nav__title--site" for="drawer">
     <span class="md-nav__button md-logo">
       
-        <img src="../../assets/logo.png" width="48" height="48">
+        <img src="../../assets/logo_s.webp" width="48" height="48">
       
     </span>
     WakaamaNode
@@ -561,9 +561,59 @@
       
     
     
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Limitations and known issues
+      </label>
+    
     <a href="./" title="Limitations and known issues" class="md-nav__link md-nav__link--active">
       Limitations and known issues
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#auto-generated-registry-objects" title="Auto generated registry objects" class="md-nav__link">
+    Auto generated registry objects
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-link-resources" title="Object link resources" class="md-nav__link">
+    Object link resources
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources-multiple-instances" title="Resources: Multiple instances" class="md-nav__link">
+    Resources: Multiple instances
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-loop-timing" title="Main loop timing" class="md-nav__link">
+    Main loop timing
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
+</nav>
     
   </li>
 
@@ -602,6 +652,43 @@
     
   
   
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#auto-generated-registry-objects" title="Auto generated registry objects" class="md-nav__link">
+    Auto generated registry objects
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#object-link-resources" title="Object link resources" class="md-nav__link">
+    Object link resources
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resources-multiple-instances" title="Resources: Multiple instances" class="md-nav__link">
+    Resources: Multiple instances
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#main-loop-timing" title="Main loop timing" class="md-nav__link">
+    Main loop timing
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -615,10 +702,17 @@
                   <a href="https://github.com/Openhab-Nodes/wakaamaNode/edit/master/docs/others/limitations-and-known-issues.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <h1 id="esp8266-adc-readings">ESP8266: ADC readings<a class="headerlink" href="#esp8266-adc-readings" title="Permanent link">&para;</a></h1>
-<p><a href="https://github.com/esp8266/Arduino/issues/1634">This is a known esp8266/Arduino issue</a> that polling <code class="codehilite">analogRead()</code> too frequently forces the Wi-Fi to disconnect. As a workaround, don't poll the ADC more than one time every 3ms.</p>
-<h1 id="esp8266-wi-fi-connection">ESP8266: Wi-Fi connection<a class="headerlink" href="#esp8266-wi-fi-connection" title="Permanent link">&para;</a></h1>
-<p>If you encouter any issues with the Wi-Fi, try changing the flash size build parameter, or try to erase the flash.</p>
+                <h1 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h1>
+<h2 id="auto-generated-registry-objects">Auto generated registry objects<a class="headerlink" href="#auto-generated-registry-objects" title="Permanent link">&para;</a></h2>
+<p>Unfortunately the lwm2m description does not consistently contain information about the size of a string or an opaque block.
+Currently strings and opaque resources are hardcoded to 30 bytes in size.</p>
+<h2 id="object-link-resources">Object link resources<a class="headerlink" href="#object-link-resources" title="Permanent link">&para;</a></h2>
+<p>The library does not support object links as resources if you use the C or C++ objects API.</p>
+<h2 id="resources-multiple-instances">Resources: Multiple instances<a class="headerlink" href="#resources-multiple-instances" title="Permanent link">&para;</a></h2>
+<p>The library does not support multiple instances of resources. Those are mostly used for object links anyway.</p>
+<h2 id="main-loop-timing">Main loop timing<a class="headerlink" href="#main-loop-timing" title="Permanent link">&para;</a></h2>
+<p>A connection to a lwM2M server may be interrupted if the the libraries main loop method is not called in time.
+Do not <code class="codehilite">delay()</code> or ADC read for too long.</p>
                 
                   
                 
