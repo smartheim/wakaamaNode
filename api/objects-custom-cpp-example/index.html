@@ -830,19 +830,18 @@ WakamaNode provides ready-to-use, auto-generated c++ classes for all those objec
 and all read/write/execute handling is done for you. </p>
 <p>Create an object instance class, that serves as data holder for each individual instance.</p>
 <div class="codehilite"><pre><span></span><span class="k">using</span> <span class="n">MyReadIntFunction</span> <span class="o">=</span> <span class="kt">int</span> <span class="p">(</span><span class="o">*</span><span class="p">)();</span>
-<span class="k">using</span> <span class="n">MyExecuteFunction</span> <span class="o">=</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="p">)();</span>
 
 <span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
     <span class="kt">uint8_t</span>  <span class="n">test</span><span class="p">;</span>
-    <span class="n">MyExecuteFunction</span><span class="o">*</span> <span class="n">exec</span><span class="p">;</span>
+    <span class="n">Executable</span> <span class="n">exec</span><span class="p">;</span>
     <span class="kt">double</span>   <span class="n">dec</span><span class="p">;</span>
     <span class="kt">int16_t</span>  <span class="n">sig</span><span class="p">;</span>
 
     <span class="kt">char</span><span class="o">*</span>    <span class="n">text</span><span class="p">;</span>
 
-    <span class="kt">char</span>    <span class="n">opaque</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+    <span class="n">Opaque</span><span class="o">&lt;</span><span class="mi">32</span><span class="o">&gt;</span> <span class="n">opaque</span><span class="p">;</span>
 
-    <span class="n">MyReadIntFunction</span><span class="o">*</span>    <span class="n">read</span><span class="p">;</span>
+    <span class="n">IndirectRead</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span>    <span class="n">read</span><span class="p">;</span>
 
     <span class="c1">// Force the MyObjectInstance user to assign a read and execute funtion. We don&#39;t want to crash!</span>
     <span class="n">MyObjectInstance</span><span class="p">(</span><span class="n">MyReadIntFunction</span><span class="o">*</span> <span class="n">readF</span><span class="p">,</span> <span class="n">MyExecuteFunction</span><span class="o">*</span> <span class="n">execF</span><span class="p">)</span> <span class="o">:</span> <span class="n">exec</span><span class="p">(</span><span class="n">execF</span><span class="p">)</span> <span class="n">read</span><span class="p">(</span><span class="n">readF</span><span class="p">)</span> <span class="p">{}</span>
@@ -852,33 +851,33 @@ and all read/write/execute handling is done for you. </p>
 <p>You inherit from <code class="codehilite">Lwm2mObjectInstance</code> for the object instance data holder.</p>
 <p>Declare an object class that describes object 1024 to the library:</p>
 <div class="codehilite"><pre><span></span><span class="c1">// Object with LwM2M ID 1024</span>
-<span class="cp">#pragma pack(push, 1)</span>
-<span class="k">class</span> <span class="nc">MyObject</span><span class="o">:</span> <span class="k">public</span> <span class="n">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="o">&gt;</span>
+<span class="k">class</span> <span class="nc">MyObject</span><span class="o">:</span> <span class="k">public</span> <span class="n">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="p">,</span><span class="n">MyObject</span><span class="p">,</span><span class="n">MyObjectInstance</span><span class="o">&gt;</span>
 <span class="p">{</span>
 <span class="k">public</span><span class="o">:</span>
-    <span class="n">Resource</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">test</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="o">&gt;</span> <span class="n">test</span><span class="p">;</span>
-    <span class="n">ExecutableResource</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">exec</span><span class="o">&gt;</span> <span class="n">exec</span><span class="p">;</span>
-    <span class="n">Resource</span><span class="o">&lt;</span><span class="mi">2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">dec</span> <span class="p">,</span> <span class="n">O_RES_RW</span><span class="o">&gt;</span> <span class="n">dec</span><span class="p">;</span>
-    <span class="n">Resource</span><span class="o">&lt;</span><span class="mi">3</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">sig</span> <span class="p">,</span> <span class="n">O_RES_RW</span><span class="o">&gt;</span> <span class="n">sig</span><span class="p">;</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">test</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">)</span> <span class="n">test</span><span class="p">;</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">exec</span><span class="p">,</span> <span class="n">O_RES_E</span> <span class="p">)</span> <span class="n">exec</span><span class="p">;</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">dec</span><span class="p">,</span>  <span class="n">O_RES_RW</span><span class="p">)</span> <span class="n">dec</span><span class="p">;</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">sig</span><span class="p">,</span>  <span class="n">O_RES_RW</span><span class="p">)</span> <span class="n">sig</span><span class="p">;</span>
 
-    <span class="n">Resource</span><span class="o">&lt;</span><span class="mi">4</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">text</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="o">&gt;</span> <span class="n">text</span><span class="p">;</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">text</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">)</span> <span class="n">text</span><span class="p">;</span>
 
-    <span class="n">OpaqueResource</span><span class="o">&lt;</span><span class="mi">5</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">opaque</span><span class="p">,</span> <span class="n">O_RES_W</span><span class="o">&gt;</span> <span class="n">opaque</span><span class="p">;</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">opaque</span><span class="p">,</span><span class="n">O_RES_W</span><span class="p">)</span> <span class="n">opaque</span><span class="p">;</span>
 
-    <span class="n">PollingResource</span><span class="o">&lt;</span><span class="mi">9</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">read</span><span class="o">&gt;</span> <span class="n">read</span><span class="p">;</span>
+    <span class="c1">// You don&#39;t need to specify the operation, if it is a</span>
+    <span class="c1">// IndirectRead, IndirectWrite, IndirectReadWrite type</span>
+    <span class="n">Resource</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">MyObjectInstance</span><span class="o">::</span><span class="n">read</span><span class="p">)</span> <span class="n">read</span><span class="p">;</span>
 
     <span class="n">MyObject</span><span class="p">()</span> <span class="o">:</span> <span class="n">test</span><span class="p">([](</span><span class="kt">uint8_t</span> <span class="n">val</span><span class="p">){</span><span class="k">return</span> <span class="n">val</span><span class="o">&lt;=</span><span class="mi">128</span><span class="p">;});</span>
 
     <span class="c1">// Allow dynamic new instances. Default is to not allow new instances</span>
     <span class="k">virtual</span> <span class="kt">bool</span> <span class="nf">allowNewInstance</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">instanceID</span><span class="p">)</span> <span class="k">override</span> <span class="p">{</span> <span class="k">return</span> <span class="nb">true</span><span class="p">;</span> <span class="p">}</span> 
 <span class="p">};</span>
-<span class="cp">#pragma pack(pop)</span>
 </pre></div>
 
 <p>Inherit from <code class="codehilite">Lwm2mObject</code> and specify the object ID as template parameter for your object class.
 Notice the <code class="codehilite">#pragma pack</code>, which is important!</p>
 <p>Use the templated <code class="codehilite">Resource</code> class to describe the resource ID, reference to the member variable and supported operations in this order.</p>
-<p>Supported operations are O_RES_R (read only), O_RES_W (assign only), O_RES_RW (read/write).</p>
+<p>Supported operations are O_RES_R (read only), O_RES_W (assign only), O_RES_RW (read/write), O_RES_E (executable).</p>
 <h2 id="read-resource-value-from-function">Read resource value from function<a class="headerlink" href="#read-resource-value-from-function" title="Permanent link">&para;</a></h2>
 <p>It is possible to read a resource value from a function instead of a classes member variable.
 Use <code class="codehilite">PollingResource</code> and define the resource ID and resource type.</p>
@@ -911,8 +910,8 @@ If you do not implement this method somewhere, a default no-op method will be us
 <span class="n">MyObjectInstance</span> <span class="nf">myInstance</span><span class="p">(</span><span class="n">my_read_method</span><span class="p">);</span>
 
 <span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">myObj</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="o">&amp;</span><span class="n">myInstance</span><span class="p">);</span>
-    <span class="n">myObj</span><span class="p">.</span><span class="k">register</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
+    <span class="n">myObj</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">myInstance</span><span class="p">);</span>
+    <span class="n">myObj</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -925,8 +924,8 @@ the register call will be a little bit more expensive, because the object need t
 <span class="n">MyObjectInstance</span> <span class="nf">myInstance</span><span class="p">(</span><span class="n">my_read_method</span><span class="p">);</span>
 
 <span class="kt">void</span> <span class="nf">exit</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">myObj</span><span class="p">.</span><span class="n">removeInstance</span><span class="p">(</span><span class="n">myInstance</span><span class="p">.</span><span class="n">instanceID</span><span class="p">);</span>
-    <span class="n">myObj</span><span class="p">.</span><span class="n">unregister</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
+    <span class="n">myObj</span><span class="p">.</span><span class="n">removeInstance</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="n">myInstance</span><span class="p">.</span><span class="n">instanceID</span><span class="p">);</span>
+    <span class="n">myObj</span><span class="p">.</span><span class="n">unregisterObject</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
                 

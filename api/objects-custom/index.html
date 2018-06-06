@@ -484,22 +484,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executableresource-class" title="ExecutableResource class" class="md-nav__link">
-    ExecutableResource class
+  <a href="#executable-resources" title="Executable Resources" class="md-nav__link">
+    Executable Resources
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#opaqueresource-class" title="OpaqueResource class" class="md-nav__link">
-    OpaqueResource class
+  <a href="#opaque-resources" title="Opaque Resources" class="md-nav__link">
+    Opaque Resources
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pollingresource-class" title="PollingResource class" class="md-nav__link">
-    PollingResource class
+  <a href="#read-from-write-to-resource-value-function" title="Read from / Write to resource value function" class="md-nav__link">
+    Read from / Write to resource value function
   </a>
   
 </li>
@@ -525,22 +525,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executablereadablewritable-resources" title="Executable/Readable/Writable Resources" class="md-nav__link">
-    Executable/Readable/Writable Resources
+  <a href="#resource-access-modifier" title="Resource Access modifier" class="md-nav__link">
+    Resource Access modifier
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#resource-types" title="Resource types" class="md-nav__link">
-    Resource types
+  <a href="#resource-type" title="Resource type" class="md-nav__link">
+    Resource type
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#opaquepreallocated-resources" title="Opaque/Preallocated resources" class="md-nav__link">
-    Opaque/Preallocated resources
+  <a href="#executable-resources_1" title="Executable Resources" class="md-nav__link">
+    Executable Resources
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opaque-resources_1" title="Opaque Resources" class="md-nav__link">
+    Opaque Resources
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-from-write-to-resource-value-function_1" title="Read from / Write to resource value function" class="md-nav__link">
+    Read from / Write to resource value function
   </a>
   
 </li>
@@ -767,22 +781,22 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executableresource-class" title="ExecutableResource class" class="md-nav__link">
-    ExecutableResource class
+  <a href="#executable-resources" title="Executable Resources" class="md-nav__link">
+    Executable Resources
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#opaqueresource-class" title="OpaqueResource class" class="md-nav__link">
-    OpaqueResource class
+  <a href="#opaque-resources" title="Opaque Resources" class="md-nav__link">
+    Opaque Resources
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#pollingresource-class" title="PollingResource class" class="md-nav__link">
-    PollingResource class
+  <a href="#read-from-write-to-resource-value-function" title="Read from / Write to resource value function" class="md-nav__link">
+    Read from / Write to resource value function
   </a>
   
 </li>
@@ -808,22 +822,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#executablereadablewritable-resources" title="Executable/Readable/Writable Resources" class="md-nav__link">
-    Executable/Readable/Writable Resources
+  <a href="#resource-access-modifier" title="Resource Access modifier" class="md-nav__link">
+    Resource Access modifier
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#resource-types" title="Resource types" class="md-nav__link">
-    Resource types
+  <a href="#resource-type" title="Resource type" class="md-nav__link">
+    Resource type
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#opaquepreallocated-resources" title="Opaque/Preallocated resources" class="md-nav__link">
-    Opaque/Preallocated resources
+  <a href="#executable-resources_1" title="Executable Resources" class="md-nav__link">
+    Executable Resources
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#opaque-resources_1" title="Opaque Resources" class="md-nav__link">
+    Opaque Resources
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#read-from-write-to-resource-value-function_1" title="Read from / Write to resource value function" class="md-nav__link">
+    Read from / Write to resource value function
   </a>
   
 </li>
@@ -907,25 +935,23 @@ make use of the <a href="http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRe
 <h2 id="object-definition-c-api">Object definition C++ API<a class="headerlink" href="#object-definition-c-api" title="Permanent link">&para;</a></h2>
 <p>Include <code class="codehilite">lwm2m_objects.hpp</code>.</p>
 <h3 id="lwm2mobject-class">Lwm2mObject class<a class="headerlink" href="#lwm2mobject-class" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObject</span><span class="o">&lt;</span><span class="n">ObjectID</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObject</span><span class="o">&lt;</span><span class="n">ObjectID</span><span class="p">,</span> <span class="n">DerivedObject</span><span class="p">,</span> <span class="n">ObjectInstance</span><span class="o">&gt;</span>
 </pre></div>
 
 <p>Lwm2mObject is not to be used directly.
-Inherit from Lwm2mObject to implement your own lwM2M object. Specify the <strong>ObjectID</strong>, for example "1024".
-Wrap your class in <code class="codehilite">#pragma pack(push, 1)</code> and <code class="codehilite">#pragma pack(pop)</code>.</p>
+Inherit from Lwm2mObject to implement your own lwM2M object. Specify the <strong>ObjectID</strong>, for example "1024",
+the derived object class and the associated object instance class.</p>
 <p>To allow WakaamaNode to handle all read/write/execute handling for you, you need to describe the available
 resources of an lwM2M object.
 Example:</p>
-<div class="codehilite"><pre><span></span><span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">push</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="p">,</span> <span class="nx">MyObject</span><span class="p">,</span> <span class="nx">MyObjectInstance</span><span class="o">&gt;</span>
 <span class="p">{</span>
 <span class="kr">public</span><span class="o">:</span>
-    <span class="nx">Resource</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">test</span><span class="p">,</span> <span class="nx">O_RES_RW</span><span class="o">&gt;</span> <span class="nx">test</span><span class="p">;</span>
+    <span class="nx">Resource</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">test</span><span class="p">,</span> <span class="nx">O_RES_RW</span><span class="p">)</span> <span class="nx">test</span><span class="p">;</span>
 <span class="p">};</span>
-<span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">pop</span><span class="p">)</span>
 </pre></div>
 
-<p>Here a Readable/Writable(O_RES_RW) resource with ResourceID 0 is declared. It references the <code class="codehilite">&amp;MyObjectInstance::test</code> class variable of "MyObjectInstance"
+<p>Here a Readable/Writable(O_RES_RW) resource with ResourceID 0 is declared. It references the <code class="codehilite">&amp;MyObjectInstance::test</code> class member of "MyObjectInstance"
 for reading the resource value and writing to it.
 The name of the class member is not relevant and should describe the resource, for example "power" or "volume".</p>
 <p>The exact syntax and semantic of <code class="codehilite">Resource</code> is described further down in the <a href="#resource-class">Resource class</a> section.</p>
@@ -949,7 +975,7 @@ The instance is automatically unregistered from the lwm2m server, if already con
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param lwm2mContext The Wakaama context.</span>
 <span class="cm"> */</span>
-<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="k">register</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="n">registerObject</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">allow_dynamic_instance_creation</span><span class="p">);</span>
 </pre></div>
 
 <p>Registers the object to Wakaama.
@@ -957,10 +983,37 @@ The object is automatically registered to the lwM2M server, if already connected
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param lwm2mContext The Wakaama context.</span>
 <span class="cm"> */</span>
-<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="n">unregister</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">);</span>
+<span class="kt">void</span> <span class="n">Lwm2mObject</span><span class="o">::</span><span class="n">unregisterObject</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">);</span>
 </pre></div>
 
 <p>Unregisters the object from Wakaama.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param instance_id Instance ID</span>
+<span class="cm"> */</span>
+<span class="k">virtual</span> <span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="nf">createInstance</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">instance_id</span><span class="p">);</span>
+</pre></div>
+
+<p>Implement this function in your object class and either return <code class="codehilite">nullptr</code>
+if creating instances dynamically by the server or with the given ID is not supported or
+return a working object instance with the given instance ID.</p>
+<p>The default does nothing and returns a <code class="codehilite">nullptr</code>.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param instance Object instance to delete</span>
+<span class="cm"> * @return Return COAP_NO_ERROR if no error happened.</span>
+<span class="cm"> */</span>
+<span class="k">virtual</span> <span class="kt">int</span> <span class="nf">deleteInstance</span><span class="p">(</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">);</span>
+</pre></div>
+
+<p>Implement this function in your object class to allow to delete an object instance.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param instance Object instance that is going to be modified</span>
+<span class="cm"> * @param res_id The resource that will get changed</span>
+<span class="cm"> * @return Return true if change is accepted or false if change is denied.</span>
+<span class="cm"> */</span>
+<span class="k">virtual</span> <span class="kt">bool</span> <span class="nf">verifyWrite</span><span class="p">(</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">);</span>
+</pre></div>
+
+<p>Implement this function in your object class to verify a change on an object instance resource.</p>
 <h3 id="lwm2mobjectinstance-class">Lwm2mObjectInstance class<a class="headerlink" href="#lwm2mobjectinstance-class" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObjectInstance</span>
 </pre></div>
@@ -973,96 +1026,119 @@ Example:
 <span class="p">}</span>
 </pre></div></p>
 <p>Allowed data types are 8/16/32/64 bit unsigned/signed integers,
-floats and doubles, booleans, unsigned/signed c-strings.</p>
+floats, doubles, booleans and unsigned/signed c-strings.</p>
 <p><span id="opaqueExample"></span>
 CoAP and lwM2M support opaque resources.
-Declare a memory area as opaque type by defining an array with a specifc size:</p>
-<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
-    <span class="kt">uint8_t</span> <span class="n">myOpaqueData</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-<span class="p">}</span>
-</pre></div>
-
-<p>Resources can be executable. Declare a class member of type <code class="codehilite">void*</code> that will be used
-as function pointer. See <a href="">Executable Resource</a> for an example.</p>
+WakaamaNode provides the <code class="codehilite">Opaque&lt;N&gt;</code> and <code class="codehilite">OpaqueIndirect</code> type.
+See <a href="#opaque-resources">Opaque Resources</a> for an example.</p>
+<p>Resources can be executable. Declare a class member of type <code class="codehilite">Executable</code> that will be used
+as function pointer. See <a href="#executable-resources">Executable Resource</a> for an example.</p>
 <p>The name of the class member is not relevant and should describe the resource, for example "power" or "volume".</p>
 <p>Lwm2mObjectInstance does not have any methods.</p>
 <h3 id="resource-class">Resource class<a class="headerlink" href="#resource-class" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Resource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="p">,</span> <span class="n">Operations</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Resource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ResourceValueReference</span><span class="p">,</span> <span class="n">Operations</span><span class="o">&gt;</span>
 </pre></div>
 
-<p>Use the templated <code class="codehilite">Resource</code> class to describe the resource ID, reference to the member variable and supported operations in this order.</p>
+<p>Use the templated <code class="codehilite">Resource</code> class to describe the resource ID, reference to the member variable that stores the value and supported operations in this order.
+<strong>Until C++17, the syntax of declaring a Resource needs "(" instead of "&lt;" brackets.</strong></p>
 <p>Supported operations are O_RES_R (read only), O_RES_W (assign only), O_RES_RW (read/write).</p>
-<h3 id="executableresource-class">ExecutableResource class<a class="headerlink" href="#executableresource-class" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">ExecutableResource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="o">&gt;</span>
-</pre></div>
-
-<p>For an executable resource, use the specialiced <code class="codehilite">ExecutableResource</code> class with the resource ID and reference to the function pointer.</p>
+<h3 id="executable-resources">Executable Resources<a class="headerlink" href="#executable-resources" title="Permanent link">&para;</a></h3>
+<p>For an executable resource, you do not need to specify the Operations, because it will always be O_RES_E.</p>
 <p>In the following example a constructor is used to force the <code class="codehilite">MyObjectInstance</code>
 user to assign a function:</p>
 <div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
-    <span class="kt">void</span><span class="o">*</span> <span class="n">exec</span><span class="p">;</span>
+    <span class="n">Executable</span> <span class="n">exec</span><span class="p">;</span>
 
-    <span class="n">MyObjectInstance</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">anExecutableResourceFunction</span><span class="p">)</span> <span class="o">:</span> <span class="n">exec</span><span class="p">(</span><span class="n">anExecutableResourceFunction</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="n">MyObjectInstance</span><span class="p">(</span><span class="n">Executable</span> <span class="n">anExecutableResourceFunction</span><span class="p">)</span> <span class="o">:</span> <span class="n">exec</span><span class="p">(</span><span class="n">anExecutableResourceFunction</span><span class="p">)</span> <span class="p">{}</span>
 <span class="p">}</span>
 </pre></div>
 
 <p>The corresponding object looks like this:</p>
-<div class="codehilite"><pre><span></span><span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">push</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="o">&gt;</span>
+<div class="codehilite"><pre><span></span><span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="p">,</span><span class="nx">MyObject</span><span class="p">,</span><span class="nx">MyObjectInstance</span><span class="o">&gt;</span>
 <span class="p">{</span>
 <span class="kr">public</span><span class="o">:</span>
-    <span class="nx">ExecutableResource</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">exec</span><span class="o">&gt;</span> <span class="nx">exec</span><span class="p">;</span>
+    <span class="nx">Resource</span><span class="o">&lt;</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">exec</span><span class="o">&gt;</span> <span class="nx">exec</span><span class="p">;</span>
 <span class="p">};</span>
-<span class="err">#</span><span class="nx">pragma</span> <span class="nx">pack</span><span class="p">(</span><span class="nx">pop</span><span class="p">)</span>
 </pre></div>
 
-<h3 id="opaqueresource-class">OpaqueResource class<a class="headerlink" href="#opaqueresource-class" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">OpaqueResource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="p">,</span> <span class="n">Operations</span><span class="o">&gt;</span>
+<h3 id="opaque-resources">Opaque Resources<a class="headerlink" href="#opaque-resources" title="Permanent link">&para;</a></h3>
+<p>If you have an opaque resource, you have two options. Either you directly reserve enough space in-place via the <code class="codehilite">Opaque&lt;N&gt;</code>
+templated class, or you let the class variable point to a memory location, which basically means an indirect memory access. Use <code class="codehilite">OpaqueIndirect</code> in this case.
+An example:</p>
+<div class="codehilite"><pre><span></span><span class="kt">char</span> <span class="n">memory</span><span class="p">[</span><span class="mi">100</span><span class="p">];</span>
+
+<span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
+   <span class="c1">// Equals an in-place array with the size of 20 bytes</span>
+   <span class="n">Opaque</span><span class="o">&lt;</span><span class="mi">20</span><span class="o">&gt;</span> <span class="n">opaqueRes</span><span class="p">;</span>
+
+   <span class="c1">// Similar to Opaque, but will be designated as string resource</span>
+   <span class="n">PreallocString</span><span class="o">&lt;</span><span class="mi">20</span><span class="o">&gt;</span> <span class="n">preallocStringRes</span><span class="p">;</span>   
+
+   <span class="c1">// You need to assign the OpaqueIndirect::data pointer a memory location.</span>
+   <span class="n">OpaqueIndirect</span> <span class="n">opaqueIndirectRes</span><span class="p">;</span>
+
+   <span class="n">MyObjectInstance</span><span class="p">()</span> <span class="o">:</span> <span class="n">opaqueIndirectRes</span><span class="p">{</span><span class="mi">100</span><span class="p">,</span><span class="mi">0</span><span class="p">,</span><span class="n">memory</span><span class="p">}</span> <span class="p">{}</span>
+<span class="p">};</span>
 </pre></div>
 
-<p>For an opaque memory area like the 32 byte array in <a href="#opaqueExample"><code class="codehilite">MyObjectInstance</code></a>, use <code class="codehilite">OpaqueResource</code>.
-You should also use <code class="codehilite">OpaqueResource</code> for preallocated, maximum length c-string resources.
-Define the resource ID, reference to the member variable and supported operations in this order.</p>
-<h3 id="pollingresource-class">PollingResource class<a class="headerlink" href="#pollingresource-class" title="Permanent link">&para;</a></h3>
-<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">PollingResource</span><span class="o">&lt;</span><span class="n">ResID</span><span class="p">,</span> <span class="n">ClassMemberReference</span><span class="o">&gt;</span>
+<h3 id="read-from-write-to-resource-value-function">Read from / Write to resource value function<a class="headerlink" href="#read-from-write-to-resource-value-function" title="Permanent link">&para;</a></h3>
+<p>Instead of storing data in member variables of your object instance, you can make the library to retrieve
+the resource value from a function call, or store a new resource value by calling a function.</p>
+<p>In the example of an object instance below you can see all three types (read from function, write to function, read/write from/to function):</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="nl">MyObjectInstance</span><span class="p">:</span> <span class="k">public</span> <span class="n">Lwm2mObjectInstance</span> <span class="p">{</span>
+    <span class="n">IndirectRead</span><span class="o">&lt;</span><span class="kt">int8_t</span><span class="o">&gt;</span> <span class="n">test_read_fun_int8</span><span class="p">;</span>
+    <span class="n">IndirectRead</span><span class="o">&lt;</span><span class="kt">uint32_t</span><span class="o">&gt;</span> <span class="n">test_read_fun_uint32</span><span class="p">;</span>
+
+    <span class="n">IndirectRead</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span> <span class="n">test_read_fun_string</span><span class="p">;</span>
+    <span class="n">IndirectWrite</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span> <span class="n">test_write_fun_string</span><span class="p">;</span>
+    <span class="n">IndirectReadWrite</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span> <span class="n">test_readWrite_fun_string</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
 </pre></div>
 
-<p>It is possible to read a value for a read-only resource (O_RES_R) from a function instead of a classes member variable.
-Use <code class="codehilite">PollingResource</code> and define the resource ID point to a class member variable that does not hold the value,
-but is a pointer to a function instead.</p>
+<p>As you can see, you will use the templated classes <code class="codehilite">IndirectRead</code>, <code class="codehilite">IndirectWrite</code> and <code class="codehilite">IndirectReadWrite</code>.
+The first two expect a parameter tuple (type, variable name). The third expects the type only.</p>
 <p>The library will crash, if the function pointer is dangling / not assigned to a valid function!</p>
+<p>An example object looks like this, with a constructor setting the function pointer:</p>
+<div class="codehilite"><pre><span></span><span class="kr">int</span> <span class="nx">my_read_method() {</span> <span class="k">return</span> <span class="mi">12</span><span class="p">;</span> <span class="p">}</span>
+<span class="nx">using</span> <span class="nx">MyReadIntFunction</span> <span class="o">=</span> <span class="kr">int</span> <span class="p">(</span><span class="o">*</span><span class="p">)();</span>
+
+<span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="p">,</span><span class="nx">MyObject</span><span class="p">,</span><span class="nx">MyObjectInstance</span><span class="o">&gt;</span>
+<span class="p">{</span>
+<span class="kr">public</span><span class="o">:</span>
+    <span class="nx">Resource</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">readFunctionPtr</span><span class="p">)</span> <span class="nx">readFunctionPtr</span><span class="p">;</span>
+
+    <span class="nx">MyObject</span><span class="p">(</span><span class="nx">MyReadIntFunction</span> <span class="nx">fun</span><span class="p">)</span> <span class="o">:</span> <span class="nx">readFunctionPtr</span><span class="p">(</span><span class="nx">fun</span><span class="p">)</span> <span class="p">{}</span>
+<span class="p">};</span>
+
+<span class="nx">MyObject</span> <span class="nx">o</span><span class="p">(</span><span class="nx">my_read_method</span><span class="p">);</span>
+</pre></div>
+
 <h2 id="object-definition-c-api_1">Object definition C API<a class="headerlink" href="#object-definition-c-api_1" title="Permanent link">&para;</a></h2>
 <p>Include <code class="codehilite">lwm2m_objects.h</code>.</p>
 <p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * @param objectP The object. May not be NULL.</span>
-<span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_object_free</span><span class="p">(</span><span class="n">lwm2m_object_t</span> <span class="o">*</span> <span class="n">objectP</span><span class="p">);</span>
-</pre></div>
-Free an lwm2m object, you have created with <code class="codehilite">lwm2m_object_create</code>.
-The instances which are connected to this object are not freed!</p>
-<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * @param object The object memory, doesn&#39;t need to be initialized.</span>
-<span class="cm"> * @param object_id The object ID (coap ressource id)</span>
+<span class="cm"> * @param context   The wakaama context.</span>
+<span class="cm"> * @param object   The wakaama lwm2m object with meta information attached.</span>
 <span class="cm"> * @param allow_dynamic_instance_creation Allows or disallows the use of lwm2m_object_instances_add(). Heap memory will be used.</span>
-<span class="cm"> * @param meta_information The objects meta data.</span>
+<span class="cm"> * @return The error code or COAP_NO_ERROR if no error.</span>
 <span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_object_create_preallocated</span><span class="p">(</span><span class="n">lwm2m_object_with_meta_t</span><span class="o">*</span> <span class="n">object</span><span class="p">,</span>
-                                      <span class="kt">uint16_t</span> <span class="n">object_id</span><span class="p">,</span>
-                                      <span class="kt">bool</span> <span class="n">allow_dynamic_instance_creation</span><span class="p">,</span>
-                                      <span class="n">lwm2m_object_meta_information_t</span><span class="o">*</span> <span class="n">meta_information</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">lwm2m_add_initialize_object</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span>
+                                <span class="n">lwm2m_object_t</span><span class="o">*</span> <span class="n">object</span><span class="p">,</span>
+                                <span class="kt">bool</span> <span class="n">allow_dynamic_instance_creation</span><span class="p">);</span>
 </pre></div>
-Similar to lwm2m_object_create
-Instead of allocating an object on the heap for you like in <code class="codehilite">lwm2m_object_create</code>, with this method
-you have to provide a pointer to the memory where the object data should be stored.</p>
+Initializes an lwm2m object, created with OBJECT_META().
+This will also add the object to the wakaama object registry. If the client
+is already connected to a server, the server will be notified.</p>
+<p>Remove an object with lwm2m_remove_object(context, object_id) again.</p>
 <p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param context   The wakaama context.</span>
 <span class="cm"> * @param object The lwm2m_object.</span>
-<span class="cm"> * @param instance One or more linked instances.</span>
+<span class="cm"> * @param instance An object instance.</span>
 <span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_object_instances_add</span><span class="p">(</span><span class="n">lwm2m_object_t</span><span class="o">*</span> <span class="n">object</span><span class="p">,</span> <span class="n">lwm2m_list_t</span><span class="o">*</span> <span class="n">instance</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">lwm2m_object_instance_add</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">context</span><span class="p">,</span> <span class="n">lwm2m_object_t</span><span class="o">*</span> <span class="n">object</span><span class="p">,</span> <span class="n">lwm2m_list_t</span><span class="o">*</span> <span class="n">instance</span><span class="p">);</span>
 </pre></div>
 Add an instance to an object.</p>
-<p>Ideally you do this before you have connected to a server. Otherwise you
-have to notify the server with <code class="codehilite">lwm2m_update_registration(..., true)</code> about the changed object.</p>
+<p>Ideally you do this before you connect to a server and before you call <code class="codehilite">lwm2m_add_initialize_object</code>.
+The server will be notified of the updated object otherwise.</p>
 <p>A lwm2m object instance consists of one ore more ressources identified by their ressource ids.
 A ressource may be an uint8, int8, uint16, int16, uint32, int32, uint64, int64, double, c-string.</p>
 <p>Please be aware that your object instance
@@ -1077,24 +1153,6 @@ have to "inherit" lwm2m_list_t::next and lwm2m_list_t::id like in the following 
 <p>If you implement any object with an id registered at
 <a href="http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html">OMA Object &amp; Resource Registry</a>,
 your object instances have to provide all of the defined ressources</p>
-<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * @param object_id The object id. Ids below 7 are forbidden. Ids &gt;=10241 are for custom objects.</span>
-<span class="cm"> *                  Look at http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html</span>
-<span class="cm"> *                  for predefined object definitions for ids 8-2047.</span>
-<span class="cm"> * @param allow_dynamic_instance_creation if you want a lwm2m server to be able to create new instances of your object.</span>
-<span class="cm"> * @param meta_information</span>
-<span class="cm"> * @return</span>
-<span class="cm"> */</span>
-<span class="k">extern</span> <span class="n">lwm2m_object_t</span><span class="o">*</span> <span class="nf">lwm2m_object_create</span><span class="p">(</span>
-                                    <span class="kt">uint16_t</span> <span class="n">object_id</span><span class="p">,</span>
-                                    <span class="kt">bool</span> <span class="n">allow_dynamic_instance_creation</span><span class="p">,</span>
-                                    <span class="n">lwm2m_object_meta_information_t</span><span class="o">*</span> <span class="n">meta_information</span><span class="p">);</span>
-</pre></div>
-Helps you with creating a new lwm2m object.</p>
-<p>You may create a custom object or any predefined objects, except
-already defined objects 1, 2, 3 and 5.</p>
-<p>An lwm2m object consists of an object id and none, one or more object instances. Wakaama
-allows you to add user data to an object by using the object-&gt;userdata member.</p>
 <h3 id="object_meta">OBJECT_META<a class="headerlink" href="#object_meta" title="Permanent link">&para;</a></h3>
 <p>To allow WakaamaNode to</p>
 <ul>
@@ -1103,39 +1161,52 @@ allows you to add user data to an object by using the object-&gt;userdata member
 <li>execute resources</li>
 </ul>
 <p>you have to provide a machine readable description. You do this by definining a
-lwm2m_object_meta_information_t. Use OBJECT_META() for this purpose like shown below:</p>
-<div class="codehilite"><pre><span></span><span class="n">OBJECT_META</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span> <span class="n">test_object_meta</span><span class="p">,</span> <span class="n">test_object_write_verify_cb</span><span class="p">,</span>
+lwm2m_object_meta_information_t. Imagine you have defined an object instance looking like below:</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+   <span class="k">struct</span> <span class="n">_prv_instance_next</span><span class="p">;</span> <span class="c1">// matches lwm2m_list_t::next</span>
+   <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>          <span class="c1">// matches lwm2m_list_t::id</span>
+
+   <span class="kt">uint8_t</span> <span class="n">test</span><span class="p">;</span>
+   <span class="n">ExecutableType</span> <span class="n">exec</span><span class="p">;</span>
+   <span class="kt">double</span> <span class="n">dec</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
+</pre></div>
+
+<p>Use OBJECT_META() for the machine readable description part:</p>
+<div class="codehilite"><pre><span></span><span class="n">OBJECT_META</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span> <span class="n">test_object</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="n">test_object_write_verify_cb</span><span class="p">,</span>
     <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">,</span><span class="n">O_RES_UINT8</span> <span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">test</span><span class="p">)},</span>
     <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="n">O_RES_E</span> <span class="p">,</span><span class="n">O_RES_EXEC</span>  <span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">exec</span><span class="p">)},</span>
     <span class="p">{</span><span class="mi">2</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">,</span><span class="n">O_RES_DOUBLE</span><span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">dec</span><span class="p">)}</span>
 <span class="p">);</span>
 </pre></div>
 
-<p>You provide the object instance structure and the variable name for the meta object via
+<p>Which results in a <code class="codehilite">test_object</code> variable, that can be handed over to <code class="codehilite">lwm2m_add_initialize_object</code>.</p>
+<p>OBJECT_META expects the object instance (here: <code class="codehilite">your_object_instance_t</code>), and the variable name for the object via
 the first and second argument.</p>
-<p>The third argument may be set to NULL. Otherwise set it to a callback method which is called on
+<p>The third argument is the object ID.</p>
+<p>The 4<sup>th</sup> argument may be set to NULL. Otherwise set it to a callback method which is called on
 a write to your object instance. You may react on a write in this method and you may deny the write if the new value
 is not in range of your allowed values. The callback method needs this signature:</p>
 <p><code class="codehilite">bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);</code></p>
 <p>The subsequent arguments describe the ressources of your object instances. Each entry is enclosed in curly brackets and consists of these values:</p>
 <ol>
 <li>The id of the ressource</li>
-<li>The access modifier (O_RES_RW for read/write etc).</li>
-<li>The type (O_RES_UINT8 for uint8 etc, O_RES_EXEC for executables).</li>
+<li>The Resource access modifier (see next sections).</li>
+<li>The Resource type (see next sections).</li>
 <li>Member pointer</li>
 </ol>
-<h3 id="executablereadablewritable-resources">Executable/Readable/Writable Resources<a class="headerlink" href="#executablereadablewritable-resources" title="Permanent link">&para;</a></h3>
+<h3 id="resource-access-modifier">Resource Access modifier<a class="headerlink" href="#resource-access-modifier" title="Permanent link">&para;</a></h3>
 <p>You can use the following access modifiers:</p>
-<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">_lwm2m_object_util_access_</span> <span class="p">{</span>
-    <span class="n">O_RES_R</span>  <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="c1">///&lt; Read only access</span>
-    <span class="n">O_RES_W</span>  <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="c1">///&lt; Write only access</span>
-    <span class="n">O_RES_RW</span> <span class="o">=</span> <span class="n">O_RES_R</span><span class="o">|</span><span class="n">O_RES_W</span><span class="p">,</span> <span class="c1">///&lt; Read/Write access</span>
-    <span class="n">O_RES_E</span>  <span class="o">=</span> <span class="mi">4</span><span class="p">,</span> <span class="c1">///&lt; Standalone: Makes this resource executable. Combinded with O_RES_R: Reads the resource value from the function.</span>
-    <span class="n">O_RES_M</span>  <span class="o">=</span> <span class="mi">8</span>  <span class="c1">///&lt; Indicator for a resource modification. After a write this flag will be erased.</span>
-<span class="p">}</span> <span class="n">lwm2m_object_util_access_t</span><span class="p">;</span>
-</pre></div>
-
-<h3 id="resource-types">Resource types<a class="headerlink" href="#resource-types" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>O_RES_R</strong>: Read only access</li>
+<li><strong>O_RES_W</strong>:Write only access</li>
+<li><strong>O_RES_RW</strong>: Read/Write access</li>
+<li><strong>O_RES_E</strong>: Makes this resource executable</li>
+<li><strong>O_RES_E|O_RES_R</strong>: Reads the resource value from a function</li>
+<li><strong>O_RES_E|O_RES_W</strong>: Writes the resource value to a function</li>
+<li><strong>O_RES_E|O_RES_RW</strong>: The resource value is read from and written to a function</li>
+</ul>
+<h3 id="resource-type">Resource type<a class="headerlink" href="#resource-type" title="Permanent link">&para;</a></h3>
 <p>You can use the following types:</p>
 <div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">enum</span> <span class="n">_lwm2m_object_util_type_</span> <span class="p">{</span>
     <span class="n">O_RES_EXEC</span>   <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="c1">///&lt; Executable resource == no type</span>
@@ -1148,31 +1219,76 @@ is not in range of your allowed values. The callback method needs this signature
     <span class="n">O_RES_INT32</span>  <span class="o">=</span> <span class="mi">7</span><span class="p">,</span> <span class="c1">///&lt; Int with range [-2^31,2^31-1]</span>
     <span class="n">O_RES_UINT32</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span> <span class="c1">///&lt; Int with range [0, 2^32-1]</span>
     <span class="n">O_RES_INT64</span>  <span class="o">=</span> <span class="mi">9</span><span class="p">,</span> <span class="c1">///&lt; Int with range [-2^63, 2^63-1]</span>
-    <span class="n">O_RES_STRING</span>          <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="c1">///&lt; free + strdub for an entry</span>
-    <span class="n">O_RES_STRING_STATIC</span>   <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="c1">///&lt; assign pointer, no free</span>
-    <span class="n">O_RES_STRING_PREALLOC</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span> <span class="c1">///&lt; preallocated space. In the write verify cb make sure the incoming string fits into the allocated space.</span>
-    <span class="n">O_RES_OPAQUE</span>          <span class="o">=</span> <span class="mi">13</span><span class="p">,</span> <span class="c1">///&lt; free + memcpy with length for an antry</span>
-    <span class="n">O_RES_OPAQUE_STATIC</span>   <span class="o">=</span> <span class="mi">14</span> <span class="c1">///&lt; assign pointer and length, no free</span>
+    <span class="n">O_RES_STRING</span>          <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="c1">///&lt; Readonly c-string</span>
+    <span class="n">O_RES_STRING_PREALLOC</span> <span class="o">=</span> <span class="mi">11</span><span class="p">,</span> <span class="c1">///&lt; preallocated space. To be used with OpaqueType(N) in C or Opaque&lt;N&gt; in C++.</span>
+    <span class="n">O_RES_OPAQUE_INDIRECT</span> <span class="o">=</span> <span class="mi">12</span><span class="p">,</span> <span class="c1">///&lt; To be used with type OpaqueIndirect</span>
+    <span class="n">O_RES_OPAQUE_PREALLOC</span> <span class="o">=</span> <span class="mi">13</span>  <span class="c1">///&lt; preallocated space. To be used with OpaqueType(N) in C or Opaque&lt;N&gt; in C++.</span>
 <span class="p">}</span> <span class="n">lwm2m_object_util_type_t</span><span class="p">;</span>
 </pre></div>
 
-<h3 id="opaquepreallocated-resources">Opaque/Preallocated resources<a class="headerlink" href="#opaquepreallocated-resources" title="Permanent link">&para;</a></h3>
-<p>If you have an OPAQUE field in your struct you have to define it as a pointer, directly followed by a size_t struct member,
-where the length information is stored. An example:</p>
+<h3 id="executable-resources_1">Executable Resources<a class="headerlink" href="#executable-resources_1" title="Permanent link">&para;</a></h3>
+<p>An executable resource expects a function pointer in your object instance struct. Use the special <code class="codehilite">ExecutableType</code> type:</p>
 <div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
    <span class="k">struct</span> <span class="n">_prv_instance_next</span><span class="p">;</span> <span class="c1">// matches lwm2m_list_t::next</span>
-   <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>             <span class="c1">// matches lwm2m_list_t::id</span>
-   <span class="kt">uint8_t</span><span class="o">*</span>  <span class="n">opaque_field</span><span class="p">;</span>
-   <span class="kt">size_t</span>    <span class="n">opaque_field_length</span><span class="p">;</span>  <span class="c1">// The length of the opaque_field buffer.</span>
+   <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>          <span class="c1">// matches lwm2m_list_t::id</span>
+   <span class="n">ExecutableType</span> <span class="n">myExecRes</span><span class="p">;</span>
 <span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
 </pre></div>
 
-<p>OPAQUE and STRING fields have two/three variants:</p>
+<p>The signature of your executabe function pointer should be: <code class="codehilite">void myFun();</code>.</p>
+<h3 id="opaque-resources_1">Opaque Resources<a class="headerlink" href="#opaque-resources_1" title="Permanent link">&para;</a></h3>
+<p>If you have an opaque resource, you have two options. Either you directly reserve enough space in-place via the <code class="codehilite">OpaqueType(N)</code>
+macro, or you let the struct variable point to a memory location, which basically means an indirect memory access. Use <code class="codehilite">OpaqueIndirect</code> in this case.
+An example:</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+   <span class="k">struct</span> <span class="n">_prv_instance_next</span><span class="p">;</span> <span class="c1">// matches lwm2m_list_t::next</span>
+   <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>          <span class="c1">// matches lwm2m_list_t::id</span>
+
+   <span class="c1">// Equals an in-place array with the size of 20 bytes</span>
+   <span class="n">OpaqueType</span><span class="p">(</span><span class="mi">20</span><span class="p">)</span> <span class="n">opaqueRes</span><span class="p">;</span>
+
+   <span class="c1">// You need to assign the OpaqueIndirect::data pointer a memory location.</span>
+   <span class="n">OpaqueIndirect</span> <span class="n">opaqueIndirectRes</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
+</pre></div>
+
+<p>Before you can actually use <code class="codehilite">your_object_instance_t</code>, you need to initialize opaque members.</p>
 <ul>
-<li>normal: On each assignment to the normal variant, a series of free(), malloc() and strcpy() will be executed.</li>
-<li>_STATIC: the incoming data pointer will be assigned to the member variable directly and you have to take care, that the assigned data is valid as long as that object instance is alive.</li>
-<li>_PREALLOC: The _PREALLOC variant changes into a normal variant as soon as the user assigns a different value.</li>
+<li>Set the reserved size: For <code class="codehilite">opaqueRes</code> this is done by: <code class="codehilite">opaqueRes.reserved_len = 20;</code>.</li>
+<li>Set the used size to 0: <code class="codehilite">opaqueRes.used_len = 0;</code>. This value will be updated on a write access.</li>
+<li>Set the function pointer for <code class="codehilite">OpaqueIndirect</code>: <code class="codehilite">opaqueIndirectRes.data = myMemory;</code>.</li>
 </ul>
+<p>The C-API does not reallocate memory. If there's not enough space, a <strong>COAP_413_ENTITY_TOO_LARGE</strong> error code is returned.</p>
+<h3 id="read-from-write-to-resource-value-function_1">Read from / Write to resource value function<a class="headerlink" href="#read-from-write-to-resource-value-function_1" title="Permanent link">&para;</a></h3>
+<p>Instead of storing data in member variables of your object instance, you can make the library to retrieve
+the resource value from a function call, or store a new resource value by calling a function.</p>
+<p>In the example of an object instance below you can see all three types (read from function, write to function, read/write from/to function):</p>
+<div class="codehilite"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="k">struct</span> <span class="n">_prv_instance_next</span><span class="p">;</span> <span class="c1">// matches lwm2m_list_t::next</span>
+    <span class="kt">uint16_t</span> <span class="n">shortID</span><span class="p">;</span>          <span class="c1">// matches lwm2m_list_t::id</span>
+
+    <span class="n">IndirectReadType</span><span class="p">(</span><span class="kt">int8_t</span><span class="p">,</span><span class="n">test_read_fun_int8</span><span class="p">);</span>
+    <span class="n">IndirectReadType</span><span class="p">(</span><span class="kt">uint32_t</span><span class="p">,</span><span class="n">test_read_fun_uint32</span><span class="p">);</span>
+
+    <span class="n">IndirectReadType</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span><span class="n">test_read_fun_string</span><span class="p">);</span>
+    <span class="n">IndirectWriteType</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span><span class="n">test_write_fun_string</span><span class="p">);</span>
+    <span class="n">IndirectReadWriteType</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">)</span> <span class="n">test_readWrite_fun_string</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
+</pre></div>
+
+<p>As you can see, you will use the macros <code class="codehilite">IndirectReadType</code>, <code class="codehilite">IndirectWriteType</code> and <code class="codehilite">IndirectReadWriteType</code>.
+The first two expect a parameter tuple (type, variable name). The third expects the type only.</p>
+<p>The library will crash, if the function pointer is dangling / not assigned to a valid function!</p>
+<p>Before you can actually use <code class="codehilite">your_object_instance_t</code>, you need to initialize indirect read/write members.</p>
+<p>For the example above this would look like:
+<div class="codehilite"><pre><span></span>    <span class="n">your_object_instance_t</span><span class="p">.</span><span class="n">test_read_fun_int8</span> <span class="o">=</span> <span class="n">readFun8</span><span class="p">;</span>
+    <span class="n">your_object_instance_t</span><span class="p">.</span><span class="n">test_read_fun_uint32</span> <span class="o">=</span> <span class="n">readFun32</span><span class="p">;</span>
+
+    <span class="n">your_object_instance_t</span><span class="p">.</span><span class="n">test_read_fun_string</span> <span class="o">=</span> <span class="n">readFunStr</span><span class="p">;</span>
+    <span class="n">your_object_instance_t</span><span class="p">.</span><span class="n">test_write_fun_string</span> <span class="o">=</span> <span class="n">writeFunStr</span><span class="p">;</span>
+    <span class="n">your_object_instance_t</span><span class="p">.</span><span class="n">test_readWrite_fun_string</span><span class="p">.</span><span class="n">read</span> <span class="o">=</span> <span class="n">readFunStr</span><span class="p">;</span>
+    <span class="n">your_object_instance_t</span><span class="p">.</span><span class="n">test_readWrite_fun_string</span><span class="p">.</span><span class="n">write</span> <span class="o">=</span> <span class="n">writeFunStr</span><span class="p">;</span>
+</pre></div></p>
                 
                   
                 
