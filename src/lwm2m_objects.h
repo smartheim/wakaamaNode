@@ -11,7 +11,6 @@
 extern "C" {
 #endif
 
-
 /**
  * @brief Implement this method to get notified of altered lwM2M resources.
  *
@@ -49,6 +48,10 @@ typedef enum _lwm2m_object_util_access_ {
     O_RES_M  = 8  ///< Indicator for a resource modification. After a write this flag will be erased.
 } lwm2m_object_util_access_t;
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma clang diagnostic ignored "-Wpedantic"
+#endif
 #pragma GCC diagnostic ignored "-Wpedantic"
 typedef struct _lwm2m_object_res_item_t_ {
     uint16_t ressource_id;
@@ -76,12 +79,12 @@ typedef struct _lwm2m_object_res_opaque_t_ {
     uint8_t data[N]; \
 }
 
-typedef void(*ExecutableType)();
-#define IndirectReadType(TYPE,NAME) TYPE(*NAME)()
+typedef void(*ExecutableType)(void);
+#define IndirectReadType(TYPE,NAME) TYPE(*NAME)(void)
 #define IndirectWriteType(TYPE,NAME) void(*NAME)(TYPE)
 
 #define IndirectReadWriteType(TYPE) struct { \
-    TYPE(*read)(); \
+    TYPE(*read)(void); \
     void(*write)(TYPE); \
 }
 

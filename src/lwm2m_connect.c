@@ -4,7 +4,7 @@
 #include "client_debug.h"
 #include "network.h"
 
-static lwm2m_context_t * contextP;
+lwm2m_context_t * contextP;
 
 inline lwm2m_context_t * lwm2m_client_get_context() {
     return contextP;

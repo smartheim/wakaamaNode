@@ -47,7 +47,7 @@ else()
     set(GTEST_FILES "")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wno-unknown-pragmas -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-folding-constant")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic")
 
 ## Prepare for coverage measuring

@@ -30,6 +30,8 @@ static const char* prv_status_to_string(int status)
     default: return "";
     }
 }
+#else
+#define prv_status_to_string(s)
 #endif
 
 void print_status(uint8_t status)

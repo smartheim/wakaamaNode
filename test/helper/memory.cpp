@@ -32,10 +32,6 @@ std::string hexify(T i)
     return buf.str().c_str();
 }
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifdef WITH_LIB_UNWIND
 
 std::string print_trace (void)
@@ -99,6 +95,11 @@ std::string print_trace (void)
 }
 #else
 std::string print_trace (void) { return std::string(); }
+#endif
+
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 void* lwm2m_malloc(size_t s)

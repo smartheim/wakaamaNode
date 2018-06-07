@@ -24,13 +24,14 @@ void network_close()
 
 void* network_get_interface(int id)
 {
+    (void)id;
     return 0;
 }
 
 uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets)
 {
     struct timeval tv = {0,1000*50}; // wait 50ms for an incoming packet
-    fd_set readfds = {0};
+    fd_set readfds = {{0}};
     for (uint8_t c = 0; c < bound_sockets; ++c) {
         int sock = lwm2m_network_native_sock(lwm2mH, c);
         if (sock == -1)

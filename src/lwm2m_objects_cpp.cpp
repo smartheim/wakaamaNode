@@ -1,6 +1,16 @@
 #include "lwm2m_objects.hpp"
 #include <cstring>
 
+// Test offset_of
+struct TestA {
+    int a;
+};
+struct TestB : public TestA {
+    int b;
+};
+static_assert(offset_of(&TestB::b)==sizeof(int),"offset_of doesn't work");
+
+
 int lwm2m_object_prepare_full_response(lwm2m_data_t ** dataArrayP, Lwm2mObjectBase* metaP)
 {
     *dataArrayP = lwm2m_data_new(metaP->resources_len());
@@ -168,7 +178,7 @@ static uint8_t prv_write(uint16_t instanceId,
     // For the verify/write callback to be able to deny a change, we hand over a copy
     // of the instance data. The copy is just thrown away if the change is denied.
     uint8_t copy_of_entry[300];
-    if (metaP->object_instance_size>300) return COAP_412_PRECONDITION_FAILED;
+    if (metaP->sizes.object_instance>300) return COAP_412_PRECONDITION_FAILED;
 
     for (int i = 0 ; i < numData ; ++i)
     {
@@ -187,7 +197,7 @@ static uint8_t prv_write(uint16_t instanceId,
 
         // For the verify/write callback to be able to deny a change, we hand over a copy
         // of the instance data. The copy is just thrown away if the change is denied.
-        memcpy(copy_of_entry, instanceP, metaP->object_instance_size);
+        memcpy(copy_of_entry, instanceP, metaP->sizes.object_instance);
         void* memberP = (void*)((char*)copy_of_entry + resP->struct_member_offset);
 
         union {
@@ -293,7 +303,7 @@ static uint8_t prv_write(uint16_t instanceId,
             }
             // The verify method is either not set or accepted the input. Copy the altered
             // instance data back to the original instance.
-            memcpy(instanceP, copy_of_entry, metaP->object_instance_size);
+            memcpy(instanceP, copy_of_entry, metaP->sizes.object_instance);
         } else {
             return COAP_400_BAD_REQUEST;
         }
@@ -419,6 +429,9 @@ static uint8_t prv_create(uint16_t instanceId,
 
     return result;
 }
+
+Lwm2mObjectInstance* Lwm2mObjectBase::createInstance(uint16_t) {return nullptr;}
+int Lwm2mObjectBase::deleteInstance(Lwm2mObjectInstance*) {return COAP_NO_ERROR;}
 
 void Lwm2mObjectBase::addInstance(lwm2m_context_t * contextP, Lwm2mObjectInstance* instance) {
     if (lwm2m_list_find(object.instanceList,instance->id)) return;

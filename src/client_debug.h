@@ -5,6 +5,10 @@
 extern "C" {
 #endif
 
+#ifndef LWM2M_WITH_LOGS
+#define lwm2m_printf(...)
+#endif
+
 void print_state(lwm2m_context_t * lwm2mH);
 
 #ifdef __cplusplus

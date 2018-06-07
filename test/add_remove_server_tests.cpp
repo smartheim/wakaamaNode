@@ -40,11 +40,11 @@ public:
     lwm2m_object_t * serverObj=nullptr;
     lwm2m_context_t * server_context=nullptr;
     int client_bound_sockets;
+    int client_updated;
 
     // Client name and connected client name
     char* connected_client_name = nullptr;
     const char* client_name = "testClient";
-    int client_updated;
 
  protected:
     virtual void TearDown() {

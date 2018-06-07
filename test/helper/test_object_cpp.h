@@ -67,8 +67,8 @@ struct MyTestObjectInstance : public Lwm2mObjectInstance {
                          IndirectWrite<const char*> test_write_fun_string,
                          IndirectReadWrite<const char*> test_readWrite_fun_string)
         : test_execute_fun(test_execute_fun), test_read_fun_int8(test_read_fun_int8),
-    test_read_fun_uint32(test_read_fun_uint32),test_read_fun_string(test_read_fun_string),
-    test_write_fun_string(test_write_fun_string),test_readWrite_fun_string(test_readWrite_fun_string) {
+        test_read_fun_uint32(test_read_fun_uint32),test_read_fun_string(test_read_fun_string),
+        test_write_fun_string(test_write_fun_string),test_readWrite_fun_string(test_readWrite_fun_string) {
         test_str_prealloc.copy("test");
         test_opaque_prealloc.copy("ab\0\nab",6);
     }

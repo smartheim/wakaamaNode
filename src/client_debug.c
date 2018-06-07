@@ -1,11 +1,11 @@
 #include "client_debug.h"
 #include "wakaama_config.h"
 #include "wakaama/liblwm2m.h"
-#include "lwm2m_connect.h" // for lwm2m_printf
 #include "wakaama/internals.h"
 
 #ifndef LWM2M_WITH_LOGS
-void lwm2m_printf(const char * format, ...) {}
+void lwm2m_printfAA(const char * format, ...) {
+}
 #endif
 
 void print_state(lwm2m_context_t * lwm2mH)
