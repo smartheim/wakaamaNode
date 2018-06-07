@@ -681,6 +681,7 @@ New objects and resources can be proposed via the <a href="http://devtoolkit.ope
 <p>WakaamaNode provides ready-to-consume C++ objects for all lwM2M objects of the registry. Just be aware that
 special implementations exist for object ID 1 (LWM2M Server), 2 (Access Control), 3 (device) and 5 (firmware)
 and you should not use the auto generated ones.</p>
+<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <p>For example if you want to use the "Light Control" lwM2M object:</p>
 <ul>
 <li>Search the list below for "Light Control".</li>
@@ -689,7 +690,6 @@ and you should not use the auto generated ones.</p>
 <li>Create as many object instances as you need and add them to the object via <code class="codehilite">object.addInstance(objectInstance)</code>.</li>
 <li>Make the object itself known to WakaamaNode with <code class="codehilite">object.register(lwm2mContext)</code>.</li>
 </ul>
-<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;lwm2mObjects/3311.h&quot;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&quot;Arduino.h&quot;</span><span class="cp"></span>
 
@@ -701,10 +701,12 @@ and you should not use the auto generated ones.</p>
 <span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
     <span class="c1">// Overwrite the verifyFunction and &quot;abuse&quot; it as value changed event.</span>
     <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span> <span class="n">inst</span> <span class="o">=</span> <span class="p">(</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span><span class="p">)</span><span class="n">instance</span><span class="p">;</span>
-        <span class="c1">// Change the led pin depending on the power value</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">res_id</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-            <span class="n">digitalWrite</span><span class="p">(</span><span class="n">ledPin</span><span class="p">,</span> <span class="n">inst</span><span class="o">-&gt;</span><span class="n">power</span><span class="p">);</span>
+        <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span> <span class="n">inst</span> <span class="o">=</span> <span class="p">(</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span><span class="p">)</span><span class="n">instance</span><span class="p">;</span>
+        <span class="c1">// Is it instance 0 and the OnOff resource?</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span> <span class="o">==</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// Change the led pin depending on the OnOff value</span>
+            <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">inst</span><span class="o">-&gt;</span><span class="n">OnOff</span><span class="p">);</span>
+        <span class="p">}</span>
         <span class="c1">// Return true to accept the value and ACK to the server</span>
         <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
     <span class="p">};</span>
