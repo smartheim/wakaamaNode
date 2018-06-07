@@ -1,7 +1,7 @@
 # WakaamaNode [![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode)
 
 This is a Lightweight M2M library meant to be used for embedded/constrained devices with a convenient C and C++ API.
-Find the documentation at https://openhab-nodes.github.io/wakaamaNode/.
+[Get Started](https://openhab-nodes.github.io/wakaamaNode/).
 
 > Lightweight M2M is a protocol from the Open Mobile Alliance for M2M or IoT device management and communication.
 It is a convention on top of CoAP/UDP which itself is a light and compact protocol with an efficient resource data model.
@@ -14,7 +14,7 @@ A lot of common and not so common object and resource identifiers are standardis
 
 ## Features
 * The well-tested [Eclipse Wakaama](https://github.com/eclipse/wakaama) provides the underlying lwM2M protocol.
-* Always up-to-date/in-sync Wakaama code (using a Travis CI daily cron job).
+  * Always up-to-date/in-sync Wakaama code (using a Travis CI daily cron job).
 * A powerful [Connections API](https://openhab-nodes.github.io/wakaamaNode/api/connection-api/) allows to configure lwM2M servers
 * [lwM2M object definition API](https://openhab-nodes.github.io/wakaamaNode/api/objects-custom/) for C and C++
 * All LwM2M Objects of the [OMA Registry](http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html) are predefined for the [C++ Objects API](https://openhab-nodes.github.io/wakaamaNode/api/objects-registry/).

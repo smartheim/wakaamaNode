@@ -34,6 +34,7 @@ addons:
     - g++-6
     - gcc-6
     - clang-3.6
+    - libunwind8-dev
     - libgtest-dev
     - cmake
 

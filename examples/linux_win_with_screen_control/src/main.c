@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    // Create object
+    // Create object with the C-Object API
     lwm2m_object_t* test_object = get_screen_object();
     lwm2m_add_initialize_object(lwm2mH, test_object, false);
     lwm2m_object_instance_add(lwm2mH, test_object, get_screen_instance());

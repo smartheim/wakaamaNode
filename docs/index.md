@@ -12,12 +12,10 @@ It is a convention on top of CoAP/UDP, a light and compact protocol with an effi
 It follows a server/client architecture with Request/Response semantics (GET, POST, PUT, DELETE), as well as observable resources.
 Optional DTLS (Datagram TLS) ensures secure communication between LWM2M Servers and LWM2M Clients.
 
-Each service on a constrained device/sensor/actor is modeled as an lwM2M object instance with a set of so called resources,
-accessible via a unique CoAP URI.
-lwM2M URIs have a clear hierarchy of *objectID*/*objectInstanceID*/*resourceID*.
-A lot of common and not so common object and resource identifiers are standardised via the [OMA Object & Resource Registry](http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html).
+The CoAP/lwM2M data model is explained on the [Object API](https://openhab-nodes.github.io/wakaamaNode/api/about/) page.
 
-For example object [3311](http://www.openmobilealliance.org/tech/profiles/lwm2m/3311.xml) is for light controls, [3312](http://www.openmobilealliance.org/tech/profiles/lwm2m/3312.xml) for power sources such as smart plugs.
+A lot of common and not so common object and resource identifiers are standardised via the [OMA Object & Resource Registry](http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html). For example object [3311](http://www.openmobilealliance.org/tech/profiles/lwm2m/3311.xml) is for light controls, [3312](http://www.openmobilealliance.org/tech/profiles/lwm2m/3312.xml) for power sources such as smart plugs.
+
 
 ## Getting started
 
