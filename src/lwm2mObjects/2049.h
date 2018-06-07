@@ -1,0 +1,38 @@
+#pragma once
+// Automatically generated header file
+
+#include "lwm2m_objects.hpp"
+namespace KnownObjects {
+namespace id2049 {
+/* \brief Class for object 2049 - ActiveCmdhPolicy
+ *  This Object provides a link to the currently active set of CMDH policies
+ */
+class instance : public Lwm2mObjectInstance {
+public:
+
+    // 0 - Contains the reference to the CMDH policies (CmdhPolicy Object Instance) currently active for the associated CSE.
+    // Objlnk resources are not supported yet - ActiveLink;
+    
+    enum class RESID {
+        ActiveLink = 0,
+        
+    };
+};
+
+/* \brief Class for object 2049 - ActiveCmdhPolicy
+ *  This Object provides a link to the currently active set of CMDH policies
+ */
+class object : public Lwm2mObject<2049, object, instance> {
+public:
+
+    // 0 - Contains the reference to the CMDH policies (CmdhPolicy Object Instance) currently active for the associated CSE.
+    // Objlnk resources are not supported yet - ActiveLink;
+    
+};
+
+} // end of id namespace
+inline bool operator== (id2049::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, id2049::instance::RESID c1) { return (uint16_t) c1 == c2; }
+
+} // end of KnownObjects namespace
+	

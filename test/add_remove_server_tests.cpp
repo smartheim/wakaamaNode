@@ -13,13 +13,14 @@
  */
 
 #include <gtest/gtest.h>
-#include "wakaama_simple_client.h"
-#include "wakaama_object_utils.h"
-#include "wakaama_client_debug.h"
+#include "lwm2m_connect.h"
+#include "lwm2m_objects.h"
+#include "client_debug.h"
 #include "wakaama_server_debug.h"
-#include "wakaama_network.h"
-#include "wakaama_client_internal.h"
+#include "network.h"
+#include "internal.h"
 #include "network_helper.h"
+#include "memory.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -35,10 +36,9 @@ extern "C" {
 
 class AddRemoveServerTests : public testing::Test {
 public:
-    lwm2m_context_t * client_context;
-    lwm2m_object_t * securityObj;
-    lwm2m_object_t * serverObj;
-    lwm2m_context_t * server_context;
+    lwm2m_object_t * securityObj=nullptr;
+    lwm2m_object_t * serverObj=nullptr;
+    lwm2m_context_t * server_context=nullptr;
     int client_bound_sockets;
 
     // Client name and connected client name
@@ -56,19 +56,20 @@ public:
             server_context = nullptr;
         }
 
-        lwm2m_network_close(client_context);
 
         network_close();
+
+        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
     }
 
     virtual void SetUp() {
+        memoryObserver.reset();
         // Necessary for lwip to initialize the memory module
         ASSERT_TRUE(network_init());
 
-        client_context = lwm2m_client_init(client_name);
-        ASSERT_TRUE(client_context) << "Failed to initialize wakaama\r\n";
+        ASSERT_TRUE(lwm2m_client_init(client_name)) << "Failed to initialize wakaama\r\n";
 
-        securityObj = client_context->objectList;
+        securityObj = lwm2m_client_get_context()->objectList;
         ASSERT_EQ(securityObj->objID, 0);
         ASSERT_TRUE(securityObj);
         serverObj   = securityObj->next;
@@ -77,15 +78,15 @@ public:
 
         server_context = nullptr;
 
-        ASSERT_GE(lwm2m_network_init(client_context, "12345"), 1);
+        ASSERT_GE(lwm2m_network_init(lwm2m_client_get_context(), "12345"), 1);
     }
 };
 
 
 TEST_F(AddRemoveServerTests, AddServer) {
-    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false));
 
-    ASSERT_EQ(client_context->state, STATE_INITIAL);
+    ASSERT_EQ(lwm2m_client_get_context()->state, STATE_INITIAL);
 
     security_instance_t* secInstance = (security_instance_t*)securityObj->instanceList;
     server_instance_t* serverInstance = (server_instance_t*)serverObj->instanceList;
@@ -98,28 +99,28 @@ TEST_F(AddRemoveServerTests, AddServer) {
     ASSERT_STREQ(uriBuffer, LWM2M_SERVER_ADDR);
 
     time_t timeout;
-    uint8_t result = lwm2m_step(client_context, &timeout);
+    uint8_t result = lwm2m_step(lwm2m_client_get_context(), &timeout);
     ASSERT_EQ(COAP_NO_ERROR, result);
-    ASSERT_EQ(STATE_REGISTERING, client_context->state);
+    ASSERT_EQ(STATE_REGISTERING, lwm2m_client_get_context()->state);
 
     lwm2m_server_t * serverListEntry;
-    serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(client_context->serverList, secInstance->instanceId);
+    serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(lwm2m_client_get_context()->serverList, secInstance->instanceId);
     ASSERT_TRUE(serverListEntry);
 }
 
 TEST_F(AddRemoveServerTests, RemoveServer) {
     time_t timeout;
 
-    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false));
 
     security_instance_t* secInstance = (security_instance_t*)securityObj->instanceList;
 
     // Add server to serverlist
-    uint8_t result = lwm2m_step(client_context, &timeout);
+    uint8_t result = lwm2m_step(lwm2m_client_get_context(), &timeout);
     ASSERT_EQ(COAP_NO_ERROR, result);
 
     lwm2m_server_t * serverListEntry;
-    serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(client_context->serverList, secInstance->instanceId);
+    serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(lwm2m_client_get_context()->serverList, secInstance->instanceId);
     ASSERT_TRUE(serverListEntry);
 
     // Now assume registering worked
@@ -135,12 +136,12 @@ TEST_F(AddRemoveServerTests, RemoveServer) {
 
     ASSERT_FALSE(securityObj->instanceList);
     ASSERT_FALSE(serverObj->instanceList);
-    ASSERT_TRUE(client_context->serverList);
+    ASSERT_TRUE(lwm2m_client_get_context()->serverList);
 
-    ASSERT_EQ(client_context->state, STATE_INITIAL);
-    result = lwm2m_step(client_context, &timeout);
+    ASSERT_EQ(lwm2m_client_get_context()->state, STATE_INITIAL);
+    result = lwm2m_step(lwm2m_client_get_context(), &timeout);
     ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
 
-    ASSERT_EQ(client_context->state, STATE_BOOTSTRAP_REQUIRED);
-    ASSERT_FALSE(client_context->serverList);
+    ASSERT_EQ(lwm2m_client_get_context()->state, STATE_BOOTSTRAP_REQUIRED);
+    ASSERT_FALSE(lwm2m_client_get_context()->serverList);
 }

@@ -13,11 +13,12 @@
  */
 
 #include <gtest/gtest.h>
-#include "wakaama_simple_client.h"
-#include "wakaama_object_utils.h"
-#include "wakaama_client_debug.h"
-#include "wakaama_network.h"
+#include "lwm2m_connect.h"
+#include "lwm2m_objects.h"
+#include "client_debug.h"
+#include "network.h"
 #include <stdint.h>
+#include "memory.h"
 
 extern "C" {
     #include "internals.h"
@@ -64,31 +65,35 @@ extern "C" {
 class DeviceInfoObjectTests : public testing::Test {
 public:
     lwm2m_context_t * lwm2mH;
-    device_instance_t * deviceObj;
+    device_instance_t * deviceInstance;
+    lwm2m_object_t* deviceObject;
  protected:
     virtual void TearDown() {
         lwm2m_client_close();
+        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
     }
 
     virtual void SetUp() {
+        memoryObserver.reset();
+
         lwm2mH = lwm2m_client_init("testClient");
         ASSERT_TRUE(lwm2mH) << "Failed to initialize wakaama\r\n";
 
-        deviceObj = lwm2m_device_data_get();
+        deviceInstance = lwm2m_device_data_get();
 
-        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)lwm2mH->objectList, 3);
-        ASSERT_TRUE(o);
-        ASSERT_EQ(o->instanceList, (lwm2m_list_t*)deviceObj);
+        deviceObject = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)lwm2mH->objectList, 3);
+        ASSERT_TRUE(deviceObject);
+        ASSERT_EQ(deviceObject->instanceList, (lwm2m_list_t*)deviceInstance);
 
-        deviceObj->manufacturer = "manufacturer";
-        deviceObj->model_name = "model_name";
-        deviceObj->serial_number = "serial_number";
-        deviceObj->firmware_ver = "firmware_ver";
-        deviceObj->device_type = "device_type";
-        deviceObj->hardware_ver = "hardware1.0";
-        deviceObj->software_ver = "software1.0";
-        memcpy(deviceObj->time_offset, "+11:12", 7);
-        deviceObj->timezone = "Europe/+2";
+        deviceInstance->manufacturer = "manufacturer";
+        deviceInstance->model_name = "model_name";
+        deviceInstance->serial_number = "serial_number";
+        deviceInstance->firmware_ver = "firmware_ver";
+        deviceInstance->device_type = "device_type";
+        deviceInstance->hardware_ver = "hardware1.0";
+        deviceInstance->software_ver = "software1.0";
+        memcpy(deviceInstance->time_offset.data, "+11:12", sizeof("+11:12"));
+        deviceInstance->timezone = "Europe/+2";
     }
 };
 
@@ -96,17 +101,21 @@ public:
 TEST_F(DeviceInfoObjectTests, ReadAll) {
     lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, 0};
     lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
-    char* buffer;
-    size_t buffer_len=0;
-    uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
+
+    std::string fullRead;
+    {
+        size_t buffer_len=0;
+        char* buffer;
+        uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
+        ASSERT_EQ(s, CONTENT_2_05);
+        fullRead.assign(buffer,buffer_len);
+        lwm2m_free(buffer);
+    }
 
     const char expect[] = "{\"bn\":\"/3/0/\",\"e\":[{\"n\":\"0\",\"sv\":\"manufacturer\"},{\"n\":\"1\",\"sv\":\"model_name\"},{\"n\":\"2\",\"sv\":\"serial_number\"},{\"n\":\"3\",\"sv\":\"firmware_ver\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"11\",\"v\":-12},{\"n\":\"13\",\"v\":1498765432},{\"n\":\"16\",\"sv\":\"U\"},{\"n\":\"14\",\"sv\":\"+11:12\"},{\"n\":\"15\",\"sv\":\"Europe/+2\"},{\"n\":\"17\",\"sv\":\"device_type\"},{\"n\":\"18\",\"sv\":\"hardware1.0\"},{\"n\":\"19\",\"sv\":\"software1.0\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"10\",\"v\":12},{\"n\":\"21\",\"v\":12}]}";
 
-    ASSERT_EQ(CONTENT_2_05, s);
-    ASSERT_EQ(sizeof(expect), buffer_len+1);
-    ASSERT_TRUE(memcmp(expect, buffer, buffer_len)==0);
-
-    lwm2m_free(buffer);
+    ASSERT_STREQ(expect, fullRead.c_str());
+    ASSERT_EQ(sizeof(expect), fullRead.size()+1);
 }
 
 TEST_F(DeviceInfoObjectTests, ExecuteReboot) {

@@ -1106,6 +1106,10 @@ uint8_t registration_handleRequest(lwm2m_context_t * contextP,
                 return COAP_412_PRECONDITION_FAILED;
             }
 
+            // BUGFIX: Free version
+            lwm2m_free(version);
+            version = NULL;
+
             if (lifetime == 0)
             {
                 lifetime = LWM2M_DEFAULT_LIFETIME;

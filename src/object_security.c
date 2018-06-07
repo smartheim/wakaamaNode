@@ -41,7 +41,7 @@
  */
 
 #include "wakaama/liblwm2m.h"
-#include "wakaama_client_internal.h"
+#include "internal.h"
 
 #include <stdlib.h>
 #include <string.h>

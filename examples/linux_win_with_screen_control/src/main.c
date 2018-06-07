@@ -1,7 +1,7 @@
-#include "wakaama_simple_client.h"
-#include "wakaama_object_utils.h"
-#include "wakaama_client_debug.h"
-#include "wakaama_network.h"
+#include "lwm2m_connect.h"
+#include "lwm2m_objects.h"
+#include "client_debug.h"
+#include "network.h"
 #include "screen_object.h"
 
 #include <string.h>
@@ -43,9 +43,9 @@ int main(int argc, char *argv[])
     }
 
     // Create object
-    lwm2m_object_t* test_object = lwm2m_object_create(1024, true, screen_object_get_meta());
-    lwm2m_object_instances_add(test_object, screen_object_create_instances());
-    lwm2m_add_object(lwm2mH, test_object);
+    lwm2m_object_t* test_object = get_screen_object();
+    lwm2m_add_initialize_object(lwm2mH, test_object, false);
+    lwm2m_object_instance_add(lwm2mH, test_object, get_screen_instance());
 
     uint8_t bound_sockets = lwm2m_network_init(lwm2mH, NULL);
 
@@ -54,6 +54,14 @@ int main(int argc, char *argv[])
         fprintf(stderr, "Failed to open socket: %d %s\r\n", errno, strerror(errno));
         return -1;
     }
+    
+    // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
+    // unsend messages. The host url is either coap:// or coaps://.
+    lwm2m_add_server(123, "coap://192.168.1.18", 100, false);
+    
+    // If you want to establish a DTLS secured connection, you need to alter the security
+    // information:
+    // lwm2m_server_security_preshared(123, "publicid", "password", sizeof("password"));
 
     /*
      * We now enter a while loop that will handle the communications from the server
@@ -95,10 +103,8 @@ int main(int argc, char *argv[])
 
     printf("finished\n");
 
-    lwm2m_network_close(lwm2mH);
+    lwm2m_remove_object(lwm2mH, test_object->objID);
     lwm2m_client_close();
-
-    lwm2m_object_free(test_object);
 
     return 0;
 }

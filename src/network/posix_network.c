@@ -1,8 +1,9 @@
 #if !defined(LWIP) && (defined(_WIN32) || defined(__unix__) || defined(POSIX_NETWORK))
 
-#include "wakaama_network.h"
-#include "wakaama_simple_client.h"
+#include "network.h"
+#include "lwm2m_connect.h"
 #include "network_utils.h"
+#include "client_debug.h"
 #include "internals.h"
 #include <stdio.h>
 #include <errno.h>
@@ -103,7 +104,7 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
     for(p = res ; p != NULL && s == -1 ; p = p->ai_next)
         ++network->open_listen_sockets;
 
-    network->socket_handle = (int*)malloc(sizeof(int)*network->open_listen_sockets);
+    network->socket_handle = (int*)lwm2m_malloc(sizeof(int)*network->open_listen_sockets);
 
     network->open_listen_sockets = 0;
     for(p = res ; p != NULL; p = p->ai_next)
@@ -149,9 +150,9 @@ void prv_log_addr(connection_t * connP, size_t length, bool sending)
     }
 
     if (sending)
-        printf("Sending %d bytes to [%s]:%hu\r\n", length, s, ntohs(port));
+        printf("Sending %d bytes to [%s]:%hu\r\n", (int)length, s, ntohs(port));
     else
-        printf("Receiving %d bytes from [%s]:%hu\r\n", length, s, ntohs(port));
+        printf("Receiving %d bytes from [%s]:%hu\r\n", (int)length, s, ntohs(port));
 
     //output_buffer(stderr, buffer, length, 0);
 }
@@ -172,7 +173,7 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
 
         if (numBytes < 0)
         {
-            simple_lwm2m_printf("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+            lwm2m_printf("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
             continue;
         } else if (numBytes == 0)
             continue; // no new data
@@ -183,7 +184,7 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
             connP = (connection_t *)malloc(sizeof(connection_t));
             if (connP == NULL)
             {
-                simple_lwm2m_printf("memory alloc for new connection failed");
+                lwm2m_printf("memory alloc for new connection failed");
                 continue;
             }
 
@@ -198,7 +199,7 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
             prv_log_addr(connP, numBytes, false);
             lwm2m_handle_packet(contextP, buffer, numBytes, connP);
         } else {
-            simple_lwm2m_printf("received bytes ignored!\r\n");
+            lwm2m_printf("received bytes ignored!\r\n");
         }
     }
 
@@ -206,14 +207,17 @@ bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
 }
 
 void __attribute__((weak)) lwm2m_network_close(lwm2m_context_t * contextP) {
+    if (!contextP->userData) return;
+
     network_t* network = (network_t*)contextP->userData;
     for (unsigned c = 0; c < network->open_listen_sockets; ++c)
     {
         close(network->socket_handle[c]);
     }
-    free(network->socket_handle);
+    lwm2m_free(network->socket_handle);
     network->open_listen_sockets = 0;
-    free(network);
+
+    lwm2m_free(network);
     contextP->userData = NULL;
 }
 
@@ -267,7 +271,7 @@ void * lwm2m_connect_server(uint16_t secObjInstID,
     if (!lwm2m_get_server_uri(secObjInstID, uri, sizeof(uri)))
         return NULL;
 
-    simple_lwm2m_printf("Connecting to %s\r\n", uri);
+    lwm2m_printf("Connecting to %s\r\n", uri);
 
     decode_uri(uri, &host, &port);
 
@@ -364,7 +368,7 @@ connection_t * connection_create(network_t* network,
 
     if (s >= 0)
     {
-        connP = (connection_t *)malloc(sizeof(connection_t));
+        connP = (connection_t *)lwm2m_malloc(sizeof(connection_t));
         if (connP != NULL)
         {
             connP->sock = s;
@@ -388,7 +392,7 @@ void connection_free(connection_t * connList)
         connection_t * nextP;
 
         nextP = (connection_t*)connList->next;
-        free(connList);
+        lwm2m_free(connList);
 
         connList = nextP;
     }

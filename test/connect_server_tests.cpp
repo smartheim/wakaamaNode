@@ -13,13 +13,14 @@
  */
 
 #include <gtest/gtest.h>
-#include "wakaama_simple_client.h"
-#include "wakaama_object_utils.h"
-#include "wakaama_client_debug.h"
+#include "lwm2m_connect.h"
+#include "lwm2m_objects.h"
+#include "client_debug.h"
 #include "wakaama_server_debug.h"
-#include "wakaama_network.h"
-#include "wakaama_client_internal.h"
+#include "network.h"
+#include "internal.h"
 #include "network_helper.h"
+#include "memory.h"
 
 #ifdef TAP_SERVER_ADDR
 #define LWM2M_SERVER_ADDR "coap://" TAP_SERVER_ADDR
@@ -63,9 +64,13 @@ public:
         lwm2m_client_close();
 
         network_close();
+
+        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
     }
 
     virtual void SetUp() {
+        memoryObserver.reset();
+
         ASSERT_TRUE(network_init());
         client_context = lwm2m_client_init(client_name);
         ASSERT_TRUE(client_context) << "Failed to initialize wakaama\r\n";
@@ -77,8 +82,7 @@ public:
         ASSERT_TRUE(serverObj);
         ASSERT_EQ(serverObj->objID, 1);
 
-        // The meta data pointer is not an official member of the lwm2m_object_t struct.
-        lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)serverObj)->meta;
+        lwm2m_object_meta_information_t* metaP = (lwm2m_object_meta_information_t*)serverObj;
 
         for(unsigned i=0;i<metaP->ressources_len;++i)
         {
@@ -158,7 +162,7 @@ TEST_F(ConnectServerTests, ConnectServer) {
     }));
 
     //// client: add server and register ////
-    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false, NULL, NULL, 0));
+    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false));
 
     uint8_t steps = 0;
     uint8_t result;

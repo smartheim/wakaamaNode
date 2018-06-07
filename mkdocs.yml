@@ -1,0 +1,62 @@
+site_name: WakaamaNode
+site_description: The WakaamaNode (lwM2M library) documentation.
+site_author: David Gräff
+
+repo_name: 'Openhab-Nodes/wakaamaNode'
+repo_url: 'https://github.com/Openhab-Nodes/wakaamaNode'
+
+pages:
+  - Welcome: index.md
+  - Getting started: quickstart/getting-started.md
+  - Connection API:
+    - Connection API: api/connection-api.md
+  - Objects API:
+    - Introduction: api/about.md
+    - Registry objects: api/objects-registry.md
+    - Custom objects: api/objects-custom.md
+    - Custom objects /CPP Example: api/objects-custom-cpp-example.md
+    - Custom objects /C Example: api/objects-custom-c-example.md
+  - Advanced usage:
+    - Custom platform: advanced-usage/custom-platform.md
+    - Custom network stack: advanced-usage/custom-network.md
+    - Over-the-air updates: advanced-usage/ota.md
+    - Deep sleep: advanced-usage/deep-sleep.md
+  - Others:
+    - Limitations and known issues: others/limitations-and-known-issues.md
+    - Troubleshooting: others/troubleshooting.md
+
+theme:
+  name: material
+  palette:
+    primary: red
+    accent: red
+  logo: assets/logo_s.webp
+  feature:
+    tabs: true
+
+extra:
+  social:
+    - type: cog
+      link: http://openhab-nodes.github.io/wakaamaNode/
+
+markdown_extensions:
+  - meta
+  - footnotes
+  - codehilite
+  - admonition
+  - toc(permalink=true)
+  - pymdownx.arithmatex
+  - pymdownx.betterem(smart_enable=all)
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist(custom_checkbox=true)
+  - pymdownx.tilde
+

@@ -17,11 +17,16 @@
 
 #include <Arduino.h>
 
-#include "wakaama_simple_client.h"
-#include "wakaama_network.h"
-#include "wakaama_object_utils.h"
+#include "lwm2m_connect.h"
+#include "network.h"
+#include "lwm2m_objects.hpp"
 
-#include "led_object.h"
+#include "lwm2mObjects/3311.h"
+
+using namespace KnownObjects;
+
+id3311::object lights;
+id3311::instance ledsInstance;
 
 lwm2m_context_t * client_context;
 void setup() {
@@ -38,13 +43,24 @@ void setup() {
         return;
     }
 
-    // Create object
-    lwm2m_object_t* test_object = lwm2m_object_create(5850, true, led_object_get_meta());
-    lwm2m_object_instances_add(test_object, led_object_create_instances());
-    lwm2m_add_object(client_context, test_object);
+    // Overwrite the verifyFunction and "abuse" it as value changed event.
+    lights.verifyWrite = [](Lwm2mObjectInstance* instance, uint16_t res_id) {
+        id3311::instance* inst = (id3311::instance*)instance;
+        // Is it instance 0 and the OnOff resource?
+        if (inst->id == 0 && id3311::instance::RESID::OnOff == res_id) {
+            // Change the led pin depending on the OnOff value
+            digitalWrite(LED_BUILTIN, inst->OnOff);
+        }
+        // Return true to accept the value and ACK to the server
+        return true;
+    };
 
-    // Initialize the BUILTIN_LED pin as an output
-    pinMode(BUILTIN_LED, OUTPUT);     
+    ledsInstance.id = 0; // set instance id
+    lights.addInstance(client_context, &ledsInstance);
+    lights.registerObject(client_context, false);
+
+    // Initialize the LED_BUILTIN pin as an output
+    pinMode(LED_BUILTIN, OUTPUT);
 
     // Wait for network to connect
 
@@ -52,6 +68,14 @@ void setup() {
     uint8_t bound_sockets = lwm2m_network_init(client_context, NULL);
     if (bound_sockets == 0)
         printf("Failed to open socket\n");
+    
+    // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
+    // unsend messages. The host url is either coap:// or coaps://.
+    lwm2m_add_server(123, "coap://192.168.1.18", 100, false);
+    
+    // If you want to establish a DTLS secured connection, you need to alter the security
+    // information:
+    // lwm2m_server_security_preshared(123, "publicid", "password", sizeof("password"));
 }
 
 void loop() {
@@ -65,7 +89,6 @@ void loop() {
     else if (result != 0)
         printf("lwm2m_step() failed: 0x%X\n", result);
 
-    lwm2m_network_native_sock(client_context, 0);
     lwm2m_network_process(client_context);
 }
 

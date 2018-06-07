@@ -8,26 +8,15 @@
  */
 
 #include "wakaama/liblwm2m.h"
-#include "wakaama_client_internal.h"
-#include "wakaama_object_utils.h"
-#include "wakaama_device_data.h"
+#include "internal.h"
+#include "lwm2m_objects.h"
+#include "object_device.h"
 
 // Configures the lwm2m device object instance
 #include "wakaama_config.h"
 
 #include <string.h>
 #include <ctype.h>
-
-static lwm2m_object_with_meta_t device_object = {{0,0}};
-static device_instance_t device_instance = {0};
-
-#ifdef LWM2M_DEVICE_WITH_REBOOT
-void lwm2m_reboot(void);
-#endif
-
-#ifdef LWM2M_DEVICE_WITH_FACTORY_RESET
-void lwm2m_factory_reset(void);
-#endif
 
 #ifdef LWM2M_DEVICE_INFO_WITH_BATTERY
     // uint8_t battery_level;  //  9
@@ -36,8 +25,8 @@ void lwm2m_factory_reset(void);
     uint8_t lwm2m_get_bat_status(void);
 
     #define DEVICE_INFO_WITH_BATTERY \
-    ,{RES_O_BATTERY_LEVEL, O_RES_R | O_RES_FUNCTION , O_RES_UINT8, 0} \
-    ,{RES_O_BATTERY_STATUS, O_RES_R | O_RES_FUNCTION , O_RES_UINT8, 0}
+    ,{RES_O_BATTERY_LEVEL, O_RES_R | O_RES_E , O_RES_UINT8, 0} \
+    ,{RES_O_BATTERY_STATUS, O_RES_R | O_RES_E , O_RES_UINT8, 0}
 #else
     #define DEVICE_INFO_WITH_BATTERY
 #endif
@@ -49,8 +38,8 @@ void lwm2m_factory_reset(void);
     int64_t lwm2m_get_total_mem(void);
 
     #define DEVICE_INFO_WITH_MEMINFO \
-    ,{RES_O_MEMORY_FREE,  O_RES_R | O_RES_FUNCTION , O_RES_INT64, 0} \
-    ,{RES_O_MEMORY_TOTAL, O_RES_R | O_RES_FUNCTION , O_RES_INT64, 0}
+    ,{RES_O_MEMORY_FREE,  O_RES_R | O_RES_E , O_RES_INT64, 0} \
+    ,{RES_O_MEMORY_TOTAL, O_RES_R | O_RES_E , O_RES_INT64, 0}
 
 #else
     #define DEVICE_INFO_WITH_MEMINFO
@@ -64,7 +53,7 @@ void lwm2m_factory_reset(void);
     int64_t lwm2m_get_last_error(void);
     void lwm2m_reset_last_error(void);
     #define DEVICE_INFO_WITH_ERRCODE \
-    ,{RES_M_ERROR_CODE, O_RES_R | O_RES_FUNCTION , O_RES_INT64, 0} \
+    ,{RES_M_ERROR_CODE, O_RES_R | O_RES_E , O_RES_INT64, 0} \
     ,{RES_O_RESET_ERROR_CODE, O_RES_E,0 , 0}
 #else
     #define DEVICE_INFO_WITH_ERRCODE
@@ -84,30 +73,33 @@ void lwm2m_factory_reset(void);
 #ifdef LWM2M_DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
      // 18 and 19
     #define DEVICE_INFO_WITH_ADDITIONAL_VERSIONS \
-    ,{RES_O_HARDWARE_VERSION, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, hardware_ver)}, \
-    { RES_O_SOFTWARE_VERSION, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, software_ver) }
+    ,{RES_O_HARDWARE_VERSION, O_RES_R , O_RES_STRING, offsetof(device_instance_t, hardware_ver)}, \
+    { RES_O_SOFTWARE_VERSION, O_RES_R , O_RES_STRING, offsetof(device_instance_t, software_ver) }
 #else
     #define DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
 #endif
 
-OBJECT_META(device_instance_t, device_object_meta, NULL,
-    {RES_O_MANUFACTURER, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, manufacturer)},
-    {RES_O_MODEL_NUMBER, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, model_name)},
-    {RES_O_SERIAL_NUMBER, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, serial_number)},
-    {RES_O_FIRMWARE_VERSION, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, firmware_ver)},
+OBJECT_META(device_instance_t, device_object, 3, NULL,
+    {RES_O_MANUFACTURER, O_RES_R , O_RES_STRING, offsetof(device_instance_t, manufacturer)},
+    {RES_O_MODEL_NUMBER, O_RES_R , O_RES_STRING, offsetof(device_instance_t, model_name)},
+    {RES_O_SERIAL_NUMBER, O_RES_R , O_RES_STRING, offsetof(device_instance_t, serial_number)},
+    {RES_O_FIRMWARE_VERSION, O_RES_R , O_RES_STRING, offsetof(device_instance_t, firmware_ver)},
     {RES_M_REBOOT, O_RES_E,0, 0},       // reboot 4
     {RES_O_FACTORY_RESET, O_RES_E,0, 0} // factory reset 5
     DEVICE_INFO_WITH_BATTERY
     DEVICE_INFO_WITH_ERRCODE
-    ,{RES_O_CURRENT_TIME, O_RES_RW | O_RES_FUNCTION , O_RES_INT64, 0} // Implement: lwm2m_gettime() 13
+    ,{RES_O_CURRENT_TIME, O_RES_R , O_RES_INT64, 0} // Implement: lwm2m_gettime() 13
     ,{RES_M_BINDING_MODES, O_RES_RW , O_RES_STRING_PREALLOC, offsetof(device_instance_t, binding)}
     DEVICE_INFO_WITH_TIME
     //  Binding mode. Always "U".  16
-    ,{ RES_O_DEVICE_TYPE, O_RES_R , O_RES_STRING_STATIC, offsetof(device_instance_t, device_type) } // 17
+    ,{ RES_O_DEVICE_TYPE, O_RES_R , O_RES_STRING, offsetof(device_instance_t, device_type) } // 17
     DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
     DEVICE_INFO_WITH_BATTERY
     DEVICE_INFO_WITH_MEMINFO
 ) // End OBJECT_META
+
+
+static device_instance_t device_instance = {0};
 
 inline static lwm2m_object_res_item_t* prv_find_ressource(lwm2m_object_meta_information_t* metaP, unsigned res_id)
 {
@@ -136,7 +128,7 @@ static uint8_t prv_device_read(uint16_t instanceId,
     if (NULL == instanceP) return COAP_404_NOT_FOUND;
 
     // The meta data pointer is not an official member of the lwm2m_object_t struct.
-    lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)objectP)->meta;
+    lwm2m_object_meta_information_t* metaP = (lwm2m_object_meta_information_t*)objectP;
 
     // is the server asking for the full instance ?
     if (*numDataP == 0)
@@ -203,7 +195,7 @@ uint8_t prv_device_execute(uint16_t instanceId,
                         lwm2m_object_t * objectP)
 {
     // The meta data pointer is not an official member of the lwm2m_object_t struct.
-    lwm2m_object_meta_information_t* metaP = ((lwm2m_object_with_meta_t*)objectP)->meta;
+    lwm2m_object_meta_information_t* metaP = (lwm2m_object_meta_information_t*)objectP;
 
     lwm2m_list_t* instanceP = (lwm2m_list_t *)lwm2m_list_find(objectP->instanceList, instanceId);
     if (NULL == instanceP) return COAP_404_NOT_FOUND;
@@ -236,13 +228,14 @@ device_instance_t * lwm2m_device_data_get() {
     return &device_instance;
 }
 
-lwm2m_object_t *
-init_device_object()
-{
-    lwm2m_object_create_preallocated(&device_object, 3, false, device_object_meta);
-    device_object.obj.instanceList = lwm2m_list_add(device_object.obj.instanceList, (lwm2m_list_t*)&device_instance);
-    device_object.obj.readFunc = prv_device_read;
-    device_object.obj.executeFunc = prv_device_execute;
-    device_instance.binding[0] = 'U';
-    return (lwm2m_object_t *)&device_object;
+lwm2m_object_t *init_device_object() {
+    device_object->instanceList = (lwm2m_list_t*)&device_instance;
+    device_object->readFunc = prv_device_read;
+    device_object->executeFunc = prv_device_execute;
+    device_instance.binding.data[0] = 'U';
+    device_instance.binding.reserved_len = 2;
+    #ifdef LWM2M_DEVICE_INFO_WITH_TIME
+    device_instance.time_offset.reserved_len = 7;
+    #endif
+    return device_object;
 }

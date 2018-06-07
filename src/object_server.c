@@ -35,14 +35,11 @@
  */
 
 #include "wakaama/liblwm2m.h"
-#include "wakaama_client_internal.h"
-#include "wakaama_object_utils.h"
-
-static lwm2m_object_with_meta_t server_object = {{0},0};
+#include "internal.h"
 
 static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 
-OBJECT_META(server_instance_t, server_object_meta, server_object_write_verify_cb,
+OBJECT_META(server_instance_t, server_object, 1, server_object_write_verify_cb,
         {0, O_RES_R,O_RES_UINT16 ,  offsetof(server_instance_t,shortServerId)},
         {1, O_RES_RW,O_RES_UINT32,  offsetof(server_instance_t,lifetime)},
         {2, O_RES_RW,O_RES_UINT32,  offsetof(server_instance_t,defaultMinPeriod)},
@@ -58,21 +55,21 @@ static bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t chang
     server_instance_t* i = (server_instance_t*)instance;
 
     if(changed_res_id==7) {
-        size_t len = strlen(i->binding);
+        size_t len = strlen((char*)i->binding.data);
         if (!(len > 0 && len <= 3)
-                && (strncmp(i->binding, "U",   len) == 0
-                 || strncmp(i->binding, "UQ",  len) == 0
-                 || strncmp(i->binding, "S",   len) == 0
-                 || strncmp(i->binding, "SQ",  len) == 0
-                 || strncmp(i->binding, "US",  len) == 0
-                 || strncmp(i->binding, "UQS", len) == 0))
+                && (strncmp((char*)i->binding.data, "U",   len) == 0
+                 || strncmp((char*)i->binding.data, "UQ",  len) == 0
+                 || strncmp((char*)i->binding.data, "S",   len) == 0
+                 || strncmp((char*)i->binding.data, "SQ",  len) == 0
+                 || strncmp((char*)i->binding.data, "US",  len) == 0
+                 || strncmp((char*)i->binding.data, "UQS", len) == 0))
             return false;
     }
     return true;
 }
 
-lwm2m_object_t * init_server_object()
+lwm2m_object_t * init_server_object(lwm2m_context_t * contextP)
 {
-    lwm2m_object_create_preallocated(&server_object, 1, false, server_object_meta);
-    return (lwm2m_object_t*)&server_object;
+    lwm2m_add_initialize_object(contextP, server_object, false);
+    return (lwm2m_object_t*)server_object;
 }

@@ -48,25 +48,25 @@ typedef struct _test_object_instance_
 bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id);
 
 // Always do this in an implementation file not a header file
-OBJECT_META(test_object_instance_t, test_object_meta, test_object_write_verify_cb,
-    {0, O_RES_RW|O_RES_BOOL,          offsetof(test_object_instance_t,state)},
-    {1, O_RES_RW|O_RES_STRING_STATIC, offsetof(test_object_instance_t,host)},
-    {2, O_RES_RW|O_RES_STRING_STATIC, offsetof(test_object_instance_t,name)}
+OBJECT_META(test_object_instance_t, test_object, 1024, test_object_write_verify_cb,
+    {0, O_RES_RW,O_RES_BOOL,          offsetof(test_object_instance_t,state)},
+    {1, O_RES_R,O_RES_STRING, offsetof(test_object_instance_t,host)},
+    {2, O_RES_R,O_RES_STRING, offsetof(test_object_instance_t,name)}
 )
 
-lwm2m_object_meta_information_t *screen_object_get_meta() {
-    return (lwm2m_object_meta_information_t*)&test_object_meta;
+test_object_instance_t instance;
+
+lwm2m_object_t *get_screen_object() {
+    return test_object;
 }
 
-lwm2m_list_t* screen_object_create_instances() {
-    test_object_instance_t * targetP = (test_object_instance_t *)malloc(sizeof(test_object_instance_t));
-    if (NULL == targetP) return NULL;
-    memset(targetP, 0, sizeof(test_object_instance_t));
-    targetP->shortID = 0;
-    targetP->state = 0;
-    targetP->host = "host";
-    targetP->name = "All monitors";
-    return (lwm2m_list_t*)targetP;
+lwm2m_list_t* get_screen_instance() {
+    memset(&instance, 0, sizeof(test_object_instance_t));
+    instance.shortID = 0;
+    instance.state = 0;
+    instance.host = "host";
+    instance.name = "All monitors";
+    return (lwm2m_list_t*)&instance;
 }
 
 bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {

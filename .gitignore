@@ -28,10 +28,18 @@
 *.app
 
 build-*
+site/
 CMakeLists.txt.user
 .pioenvs
 .piolibdeps
 .vscode
 lib/readme.txt
 buildtest/
+.vscode/c_cpp_properties.json
+.vscode/.browse.c_cpp.db*
+.vscode/launch.json
 .directory
+
+generate_cpp_objects_from_registry/out
+generate_cpp_objects_from_registry/build
+generate_cpp_objects_from_registry/.gradle

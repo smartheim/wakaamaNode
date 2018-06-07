@@ -1,10 +1,10 @@
 #if !defined(LWIP) && (defined(_WIN32) || defined(__unix__) || defined(POSIX_NETWORK))
 
 #include "liblwm2m.h"
-#include "wakaama_simple_client.h"
-#include "wakaama_object_utils.h"
-#include "wakaama_client_debug.h"
-#include "wakaama_network.h"
+#include "lwm2m_connect.h"
+#include "lwm2m_objects.h"
+#include "client_debug.h"
+#include "network.h"
 
 #include <string.h>
 #include <stdlib.h>

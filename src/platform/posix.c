@@ -7,20 +7,22 @@
 #include <stdarg.h>
 #include <sys/time.h>
 
-void* lwm2m_malloc(size_t s)
+#ifndef LWM2M_WITHOUT_ALLOC_FREE
+void* __attribute__((weak)) lwm2m_malloc(size_t s)
 {
     return malloc(s);
 }
 
-void lwm2m_free(void * p)
+void __attribute__((weak)) lwm2m_free(void * p)
 {
     free(p);
 }
 
-char* lwm2m_strdup(const char * str)
+char* __attribute__((weak)) lwm2m_strdup(const char * str)
 {
     return strdup(str);
 }
+#endif
 
 int lwm2m_strncmp(const char * s1,
                      const char * s2,

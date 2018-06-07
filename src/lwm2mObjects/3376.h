@@ -1,0 +1,38 @@
+#pragma once
+// Automatically generated header file
+
+#include "lwm2m_objects.hpp"
+namespace KnownObjects {
+namespace id3376 {
+/* \brief Class for object 3376 - txPowerBackOffEvent
+ *  TX Power backoff information
+ */
+class instance : public Lwm2mObjectInstance {
+public:
+
+    // 0 - TX Power Backoff
+    int TxPowerBackoff;
+    
+    enum class RESID {
+        TxPowerBackoff = 0,
+        
+    };
+};
+
+/* \brief Class for object 3376 - txPowerBackOffEvent
+ *  TX Power backoff information
+ */
+class object : public Lwm2mObject<3376, object, instance> {
+public:
+
+    // 0 - TX Power Backoff
+    Resource(0, &instance::TxPowerBackoff, O_RES_R) TxPowerBackoff;
+    
+};
+
+} // end of id namespace
+inline bool operator== (id3376::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, id3376::instance::RESID c1) { return (uint16_t) c1 == c2; }
+
+} // end of KnownObjects namespace
+	

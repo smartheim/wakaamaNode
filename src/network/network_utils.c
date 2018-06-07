@@ -1,5 +1,5 @@
 #include <string.h>
-#include "wakaama_network.h"
+#include "network.h"
 #include "network_utils.h"
 
 uint8_t decode_uri(char* uri, char** host, char** port)

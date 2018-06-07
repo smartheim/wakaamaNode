@@ -14,13 +14,25 @@ cmake_minimum_required(VERSION 3.1)
 
 project(Lwm2mCLientLibWithLwIP CXX C)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
+
 option(USE_LWIP "Use the Lwip network stack on top of linux tapif or windows pcapif instead of the posix sockets library directly" OFF)
+
+option(USE_LIBUNWIND "Print stack traces of not freed memory allocations with libunwind" ON)
+
+if(USE_LIBUNWIND)
+    find_package(libunwind REQUIRED)
+endif()
+
+INCLUDE(CheckCSourceCompiles)
+CHECK_C_SOURCE_COMPILES("#include <execinfo.h>
+int main(void) { return backtrace(0, 0); }" HAVE_LIBC_BACKTRACE)
 
 SET(REPO_ROOT ${CMAKE_CURRENT_LIST_DIR}/..)
 set(TEST_DIR ${REPO_ROOT}/test)
 set(LWIP_DIR ${REPO_ROOT}/contrib/lwip/src)
 
-include("${REPO_ROOT}/src/wakaama_simple_client.cmake")
+include("${REPO_ROOT}/src/src.cmake")
 
 enable_testing()
 
@@ -48,18 +60,26 @@ file(GLOB TESTS_FILES ${TEST_DIR}/*.cpp ${TEST_DIR}/*.c ${TEST_DIR}/*.h)
 if (USE_LWIP)
     file(GLOB_RECURSE DBG_FILES ${LWIP_DIR}/api/*.c ${LWIP_DIR}/core/*.c ${LWIP_DIR}/include/*.h ${LWIP_DIR}/netif/*.c
         ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.c ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.h
-        ${CMAKE_CURRENT_LIST_DIR}/dbg/*.*)
+        ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
     set(DBG_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/with_lwip" "${LWIP_DIR}/include" "${CMAKE_CURRENT_LIST_DIR}/dbg/")
 else()
-    file(GLOB_RECURSE DBG_FILES ${CMAKE_CURRENT_LIST_DIR}/dbg/*.*)
+    file(GLOB_RECURSE DBG_FILES ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
     set(DBG_FILES ${DBG_FILES} ${CMAKE_CURRENT_LIST_DIR}/with_posix_sockets/posix_network_helper.c)
-    set(DBG_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/dbg/")
+    set(DBG_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/helper/")
 endif()
 
 add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES} ${WAKAAMA_SIMPLE_CLIENT_SOURCES} ${DBG_FILES})
 
+if(USE_LIBUNWIND)
+    target_link_libraries(${PROJECT_NAME} ${LIBUNWIND_LIBRARIES})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DWITH_LIB_UNWIND)
+endif()
+if (HAVE_LIBC_BACKTRACE)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE -DWITH_LIB_BACKTRACE)
+endif()
+
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_range_for)
-target_include_directories(${PROJECT_NAME} PRIVATE ${GTEST_INCLUDE_DIRS} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS} ${DBG_INCLUDE_DIRS} ${TEST_DIR} ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE ${LIBUNWIND_INCLUDE_DIR} ${GTEST_INCLUDE_DIRS} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS} ${DBG_INCLUDE_DIRS} ${TEST_DIR} ${CMAKE_CURRENT_LIST_DIR})
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 11)
 
 # -DLWM2M_WITH_LOGS -DLWIP_DEBUG
@@ -79,12 +99,12 @@ if (USE_LWIP)
 
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
         -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON
-        -DLWIP -DPOSIX
+        -DLWIP -DPOSIX -DLWM2M_WITHOUT_ALLOC_FREE
         -DTAP_CLIENT_DEVIDE="${TAP_CLIENT_DEVICE}" -DTAP_CLIENT_ADDR="${TAP_CLIENT_ADDR}"
         -DTAP_SERVER_DEVICE="${TAP_SERVER_DEVICE}" -DTAP_SERVER_ADDR="${TAP_SERVER_ADDR}")
 else()
     target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
-        -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON -DPOSIX)
+        -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON -DPOSIX -DLWM2M_WITHOUT_ALLOC_FREE)
 endif()
 
 if (UNIX)
