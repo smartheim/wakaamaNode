@@ -1006,14 +1006,23 @@ return a working object instance with the given instance ID.</p>
 
 <p>Implement this function in your object class to allow to delete an object instance.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param lwm2mContext The Wakaama context.</span>
+<span class="cm"> * @param object_instance_id Object instance id</span>
+<span class="cm"> * @param res_id Resource id</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="nf">resChanged</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">lwm2mContext</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">object_instance_id</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">);</span>
+</pre></div>
+
+<p>Call this method if you have changed a resource of the given instance with the given resource id.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param instance Object instance that is going to be modified</span>
 <span class="cm"> * @param res_id The resource that will get changed</span>
 <span class="cm"> * @return Return true if change is accepted or false if change is denied.</span>
 <span class="cm"> */</span>
-<span class="k">virtual</span> <span class="kt">bool</span> <span class="nf">verifyWrite</span><span class="p">(</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">);</span>
+<span class="kt">void</span><span class="o">*</span> <span class="nf">verifyWrite</span><span class="p">(</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">);</span>
 </pre></div>
 
-<p>Implement this function in your object class to verify a change on an object instance resource.</p>
+<p>Implement a function with the above signature and assign it to the <code class="codehilite">verifyWrite</code> object field to verify a change on an object instance resource.</p>
 <h3 id="lwm2mobjectinstance-class">Lwm2mObjectInstance class<a class="headerlink" href="#lwm2mobjectinstance-class" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObjectInstance</span>
 </pre></div>

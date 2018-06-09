@@ -532,6 +532,20 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#on-posixwindows-systems" title="On Posix/Windows systems" class="md-nav__link">
+    On Posix/Windows systems
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arduino-ota" title="Arduino OTA" class="md-nav__link">
+    Arduino OTA
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ota-security" title="OTA security" class="md-nav__link">
     OTA security
   </a>
@@ -635,6 +649,20 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#on-posixwindows-systems" title="On Posix/Windows systems" class="md-nav__link">
+    On Posix/Windows systems
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arduino-ota" title="Arduino OTA" class="md-nav__link">
+    Arduino OTA
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#ota-security" title="OTA security" class="md-nav__link">
     OTA security
   </a>
@@ -668,6 +696,21 @@ reference implementations: For the Arduino OTA model and for Posix/Windows binar
 directory.</p>
 <p>Updating or even checking the version is a server initatiated operation, wakaamaNode
 will not perform any checks on its own.</p>
+<h2 id="on-posixwindows-systems">On Posix/Windows systems<a class="headerlink" href="#on-posixwindows-systems" title="Permanent link">&para;</a></h2>
+<p>The firmware update object accepts pushed binaries via coap in the default implementation.
+The new binary is saved as "new.current_binary_name". As soon as the update resource is executed,
+the current binary will be moved to "old.current_binary_name" and the "new.current_binary_name"
+takes it place.</p>
+<p>The new binary is started with a command line argument "oldpid=PID". It sends a posix signal SIGTERM
+to the old binary via the PID and waits for it to finish.</p>
+<p>The old binary waits for SIGTERM and terminates if received.
+If not received in time (because the new binary has startup problems for example), the old executable
+will stay active.</p>
+<p>A posix/win32 binary is required to call <code class="codehilite">void checkIsUpdated(int argc, char** argv)</code> on startup.</p>
+<h2 id="arduino-ota">Arduino OTA<a class="headerlink" href="#arduino-ota" title="Permanent link">&para;</a></h2>
+<p>Because memory space is assumed to be limited, the update process accepts a http URI only and does not take
+binaries directly via COAP.</p>
+<p>The ESP8266 method <code class="codehilite">ESPhttpUpdate.update(&quot;192.168.0.2&quot;, 80, &quot;/arduino.bin&quot;);</code> is used.</p>
 <h2 id="ota-security">OTA security<a class="headerlink" href="#ota-security" title="Permanent link">&para;</a></h2>
 <p>You should only accept an OTA request, if you are connected to a DTLS secured connection
 with an authentificated server.</p>

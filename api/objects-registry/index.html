@@ -701,9 +701,9 @@ and you should not use the auto generated ones.</p>
 <span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
     <span class="c1">// Overwrite the verifyFunction and &quot;abuse&quot; it as value changed event.</span>
     <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
-        <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span> <span class="n">inst</span> <span class="o">=</span> <span class="p">(</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span><span class="p">)</span><span class="n">instance</span><span class="p">;</span>
+        <span class="k">auto</span> <span class="n">inst</span> <span class="o">=</span> <span class="n">instance</span><span class="o">-&gt;</span><span class="n">as</span><span class="o">&lt;</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">&gt;</span><span class="p">();</span>
         <span class="c1">// Is it instance 0 and the OnOff resource?</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span> <span class="o">==</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span> <span class="o">==</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
             <span class="c1">// Change the led pin depending on the OnOff value</span>
             <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">inst</span><span class="o">-&gt;</span><span class="n">OnOff</span><span class="p">);</span>
         <span class="p">}</span>
@@ -714,6 +714,12 @@ and you should not use the auto generated ones.</p>
     <span class="n">led</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// set instance id</span>
     <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">led</span><span class="p">);</span>
     <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">led</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
+    <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="n">resChanged</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
