@@ -1,11 +1,7 @@
-#define ARDUINO
-#define LWM2M_FIRMWARE_UPGRADES
-
-#include "object_firmware.hpp"
-#include "lwm2m_connect.h"
-
-#if (defined(ARDUINO) || defined(LWM2M_FIRMWARE_UPGRADES))
+#if (defined(ARDUINO) && defined(LWM2M_FIRMWARE_UPGRADES))
 #include <ArduinoOTA.h>
+#include "lwm2m_connect.h"
+#include "object_firmware.hpp"
 
 void writeNewFirmware(DynArray<uint8_t*>& firmware) {}
 

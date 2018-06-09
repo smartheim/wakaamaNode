@@ -8,7 +8,7 @@
 #include "wakaama/liblwm2m.h"
 #include "lwm2m_objects.h" // We need the enums of the C-API as well
 #include <inttypes.h>
-#include <cstring>
+#include <string.h>
 #include "macro_helper.h"
 #include <type_traits>
 #include <functional>

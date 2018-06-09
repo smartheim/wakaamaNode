@@ -3,6 +3,8 @@
 #include "client_debug.h"
 #include "network.h"
 #include "screen_object.h"
+// For c++ projects with firmware support
+// #include "object_firmware.hpp"
 
 #include <string.h>
 #include <stdlib.h>
@@ -28,6 +30,9 @@ int main(int argc, char *argv[])
      * We catch Ctrl-C signal for a clean exit
      */
     signal(SIGINT, handle_sigint);
+    
+    // For c++ projects with firmware support
+    //checkIsUpdated(argc, argv);
 
     device_instance_t * device_data = lwm2m_device_data_get();
     device_data->manufacturer = "test manufacturer";

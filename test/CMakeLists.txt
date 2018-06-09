@@ -12,7 +12,7 @@
 
 cmake_minimum_required(VERSION 3.1)
 
-project(Lwm2mCLientLibWithLwIP CXX C)
+project(Tests CXX C)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
