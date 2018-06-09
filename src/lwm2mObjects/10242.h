@@ -4,6 +4,25 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10242 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Manufacturer10242
+    class ManufacturerType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ModelNumber10242
+    class ModelNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SerialNumber10242
+    class SerialNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Description10242
+    class DescriptionType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10242 - 3-Phase Power Meter
  *  This Object provides the information to represent a generic 3-Phase Power Meter.
  */
@@ -12,19 +31,19 @@ public:
 
     // Optional resource
     // 0 -                 Human readable manufacturer name            
-    PreallocString<30> Manufacturer;
+    ManufacturerType Manufacturer;
     
     // Optional resource
     // 1 -                 A model identifier (manufacturer specified string)            
-    PreallocString<30> ModelNumber;
+    ModelNumberType ModelNumber;
     
     // Optional resource
     // 2 -                 Serial number of the meter            
-    PreallocString<30> SerialNumber;
+    SerialNumberType SerialNumber;
     
     // Optional resource
     // 3 -                 Description of the meter            
-    PreallocString<30> Description;
+    DescriptionType Description;
     
     // 4 -                 Voltage phase 1 (phase to neutral)            
     float TensionR;
@@ -208,60 +227,61 @@ public:
     // 50 -                 Neutral Current            
     float NeutralCurrent;
     
-    enum class RESID {
-        Manufacturer = 0,
-        ModelNumber = 1,
-        SerialNumber = 2,
-        Description = 3,
-        TensionR = 4,
-        CurrentR = 5,
-        ActivePowerR = 6,
-        ReactivePowerR = 7,
-        InductiveReactivePowerR = 8,
-        CapacitiveReactivePowerR = 9,
-        ApparentPowerR = 10,
-        PowerFactorR = 11,
-        THDVR = 12,
-        THDAR = 13,
-        TensionS = 14,
-        CurrentS = 15,
-        ActivePowerS = 16,
-        ReactivePowerS = 17,
-        InductiveReactivePowerS = 18,
-        CapacitiveReactivePowerS = 19,
-        ApparentPowerS = 20,
-        PowerFactorS = 21,
-        THDVS = 22,
-        THDAS = 23,
-        TensionT = 24,
-        CurrentT = 25,
-        ActivePowerT = 26,
-        ReactivePowerT = 27,
-        InductiveReactivePowerT = 28,
-        CapacitiveReactivePowerT = 29,
-        ApparentPowerT = 30,
-        PowerFactorT = 31,
-        THDVT = 32,
-        THDAT = 33,
-        ThreePhaseActivePower = 34,
-        ThreePhaseReactivePower = 35,
-        ThreePhaseInductiveReactivePower = 36,
-        ThreePhaseCapacitiveReactivePower = 37,
-        ThreePhaseApparentPower = 38,
-        ThreePhasePowerFactor = 39,
-        ThreePhasephicosine = 40,
-        ActiveEnergy = 41,
-        ReactiveEnergy = 42,
-        InductiveReactiveEnergy = 43,
-        CapacitiveReactiveEnergy = 44,
-        ApparentEnergy = 45,
-        TensionRS = 46,
-        TensionST = 47,
-        TensionTR = 48,
-        Frequency = 49,
-        NeutralCurrent = 50,
-        
-    };
+};
+
+enum class RESID {
+    Manufacturer = 0,
+    ModelNumber = 1,
+    SerialNumber = 2,
+    Description = 3,
+    TensionR = 4,
+    CurrentR = 5,
+    ActivePowerR = 6,
+    ReactivePowerR = 7,
+    InductiveReactivePowerR = 8,
+    CapacitiveReactivePowerR = 9,
+    ApparentPowerR = 10,
+    PowerFactorR = 11,
+    THDVR = 12,
+    THDAR = 13,
+    TensionS = 14,
+    CurrentS = 15,
+    ActivePowerS = 16,
+    ReactivePowerS = 17,
+    InductiveReactivePowerS = 18,
+    CapacitiveReactivePowerS = 19,
+    ApparentPowerS = 20,
+    PowerFactorS = 21,
+    THDVS = 22,
+    THDAS = 23,
+    TensionT = 24,
+    CurrentT = 25,
+    ActivePowerT = 26,
+    ReactivePowerT = 27,
+    InductiveReactivePowerT = 28,
+    CapacitiveReactivePowerT = 29,
+    ApparentPowerT = 30,
+    PowerFactorT = 31,
+    THDVT = 32,
+    THDAT = 33,
+    ThreePhaseActivePower = 34,
+    ThreePhaseReactivePower = 35,
+    ThreePhaseInductiveReactivePower = 36,
+    ThreePhaseCapacitiveReactivePower = 37,
+    ThreePhaseApparentPower = 38,
+    ThreePhasePowerFactor = 39,
+    ThreePhasephicosine = 40,
+    ActiveEnergy = 41,
+    ReactiveEnergy = 42,
+    InductiveReactiveEnergy = 43,
+    CapacitiveReactiveEnergy = 44,
+    ApparentEnergy = 45,
+    TensionRS = 46,
+    TensionST = 47,
+    TensionTR = 48,
+    Frequency = 49,
+    NeutralCurrent = 50,
+    
 };
 
 /* \brief Class for object 10242 - 3-Phase Power Meter
@@ -471,8 +491,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10242::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10242::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10242::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10242::RESID c1) { return (uint16_t) c1 == c2; }
 	

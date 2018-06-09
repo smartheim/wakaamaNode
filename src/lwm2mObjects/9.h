@@ -4,6 +4,33 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id9 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef PkgName9
+    class PkgNameType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef PkgVersion9
+    class PkgVersionType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Package9
+    class PackageType : public Opaque<30> {};
+    #endif
+    
+    #ifndef PackageURI9
+    class PackageURIType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef UserName9
+    class UserNameType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Password9
+    class PasswordType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 9 - LWM2M Software Management
  *  This LwM2M objects provides the resources needed to perform software management on
  *  the device. Each software component is managed via a dedicated Software Management
@@ -13,18 +40,18 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Name of the software package
-    PreallocString<30> PkgName;
+    PkgNameType PkgName;
     
     // 1 - Version of the software package
-    PreallocString<30> PkgVersion;
+    PkgVersionType PkgVersion;
     
     // Optional resource
     // 2 - Software packageThe package can be in one single software component, or any delivery material used by the Device to determine the software component(s) and proceed to their installation.Can be archive file, executable, manifest. This resource to be used when it is single block of delivery.
-    Opaque<30> Package;
+    PackageType Package;
     
     // Optional resource
     // 3 - URI from where the device can download the software package by an alternative mechanism. As soon the device has received the Package URI it performs the download at the next practical opportunity.Can be direct link to a single software component or link to archive file, executable, or manifest, used by the Device to determine, then access to the software component(s). This resource to be used when it is single block of delivery.
-    PreallocString<30> PackageURI;
+    PackageURIType PackageURI;
     
     // 4 - Installs software from the package either stored in Package resource, or, downloaded from the Package URI. This Resource is only executable when the value of the State Resource is DELIVERED.
     Executable Install;
@@ -61,31 +88,32 @@ public:
     
     // Optional resource
     // 14 - User Name for access to SW Update Package in pull mode.Key based mechanism can alternatively use for talking to the component server instead of user name and password combination.
-    PreallocString<30> UserName;
+    UserNameType UserName;
     
     // Optional resource
     // 15 - Password for access to SW Update Package in pull mode.
-    PreallocString<30> Password;
+    PasswordType Password;
     
-    enum class RESID {
-        PkgName = 0,
-        PkgVersion = 1,
-        Package = 2,
-        PackageURI = 3,
-        Install = 4,
-        Checkpoint = 5,
-        Uninstall = 6,
-        UpdateState = 7,
-        UpdateSupportedObjects = 8,
-        UpdateResult = 9,
-        Activate = 10,
-        Deactivate = 11,
-        ActivationState = 12,
-        PackageSettings = 13,
-        UserName = 14,
-        Password = 15,
-        
-    };
+};
+
+enum class RESID {
+    PkgName = 0,
+    PkgVersion = 1,
+    Package = 2,
+    PackageURI = 3,
+    Install = 4,
+    Checkpoint = 5,
+    Uninstall = 6,
+    UpdateState = 7,
+    UpdateSupportedObjects = 8,
+    UpdateResult = 9,
+    Activate = 10,
+    Deactivate = 11,
+    ActivationState = 12,
+    PackageSettings = 13,
+    UserName = 14,
+    Password = 15,
+    
 };
 
 /* \brief Class for object 9 - LWM2M Software Management
@@ -154,8 +182,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id9::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id9::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id9::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id9::RESID c1) { return (uint16_t) c1 == c2; }
 	

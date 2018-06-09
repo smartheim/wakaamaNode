@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3349 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef BitmapInputReset3349
+    class BitmapInputResetType : public Opaque<30> {};
+    #endif
+    
+    #ifndef ElementDescription3349
+    class ElementDescriptionType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3349
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3349 - Bitmap
  *  Summarize several digital inputs to one value by mapping each bit to a digital input.
  */
@@ -19,19 +34,20 @@ public:
 
     // Optional resource
     // 5912 - The semantics / description of each bit as a string. First instance describes the least significant bit, second instance the second least significant bit, etc.
-    PreallocString<30> ElementDescription;
+    ElementDescriptionType ElementDescription;
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        BitmapInput = 5910,
-        BitmapInputReset = 5911,
-        ElementDescription = 5912,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    BitmapInput = 5910,
+    BitmapInputReset = 5911,
+    ElementDescription = 5912,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3349 - Bitmap
@@ -58,8 +74,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3349::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3349::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3349::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3349::RESID c1) { return (uint16_t) c1 == c2; }
 	

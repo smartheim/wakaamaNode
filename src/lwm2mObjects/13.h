@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id13 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Celllocklist13
+    class CelllocklistType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Operatorlist13
+    class OperatorlistType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ListofavailablePLMNs13
+    class ListofavailablePLMNsType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 13 - Bearer selection
  *  This object specifies resources to enable a device to choose a PLMN/network on which
  *  to attach/register and what type of bearer to then connect. This object allows via remote
@@ -39,11 +54,11 @@ public:
     
     // Optional resource
     // 5 - Comma separated list of allowed Global Cell Identities.
-    PreallocString<30> Celllocklist;
+    CelllocklistType Celllocklist;
     
     // Optional resource
     // 6 - Comma separated list of MCC+MNC of operators, in priority order.Resource “operator list mode” indicates how to process this list.
-    PreallocString<30> Operatorlist;
+    OperatorlistType Operatorlist;
     
     // Optional resource
     // 7 - Indicates whether resource “operator list” represents the allowed operator list (white list), or, the preferred operator list.0=preferred1=allowed
@@ -51,7 +66,7 @@ public:
     
     // Optional resource
     // 8 - Allows server to see results of network scan (e.g. result of AT+COPS=?)
-    PreallocString<30> ListofavailablePLMNs;
+    ListofavailablePLMNsType ListofavailablePLMNs;
     
     // Optional resource
     // 9 - Links to a vendor specific object.
@@ -69,22 +84,23 @@ public:
     // 12 - 0=attach with PDN connection1=attach without PDN connection
     bool AttachwithoutPDNconnection;
     
-    enum class RESID {
-        PreferredCommunicationsBearer = 0,
-        AcceptableRSSIGSM = 1,
-        AcceptableRSCPUMTS = 2,
-        AcceptableRSRPLTE = 3,
-        AcceptableRSSI1xEVDO = 4,
-        Celllocklist = 5,
-        Operatorlist = 6,
-        Operatorlistmode = 7,
-        ListofavailablePLMNs = 8,
-        Vendorspecificextensions = 9,
-        AcceptableRSRPNBIoT = 10,
-        HigherPriorityPLMNSearchTimer = 11,
-        AttachwithoutPDNconnection = 12,
-        
-    };
+};
+
+enum class RESID {
+    PreferredCommunicationsBearer = 0,
+    AcceptableRSSIGSM = 1,
+    AcceptableRSCPUMTS = 2,
+    AcceptableRSRPLTE = 3,
+    AcceptableRSSI1xEVDO = 4,
+    Celllocklist = 5,
+    Operatorlist = 6,
+    Operatorlistmode = 7,
+    ListofavailablePLMNs = 8,
+    Vendorspecificextensions = 9,
+    AcceptableRSRPNBIoT = 10,
+    HigherPriorityPLMNSearchTimer = 11,
+    AttachwithoutPDNconnection = 12,
+    
 };
 
 /* \brief Class for object 13 - Bearer selection
@@ -155,8 +171,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id13::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id13::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id13::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id13::RESID c1) { return (uint16_t) c1 == c2; }
 	

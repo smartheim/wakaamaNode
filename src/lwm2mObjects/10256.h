@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10256 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10256 - ECID-Signal Measurement Information
  *  This LWM2M Object provides ECID signal measurements of a device.
  */
@@ -31,15 +34,16 @@ public:
     // 5 - This field specifies the UE Rx–Tx time difference measurement.
     int ueRxTxTimeDiff;
     
-    enum class RESID {
-        physCellId = 0,
-        ECGI = 1,
-        arfcnEUTRA = 2,
-        rsrpResult = 3,
-        rsrqResult = 4,
-        ueRxTxTimeDiff = 5,
-        
-    };
+};
+
+enum class RESID {
+    physCellId = 0,
+    ECGI = 1,
+    arfcnEUTRA = 2,
+    rsrpResult = 3,
+    rsrqResult = 4,
+    ueRxTxTimeDiff = 5,
+    
 };
 
 /* \brief Class for object 10256 - ECID-Signal Measurement Information
@@ -72,8 +76,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10256::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10256::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10256::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10256::RESID c1) { return (uint16_t) c1 == c2; }
 	

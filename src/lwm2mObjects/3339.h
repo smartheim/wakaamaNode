@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3339 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Clip3339
+    class ClipType : public Opaque<30> {};
+    #endif
+    
+    #ifndef Trigger3339
+    class TriggerType : public Opaque<30> {};
+    #endif
+    
+    #ifndef ApplicationType3339
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3339 - Audio Clip
  *  This IPSO object should be used for a speaker that plays a pre-recorded audio clip or
  *  an audio output that is sent elsewhere. For example, an elevator which announces the
@@ -16,7 +31,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 5522 - Audio Clip that is playable (i.e. short audio recording indicating the floor in an elevator).
-    Opaque<30> Clip;
+    ClipType Clip;
     
     // Optional resource
     // 5523 - Trigger initiating actuation.
@@ -32,16 +47,17 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        Clip = 5522,
-        Trigger = 5523,
-        Dimmer = 5851,
-        Duration = 5524,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    Clip = 5522,
+    Trigger = 5523,
+    Dimmer = 5851,
+    Duration = 5524,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3339 - Audio Clip
@@ -77,8 +93,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3339::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3339::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3339::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3339::RESID c1) { return (uint16_t) c1 == c2; }
 	

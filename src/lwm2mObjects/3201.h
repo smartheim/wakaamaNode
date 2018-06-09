@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3201 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3201
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3201 - Digital Output
  *  Generic digital output for non-specific actuators
  */
@@ -19,14 +26,15 @@ public:
     
     // Optional resource
     // 5750 - The application type of the output as a string, for instance, “LED”
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        DigitalOutputState = 5550,
-        DigitalOutputPolarity = 5551,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    DigitalOutputState = 5550,
+    DigitalOutputPolarity = 5551,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3201 - Digital Output
@@ -49,8 +57,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3201::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3201::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3201::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3201::RESID c1) { return (uint16_t) c1 == c2; }
 	

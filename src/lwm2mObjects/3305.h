@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3305 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ResetCumulativeenergy3305
+    class ResetCumulativeenergyType : public Opaque<30> {};
+    #endif
+    
+    #ifndef ResetMinandMaxMeasuredValues3305
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 3305 - Power Measurement
  *  This IPSO object should be used over a power measurement sensor to report a remote power
  *  measurement. It also provides resources for minimum/maximum measured values and
@@ -84,27 +95,28 @@ public:
     // 5605 - Reset the Min and Max Measured Values to Current Value
     Executable ResetMinandMaxMeasuredValues;
 
-    enum class RESID {
-        Instantaneousactivepower = 5800,
-        MinMeasuredactivepower = 5801,
-        MaxMeasuredactivepower = 5802,
-        MinRangeactivepower = 5803,
-        MaxRangeactivepower = 5804,
-        Cumulativeactivepower = 5805,
-        ActivePowerCalibration = 5806,
-        Instantaneousreactivepower = 5810,
-        MinMeasuredreactivepower = 5811,
-        MaxMeasuredreactivepower = 5812,
-        MinRangereactivepower = 5813,
-        MaxRangereactivepower = 5814,
-        Cumulativereactivepower = 5815,
-        ReactivePowerCalibration = 5816,
-        PowerFactor = 5820,
-        CurrentCalibration = 5821,
-        ResetCumulativeenergy = 5822,
-        ResetMinandMaxMeasuredValues = 5605,
-        
-    };
+};
+
+enum class RESID {
+    Instantaneousactivepower = 5800,
+    MinMeasuredactivepower = 5801,
+    MaxMeasuredactivepower = 5802,
+    MinRangeactivepower = 5803,
+    MaxRangeactivepower = 5804,
+    Cumulativeactivepower = 5805,
+    ActivePowerCalibration = 5806,
+    Instantaneousreactivepower = 5810,
+    MinMeasuredreactivepower = 5811,
+    MaxMeasuredreactivepower = 5812,
+    MinRangereactivepower = 5813,
+    MaxRangereactivepower = 5814,
+    Cumulativereactivepower = 5815,
+    ReactivePowerCalibration = 5816,
+    PowerFactor = 5820,
+    CurrentCalibration = 5821,
+    ResetCumulativeenergy = 5822,
+    ResetMinandMaxMeasuredValues = 5605,
+    
 };
 
 /* \brief Class for object 3305 - Power Measurement
@@ -190,8 +202,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3305::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3305::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3305::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3305::RESID c1) { return (uint16_t) c1 == c2; }
 	

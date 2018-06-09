@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2048 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Name2048
+    class NameType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 2048 - CmdhPolicy
  *  This Object provides links to a set of rules associated with a specific CSE that governs
  *  the behavior of that CSE regarding rejecting, buffering and sending request or response
@@ -13,7 +20,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Contains the name of a CmdhPolicy Object Instance 
-    PreallocString<30> Name;
+    NameType Name;
     
     // 1 - 1 reference to CmdhDefaults Object  Instance
     // Objlnk resources are not supported yet - DefaultRule;
@@ -27,14 +34,15 @@ public:
     // 4 - 1 or more references to CmdhBuffer Object Instances
     // Objlnk resources are not supported yet - BufferRules;
     
-    enum class RESID {
-        Name = 0,
-        DefaultRule = 1,
-        LimiRules = 2,
-        NetworkAccessECRules = 3,
-        BufferRules = 4,
-        
-    };
+};
+
+enum class RESID {
+    Name = 0,
+    DefaultRule = 1,
+    LimiRules = 2,
+    NetworkAccessECRules = 3,
+    BufferRules = 4,
+    
 };
 
 /* \brief Class for object 2048 - CmdhPolicy
@@ -63,8 +71,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2048::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2048::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2048::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2048::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3355 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3355 - handoverEvent
  *  handover event information
  */
@@ -31,16 +34,17 @@ public:
     // 6 - Target Cell RSRP in dBm
     int targetCellRsrp;
     
-    enum class RESID {
-        timeHandoverStart = 0,
-        dlEarfcn = 6032,
-        CellID = 6033,
-        handoverResult = 3,
-        TargetEarfcn = 4,
-        TargetPhysicalCellID = 5,
-        targetCellRsrp = 6,
-        
-    };
+};
+
+enum class RESID {
+    timeHandoverStart = 0,
+    dlEarfcn = 6032,
+    CellID = 6033,
+    handoverResult = 3,
+    TargetEarfcn = 4,
+    TargetPhysicalCellID = 5,
+    targetCellRsrp = 6,
+    
 };
 
 /* \brief Class for object 3355 - handoverEvent
@@ -73,8 +77,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3355::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3355::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3355::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3355::RESID c1) { return (uint16_t) c1 == c2; }
 	

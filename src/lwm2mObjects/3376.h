@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3376 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3376 - txPowerBackOffEvent
  *  TX Power backoff information
  */
@@ -13,10 +16,11 @@ public:
     // 0 - TX Power Backoff
     int TxPowerBackoff;
     
-    enum class RESID {
-        TxPowerBackoff = 0,
-        
-    };
+};
+
+enum class RESID {
+    TxPowerBackoff = 0,
+    
 };
 
 /* \brief Class for object 3376 - txPowerBackOffEvent
@@ -31,8 +35,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3376::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3376::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3376::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3376::RESID c1) { return (uint16_t) c1 == c2; }
 	

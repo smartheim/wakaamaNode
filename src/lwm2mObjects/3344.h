@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3344 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3344
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3344 - Up/Down Control
  *  This IPSO object is used to report the state of an up/down control element like a pair
  *  of push buttons or a rotary encoder. Counters for increase and decrease operations
@@ -28,16 +35,17 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        IncreaseInputState = 5532,
-        DecreaseInputState = 5533,
-        UpCounter = 5541,
-        DownCounter = 5542,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    IncreaseInputState = 5532,
+    DecreaseInputState = 5533,
+    UpCounter = 5541,
+    DownCounter = 5542,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3344 - Up/Down Control
@@ -69,8 +77,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3344::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3344::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3344::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3344::RESID c1) { return (uint16_t) c1 == c2; }
 	

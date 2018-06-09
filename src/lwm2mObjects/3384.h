@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3384 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3384 - sipSubscriptionEvent
  *  SIP Subscription status
  */
@@ -16,11 +19,12 @@ public:
     // 1 - -1 = Event subscription message not available0 = Success (when 200 OK received is followed by NOTIFY, and applies to all Event Types)1 = Failure (when any error other than 401 is received; else when 408 timeout occurs)
     int subscriptionResult;
     
-    enum class RESID {
-        eventType = 0,
-        subscriptionResult = 1,
-        
-    };
+};
+
+enum class RESID {
+    eventType = 0,
+    subscriptionResult = 1,
+    
 };
 
 /* \brief Class for object 3384 - sipSubscriptionEvent
@@ -38,8 +42,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3384::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3384::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3384::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3384::RESID c1) { return (uint16_t) c1 == c2; }
 	

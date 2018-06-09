@@ -4,6 +4,65 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id12 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Interfacename12
+    class InterfacenameType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef BSSID12
+    class BSSIDType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SSID12
+    class SSIDType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RegulatoryDomain12
+    class RegulatoryDomainType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WPAPreSharedKey12
+    class WPAPreSharedKeyType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WPAKeyPhrase12
+    class WPAKeyPhraseType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WEPKeyPhrase12
+    class WEPKeyPhraseType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WEPKey112
+    class WEPKey1Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WEPKey212
+    class WEPKey2Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WEPKey312
+    class WEPKey3Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef WEPKey412
+    class WEPKey4Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RADIUSServer12
+    class RADIUSServerType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RADIUSSecret12
+    class RADIUSSecretType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef MACAddressList12
+    class MACAddressListType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 12 - WLAN connectivity
  *  This object specifies resources to enable a device to connect to a WLAN bearer.
  */
@@ -11,7 +70,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Human-readable identifiereg. wlan0
-    PreallocString<30> Interfacename;
+    InterfacenameType Interfacename;
     
     // 1 - 0: Disabled1: EnabledEnable / Disable interfaceWhen disabled radio must also be disabled
     bool Enable;
@@ -24,10 +83,10 @@ public:
     int Status;
     
     // 4 - The MAC address of the interface, in hexadecimal form.
-    PreallocString<30> BSSID;
+    BSSIDType BSSID;
     
     // 5 - The Service Set Identifier for this interface.
-    PreallocString<30> SSID;
+    SSIDType SSID;
     
     // Optional resource
     // 6 - 0: Do not broadcast SSID1: Broadcast SSID
@@ -57,7 +116,7 @@ public:
     
     // Optional resource
     // 13 - 802.11d Regulatory Domain String. First two octets are ISO/IEC 3166-1 two-character country code. The third octet is either “ ” (all environments), “O” (outside) or “I” (inside).
-    PreallocString<30> RegulatoryDomain;
+    RegulatoryDomainType RegulatoryDomain;
     
     // 14 - 0: 802.11a1: 802.11b2: 802.11bg 3: 802.11g4: 802.11n5: 802.11bgn6: 802.11ac7: 802.11ah
     int Standard;
@@ -71,11 +130,11 @@ public:
     
     // Optional resource
     // 17 - WPA/WPA2 Key expressed as a hex string.Write – Only.
-    PreallocString<30> WPAPreSharedKey;
+    WPAPreSharedKeyType WPAPreSharedKey;
     
     // Optional resource
     // 18 - WPA/WPA2 Key Phrase.Write Only.
-    PreallocString<30> WPAKeyPhrase;
+    WPAKeyPhraseType WPAKeyPhrase;
     
     // Optional resource
     // 19 - Description.0: None1: 40-bit2: 104-bit
@@ -87,27 +146,27 @@ public:
     
     // Optional resource
     // 21 - WPA/WPA2 Key Phrase.Write Only.
-    PreallocString<30> WEPKeyPhrase;
+    WEPKeyPhraseType WEPKeyPhrase;
     
     // Optional resource
     // 22 - WEP Key 1 expressed as a hexadecimal string.10 Bytes for a 40 Bit key26 Bytes for a 104 Bit key
-    PreallocString<30> WEPKey1;
+    WEPKey1Type WEPKey1;
     
     // Optional resource
     // 23 - WEP Key 2 expressed as a hexadecimal string.10 Bytes for a 40 Bit key26 Bytes for a 104 Bit key
-    PreallocString<30> WEPKey2;
+    WEPKey2Type WEPKey2;
     
     // Optional resource
     // 24 - WEP Key 3 expressed as a hexadecimal string.10 Bytes for a 40 Bit key26 Bytes for a 104 Bit key
-    PreallocString<30> WEPKey3;
+    WEPKey3Type WEPKey3;
     
     // Optional resource
     // 25 - WEP Key 4 expressed as a hexadecimal string.10 Bytes for a 40 Bit key26 Bytes for a 104 Bit key
-    PreallocString<30> WEPKey4;
+    WEPKey4Type WEPKey4;
     
     // Optional resource
     // 26 - RADIUS Authentication Server Address
-    PreallocString<30> RADIUSServer;
+    RADIUSServerType RADIUSServer;
     
     // Optional resource
     // 27 - RADIUS Authentication Server Port Number
@@ -115,7 +174,7 @@ public:
     
     // Optional resource
     // 28 - RADIUS Shared Secret
-    PreallocString<30> RADIUSSecret;
+    RADIUSSecretType RADIUSSecret;
     
     // Optional resource
     // 29 - 0: WMM NOT Supported1: WMM Wupported
@@ -131,7 +190,7 @@ public:
     
     // Optional resource
     // 32 - Array of allowed client MAC addresses, in hexadecimal form.
-    PreallocString<30> MACAddressList;
+    MACAddressListType MACAddressList;
     
     // Optional resource
     // 33 - Total number of bytes sent via this interface
@@ -197,58 +256,59 @@ public:
     // 48 - Links to a vendor specific object.
     // Objlnk resources are not supported yet - Vendorspecificextensions;
     
-    enum class RESID {
-        Interfacename = 0,
-        Enable = 1,
-        RadioEnabled = 2,
-        Status = 3,
-        BSSID = 4,
-        SSID = 5,
-        BroadcastSSID = 6,
-        BeaconEnabled = 7,
-        Mode = 8,
-        Channel = 9,
-        AutoChannel = 10,
-        SupportedChannels = 11,
-        ChannelsInUse = 12,
-        RegulatoryDomain = 13,
-        Standard = 14,
-        AuthenticationMode = 15,
-        EncryptionMode = 16,
-        WPAPreSharedKey = 17,
-        WPAKeyPhrase = 18,
-        WEPEncryptionType = 19,
-        WEPKeyIndex = 20,
-        WEPKeyPhrase = 21,
-        WEPKey1 = 22,
-        WEPKey2 = 23,
-        WEPKey3 = 24,
-        WEPKey4 = 25,
-        RADIUSServer = 26,
-        RADIUSServerPort = 27,
-        RADIUSSecret = 28,
-        WMMSupported = 29,
-        WMMEnabled = 30,
-        MACControlEnabled = 31,
-        MACAddressList = 32,
-        TotalBytesSent = 33,
-        TotalBytesReceived = 34,
-        TotalPacketsSent = 35,
-        TotalPacketsReceived = 36,
-        TransmitErrors = 37,
-        ReceiveErrors = 38,
-        UnicastPacketsSent = 39,
-        UnicastPacketsReceived = 40,
-        MulticastPacketsSend = 41,
-        MulticastPacketsReceived = 42,
-        BroadcastPacketsSent = 43,
-        BroadcastPacketsReceived = 44,
-        DiscardPacketsSent = 45,
-        DiscardPacketsReceived = 46,
-        UnknownPacketsReceived = 47,
-        Vendorspecificextensions = 48,
-        
-    };
+};
+
+enum class RESID {
+    Interfacename = 0,
+    Enable = 1,
+    RadioEnabled = 2,
+    Status = 3,
+    BSSID = 4,
+    SSID = 5,
+    BroadcastSSID = 6,
+    BeaconEnabled = 7,
+    Mode = 8,
+    Channel = 9,
+    AutoChannel = 10,
+    SupportedChannels = 11,
+    ChannelsInUse = 12,
+    RegulatoryDomain = 13,
+    Standard = 14,
+    AuthenticationMode = 15,
+    EncryptionMode = 16,
+    WPAPreSharedKey = 17,
+    WPAKeyPhrase = 18,
+    WEPEncryptionType = 19,
+    WEPKeyIndex = 20,
+    WEPKeyPhrase = 21,
+    WEPKey1 = 22,
+    WEPKey2 = 23,
+    WEPKey3 = 24,
+    WEPKey4 = 25,
+    RADIUSServer = 26,
+    RADIUSServerPort = 27,
+    RADIUSSecret = 28,
+    WMMSupported = 29,
+    WMMEnabled = 30,
+    MACControlEnabled = 31,
+    MACAddressList = 32,
+    TotalBytesSent = 33,
+    TotalBytesReceived = 34,
+    TotalPacketsSent = 35,
+    TotalPacketsReceived = 36,
+    TransmitErrors = 37,
+    ReceiveErrors = 38,
+    UnicastPacketsSent = 39,
+    UnicastPacketsReceived = 40,
+    MulticastPacketsSend = 41,
+    MulticastPacketsReceived = 42,
+    BroadcastPacketsSent = 43,
+    BroadcastPacketsReceived = 44,
+    DiscardPacketsSent = 45,
+    DiscardPacketsReceived = 46,
+    UnknownPacketsReceived = 47,
+    Vendorspecificextensions = 48,
+    
 };
 
 /* \brief Class for object 12 - WLAN connectivity
@@ -447,8 +507,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id12::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id12::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id12::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id12::RESID c1) { return (uint16_t) c1 == c2; }
 	

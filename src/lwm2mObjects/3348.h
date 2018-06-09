@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3348 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3348
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3348 - Multi-state Selector
  *  This IPSO object is used to represent the state of a Multi-state selector switch with
  *  a number of fixed positions.
@@ -16,13 +23,14 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        MultistateInput = 5547,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    MultistateInput = 5547,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3348 - Multi-state Selector
@@ -42,8 +50,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3348::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3348::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3348::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3348::RESID c1) { return (uint16_t) c1 == c2; }
 	

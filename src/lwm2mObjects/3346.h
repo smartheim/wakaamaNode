@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3346 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ResetMinandMaxMeasuredValues3346
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+    #ifndef CurrentCalibration3346
+    class CurrentCalibrationType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3346
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3346 - Rate
  *  This object type should be used to report a rate measurement, for example the speed of
  *  a vehicle, or the rotational speed of a drive shaft. It also provides resources for minimum
@@ -42,24 +57,25 @@ public:
 
     // Optional resource
     // 5821 - Read or Write the current calibration coefficient
-    PreallocString<30> CurrentCalibration;
+    CurrentCalibrationType CurrentCalibration;
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        SensorValue = 5700,
-        SensorUnits = 5701,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        ResetMinandMaxMeasuredValues = 5605,
-        CurrentCalibration = 5821,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    SensorValue = 5700,
+    SensorUnits = 5701,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    ResetMinandMaxMeasuredValues = 5605,
+    CurrentCalibration = 5821,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3346 - Rate
@@ -109,8 +125,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3346::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3346::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3346::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3346::RESID c1) { return (uint16_t) c1 == c2; }
 	

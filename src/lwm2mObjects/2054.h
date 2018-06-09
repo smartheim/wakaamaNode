@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2054 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2054 - CmdhNetworkAccessRules
  *  This Object defines the usage of underlying networks for forwarding information to
  *  other CSEs during processing of CMDH-related requests in a CSE.
@@ -18,11 +21,12 @@ public:
     // 1 - Contains 0 or more references to CmdhNwAccessRule Object Instances 
     // Objlnk resources are not supported yet - NetworkAccessRule;
     
-    enum class RESID {
-        ApplicableEventCategories = 0,
-        NetworkAccessRule = 1,
-        
-    };
+};
+
+enum class RESID {
+    ApplicableEventCategories = 0,
+    NetworkAccessRule = 1,
+    
 };
 
 /* \brief Class for object 2054 - CmdhNetworkAccessRules
@@ -42,8 +46,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2054::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2054::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2054::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2054::RESID c1) { return (uint16_t) c1 == c2; }
 	

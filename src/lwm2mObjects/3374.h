@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3374 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3374 - radioLinkMonitoring
  *  Radio Link monitoring information maintained by RRC
  */
@@ -25,14 +28,15 @@ public:
     // 4 - 0=stopped, 1=running
     bool t310Timer;
     
-    enum class RESID {
-        sysFrameNumber = 6037,
-        subFrameNumber = 6038,
-        outOfSyncCount = 2,
-        inSyncCount = 3,
-        t310Timer = 4,
-        
-    };
+};
+
+enum class RESID {
+    sysFrameNumber = 6037,
+    subFrameNumber = 6038,
+    outOfSyncCount = 2,
+    inSyncCount = 3,
+    t310Timer = 4,
+    
 };
 
 /* \brief Class for object 3374 - radioLinkMonitoring
@@ -59,8 +63,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3374::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3374::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3374::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3374::RESID c1) { return (uint16_t) c1 == c2; }
 	

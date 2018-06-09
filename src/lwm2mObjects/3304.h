@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3304 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef MinRangeValue3304
+    class MinRangeValueType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SensorUnits3304
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ResetMinandMaxMeasuredValues3304
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 3304 - Humidity
  *  Description: This IPSO object should be used with a humidity sensor to report a humidity
  *  measurement. It also provides resources for minimum/maximum measured values and
@@ -26,7 +41,7 @@ public:
     
     // Optional resource
     // 5603 - The minimum value that can be measured by the sensor
-    PreallocString<30> MinRangeValue;
+    MinRangeValueType MinRangeValue;
     
     // Optional resource
     // 5604 - The maximum value that can be measured by the sensor
@@ -34,22 +49,23 @@ public:
     
     // Optional resource
     // 5701 - Measurement Units Definition e.g. “Cel” for Temperature in Celsius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
     // Optional resource
     // 5605 - Reset the Min and Max Measured Values to Current Value
     Executable ResetMinandMaxMeasuredValues;
 
-    enum class RESID {
-        SensorValue = 5700,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        SensorUnits = 5701,
-        ResetMinandMaxMeasuredValues = 5605,
-        
-    };
+};
+
+enum class RESID {
+    SensorValue = 5700,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    SensorUnits = 5701,
+    ResetMinandMaxMeasuredValues = 5605,
+    
 };
 
 /* \brief Class for object 3304 - Humidity
@@ -91,8 +107,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3304::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3304::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3304::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3304::RESID c1) { return (uint16_t) c1 == c2; }
 	

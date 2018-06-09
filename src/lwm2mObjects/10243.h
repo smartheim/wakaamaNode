@@ -4,6 +4,29 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10243 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Manufacturer10243
+    class ManufacturerType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ModelNumber10243
+    class ModelNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SerialNumber10243
+    class SerialNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Description10243
+    class DescriptionType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Tension10243
+    class TensionType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10243 - Single-Phase Power Meter
  *  This Object provides the information to represent a generic Single-Phase Power Meter.
  */
@@ -12,22 +35,22 @@ public:
 
     // Optional resource
     // 0 -                 Human readable manufacturer name            
-    PreallocString<30> Manufacturer;
+    ManufacturerType Manufacturer;
     
     // Optional resource
     // 1 -                 A model identifier (manufacturer specified string)            
-    PreallocString<30> ModelNumber;
+    ModelNumberType ModelNumber;
     
     // Optional resource
     // 2 -                 Serial number of the meter            
-    PreallocString<30> SerialNumber;
+    SerialNumberType SerialNumber;
     
     // Optional resource
     // 3 -                 Description of the meter            
-    PreallocString<30> Description;
+    DescriptionType Description;
     
     // 4 -                 Voltage            
-    PreallocString<30> Tension;
+    TensionType Tension;
     
     // 5 -                 Current            
     float Current;
@@ -80,27 +103,28 @@ public:
     // 17 -                 Frequency            
     float Frequency;
     
-    enum class RESID {
-        Manufacturer = 0,
-        ModelNumber = 1,
-        SerialNumber = 2,
-        Description = 3,
-        Tension = 4,
-        Current = 5,
-        ActivePower = 6,
-        ReactivePower = 7,
-        InductiveReactivePower = 8,
-        CapacitiveReactivePower = 9,
-        ApparentPower = 10,
-        PowerFactor = 11,
-        THDV = 12,
-        THDA = 13,
-        ActiveEnergy = 14,
-        ReactiveEnergy = 15,
-        ApparentEnergy = 16,
-        Frequency = 17,
-        
-    };
+};
+
+enum class RESID {
+    Manufacturer = 0,
+    ModelNumber = 1,
+    SerialNumber = 2,
+    Description = 3,
+    Tension = 4,
+    Current = 5,
+    ActivePower = 6,
+    ReactivePower = 7,
+    InductiveReactivePower = 8,
+    CapacitiveReactivePower = 9,
+    ApparentPower = 10,
+    PowerFactor = 11,
+    THDV = 12,
+    THDA = 13,
+    ActiveEnergy = 14,
+    ReactiveEnergy = 15,
+    ApparentEnergy = 16,
+    Frequency = 17,
+    
 };
 
 /* \brief Class for object 10243 - Single-Phase Power Meter
@@ -182,8 +206,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10243::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10243::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10243::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10243::RESID c1) { return (uint16_t) c1 == c2; }
 	

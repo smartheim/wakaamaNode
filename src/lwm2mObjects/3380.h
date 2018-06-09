@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3380 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3380 - PrachReport
  *  PRACH report information
  */
@@ -49,22 +52,23 @@ public:
     // 12 - PRACH Repetition seq
     int prachrepetitionseq;
     
-    enum class RESID {
-        sysFrameNumber = 6037,
-        subFrameNumber = 6038,
-        rachTxPower = 2,
-        zadOffSeqNum = 3,
-        prachConfig = 4,
-        preambleFormat = 5,
-        maxTransmissionMsg3 = 6,
-        raResponseWindowSize = 7,
-        RachRequestResult = 8,
-        cemode = 9,
-        celevel = 10,
-        numprachrepetition = 11,
-        prachrepetitionseq = 12,
-        
-    };
+};
+
+enum class RESID {
+    sysFrameNumber = 6037,
+    subFrameNumber = 6038,
+    rachTxPower = 2,
+    zadOffSeqNum = 3,
+    prachConfig = 4,
+    preambleFormat = 5,
+    maxTransmissionMsg3 = 6,
+    raResponseWindowSize = 7,
+    RachRequestResult = 8,
+    cemode = 9,
+    celevel = 10,
+    numprachrepetition = 11,
+    prachrepetitionseq = 12,
+    
 };
 
 /* \brief Class for object 3380 - PrachReport
@@ -115,8 +119,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3380::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3380::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3380::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3380::RESID c1) { return (uint16_t) c1 == c2; }
 	

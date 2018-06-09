@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3370 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3370 - ServingCellMeasurement
  *  Serving Cell Measurement
  */
@@ -28,15 +31,16 @@ public:
     // 6032 - EARFCN - frequency
     int dlEarfcn;
     
-    enum class RESID {
-        sysFrameNumber = 6037,
-        subFrameNumber = 6038,
-        pci = 6034,
-        rsrp = 6035,
-        rsrq = 6036,
-        dlEarfcn = 6032,
-        
-    };
+};
+
+enum class RESID {
+    sysFrameNumber = 6037,
+    subFrameNumber = 6038,
+    pci = 6034,
+    rsrp = 6035,
+    rsrq = 6036,
+    dlEarfcn = 6032,
+    
 };
 
 /* \brief Class for object 3370 - ServingCellMeasurement
@@ -66,8 +70,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3370::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3370::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3370::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3370::RESID c1) { return (uint16_t) c1 == c2; }
 	

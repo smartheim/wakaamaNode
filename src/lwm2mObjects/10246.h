@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10246 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10246 - CrowdBox Measurements
  *  This LWM2M Object provides CrowdBox-related measurements such as serving cell parameters,
  *  backhaul timing advance, and neighbour cell reports.
@@ -30,15 +33,16 @@ public:
     // 5 - A link to the "Neighbour Cell Report" object for each neighbour cell of the CrowdBox.
     // Objlnk resources are not supported yet - NeighbourCellReport;
     
-    enum class RESID {
-        ServingCellID = 0,
-        ServingCellRSRP = 1,
-        ServingCellRSRQ = 2,
-        ServingCellSINR = 3,
-        CumulativeBackhaulTimingAdvance = 4,
-        NeighbourCellReport = 5,
-        
-    };
+};
+
+enum class RESID {
+    ServingCellID = 0,
+    ServingCellRSRP = 1,
+    ServingCellRSRQ = 2,
+    ServingCellSINR = 3,
+    CumulativeBackhaulTimingAdvance = 4,
+    NeighbourCellReport = 5,
+    
 };
 
 /* \brief Class for object 10246 - CrowdBox Measurements
@@ -70,8 +74,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10246::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10246::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10246::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10246::RESID c1) { return (uint16_t) c1 == c2; }
 	

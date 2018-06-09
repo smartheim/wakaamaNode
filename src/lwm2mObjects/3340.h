@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3340 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Trigger3340
+    class TriggerType : public Opaque<30> {};
+    #endif
+    
+    #ifndef ApplicationType3340
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3340 - Timer
  *  This IPSO object is used to time events and actions, using patterns common to industrial
  *  timers. A POST to the trigger resource or On/Off input state change starts the timing
@@ -58,22 +69,23 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        Duration = 5521,
-        RemainingTime = 5538,
-        MinimumOfftime = 5525,
-        Trigger = 5523,
-        OnOff = 5850,
-        DigitalInputCounter = 5501,
-        CumulativeTime = 5544,
-        DigitalState = 5543,
-        Counter = 5534,
-        Mode = 5526,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    Duration = 5521,
+    RemainingTime = 5538,
+    MinimumOfftime = 5525,
+    Trigger = 5523,
+    OnOff = 5850,
+    DigitalInputCounter = 5501,
+    CumulativeTime = 5544,
+    DigitalState = 5543,
+    Counter = 5534,
+    Mode = 5526,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3340 - Timer
@@ -135,8 +147,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3340::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3340::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3340::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3340::RESID c1) { return (uint16_t) c1 == c2; }
 	

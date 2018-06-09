@@ -4,6 +4,29 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10252 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Manifest10252
+    class ManifestType : public Opaque<30> {};
+    #endif
+    
+    #ifndef PayloadResult10252
+    class PayloadResultType : public Opaque<30> {};
+    #endif
+    
+    #ifndef AssetHash10252
+    class AssetHashType : public Opaque<30> {};
+    #endif
+    
+    #ifndef CampaignId10252
+    class CampaignIdType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ManualTrigger10252
+    class ManualTriggerType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10252 - Manifest
  *  This object provides a range of information related to updating packages on a device
  */
@@ -11,7 +34,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 1 - Content of a new manifest
-    Opaque<30> Manifest;
+    ManifestType Manifest;
     
     // 2 - Current state of manifest processing0.	Uninitialised1.	Idle2.	Processing manifest3.	Awaiting download approval4.	Downloading 5.	Downloaded6.	Awaiting application approval7.	Updating8.	Rebooting
     int State;
@@ -20,10 +43,10 @@ public:
     int ManifestResult;
     
     // 4 - Contains payload-specific errors or output.
-    Opaque<30> PayloadResult;
+    PayloadResultType PayloadResult;
     
     // 5 - Hash of the installed asset.
-    Opaque<30> AssetHash;
+    AssetHashType AssetHash;
     
     // 6 - Version of the current manifest.
     int Manifestversion;
@@ -32,23 +55,24 @@ public:
     int AssetInstallationProgress;
     
     // 8 - Id of campaign affecting this device. There currently isn’t any logic on the server or the client to handle this. 
-    PreallocString<30> CampaignId;
+    CampaignIdType CampaignId;
     
     // 9 - Manually apply the asset update. This will only have effect if the manifest requires this. The state resource must also be in the downloaded state for the execute command to be actioned.
     Executable ManualTrigger;
 
-    enum class RESID {
-        Manifest = 1,
-        State = 2,
-        ManifestResult = 3,
-        PayloadResult = 4,
-        AssetHash = 5,
-        Manifestversion = 6,
-        AssetInstallationProgress = 7,
-        CampaignId = 8,
-        ManualTrigger = 9,
-        
-    };
+};
+
+enum class RESID {
+    Manifest = 1,
+    State = 2,
+    ManifestResult = 3,
+    PayloadResult = 4,
+    AssetHash = 5,
+    Manifestversion = 6,
+    AssetInstallationProgress = 7,
+    CampaignId = 8,
+    ManualTrigger = 9,
+    
 };
 
 /* \brief Class for object 10252 - Manifest
@@ -87,8 +111,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10252::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10252::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10252::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10252::RESID c1) { return (uint16_t) c1 == c2; }
 	

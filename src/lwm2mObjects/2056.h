@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2056 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2056 - CmdhBuffer
  *  This Object defines limits in usage of buffers for temporarily storing information
  *  that needs to be forwarded to other CSEs during processing of CMDH-related requests
@@ -21,12 +24,13 @@ public:
     // 2 - Storage priority for the buffered data associated to that CmdhBuffer Object Instance. t Buffered requests associated with a lower storage priority shall be purged before buffered requests with a higher storage priority.
     int StoragePriority;
     
-    enum class RESID {
-        ApplicableEventCategory = 0,
-        MaxBufferSize = 1,
-        StoragePriority = 2,
-        
-    };
+};
+
+enum class RESID {
+    ApplicableEventCategory = 0,
+    MaxBufferSize = 1,
+    StoragePriority = 2,
+    
 };
 
 /* \brief Class for object 2056 - CmdhBuffer
@@ -49,8 +53,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2056::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2056::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2056::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2056::RESID c1) { return (uint16_t) c1 == c2; }
 	

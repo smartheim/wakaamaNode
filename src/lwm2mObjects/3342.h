@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3342 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3342
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3342 - On/Off switch
  *  This IPSO object should be used with an On/Off switch to report the state of the switch.
  */
@@ -27,16 +34,17 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        DigitalInputState = 5500,
-        DigitalInputCounter = 5501,
-        OnTime = 5852,
-        OffTime = 5854,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    DigitalInputState = 5500,
+    DigitalInputCounter = 5501,
+    OnTime = 5852,
+    OffTime = 5854,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3342 - On/Off switch
@@ -67,8 +75,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3342::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3342::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3342::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3342::RESID c1) { return (uint16_t) c1 == c2; }
 	

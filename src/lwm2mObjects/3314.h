@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3314 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef SensorUnits3314
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3314 - Magnetometer
  *  Description: This IPSO object can be used to represent a 1-3 axis magnetometer with
  *  optional compass direction.
@@ -28,16 +35,17 @@ public:
     
     // Optional resource
     // 5701 - Measurement Units Definition e.g. “Cel” for Temperature in Celsius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
-    enum class RESID {
-        XValue = 5702,
-        YValue = 5703,
-        ZValue = 5704,
-        CompassDirection = 5705,
-        SensorUnits = 5701,
-        
-    };
+};
+
+enum class RESID {
+    XValue = 5702,
+    YValue = 5703,
+    ZValue = 5704,
+    CompassDirection = 5705,
+    SensorUnits = 5701,
+    
 };
 
 /* \brief Class for object 3314 - Magnetometer
@@ -69,8 +77,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3314::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3314::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3314::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3314::RESID c1) { return (uint16_t) c1 == c2; }
 	

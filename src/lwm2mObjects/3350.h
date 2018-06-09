@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3350 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3350
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3350 - Stopwatch
  *  An ascending timer that counts how long time has passed since the timer was started after
  *  reset.
@@ -24,15 +31,16 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        CumulativeTime = 5544,
-        OnOff = 5850,
-        DigitalInputCounter = 5501,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    CumulativeTime = 5544,
+    OnOff = 5850,
+    DigitalInputCounter = 5501,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3350 - Stopwatch
@@ -60,8 +68,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3350::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3350::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3350::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3350::RESID c1) { return (uint16_t) c1 == c2; }
 	

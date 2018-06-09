@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3360 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3360 - esmContextInfo
  *  ESM context information
  */
@@ -22,13 +25,14 @@ public:
     // 3 - QoS Class Identifier (TS 23.203)
     int qci;
     
-    enum class RESID {
-        contextType = 0,
-        bearerState = 1,
-        radioBearerId = 2,
-        qci = 3,
-        
-    };
+};
+
+enum class RESID {
+    contextType = 0,
+    bearerState = 1,
+    radioBearerId = 2,
+    qci = 3,
+    
 };
 
 /* \brief Class for object 3360 - esmContextInfo
@@ -52,8 +56,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3360::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3360::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3360::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3360::RESID c1) { return (uint16_t) c1 == c2; }
 	

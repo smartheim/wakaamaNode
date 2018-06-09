@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10244 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10244 - VehicleControlUnit
  *  This Object provides the information to represent a generic VCU(vehicle control unit).
  */
@@ -115,41 +118,42 @@ public:
     // 32 - Status of the battery pack. 0: normal 1: level D25 minor fault 2: level 2 critical fault
     bool MotorError;
     
-    enum class RESID {
-        VehicleUIState = 0,
-        VehicleSpeed = 1,
-        VehicleShiftStatus = 2,
-        VehicleAPPosition = 3,
-        VehiclePower = 4,
-        VehicleDriveEnergy = 5,
-        VehicleEnergyConsumptionEfficiency = 6,
-        VehicleEstimatedMileage = 7,
-        VehicleChargeCableStatus = 8,
-        VehicleChargeStatus = 9,
-        VehicleChargeVoltage = 10,
-        VehicleChargeCurrent = 11,
-        VehicleChargeRemainingTime = 12,
-        BatteryPackVoltage = 13,
-        BatteryPackCurrent = 14,
-        BatteryPackRemainingCapacity = 15,
-        BatteryPackSOC = 16,
-        BatteryPackSOH = 17,
-        BatteryCellMinVolt = 18,
-        BatteryCellMaxVolt = 19,
-        BatteryModuleMinTemp = 20,
-        BatteryModuleMaxTemp = 21,
-        BatteryConnectionStatus = 22,
-        MCUVoltage = 24,
-        MCUTemperature = 25,
-        MotorSpeed = 26,
-        MotorTemperature = 27,
-        MotorOTWarning = 28,
-        MCUOTWarning = 29,
-        BatteryPackOTWarning = 30,
-        MCUfault = 31,
-        MotorError = 32,
-        
-    };
+};
+
+enum class RESID {
+    VehicleUIState = 0,
+    VehicleSpeed = 1,
+    VehicleShiftStatus = 2,
+    VehicleAPPosition = 3,
+    VehiclePower = 4,
+    VehicleDriveEnergy = 5,
+    VehicleEnergyConsumptionEfficiency = 6,
+    VehicleEstimatedMileage = 7,
+    VehicleChargeCableStatus = 8,
+    VehicleChargeStatus = 9,
+    VehicleChargeVoltage = 10,
+    VehicleChargeCurrent = 11,
+    VehicleChargeRemainingTime = 12,
+    BatteryPackVoltage = 13,
+    BatteryPackCurrent = 14,
+    BatteryPackRemainingCapacity = 15,
+    BatteryPackSOC = 16,
+    BatteryPackSOH = 17,
+    BatteryCellMinVolt = 18,
+    BatteryCellMaxVolt = 19,
+    BatteryModuleMinTemp = 20,
+    BatteryModuleMaxTemp = 21,
+    BatteryConnectionStatus = 22,
+    MCUVoltage = 24,
+    MCUTemperature = 25,
+    MotorSpeed = 26,
+    MotorTemperature = 27,
+    MotorOTWarning = 28,
+    MCUOTWarning = 29,
+    BatteryPackOTWarning = 30,
+    MCUfault = 31,
+    MotorError = 32,
+    
 };
 
 /* \brief Class for object 10244 - VehicleControlUnit
@@ -266,8 +270,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10244::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10244::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10244::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10244::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3375 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3375 - PagingDRX
  *  Paging DRX information
  */
@@ -31,16 +34,17 @@ public:
     // 6 - drxSubFrameNumOffset is used to obtain the starting sub frame number for DRX cycle
     int drxSubFrameNumOffset;
     
-    enum class RESID {
-        dlEarfcn = 6032,
-        pci = 6034,
-        pagingCycle = 2,
-        DrxNb = 3,
-        ueID = 4,
-        drxSysFrameNumOffset = 5,
-        drxSubFrameNumOffset = 6,
-        
-    };
+};
+
+enum class RESID {
+    dlEarfcn = 6032,
+    pci = 6034,
+    pagingCycle = 2,
+    DrxNb = 3,
+    ueID = 4,
+    drxSysFrameNumOffset = 5,
+    drxSubFrameNumOffset = 6,
+    
 };
 
 /* \brief Class for object 3375 - PagingDRX
@@ -73,8 +77,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3375::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3375::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3375::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3375::RESID c1) { return (uint16_t) c1 == c2; }
 	

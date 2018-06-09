@@ -4,6 +4,25 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2051 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef DefEcValue2051
+    class DefEcValueType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RequestOrigin2051
+    class RequestOriginType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RequestContext2051
+    class RequestContextType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RequestCharacteristics2051
+    class RequestCharacteristicsType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 2051 - CmdhDefEcValues
  *  This Object represents default set of values for the Event Category parameter of an
  *  incoming request or response message.
@@ -15,14 +34,14 @@ public:
     int Order;
     
     // 1 - Represents the default Event category value to be applied when the conditions given in this Object Instance are matched
-    PreallocString<30> DefEcValue;
+    DefEcValueType DefEcValue;
     
     // 2 - List of zero or more Local AE-IDs, App-IDs, or the strings “localAE” or “thisCSE”
-    PreallocString<30> RequestOrigin;
+    RequestOriginType RequestOrigin;
     
     // Optional resource
     // 3 - Contains the requestContext information of this Object Instance which needs to be matched  
-    PreallocString<30> RequestContext;
+    RequestContextType RequestContext;
     
     // Optional resource
     // 4 - Contains true/false flag indicating whether or not notification procedures apply.
@@ -30,17 +49,18 @@ public:
     
     // Optional resource
     // 5 - Represents conditions pertaining to the request itself, (e.g. the requested Response Type  ) than needs to be matched
-    PreallocString<30> RequestCharacteristics;
+    RequestCharacteristicsType RequestCharacteristics;
     
-    enum class RESID {
-        Order = 0,
-        DefEcValue = 1,
-        RequestOrigin = 2,
-        RequestContext = 3,
-        RequestContextNotification = 4,
-        RequestCharacteristics = 5,
-        
-    };
+};
+
+enum class RESID {
+    Order = 0,
+    DefEcValue = 1,
+    RequestOrigin = 2,
+    RequestContext = 3,
+    RequestContextNotification = 4,
+    RequestCharacteristics = 5,
+    
 };
 
 /* \brief Class for object 2051 - CmdhDefEcValues
@@ -74,8 +94,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2051::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2051::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2051::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2051::RESID c1) { return (uint16_t) c1 == c2; }
 	

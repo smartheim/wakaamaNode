@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3362 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3362 - nasEmmTimerExpiryEvent
  *  NAS EMM timer expiry information
  */
@@ -13,10 +16,11 @@ public:
     // 0 -    1 = t3410
     int NasEmmTimerExpiryEvent;
     
-    enum class RESID {
-        NasEmmTimerExpiryEvent = 0,
-        
-    };
+};
+
+enum class RESID {
+    NasEmmTimerExpiryEvent = 0,
+    
 };
 
 /* \brief Class for object 3362 - nasEmmTimerExpiryEvent
@@ -31,8 +35,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3362::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3362::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3362::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3362::RESID c1) { return (uint16_t) c1 == c2; }
 	

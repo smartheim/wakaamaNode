@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id18 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 18 - Non-Access Stratum (NAS) configuration 
  *  This object provides Non-Access Stratum (NAS) configuration and is derived from 3GPP
  *  TS 24.368.
@@ -63,22 +66,23 @@ public:
     // 12 - For the UE in NB-S1 mode, this resource indicates whether the UE is allowed to use the RRC establishment cause mo-ExceptionData, as specified in 3GPP TS 24.301 [5].0	Indicates that the UE is not allowed to use the RRC establishment cause mo-ExceptionData.1	Indicates that the UE is allowed to use the RRC establishment cause mo-ExceptionData.If this resource is not provisioned, the value of 0 is used.
     bool ExceptionDataReportingAllowed;
     
-    enum class RESID {
-        NASSignallingPriority = 0,
-        AttachWithIMSI = 1,
-        MinimumPeriodicSearchTimer = 2,
-        NMOIBehaviour = 3,
-        TimerT3245Behaviour = 4,
-        ExtendedAccessBarring = 5,
-        OverrideNASSignallingLowPriority = 6,
-        OverrideExtendedAccessBarring = 7,
-        FastFirstHigherPriorityPLMNSearch = 8,
-        EUTRADisablingAllowedForEMMCause15 = 9,
-        SMRetryWaitTime = 10,
-        SMRetryAtRATChange = 11,
-        ExceptionDataReportingAllowed = 12,
-        
-    };
+};
+
+enum class RESID {
+    NASSignallingPriority = 0,
+    AttachWithIMSI = 1,
+    MinimumPeriodicSearchTimer = 2,
+    NMOIBehaviour = 3,
+    TimerT3245Behaviour = 4,
+    ExtendedAccessBarring = 5,
+    OverrideNASSignallingLowPriority = 6,
+    OverrideExtendedAccessBarring = 7,
+    FastFirstHigherPriorityPLMNSearch = 8,
+    EUTRADisablingAllowedForEMMCause15 = 9,
+    SMRetryWaitTime = 10,
+    SMRetryAtRATChange = 11,
+    ExceptionDataReportingAllowed = 12,
+    
 };
 
 /* \brief Class for object 18 - Non-Access Stratum (NAS) configuration 
@@ -143,8 +147,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id18::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id18::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id18::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id18::RESID c1) { return (uint16_t) c1 == c2; }
 	

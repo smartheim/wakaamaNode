@@ -4,6 +4,25 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id5 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Package5
+    class PackageType : public Opaque<30> {};
+    #endif
+    
+    #ifndef PackageURI5
+    class PackageURIType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef PkgName5
+    class PkgNameType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef PkgVersion5
+    class PkgVersionType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 5 - Firmware Update
  *  This LwM2M Object enables management of firmware which is to be updated. This Object
  *  includes installing firmware package, updating firmware, and performing actions
@@ -33,10 +52,10 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Firmware package
-    Opaque<30> Package;
+    PackageType Package;
     
     // 1 - URI from where the device can download the firmware package by an alternative mechanism. As soon the device has received the Package URI it performs the download at the next practical opportunity. The URI format is defined in RFC 3986. For example, coaps://example.org/firmware is a syntactically valid URI. The URI scheme determines the protocol to be used. For CoAP this endpoint MAY be a LwM2M Server but does not necessarily need to be. A CoAP server implementing block-wise transfer is sufficient as a server hosting a firmware repository and the expectation is that this server merely serves as a separate file server making firmware images available to LwM2M Clients.
-    PreallocString<30> PackageURI;
+    PackageURIType PackageURI;
     
     // 2 - Updates firmware by using the firmware package stored in Package, or, by using the firmware downloaded from the Package URI.This Resource is only executable when the value of the State Resource is Downloaded.
     Executable Update;
@@ -49,11 +68,11 @@ public:
     
     // Optional resource
     // 6 - Name of the Firmware Package
-    PreallocString<30> PkgName;
+    PkgNameType PkgName;
     
     // Optional resource
     // 7 - Version of the Firmware package
-    PreallocString<30> PkgVersion;
+    PkgVersionType PkgVersion;
     
     // Optional resource
     // 8 - This resource indicates what protocols the LwM2M Client implements to retrieve firmware images. The LwM2M server uses this information to decide what URI to include in the Package URI. A LwM2M Server MUST NOT include a URI in the Package URI object that uses a protocol that is unsupported by the LwM2M client.For example, if a LwM2M client indicates that it supports CoAP and CoAPS then a LwM2M Server must not provide an HTTP URI in the Packet URI.The following values are defined by this version of the specification:0 – CoAP (as defined in RFC 7252) with the additional support for block-wise transfer. CoAP is the default setting.1 – CoAPS (as defined in RFC 7252) with the additional support for block-wise transfer2 – HTTP 1.1 (as defined in RFC 7230)3 – HTTPS 1.1 (as defined in RFC 7230)Additional values MAY be defined in the future. Any value not understood by the LwM2M Server MUST be ignored.
@@ -62,18 +81,19 @@ public:
     // 9 - The LwM2M Client uses this resource to indicate its support for transferring firmware images to the client either via the Package Resource (=push) or via the Package URI Resource (=pull) mechanism.0 – Pull only1 – Push only2 – Both. In this case the LwM2M Server MAY choose the preferred mechanism for conveying the firmware image to the LwM2M Client.
     int FirmwareUpdateDeliveryMethod;
     
-    enum class RESID {
-        Package = 0,
-        PackageURI = 1,
-        Update = 2,
-        State = 3,
-        UpdateResult = 5,
-        PkgName = 6,
-        PkgVersion = 7,
-        FirmwareUpdateProtocolSupport = 8,
-        FirmwareUpdateDeliveryMethod = 9,
-        
-    };
+};
+
+enum class RESID {
+    Package = 0,
+    PackageURI = 1,
+    Update = 2,
+    State = 3,
+    UpdateResult = 5,
+    PkgName = 6,
+    PkgVersion = 7,
+    FirmwareUpdateProtocolSupport = 8,
+    FirmwareUpdateDeliveryMethod = 9,
+    
 };
 
 /* \brief Class for object 5 - Firmware Update
@@ -137,8 +157,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id5::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id5::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id5::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id5::RESID c1) { return (uint16_t) c1 == c2; }
 	

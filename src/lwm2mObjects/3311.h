@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3311 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Colour3311
+    class ColourType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SensorUnits3311
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3311 - Light Control
  *  Description: This Object is used to control a light source, such as a LED or other light.
  *  It allows a light to be turned on or off and its dimmer setting to be control as a % between
@@ -34,22 +45,23 @@ public:
     
     // Optional resource
     // 5706 - A string representing a value in some color space
-    PreallocString<30> Colour;
+    ColourType Colour;
     
     // Optional resource
     // 5701 - If present, the type of sensor defined as the UCUM Unit Definition e.g. “Cel” for Temperature in Celcius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
-    enum class RESID {
-        OnOff = 5850,
-        Dimmer = 5851,
-        OnTime = 5852,
-        Cumulativeactivepower = 5805,
-        PowerFactor = 5820,
-        Colour = 5706,
-        SensorUnits = 5701,
-        
-    };
+};
+
+enum class RESID {
+    OnOff = 5850,
+    Dimmer = 5851,
+    OnTime = 5852,
+    Cumulativeactivepower = 5805,
+    PowerFactor = 5820,
+    Colour = 5706,
+    SensorUnits = 5701,
+    
 };
 
 /* \brief Class for object 3311 - Light Control
@@ -91,8 +103,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3311::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3311::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3311::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3311::RESID c1) { return (uint16_t) c1 == c2; }
 	

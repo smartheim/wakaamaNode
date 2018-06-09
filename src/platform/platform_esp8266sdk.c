@@ -49,6 +49,8 @@ void __attribute__((weak))  lwm2m_printf(const char * format, ...)
 
     va_end(ap);
 }
+#else
+void __attribute__((weak)) lwm2m_printf(const char * format, ...) {}
 #endif
 
 #endif

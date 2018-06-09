@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10247 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10247 - Neighbour Cell Report
  *  This LWM2M Object provides the neighbour cell report. The CrowdBox Measurements Object
  *  and the Connected UE Report Object have both Objlnk Resources pointing to this Object.
@@ -27,14 +30,15 @@ public:
     // 4 - Neighbour cell RSRQ, as defined in TS 36.133, Section 9.1.7. Range: RSRQ_-30; RSRQ_-29 .. RSRQ_46
     int NeighbourCellRSRQ;
     
-    enum class RESID {
-        NeighbourPCI = 0,
-        NeighbourCellID = 1,
-        NeighbourCellRank = 2,
-        NeighbourCellRSRP = 3,
-        NeighbourCellRSRQ = 4,
-        
-    };
+};
+
+enum class RESID {
+    NeighbourPCI = 0,
+    NeighbourCellID = 1,
+    NeighbourCellRank = 2,
+    NeighbourCellRSRP = 3,
+    NeighbourCellRSRQ = 4,
+    
 };
 
 /* \brief Class for object 10247 - Neighbour Cell Report
@@ -63,8 +67,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10247::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10247::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10247::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10247::RESID c1) { return (uint16_t) c1 == c2; }
 	

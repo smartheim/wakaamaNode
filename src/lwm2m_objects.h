@@ -79,13 +79,14 @@ typedef struct _lwm2m_object_res_opaque_t_ {
     uint8_t data[N]; \
 }
 
-typedef void(*ExecutableType)(void);
+typedef void(*ExecutableType)(uint8_t * buffer,
+                              int length);
 #define IndirectReadType(TYPE,NAME) TYPE(*NAME)(void)
-#define IndirectWriteType(TYPE,NAME) void(*NAME)(TYPE)
+#define IndirectWriteType(TYPE,NAME) void(*NAME)(TYPE,int)
 
 #define IndirectReadWriteType(TYPE) struct { \
     TYPE(*read)(void); \
-    void(*write)(TYPE); \
+    void(*write)(TYPE,int); \
 }
 
 /**

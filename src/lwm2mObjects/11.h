@@ -4,6 +4,65 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id11 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Profilename11
+    class ProfilenameType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef APN11
+    class APNType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef UserName11
+    class UserNameType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Secret11
+    class SecretType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ReconnectSchedule11
+    class ReconnectScheduleType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ValidityMCCMNC11
+    class ValidityMCCMNCType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Connectionestablishmenttime111
+    class Connectionestablishmenttime1Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Connectionendtime111
+    class Connectionendtime1Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef IPaddress211
+    class IPaddress2Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Prefixlength211
+    class Prefixlength2Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Subnetmask211
+    class Subnetmask2Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Gateway211
+    class Gateway2Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef PrimaryDNSaddress211
+    class PrimaryDNSaddress2Type : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SecondaryDNSaddress211
+    class SecondaryDNSaddress2Type : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 11 - APN connection profile
  *  This object specifies resources to enable a device to connect to an APN.Notes:(1) For
  *  each activated PDP context request, the device may store at least one value of ‘Connection
@@ -26,11 +85,11 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Human-readable identifier. Multiple connection profiles can share the same APN value but e.g. have different credentials.
-    PreallocString<30> Profilename;
+    ProfilenameType Profilename;
     
     // Optional resource
     // 1 - Presented to network during connection to PDN e.g. ‘internet.15.234’.This resource is not included in case ‘Auto select APN by device’ resource has the value TRUE.If the APN resource is present but contains an empty string, then the device shall not provide an APN in the connection request (invoking default APN procedures in the network).
-    PreallocString<30> APN;
+    APNType APN;
     
     // Optional resource
     // 2 - If this resource is present for a connection profile, it enables the device to choose an APN according to a device specific algorithm. It provides a fall-back mechanism e.g. for some MVNO SIMs the configured APN may not work.  Resource not included in case the ‘APN’ resource is specified.
@@ -45,23 +104,23 @@ public:
     
     // Optional resource
     // 5 - Used with e.g. PAP.
-    PreallocString<30> UserName;
+    UserNameType UserName;
     
     // Optional resource
     // 6 - Used with e.g. PAP.
-    PreallocString<30> Secret;
+    SecretType Secret;
     
     // Optional resource
     // 7 - Comma separated list of retry delay values in seconds to be used in case of unsuccessful connection establishment attempts. e.g. “10,60,600,3600,86400”
-    PreallocString<30> ReconnectSchedule;
+    ReconnectScheduleType ReconnectSchedule;
     
     // Optional resource
     // 8 - Coma separated mobile country code, then mobile network code – for which this APN is valid.
-    PreallocString<30> ValidityMCCMNC;
+    ValidityMCCMNCType ValidityMCCMNC;
     
     // Optional resource
     // 9 - UTC time of connection request. See note (1)
-    PreallocString<30> Connectionestablishmenttime1; // Time
+    Connectionestablishmenttime1Type Connectionestablishmenttime1; // Time
     
     // Optional resource
     // 10 - 0 = accepted1 = rejected
@@ -73,7 +132,7 @@ public:
     
     // Optional resource
     // 12 - UTC time of connection end.
-    PreallocString<30> Connectionendtime1; // Time
+    Connectionendtime1Type Connectionendtime1; // Time
     
     // Optional resource
     // 13 - Rolling counter for total number of bytes sent via this interface since last device reset.
@@ -85,27 +144,27 @@ public:
     
     // Optional resource
     // 15 - May be IPv4 or IPv6 address.
-    PreallocString<30> IPaddress2;
+    IPaddress2Type IPaddress2;
     
     // Optional resource
     // 16 - Associated with IPv6 address.
-    PreallocString<30> Prefixlength2;
+    Prefixlength2Type Prefixlength2;
     
     // Optional resource
     // 17 - Subnet mask.
-    PreallocString<30> Subnetmask2;
+    Subnetmask2Type Subnetmask2;
     
     // Optional resource
     // 18 - Gateway.
-    PreallocString<30> Gateway2;
+    Gateway2Type Gateway2;
     
     // Optional resource
     // 19 - Primary DNS address.
-    PreallocString<30> PrimaryDNSaddress2;
+    PrimaryDNSaddress2Type PrimaryDNSaddress2;
     
     // Optional resource
     // 20 - Secondary DNS address.
-    PreallocString<30> SecondaryDNSaddress2;
+    SecondaryDNSaddress2Type SecondaryDNSaddress2;
     
     // Optional resource
     // 21 - For LTE and NB-IoT onlyQCI=Quality of service Class IdentifierThis resource enables the LWM2M server to signal the LWM2M client which QCI it shall request from the network.See [3GPP-TS_23.203, and 3GPP-TS_24.301] for a description of QCI values. See note (3).
@@ -127,35 +186,36 @@ public:
     // 25 - Determines the number of allowed uplink PDU transmissions per time interval per APN.Rate Control information is part of the Protocol Configuration Options (PCO) according to [3GPP-TS_24.008 and 3GPP-TS_27.060]
     int APNRateControl;
     
-    enum class RESID {
-        Profilename = 0,
-        APN = 1,
-        AutoselectAPNbydevice = 2,
-        Enablestatus = 3,
-        AuthenticationType = 4,
-        UserName = 5,
-        Secret = 6,
-        ReconnectSchedule = 7,
-        ValidityMCCMNC = 8,
-        Connectionestablishmenttime1 = 9,
-        Connectionestablishmentresult1 = 10,
-        Connectionestablishmentrejectcause1 = 11,
-        Connectionendtime1 = 12,
-        TotalBytesSent = 13,
-        TotalBytesReceived = 14,
-        IPaddress2 = 15,
-        Prefixlength2 = 16,
-        Subnetmask2 = 17,
-        Gateway2 = 18,
-        PrimaryDNSaddress2 = 19,
-        SecondaryDNSaddress2 = 20,
-        QCI3 = 21,
-        Vendorspecificextensions = 22,
-        TotalPacketsSent = 23,
-        PDNType = 24,
-        APNRateControl = 25,
-        
-    };
+};
+
+enum class RESID {
+    Profilename = 0,
+    APN = 1,
+    AutoselectAPNbydevice = 2,
+    Enablestatus = 3,
+    AuthenticationType = 4,
+    UserName = 5,
+    Secret = 6,
+    ReconnectSchedule = 7,
+    ValidityMCCMNC = 8,
+    Connectionestablishmenttime1 = 9,
+    Connectionestablishmentresult1 = 10,
+    Connectionestablishmentrejectcause1 = 11,
+    Connectionendtime1 = 12,
+    TotalBytesSent = 13,
+    TotalBytesReceived = 14,
+    IPaddress2 = 15,
+    Prefixlength2 = 16,
+    Subnetmask2 = 17,
+    Gateway2 = 18,
+    PrimaryDNSaddress2 = 19,
+    SecondaryDNSaddress2 = 20,
+    QCI3 = 21,
+    Vendorspecificextensions = 22,
+    TotalPacketsSent = 23,
+    PDNType = 24,
+    APNRateControl = 25,
+    
 };
 
 /* \brief Class for object 11 - APN connection profile
@@ -284,8 +344,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id11::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id11::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id11::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id11::RESID c1) { return (uint16_t) c1 == c2; }
 	

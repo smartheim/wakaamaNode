@@ -4,6 +4,37 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ActivatedProfileNames10
+    class ActivatedProfileNamesType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SMSCaddress10
+    class SMSCaddressType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Moduleactivationcode10
+    class ModuleactivationcodeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef eDRXparametersforIumode110
+    class eDRXparametersforIumode1Type : public Opaque<30> {};
+    #endif
+    
+    #ifndef eDRXparametersforWBS1mode110
+    class eDRXparametersforWBS1mode1Type : public Opaque<30> {};
+    #endif
+    
+    #ifndef eDRXparametersforNBS1mode110
+    class eDRXparametersforNBS1mode1Type : public Opaque<30> {};
+    #endif
+    
+    #ifndef eDRXparametersforAGbmode110
+    class eDRXparametersforAGbmode1Type : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 10 - Cellular connectivity
  *  This object specifies resources to enable a device to connect to a 3GPP or 3GPP2 bearer,
  *  including GPRS/EDGE, UMTS, LTE, NB-IoT, SMS. For cellular connectivity, this object
@@ -26,11 +57,11 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 11 - Links to instances of the “APN connection profile” object representing every APN connection profile that has an activated connection to a PDN.
-    PreallocString<30> ActivatedProfileNames;
+    ActivatedProfileNamesType ActivatedProfileNames;
     
     // Optional resource
     // 0 - E.164 address of SMSC.   Applicable for 3GPP2 networks where SMSC is not available from a smart card, or for 3GPP/3GPP2 networks to provide the application with a customer specific SMSC.  The application decides how to use this parameter, e.g. precedence over UICC based SMSC address.
-    PreallocString<30> SMSCaddress;
+    SMSCaddressType SMSCaddress;
     
     // Optional resource
     // 1 - Time period for which the device shall disconnect from cellular radio (PS detach, CS detach if applicable).Can be used to handle network overload situations. The value is a positive integer (0 to 65535), duration can be from 1 minute to 65535 minutes (approximately 45 days).As soon the server writes a value which is >0 the device SHALL disconnect. When the period has elapsed the device MAY reconnect.
@@ -38,7 +69,7 @@ public:
     
     // Optional resource
     // 2 - Configurable in case the application needs to issue a code (e.g. via AT command) to activate the module. e.g. “*98”.
-    PreallocString<30> Moduleactivationcode;
+    ModuleactivationcodeType Moduleactivationcode;
     
     // Optional resource
     // 3 - Links to a vendor specific object.
@@ -58,35 +89,36 @@ public:
     
     // Optional resource
     // 7 - Extended DRX parameters (Paging Time Window and eDRX value) for Iu mode which the UE can request from the network. This resource is encoded as octet 3 in [3GPP-TS_24.008, clause 10.5.5.32].
-    Opaque<30> eDRXparametersforIumode1;
+    eDRXparametersforIumode1Type eDRXparametersforIumode1;
     
     // Optional resource
     // 8 - Extended DRX parameters (Paging Time Window and eDRX value) for WB-S1 mode which the UE can request from the network. This resource is encoded as octet 3 in [3GPP-TS_24.008, clause 10.5.5.32].
-    Opaque<30> eDRXparametersforWBS1mode1;
+    eDRXparametersforWBS1mode1Type eDRXparametersforWBS1mode1;
     
     // Optional resource
     // 9 - Extended DRX parameters (Paging Time Window and eDRX value) for NB-S1 mode which the UE can request from the network. This resource is encoded as octet 3 in [3GPP-TS_24.008, clause 10.5.5.32].
-    Opaque<30> eDRXparametersforNBS1mode1;
+    eDRXparametersforNBS1mode1Type eDRXparametersforNBS1mode1;
     
     // Optional resource
     // 10 - Extended DRX parameters (Paging Time Window and eDRX value) for A/Gb mode which the UE can request from the network. This resource is encoded as octet 3 in [3GPP-TS_24.008, clause 10.5.5.32].
-    Opaque<30> eDRXparametersforAGbmode1;
+    eDRXparametersforAGbmode1Type eDRXparametersforAGbmode1;
     
-    enum class RESID {
-        ActivatedProfileNames = 11,
-        SMSCaddress = 0,
-        Disableradioperiod = 1,
-        Moduleactivationcode = 2,
-        Vendorspecificextensions = 3,
-        PSMTimer1 = 4,
-        ActiveTimer1 = 5,
-        ServingPLMNRatecontrol = 6,
-        eDRXparametersforIumode1 = 7,
-        eDRXparametersforWBS1mode1 = 8,
-        eDRXparametersforNBS1mode1 = 9,
-        eDRXparametersforAGbmode1 = 10,
-        
-    };
+};
+
+enum class RESID {
+    ActivatedProfileNames = 11,
+    SMSCaddress = 0,
+    Disableradioperiod = 1,
+    Moduleactivationcode = 2,
+    Vendorspecificextensions = 3,
+    PSMTimer1 = 4,
+    ActiveTimer1 = 5,
+    ServingPLMNRatecontrol = 6,
+    eDRXparametersforIumode1 = 7,
+    eDRXparametersforWBS1mode1 = 8,
+    eDRXparametersforNBS1mode1 = 9,
+    eDRXparametersforAGbmode1 = 10,
+    
 };
 
 /* \brief Class for object 10 - Cellular connectivity
@@ -160,8 +192,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10248 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10248 - Connected UE Measurements
  *  This LWM2M Object provides a range of measurements of connected UEs and provides an
  *  Object link to the Connected UE report.
@@ -20,12 +23,13 @@ public:
     // 2 - Provides an Object link to the Connected UE Report which provides a range of information related to the connected UEs.
     // Objlnk resources are not supported yet - ConnectedUEReport;
     
-    enum class RESID {
-        NumberofConnectedUsers = 0,
-        CumulativeNumberofUniqueUsers = 1,
-        ConnectedUEReport = 2,
-        
-    };
+};
+
+enum class RESID {
+    NumberofConnectedUsers = 0,
+    CumulativeNumberofUniqueUsers = 1,
+    ConnectedUEReport = 2,
+    
 };
 
 /* \brief Class for object 10248 - Connected UE Measurements
@@ -47,8 +51,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10248::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10248::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10248::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10248::RESID c1) { return (uint16_t) c1 == c2; }
 	

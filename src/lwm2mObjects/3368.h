@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3368 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3368 - macTimerStatusEvent
  *  MAC timer expiry information
  */
@@ -13,10 +16,11 @@ public:
     // 0 - 0 = TA1 = RA2 = Contention3 = RACH_Back_Off
     int macTimerName;
     
-    enum class RESID {
-        macTimerName = 0,
-        
-    };
+};
+
+enum class RESID {
+    macTimerName = 0,
+    
 };
 
 /* \brief Class for object 3368 - macTimerStatusEvent
@@ -31,8 +35,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3368::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3368::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3368::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3368::RESID c1) { return (uint16_t) c1 == c2; }
 	

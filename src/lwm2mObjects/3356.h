@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3356 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3356 - radioLinkFailureEvent
  *  Radio Link Failure Event
  */
@@ -16,11 +19,12 @@ public:
     // 1 - Radio Link Failure cause        0 = configurationFailue        1 = handoverFailure        2 = rachFailure,        3 = maxRetransmission,        4 = ipCheckFailue        5 = sibReadingFailure        6 = mibChange        7 = other
     int rlfCause;
     
-    enum class RESID {
-        timeRLF = 0,
-        rlfCause = 1,
-        
-    };
+};
+
+enum class RESID {
+    timeRLF = 0,
+    rlfCause = 1,
+    
 };
 
 /* \brief Class for object 3356 - radioLinkFailureEvent
@@ -38,8 +42,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3356::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3356::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3356::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3356::RESID c1) { return (uint16_t) c1 == c2; }
 	

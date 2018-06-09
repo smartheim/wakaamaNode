@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3354 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3354 - cellReselectionEvent
  *  cell reselection event information
  */
@@ -22,13 +25,14 @@ public:
     // 3 - 0 = Pass1= S-Failure2 =  Sib-Read-Failure3 = Weak-Downlink-Indicator4 = Cell-Barred5 = Non-Valid-Plmn6 = Forbidden-Tracking-Area7 = Aborted8 = Forbidden-CSG-Id9 = IRAT-Reselection-Failure10 = Frequency-Barred
     int failureType;
     
-    enum class RESID {
-        timeReselectionStart = 0,
-        dlEarfcn = 6032,
-        CellID = 6033,
-        failureType = 3,
-        
-    };
+};
+
+enum class RESID {
+    timeReselectionStart = 0,
+    dlEarfcn = 6032,
+    CellID = 6033,
+    failureType = 3,
+    
 };
 
 /* \brief Class for object 3354 - cellReselectionEvent
@@ -52,8 +56,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3354::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3354::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3354::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3354::RESID c1) { return (uint16_t) c1 == c2; }
 	

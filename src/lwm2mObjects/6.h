@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id6 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Velocity6
+    class VelocityType : public Opaque<30> {};
+    #endif
+    
+    #ifndef Timestamp6
+    class TimestampType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 6 - Location
  *  This LwM2M Objects provide a range of device related information which can be queried
  *  by the LwM2M Server, and a device reboot and factory reset function.
@@ -27,25 +38,26 @@ public:
     
     // Optional resource
     // 4 - The velocity in the LwM2M Client is defined in [3GPP-TS_23.032].
-    Opaque<30> Velocity;
+    VelocityType Velocity;
     
     // 5 - The timestamp of when the location measurement was performed.
-    PreallocString<30> Timestamp; // Time
+    TimestampType Timestamp; // Time
     
     // Optional resource
     // 6 - Speed is the time rate of change in position of a LwM2M Client without regard for direction: the scalar component of velocity.
     float Speed;
     
-    enum class RESID {
-        Latitude = 0,
-        Longitude = 1,
-        Altitude = 2,
-        Radius = 3,
-        Velocity = 4,
-        Timestamp = 5,
-        Speed = 6,
-        
-    };
+};
+
+enum class RESID {
+    Latitude = 0,
+    Longitude = 1,
+    Altitude = 2,
+    Radius = 3,
+    Velocity = 4,
+    Timestamp = 5,
+    Speed = 6,
+    
 };
 
 /* \brief Class for object 6 - Location
@@ -83,8 +95,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id6::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id6::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id6::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id6::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10253 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef PublicKey10253
+    class PublicKeyType : public Opaque<30> {};
+    #endif
+    
+    #ifndef ApplicationData10253
+    class ApplicationDataType : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 10253 - Confidential Data
  *  This LWM2M Object is used for reporting data, but in a confidential way
  */
@@ -11,16 +22,17 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Object public key provided from the server side
-    Opaque<30> PublicKey;
+    PublicKeyType PublicKey;
     
     // 1 - Application Data encrypted by the Public Key
-    Opaque<30> ApplicationData;
+    ApplicationDataType ApplicationData;
     
-    enum class RESID {
-        PublicKey = 0,
-        ApplicationData = 1,
-        
-    };
+};
+
+enum class RESID {
+    PublicKey = 0,
+    ApplicationData = 1,
+    
 };
 
 /* \brief Class for object 10253 - Confidential Data
@@ -38,8 +50,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10253::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10253::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10253::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10253::RESID c1) { return (uint16_t) c1 == c2; }
 	

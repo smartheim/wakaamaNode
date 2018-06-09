@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3365 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3365 - rachLatency_delay
  *  RACH Latency & delay information
  */
@@ -22,13 +25,14 @@ public:
     // 3 - time in ms
     int delay;
     
-    enum class RESID {
-        sysFrameNumber = 6037,
-        subFrameNumber = 6038,
-        rachLatencyVal = 2,
-        delay = 3,
-        
-    };
+};
+
+enum class RESID {
+    sysFrameNumber = 6037,
+    subFrameNumber = 6038,
+    rachLatencyVal = 2,
+    delay = 3,
+    
 };
 
 /* \brief Class for object 3365 - rachLatency_delay
@@ -52,8 +56,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3365::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3365::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3365::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3365::RESID c1) { return (uint16_t) c1 == c2; }
 	

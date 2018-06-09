@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3385 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3385 - volteCallStateChangeEvent
  *  VoLTE call status change
  */
@@ -16,11 +19,12 @@ public:
     // 1 - 0 = Not available1 = Normal Call Clearing2 = Call Drop
     int VolteCallStateChangeCause;
     
-    enum class RESID {
-        callStatus = 0,
-        VolteCallStateChangeCause = 1,
-        
-    };
+};
+
+enum class RESID {
+    callStatus = 0,
+    VolteCallStateChangeCause = 1,
+    
 };
 
 /* \brief Class for object 3385 - volteCallStateChangeEvent
@@ -38,8 +42,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3385::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3385::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3385::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3385::RESID c1) { return (uint16_t) c1 == c2; }
 	

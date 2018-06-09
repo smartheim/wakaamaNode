@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3302 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef DigitalInputCounterReset3302
+    class DigitalInputCounterResetType : public Opaque<30> {};
+    #endif
+    
+    #ifndef SensorType3302
+    class SensorTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3302 - Presence
  *  Presence sensor with digital sensing, optional delay parameters
  */
@@ -23,7 +34,7 @@ public:
 
     // Optional resource
     // 5751 - The type of the sensor (for instance PIR type)
-    PreallocString<30> SensorType;
+    SensorTypeType SensorType;
     
     // Optional resource
     // 5903 - Delay from the detection state to the clear state in ms
@@ -33,15 +44,16 @@ public:
     // 5904 - Delay from the clear state to the busy state in ms
     int CleartoBusydelay;
     
-    enum class RESID {
-        DigitalInputState = 5500,
-        DigitalInputCounter = 5501,
-        DigitalInputCounterReset = 5505,
-        SensorType = 5751,
-        BusytoCleardelay = 5903,
-        CleartoBusydelay = 5904,
-        
-    };
+};
+
+enum class RESID {
+    DigitalInputState = 5500,
+    DigitalInputCounter = 5501,
+    DigitalInputCounterReset = 5505,
+    SensorType = 5751,
+    BusytoCleardelay = 5903,
+    CleartoBusydelay = 5904,
+    
 };
 
 /* \brief Class for object 3302 - Presence
@@ -76,8 +88,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3302::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3302::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3302::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3302::RESID c1) { return (uint16_t) c1 == c2; }
 	

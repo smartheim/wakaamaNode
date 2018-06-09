@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3378 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3378 - PbchDecodingResults
  *  Serving cell PBCH decoding information
  */
@@ -19,12 +22,13 @@ public:
     // 6037 - system frame number when pbch was decoded
     int sysFrameNumber;
     
-    enum class RESID {
-        servingCellID = 0,
-        crcResult = 1,
-        sysFrameNumber = 6037,
-        
-    };
+};
+
+enum class RESID {
+    servingCellID = 0,
+    crcResult = 1,
+    sysFrameNumber = 6037,
+    
 };
 
 /* \brief Class for object 3378 - PbchDecodingResults
@@ -45,8 +49,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3378::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3378::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3378::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3378::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2057 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2057 - CmdhBackOffParametersSet
  *  This Object defines set of parameters which can be referenced by a specific Instance
  *  of the CmdhNwAccessRule Object (ID: 2055)
@@ -28,14 +31,15 @@ public:
     // 4 - Regarding the BackOffParameters of a certain CmdhNwAccessRule  Object Instance, this Resource contains the value for an optional random wait time.
     int OptionalRandomBackoffTime;
     
-    enum class RESID {
-        NetworkAction = 0,
-        InitialBackoffTime = 1,
-        AdditionalBackoffTime = 2,
-        MaximumBackoffTime = 3,
-        OptionalRandomBackoffTime = 4,
-        
-    };
+};
+
+enum class RESID {
+    NetworkAction = 0,
+    InitialBackoffTime = 1,
+    AdditionalBackoffTime = 2,
+    MaximumBackoffTime = 3,
+    OptionalRandomBackoffTime = 4,
+    
 };
 
 /* \brief Class for object 2057 - CmdhBackOffParametersSet
@@ -65,8 +69,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2057::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2057::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2057::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2057::RESID c1) { return (uint16_t) c1 == c2; }
 	

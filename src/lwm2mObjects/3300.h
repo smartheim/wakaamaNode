@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3300 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3300
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SensorType3300
+    class SensorTypeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ResetMinandMaxMeasuredValues3300
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 3300 - Generic Sensor
  *  This IPSO object allow the description of a generic sensor. It is based on the description
  *  of a value and a unit according to the UCUM specification. Thus, any type of value defined
@@ -40,28 +55,29 @@ public:
     
     // Optional resource
     // 5750 - If present, the application type of the sensor as a string, for instance, “CO2”
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
     // Optional resource
     // 5751 - The type of the sensor (for instance PIR type)
-    PreallocString<30> SensorType;
+    SensorTypeType SensorType;
     
     // Optional resource
     // 5605 - Reset the Min and Max Measured Values to Current Value
     Executable ResetMinandMaxMeasuredValues;
 
-    enum class RESID {
-        SensorValue = 5700,
-        SensorUnits = 5701,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        ApplicationType = 5750,
-        SensorType = 5751,
-        ResetMinandMaxMeasuredValues = 5605,
-        
-    };
+};
+
+enum class RESID {
+    SensorValue = 5700,
+    SensorUnits = 5701,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    ApplicationType = 5750,
+    SensorType = 5751,
+    ResetMinandMaxMeasuredValues = 5605,
+    
 };
 
 /* \brief Class for object 3300 - Generic Sensor
@@ -113,8 +129,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3300::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3300::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3300::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3300::RESID c1) { return (uint16_t) c1 == c2; }
 	

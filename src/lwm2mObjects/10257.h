@@ -4,6 +4,29 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10257 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Manufacturer10257
+    class ManufacturerType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ModelNumber10257
+    class ModelNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SerialNumber10257
+    class SerialNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Description10257
+    class DescriptionType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef CurrentTime10257
+    class CurrentTimeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10257 - Heat / Cooling meter
  *  This Object provides the information to represent a generic (district) heat or cooling
  *  meter
@@ -13,19 +36,19 @@ public:
 
     // Optional resource
     // 0 - Human readable manufacturer name
-    PreallocString<30> Manufacturer;
+    ManufacturerType Manufacturer;
     
     // Optional resource
     // 1 - A model identifier (manufacturer specified string)
-    PreallocString<30> ModelNumber;
+    ModelNumberType ModelNumber;
     
     // Optional resource
     // 2 - Serial number of the meter
-    PreallocString<30> SerialNumber;
+    SerialNumberType SerialNumber;
     
     // Optional resource
     // 3 - Description of the meter
-    PreallocString<30> Description;
+    DescriptionType Description;
     
     // Optional resource
     // 11 - Error code reported by the meter
@@ -80,29 +103,30 @@ public:
     
     // Optional resource
     // 5506 - Unix Time. A signed integer representing the number of seconds since Jan 1st, 1970 in the UTC time zone.
-    PreallocString<30> CurrentTime; // Time
+    CurrentTimeType CurrentTime; // Time
     
-    enum class RESID {
-        Manufacturer = 0,
-        ModelNumber = 1,
-        SerialNumber = 2,
-        Description = 3,
-        Errorcode = 11,
-        Instantaneousactivepower = 5800,
-        MaxMeasuredactivepower = 5802,
-        Cumulativeactivepower = 5805,
-        Flowtemperature = 12,
-        MaxMeasuredflowtemperature = 13,
-        Returntemperature = 14,
-        MaxMeasuredreturntemperature = 15,
-        Temperaturedifference = 16,
-        Flowrate = 17,
-        MaxMeasuredflow = 18,
-        Flowvolume = 20,
-        Returnvolume = 21,
-        CurrentTime = 5506,
-        
-    };
+};
+
+enum class RESID {
+    Manufacturer = 0,
+    ModelNumber = 1,
+    SerialNumber = 2,
+    Description = 3,
+    Errorcode = 11,
+    Instantaneousactivepower = 5800,
+    MaxMeasuredactivepower = 5802,
+    Cumulativeactivepower = 5805,
+    Flowtemperature = 12,
+    MaxMeasuredflowtemperature = 13,
+    Returntemperature = 14,
+    MaxMeasuredreturntemperature = 15,
+    Temperaturedifference = 16,
+    Flowrate = 17,
+    MaxMeasuredflow = 18,
+    Flowvolume = 20,
+    Returnvolume = 21,
+    CurrentTime = 5506,
+    
 };
 
 /* \brief Class for object 10257 - Heat / Cooling meter
@@ -186,8 +210,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10257::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10257::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10257::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10257::RESID c1) { return (uint16_t) c1 == c2; }
 	

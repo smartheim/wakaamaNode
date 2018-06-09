@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <errno.h>
+#include <new>
 
 #include <time.h>
 
@@ -30,6 +31,8 @@ id3311::instance ledsInstance;
 
 lwm2m_context_t * client_context;
 void setup() {
+    std::set_new_handler([](){ESP.restart();}); // Reboot on heap memory outage
+    
     device_instance_t * device_data = lwm2m_device_data_get();
     device_data->manufacturer = "test manufacturer";
     device_data->model_name = "test model";
@@ -45,9 +48,9 @@ void setup() {
 
     // Overwrite the verifyFunction and "abuse" it as value changed event.
     lights.verifyWrite = [](Lwm2mObjectInstance* instance, uint16_t res_id) {
-        id3311::instance* inst = (id3311::instance*)instance;
+        auto inst = instance->as<id3311::instance>();
         // Is it instance 0 and the OnOff resource?
-        if (inst->id == 0 && id3311::instance::RESID::OnOff == res_id) {
+        if (inst->id == 0 && id3311::RESID::OnOff == res_id) {
             // Change the led pin depending on the OnOff value
             digitalWrite(LED_BUILTIN, inst->OnOff);
         }

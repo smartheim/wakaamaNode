@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10251 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Command10251
+    class CommandType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Response10251
+    class ResponseType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Status10251
+    class StatusType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10251 - AT Command
  *  Used to execute an AT command on a cellular modem
  */
@@ -11,13 +26,13 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - The AT command to run. Example: AT+CREG? to query registration status
-    PreallocString<30> Command;
+    CommandType Command;
     
     // 1 - Response to the AT command. Example: +CREG:0,5 If multiple lines are returned as the modem response, each line will be returned in a separate resource.
-    PreallocString<30> Response;
+    ResponseType Response;
     
     // 2 - Status of the command execution as returned by the modem. Typical values:OK ERROR
-    PreallocString<30> Status;
+    StatusType Status;
     
     // Optional resource
     // 3 - Amount of time in seconds allowed for the modem to respond to the command.
@@ -26,14 +41,15 @@ public:
     // 4 - Executing this resource will cause the command to be sent to the modem. And the result to be populated using the Response (1) and Status (2) resources
     Executable Run;
 
-    enum class RESID {
-        Command = 0,
-        Response = 1,
-        Status = 2,
-        Timeout = 3,
-        Run = 4,
-        
-    };
+};
+
+enum class RESID {
+    Command = 0,
+    Response = 1,
+    Status = 2,
+    Timeout = 3,
+    Run = 4,
+    
 };
 
 /* \brief Class for object 10251 - AT Command
@@ -61,8 +77,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10251::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10251::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10251::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10251::RESID c1) { return (uint16_t) c1 == c2; }
 	

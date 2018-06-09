@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10245 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10245 - Relay Management
  *  This LWM2M Object provides a range of eNB related measurements and parameters of which
  *  several are changeable. Furthermore, it includes Resources to enable/disable the
@@ -64,26 +67,27 @@ public:
     // 16 - Specifies the value of the cellIndividualOffset parameter applicable to the CrowdBox macro serving cell that is to be signalled to connected UEs in their measurement configuration information . See TS 36.331 for details. The CrowdBox shall only apply a change of this resource upon execution of the “Enable eNB” command.
     int ServingMacroeNBcellIndividualOffset;
     
-    enum class RESID {
-        eNBAvailability = 0,
-        GPSStatus = 1,
-        Orientation = 2,
-        eNBEARFCN = 3,
-        eNBBandwidth = 4,
-        BackhaulPrimaryEARFCN = 5,
-        BackhaulSecondaryEARFCN = 6,
-        CumulativeMeasurementWindow = 7,
-        eNBECI = 8,
-        eNBStatus = 9,
-        EnableeNB = 10,
-        eNBMaximumPower = 11,
-        BackhaulPrimaryqOffsetFreq = 12,
-        BackhaulSecondaryqOffsetFreq = 13,
-        NeighbourCrowdBoxEARFCN = 14,
-        NeighbourCrowdBoxqOffsetFreq = 15,
-        ServingMacroeNBcellIndividualOffset = 16,
-        
-    };
+};
+
+enum class RESID {
+    eNBAvailability = 0,
+    GPSStatus = 1,
+    Orientation = 2,
+    eNBEARFCN = 3,
+    eNBBandwidth = 4,
+    BackhaulPrimaryEARFCN = 5,
+    BackhaulSecondaryEARFCN = 6,
+    CumulativeMeasurementWindow = 7,
+    eNBECI = 8,
+    eNBStatus = 9,
+    EnableeNB = 10,
+    eNBMaximumPower = 11,
+    BackhaulPrimaryqOffsetFreq = 12,
+    BackhaulSecondaryqOffsetFreq = 13,
+    NeighbourCrowdBoxEARFCN = 14,
+    NeighbourCrowdBoxqOffsetFreq = 15,
+    ServingMacroeNBcellIndividualOffset = 16,
+    
 };
 
 /* \brief Class for object 10245 - Relay Management
@@ -149,8 +153,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10245::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10245::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10245::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10245::RESID c1) { return (uint16_t) c1 == c2; }
 	

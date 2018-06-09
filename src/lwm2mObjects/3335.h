@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3335 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Colour3335
+    class ColourType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SensorUnits3335
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3335
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3335 - Colour
  *  This IPSO object should be used to report the measured value of a colour sensor in some
  *  colour space described by the units resource.
@@ -12,22 +27,23 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 5706 - A string representing a value in some colour space.
-    PreallocString<30> Colour;
+    ColourType Colour;
     
     // Optional resource
     // 5701 - Measurement Units Definition e.g. “Cel” for Temperature in Celsius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        Colour = 5706,
-        SensorUnits = 5701,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    Colour = 5706,
+    SensorUnits = 5701,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3335 - Colour
@@ -51,8 +67,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3335::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3335::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3335::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3335::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -113,6 +113,29 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id<xsl:value-of select="ObjectID"/> {
+// Custom, overrideable types for Opaque and String resources
+<xsl:for-each select="Resources/Item">
+    <xsl:variable name="resid" select="self::node()/@ID" />
+    <xsl:variable name="name"><xsl:value-of select="fun:getName(Name, $objectid, $resid)" /></xsl:variable>
+    <xsl:choose>
+    <xsl:when test="self::node()/Type='Opaque'">
+    #ifndef <xsl:value-of select="$name" /><xsl:value-of select="$objectid" />
+    class <xsl:value-of select="$name" />Type : public Opaque&lt;30&gt; {};
+    #endif
+    </xsl:when>
+    <xsl:when test="self::node()/Type='String'">
+    #ifndef <xsl:value-of select="$name" /><xsl:value-of select="$objectid" />
+    class <xsl:value-of select="$name" />Type : public PreallocString&lt;30&gt; {};
+    #endif
+    </xsl:when>
+    <xsl:when test="self::node()/Type='Time'">
+    #ifndef <xsl:value-of select="$name" /><xsl:value-of select="$objectid" />
+    class <xsl:value-of select="$name" />Type : public PreallocString&lt;30&gt; {};
+    #endif
+    </xsl:when>
+    </xsl:choose>
+</xsl:for-each>
+
 /* \brief Class for object <xsl:value-of select="ObjectID"/> - <xsl:value-of select="Name"/><xsl:call-template name="substring"><xsl:with-param name="text" select="concat(normalize-space(self::node()/Description1),normalize-space(self::node()/Description2))" /></xsl:call-template>
  */
 class instance : public Lwm2mObjectInstance {
@@ -139,16 +162,19 @@ public:
     float <xsl:value-of select="$name" />;
     </xsl:when>
     <xsl:when test="self::node()/Type='Opaque'">
-    Opaque&lt;30&gt; <xsl:value-of select="$name" />;
+    <xsl:value-of select="concat($newline,'    ')" />
+    <xsl:value-of select="$name" />Type <xsl:value-of select="$name" />;
     </xsl:when>
     <xsl:when test="self::node()/Type='Objlnk'">
     // Objlnk resources are not supported yet - <xsl:value-of select="$name" />;
     </xsl:when>
     <xsl:when test="self::node()/Type='String'">
-    PreallocString&lt;30&gt; <xsl:value-of select="$name" />;
+    <xsl:value-of select="concat($newline,'    ')" />
+    <xsl:value-of select="$name" />Type <xsl:value-of select="$name" />;
     </xsl:when>
     <xsl:when test="self::node()/Type='Time'">
-    PreallocString&lt;30&gt; <xsl:value-of select="$name" />; // Time
+    <xsl:value-of select="concat($newline,'    ')" />
+    <xsl:value-of select="$name" />Type <xsl:value-of select="$name" />; // Time
     </xsl:when>
     <xsl:otherwise>
         <xsl:message terminate="yes">Type not known: <xsl:apply-templates select="self::node()" mode="message"/></xsl:message>
@@ -157,13 +183,14 @@ public:
 </xsl:otherwise>
 </xsl:choose>
 </xsl:for-each>
-    enum class RESID {
-        <xsl:for-each select="Resources/Item">
-            <xsl:variable name="resid" select="self::node()/@ID" />
-            <xsl:variable name="name"><xsl:value-of select="fun:getName(Name, $objectid, $resid)" /></xsl:variable>
-            <xsl:value-of select="$name" /> = <xsl:value-of select="$resid" />,
-        </xsl:for-each>
-    };
+};
+
+enum class RESID {
+    <xsl:for-each select="Resources/Item">
+        <xsl:variable name="resid" select="self::node()/@ID" />
+        <xsl:variable name="name"><xsl:value-of select="fun:getName(Name, $objectid, $resid)" /></xsl:variable>
+        <xsl:value-of select="$name" /> = <xsl:value-of select="$resid" />,
+    </xsl:for-each>
 };
 
 /* \brief Class for object <xsl:value-of select="ObjectID"/> - <xsl:value-of select="Name"/><xsl:call-template name="substring"><xsl:with-param name="text" select="concat(normalize-space(self::node()/Description1),normalize-space(self::node()/Description2))" /></xsl:call-template>
@@ -192,10 +219,9 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id<xsl:value-of select="$objectid" />::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id<xsl:value-of select="$objectid" />::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id<xsl:value-of select="$objectid" />::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id<xsl:value-of select="$objectid" />::RESID c1) { return (uint16_t) c1 == c2; }
 	</xsl:result-document>
 	
     <xsl:copy>

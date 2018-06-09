@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3332 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3332
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3332 - Direction
  *  This IPSO object is used to report the direction indicated by a compass, wind vane, or
  *  other directional indicator. The units of measure is plane angle degrees (ucum:deg).
@@ -28,16 +35,17 @@ public:
 
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        CompassDirection = 5705,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        ResetMinandMaxMeasuredValues = 5605,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    CompassDirection = 5705,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    ResetMinandMaxMeasuredValues = 5605,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3332 - Direction
@@ -69,8 +77,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3332::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3332::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3332::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3332::RESID c1) { return (uint16_t) c1 == c2; }
 	

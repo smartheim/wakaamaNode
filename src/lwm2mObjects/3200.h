@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3200 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef DigitalInputCounterReset3200
+    class DigitalInputCounterResetType : public Opaque<30> {};
+    #endif
+    
+    #ifndef ApplicationType3200
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SensorType3200
+    class SensorTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3200 - Digital Input
  *  Generic digital input for non-specific sensors
  */
@@ -35,23 +50,24 @@ public:
 
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string, for instance, “Air Pressure”
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
     // Optional resource
     // 5751 - The type of the sensor (for instance PIR type)
-    PreallocString<30> SensorType;
+    SensorTypeType SensorType;
     
-    enum class RESID {
-        DigitalInputState = 5500,
-        DigitalInputCounter = 5501,
-        DigitalInputPolarity = 5502,
-        DigitalInputDebounce = 5503,
-        DigitalInputEdgeSelection = 5504,
-        DigitalInputCounterReset = 5505,
-        ApplicationType = 5750,
-        SensorType = 5751,
-        
-    };
+};
+
+enum class RESID {
+    DigitalInputState = 5500,
+    DigitalInputCounter = 5501,
+    DigitalInputPolarity = 5502,
+    DigitalInputDebounce = 5503,
+    DigitalInputEdgeSelection = 5504,
+    DigitalInputCounterReset = 5505,
+    ApplicationType = 5750,
+    SensorType = 5751,
+    
 };
 
 /* \brief Class for object 3200 - Digital Input
@@ -94,8 +110,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3200::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3200::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3200::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3200::RESID c1) { return (uint16_t) c1 == c2; }
 	

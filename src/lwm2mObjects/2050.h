@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2050 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2050 - CmdhDefaults
  *  Defines which CMDH related parameters will be used by default.
  */
@@ -16,11 +19,12 @@ public:
     // 1 - 1 or more references to CmdhEcDefParamValues Object Instances 
     // Objlnk resources are not supported yet - DefaultEcParamRules;
     
-    enum class RESID {
-        DefaultEcRules = 0,
-        DefaultEcParamRules = 1,
-        
-    };
+};
+
+enum class RESID {
+    DefaultEcRules = 0,
+    DefaultEcParamRules = 1,
+    
 };
 
 /* \brief Class for object 2050 - CmdhDefaults
@@ -38,8 +42,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2050::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2050::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2050::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2050::RESID c1) { return (uint16_t) c1 == c2; }
 	

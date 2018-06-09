@@ -34,6 +34,8 @@
  *
  */
 
+struct TestInheritance : public Opaque<20>{  };
+
 struct MyTestObjectInstance : public Lwm2mObjectInstance {
     uint8_t test_u8=  0x0F;
     int8_t  test_i8=  -0x0F;
@@ -50,6 +52,7 @@ struct MyTestObjectInstance : public Lwm2mObjectInstance {
     PreallocString<20> test_str_prealloc;
     OpaqueIndirect test_opaque{0,4,(uint8_t*)"test"};
     Opaque<20> test_opaque_prealloc;
+    TestInheritance test_inheritance;
 
     Executable test_execute_fun;
     IndirectRead<int8_t> test_read_fun_int8;
@@ -74,6 +77,7 @@ struct MyTestObjectInstance : public Lwm2mObjectInstance {
     }
 };
 
+#pragma pack(push,1)
 struct MyTestObjectSecond: public Lwm2mObject<1024, MyTestObjectSecond, MyTestObjectInstance> {
     Resource(0, &MyTestObjectInstance::test_u8, O_RES_RW) test_u8;
     Resource(1, &MyTestObjectInstance::test_i8, O_RES_RW) test_i8;
@@ -83,7 +87,9 @@ struct MyTestObjectSecond: public Lwm2mObject<1024, MyTestObjectSecond, MyTestOb
     Resource(5, &MyTestObjectInstance::test_i32, O_RES_RW) test_i32;
     Resource(6, &MyTestObjectInstance::test_i64, O_RES_RW) test_i64;
 };
+#pragma pack(pop)
 
+#pragma pack(push,1)
 struct MyTestObject: public Lwm2mObject<1024, MyTestObject, MyTestObjectInstance> {
     Resource(0, &MyTestObjectInstance::test_u8, O_RES_RW) test_u8;
     Resource(1, &MyTestObjectInstance::test_i8, O_RES_RW) test_i8;
@@ -112,6 +118,8 @@ struct MyTestObject: public Lwm2mObject<1024, MyTestObject, MyTestObjectInstance
     Resource(17, &MyTestObjectInstance::test_write_fun_string) test_write_fun_string;
     Resource(18, &MyTestObjectInstance::test_readWrite_fun_string) test_readWrite_fun_string;
 
+    Resource(19, &MyTestObjectInstance::test_inheritance, O_RES_RW) test_inheritance;
+
     MyTestObject() {
         verifyWrite = ([](Lwm2mObjectInstance* instance, uint16_t res_id) {
             MyTestObjectInstance* i = (MyTestObjectInstance*)instance;
@@ -120,3 +128,4 @@ struct MyTestObject: public Lwm2mObject<1024, MyTestObject, MyTestObjectInstance
         });
     }
 };
+#pragma pack(pop)

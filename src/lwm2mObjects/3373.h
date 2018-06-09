@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3373 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3373 - txPowerHeadroomEvent
  *  TX power headroom information
  */
@@ -19,12 +22,13 @@ public:
     // 2 - headroom value in dB (-23..40)
     int headroomvalue;
     
-    enum class RESID {
-        sysFrameNumber = 6037,
-        subFrameNumber = 6038,
-        headroomvalue = 2,
-        
-    };
+};
+
+enum class RESID {
+    sysFrameNumber = 6037,
+    subFrameNumber = 6038,
+    headroomvalue = 2,
+    
 };
 
 /* \brief Class for object 3373 - txPowerHeadroomEvent
@@ -45,8 +49,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3373::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3373::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3373::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3373::RESID c1) { return (uint16_t) c1 == c2; }
 	

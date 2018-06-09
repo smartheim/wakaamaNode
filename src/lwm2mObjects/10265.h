@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10265 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef SampleUTCOffset10265
+    class SampleUTCOffsetType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef FirmwareVersion10265
+    class FirmwareVersionType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10265 - Leakage Detection Configuration
  *  The leakage detection configuration object provides a means for configuring the timing
  *  and sampling frequency of a vibration based network leak detector
@@ -16,7 +27,7 @@ public:
     
     // Optional resource
     // 1 - The Sample UTC Offset resource is a readable and writable resource representing the time zone offset for this Leakage Detection Schedule instance. If this resource is empty, the application should use the UTC offset provided in the Device [/3/0/14] object instance resource or UTC if not provided.
-    PreallocString<30> SampleUTCOffset;
+    SampleUTCOffsetType SampleUTCOffset;
     
     // 2 - Detection Mode is a readable and writeable resource used to indicate which mode to run the leak detection sensor. Values are one of:-0. Disabled1. Alarm Only (default)2. Top Frequency Values3. All Frequency ValuesDisabled (0)  the leak detection function should be disabled.Alarm Only (1)  for this mode no detailed frequency data is provided to the LwM2M server and an alarm is raised if the Leakage Detection Daughter board indicates that leak was detected. Top Frequency Values (2)  for this mode, only the top (Top Frequency Count) values will be delivered to the LwM2M server via the Frequency Value ResourceAll Frequency Values(3)  for this mode, all frequency values for all frequency bands will be provided to the LwM2M server via the Frequency Value Resource
     int DetectionMode;
@@ -34,18 +45,19 @@ public:
     int FrequencyValues;
     
     // 7 - Firmware Version is a readonly resource representing the current firmware version of the Daughter Board.
-    PreallocString<30> FirmwareVersion;
+    FirmwareVersionType FirmwareVersion;
     
-    enum class RESID {
-        SampleTimes = 0,
-        SampleUTCOffset = 1,
-        DetectionMode = 2,
-        TopFrequencyCount = 3,
-        FrequencyThresholds = 4,
-        FrequencyValues = 5,
-        FirmwareVersion = 7,
-        
-    };
+};
+
+enum class RESID {
+    SampleTimes = 0,
+    SampleUTCOffset = 1,
+    DetectionMode = 2,
+    TopFrequencyCount = 3,
+    FrequencyThresholds = 4,
+    FrequencyValues = 5,
+    FirmwareVersion = 7,
+    
 };
 
 /* \brief Class for object 10265 - Leakage Detection Configuration
@@ -83,8 +95,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10265::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10265::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10265::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10265::RESID c1) { return (uint16_t) c1 == c2; }
 	

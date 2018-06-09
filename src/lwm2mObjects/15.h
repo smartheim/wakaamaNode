@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id15 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Property15
+    class PropertyType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Description15
+    class DescriptionType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 15 - DevCapMgmt
  *  This LWM2M Object is dedicated to manage the device capabilities of a device e.g. sensors,
  *  communication, etc.
@@ -12,14 +23,14 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - List of Device Capabilities inside a given Group.The format is a free list ASCII-represented integers separated by a semi colon. (e.g. 0;1;10)The list of capabilities per Group is given in Appendix B: Device Capabilities Vocabularyexecutable Resource can work with.
-    PreallocString<30> Property;
+    PropertyType Property;
     
     // 1 - Group name of Device Capabilities0: SENSOR: luminosity, presence,temp,humidity1: CONTROL: Light, Power, Sound2: CONNECTIVITY: Bluetooth, wifi, …3: NAVIGATION: gps, galieo4: STORAGE: external memory,5: VISION: cam, video-cam, night_cam.6: SOUND: speaker, buzzer7: ANALOG_INPUT: generic input8: ANALOG_OUTPUT: generic output9-15: reserved
     int Group;
     
     // Optional resource
     // 2 - Device Capability Description(manufacturer specified string)
-    PreallocString<30> Description;
+    DescriptionType Description;
     
     // Optional resource
     // 3 - When the resource doesn’t exist, it means the associated Device Capability is not removable.When this resource is “False”, it means the associated Device Capability is removable and is currently not attached to the device.When this resource is “True”, it means the associated Device Capability – if removable – is currently attached to the Device.When a Device Capability is not removable, and the “Attached” Resource is present, the “Attached” value but be set to “True”.
@@ -38,17 +49,18 @@ public:
     // 7 - When the Resources “Enabled” or “Attached” are under “Observation”, this resource specifies whether the LWM2M Server MUST be notified when the value of the Resource on “Observation” changed. If the Resource “NotifyEn” is not present or the value is ‘False’, the LWM2M Server will be not notified about this change. If the “NotifyEn” Resource is present and the value is ‘True’, the LWM2M Server will be notified.
     bool NotifyEn;
     
-    enum class RESID {
-        Property = 0,
-        Group = 1,
-        Description = 2,
-        Attached = 3,
-        Enabled = 4,
-        opEnable = 5,
-        opDisable = 6,
-        NotifyEn = 7,
-        
-    };
+};
+
+enum class RESID {
+    Property = 0,
+    Group = 1,
+    Description = 2,
+    Attached = 3,
+    Enabled = 4,
+    opEnable = 5,
+    opDisable = 6,
+    NotifyEn = 7,
+    
 };
 
 /* \brief Class for object 15 - DevCapMgmt
@@ -88,8 +100,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id15::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id15::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id15::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id15::RESID c1) { return (uint16_t) c1 == c2; }
 	

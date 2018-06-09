@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10284 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef LatestDeliveredEventTime10284
+    class LatestDeliveredEventTimeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef LatestRecordedEventTime10284
+    class LatestRecordedEventTimeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef LatestPayload10284
+    class LatestPayloadType : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 10284 - Time Synchronisation Event
  *  This event records the fact that the device has rebooted
  */
@@ -46,10 +61,10 @@ public:
     
     // Optional resource
     // 6020 - Latest Delivered Event Time is a readable and writable resource to represent the last recorded time that an event was delivered for this event code to the LwM2M server. The setting of this resource is implementation specific but should be updated based on, either a Read request of the Latest Eventlog Payload from the LwM2M server or via a confirmed delivery of Notify operation of the Latest Eventlog Payload resource. This resource is writable to allow the server to adjust the Last Delivered Event Time value if the server and client is out of sync.
-    PreallocString<30> LatestDeliveredEventTime; // Time
+    LatestDeliveredEventTimeType LatestDeliveredEventTime; // Time
     
     // 6021 - Latest Recorded Event Time is a readonly resource used to represent the last recorded event time for this object instance on the device
-    PreallocString<30> LatestRecordedEventTime; // Time
+    LatestRecordedEventTimeType LatestRecordedEventTime; // Time
     
     // Optional resource
     // 6022 - Clear Alarm is an executable resource used to allow the LwM2M server to clear alarms when they need to be manually acknowledged.
@@ -63,26 +78,27 @@ public:
     int EventCode;
     
     // 6025 - The Latest Eventlog Payload resource is a read-only serialised Opaque (Binary) representation of all the Event Data between the Last Delivered Event Time and the Latest Recorded Event Time. When this payload is delivered to the LwM2M server, via either a read request or a confirmed observation on this Object, Object Instance or Resource, the Latest Delivered Interval should be updated. When no new data exists, an empty Opaque value should be provided.The payload data can be provided in an implementation specific serialisation, but by default for fixed length values should use the OMA-LwM2M CBOR format encoded with one of these schemes:-Event Type = Alarm Current State (1)In this mode, only the current alarm state should be reported1. 8-bit integer, value 2 representing OMA-LwM2M CBOR format.2. Event Code [16-bit integer]3. Event Type [8-bit Integer] - Alarm Current State (1)4. Alarm Timestamp [32-bit unsigned integer] representing the number of seconds since Jan 1st, 1970 in the UTC time zone.5. Alarm State [8-bit Integer]
-    Opaque<30> LatestPayload;
+    LatestPayloadType LatestPayload;
     
-    enum class RESID {
-        EventType = 6011,
-        AlarmRealtime = 6012,
-        AlarmState = 6013,
-        AlarmSetThreshold = 6014,
-        AlarmSetOperator = 6015,
-        AlarmClearThreshold = 6016,
-        AlarmClearOperator = 6017,
-        AlarmMaximumEventCount = 6018,
-        AlarmMaximumEventPeriod = 6019,
-        LatestDeliveredEventTime = 6020,
-        LatestRecordedEventTime = 6021,
-        AlarmClear = 6022,
-        AlarmAutoClear = 6023,
-        EventCode = 6024,
-        LatestPayload = 6025,
-        
-    };
+};
+
+enum class RESID {
+    EventType = 6011,
+    AlarmRealtime = 6012,
+    AlarmState = 6013,
+    AlarmSetThreshold = 6014,
+    AlarmSetOperator = 6015,
+    AlarmClearThreshold = 6016,
+    AlarmClearOperator = 6017,
+    AlarmMaximumEventCount = 6018,
+    AlarmMaximumEventPeriod = 6019,
+    LatestDeliveredEventTime = 6020,
+    LatestRecordedEventTime = 6021,
+    AlarmClear = 6022,
+    AlarmAutoClear = 6023,
+    EventCode = 6024,
+    LatestPayload = 6025,
+    
 };
 
 /* \brief Class for object 10284 - Time Synchronisation Event
@@ -149,8 +165,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10284::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10284::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10284::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10284::RESID c1) { return (uint16_t) c1 == c2; }
 	

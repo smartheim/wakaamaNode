@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id1 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Binding1
+    class BindingType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 1 - LwM2M Server
  *  This LwM2M Objects provides the data related to a LwM2M Server. A Bootstrap-Server
  *  has no such an Object Instance associated to it.
@@ -37,23 +44,24 @@ public:
     bool NotificationStoringWhenDisabledorOffline;
     
     // 7 - This Resource defines the transport binding configured for the LwM2M Client.If the LwM2M Client supports the binding specified in this Resource, the LwM2M Client MUST use that transport for the Current Binding Mode.
-    PreallocString<30> Binding;
+    BindingType Binding;
     
     // 8 - If this Resource is executed the LwM2M Client MUST perform an “Update” operation with this LwM2M Server using that transport for the Current Binding Mode.
     Executable RegistrationUpdateTrigger;
 
-    enum class RESID {
-        ShortServerID = 0,
-        Lifetime = 1,
-        DefaultMinimumPeriod = 2,
-        DefaultMaximumPeriod = 3,
-        Disable = 4,
-        DisableTimeout = 5,
-        NotificationStoringWhenDisabledorOffline = 6,
-        Binding = 7,
-        RegistrationUpdateTrigger = 8,
-        
-    };
+};
+
+enum class RESID {
+    ShortServerID = 0,
+    Lifetime = 1,
+    DefaultMinimumPeriod = 2,
+    DefaultMaximumPeriod = 3,
+    Disable = 4,
+    DisableTimeout = 5,
+    NotificationStoringWhenDisabledorOffline = 6,
+    Binding = 7,
+    RegistrationUpdateTrigger = 8,
+    
 };
 
 /* \brief Class for object 1 - LwM2M Server
@@ -97,8 +105,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id1::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id1::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id1::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id1::RESID c1) { return (uint16_t) c1 == c2; }
 	

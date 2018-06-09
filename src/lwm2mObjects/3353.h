@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3353 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3353 - scellID
  *  serving cell information that the RRC decides to camp on
  */
@@ -22,13 +25,14 @@ public:
     // 6033 - Cell ID
     int CellID;
     
-    enum class RESID {
-        plmnID = 6030,
-        BandIndicator = 6031,
-        TrackingAreaCode = 2,
-        CellID = 6033,
-        
-    };
+};
+
+enum class RESID {
+    plmnID = 6030,
+    BandIndicator = 6031,
+    TrackingAreaCode = 2,
+    CellID = 6033,
+    
 };
 
 /* \brief Class for object 3353 - scellID
@@ -52,8 +56,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3353::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3353::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3353::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3353::RESID c1) { return (uint16_t) c1 == c2; }
 	

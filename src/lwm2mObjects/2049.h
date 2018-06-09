@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2049 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2049 - ActiveCmdhPolicy
  *  This Object provides a link to the currently active set of CMDH policies
  */
@@ -13,10 +16,11 @@ public:
     // 0 - Contains the reference to the CMDH policies (CmdhPolicy Object Instance) currently active for the associated CSE.
     // Objlnk resources are not supported yet - ActiveLink;
     
-    enum class RESID {
-        ActiveLink = 0,
-        
-    };
+};
+
+enum class RESID {
+    ActiveLink = 0,
+    
 };
 
 /* \brief Class for object 2049 - ActiveCmdhPolicy
@@ -31,8 +35,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2049::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2049::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2049::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2049::RESID c1) { return (uint16_t) c1 == c2; }
 	

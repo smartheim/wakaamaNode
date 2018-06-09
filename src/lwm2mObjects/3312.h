@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3312 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3312 - Power Control
  *  Description: This Object is used to control a power source, such as a Smart Plug. It allows
  *  a power relay to be turned on or off and its dimmer setting to be control as a % between 0
@@ -31,14 +34,15 @@ public:
     // 5820 - The power factor of the load.
     float PowerFactor;
     
-    enum class RESID {
-        OnOff = 5850,
-        Dimmer = 5851,
-        OnTime = 5852,
-        Cumulativeactivepower = 5805,
-        PowerFactor = 5820,
-        
-    };
+};
+
+enum class RESID {
+    OnOff = 5850,
+    Dimmer = 5851,
+    OnTime = 5852,
+    Cumulativeactivepower = 5805,
+    PowerFactor = 5820,
+    
 };
 
 /* \brief Class for object 3312 - Power Control
@@ -71,8 +75,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3312::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3312::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3312::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3312::RESID c1) { return (uint16_t) c1 == c2; }
 	

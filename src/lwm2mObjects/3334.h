@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3334 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef SensorUnits3334
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3334
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3334 - Gyrometer
  *  This IPSO Object is used to report the current reading of a gyrometer sensor in 3 axes.
  *  It provides tracking of the minimum and maximum angular rate in all 3 axes. An example
@@ -25,7 +36,7 @@ public:
     
     // Optional resource
     // 5701 - Measurement Units Definition e.g. “Cel” for Temperature in Celsius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
     // Optional resource
     // 5508 - The minimum measured value along the X axis
@@ -65,25 +76,26 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        XValue = 5702,
-        YValue = 5703,
-        ZValue = 5704,
-        SensorUnits = 5701,
-        MinXValue = 5508,
-        MaxXValue = 5509,
-        MinYValue = 5510,
-        MaxYValue = 5511,
-        MinZValue = 5512,
-        MaxZValue = 5513,
-        ResetMinandMaxMeasuredValues = 5605,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    XValue = 5702,
+    YValue = 5703,
+    ZValue = 5704,
+    SensorUnits = 5701,
+    MinXValue = 5508,
+    MaxXValue = 5509,
+    MinYValue = 5510,
+    MaxYValue = 5511,
+    MinZValue = 5512,
+    MaxZValue = 5513,
+    ResetMinandMaxMeasuredValues = 5605,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3334 - Gyrometer
@@ -152,8 +164,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3334::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3334::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3334::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3334::RESID c1) { return (uint16_t) c1 == c2; }
 	

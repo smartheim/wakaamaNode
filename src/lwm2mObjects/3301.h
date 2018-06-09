@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3301 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ResetMinandMaxMeasuredValues3301
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+    #ifndef SensorUnits3301
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3301 - Illuminance
  *  Illuminance sensor, example units = lx
  */
@@ -35,18 +46,19 @@ public:
 
     // Optional resource
     // 5701 - If present, the type of sensor defined as the UCUM Unit Definition e.g. “Cel” for Temperature in Celcius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
-    enum class RESID {
-        SensorValue = 5700,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        ResetMinandMaxMeasuredValues = 5605,
-        SensorUnits = 5701,
-        
-    };
+};
+
+enum class RESID {
+    SensorValue = 5700,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    ResetMinandMaxMeasuredValues = 5605,
+    SensorUnits = 5701,
+    
 };
 
 /* \brief Class for object 3301 - Illuminance
@@ -85,8 +97,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3301::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3301::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3301::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3301::RESID c1) { return (uint16_t) c1 == c2; }
 	

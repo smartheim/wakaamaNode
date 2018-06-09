@@ -31,9 +31,9 @@ id3311::instance led;
 void setup() {
     // Overwrite the verifyFunction and "abuse" it as value changed event.
     lights.verifyWrite = [](Lwm2mObjectInstance* instance, uint16_t res_id) {
-        id3311::instance* inst = (id3311::instance*)instance;
+        auto inst = instance->as<id3311::instance>();
         // Is it instance 0 and the OnOff resource?
-        if (inst->id == 0 && id3311::instance::RESID::OnOff == res_id) {
+        if (inst->id == 0 && id3311::RESID::OnOff == res_id) {
             // Change the led pin depending on the OnOff value
             digitalWrite(LED_BUILTIN, inst->OnOff);
         }
@@ -44,6 +44,12 @@ void setup() {
     led.id = 0; // set instance id
     lights.addInstance(lwm2mContext, &led);
     lights.registerObject(lwm2mContext);
+}
+
+void push_button_pressed(bool newState) {
+    led.OnOff = newState;
+    digitalWrite(LED_BUILTIN, led.OnOff);
+    void resChanged(lwm2mContext, led.id, (uint16_t)id3311::RESID::OnOff);
 }
 ```
 

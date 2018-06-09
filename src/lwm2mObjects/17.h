@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id17 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 17 - Communication Characteristics
  *  This object enables configuration of various generic communications parameters.
  */
@@ -42,17 +45,18 @@ public:
     // 7 - See [RFC 7252 CoAP]
     int CoAPPROBINGRATE;
     
-    enum class RESID {
-        Maximumuplinkpacketsize = 0,
-        Maximumdownlinkpacketsize = 1,
-        CoAPACKTIMEOUT = 2,
-        CoAPACKRANDOMFACTOR = 3,
-        CoAPMAXRETRANSMIT = 4,
-        CoAPNSTART = 5,
-        CoAPDEFAULTLEISURE = 6,
-        CoAPPROBINGRATE = 7,
-        
-    };
+};
+
+enum class RESID {
+    Maximumuplinkpacketsize = 0,
+    Maximumdownlinkpacketsize = 1,
+    CoAPACKTIMEOUT = 2,
+    CoAPACKRANDOMFACTOR = 3,
+    CoAPMAXRETRANSMIT = 4,
+    CoAPNSTART = 5,
+    CoAPDEFAULTLEISURE = 6,
+    CoAPPROBINGRATE = 7,
+    
 };
 
 /* \brief Class for object 17 - Communication Characteristics
@@ -96,8 +100,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id17::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id17::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id17::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id17::RESID c1) { return (uint16_t) c1 == c2; }
 	

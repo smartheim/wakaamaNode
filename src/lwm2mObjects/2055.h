@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2055 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef TargetNetwork2055
+    class TargetNetworkType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef OtherConditions2055
+    class OtherConditionsType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef AllowedSchedule2055
+    class AllowedScheduleType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 2055 - CmdhNwAccessRule
  *  This Object defines limits in usage of specific underlying networks for forwarding
  *  information to other CSEs during processing of CMDH-related requests in a CSE.
@@ -12,7 +27,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 0 - Contains identifiers of Underlying networks
-    PreallocString<30> TargetNetwork;
+    TargetNetworkType TargetNetwork;
     
     // 1 - Contains a value in ms such that before accessing the underlying network (typically to forward an incoming request), the CSE will wait for an additional amount of time randomly chosen between 0 and this value
     int SpreadingWaitTime;
@@ -24,20 +39,21 @@ public:
     // Objlnk resources are not supported yet - BackOffParameters;
     
     // 4 - List of additional conditions that need to be fulfilled before any of the Underlying Networks matching with the TargetNetwork Resource of this CmdhNwAccessRule Object Instance can be used for forwarding information to other CSEs. 
-    PreallocString<30> OtherConditions;
+    OtherConditionsType OtherConditions;
     
     // 5 - Contains time schedules in form of extended crontab syntax defined in oneM2M Protocol TS-0004 
-    PreallocString<30> AllowedSchedule;
+    AllowedScheduleType AllowedSchedule;
     
-    enum class RESID {
-        TargetNetwork = 0,
-        SpreadingWaitTime = 1,
-        MinReqVolume = 2,
-        BackOffParameters = 3,
-        OtherConditions = 4,
-        AllowedSchedule = 5,
-        
-    };
+};
+
+enum class RESID {
+    TargetNetwork = 0,
+    SpreadingWaitTime = 1,
+    MinReqVolume = 2,
+    BackOffParameters = 3,
+    OtherConditions = 4,
+    AllowedSchedule = 5,
+    
 };
 
 /* \brief Class for object 2055 - CmdhNwAccessRule
@@ -68,8 +84,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2055::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2055::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2055::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2055::RESID c1) { return (uint16_t) c1 == c2; }
 	

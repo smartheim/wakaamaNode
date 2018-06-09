@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3369 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3369 - macTimingAdvanceEvent
  *  Timing advance information
  */
@@ -16,11 +19,12 @@ public:
     // 1 - Timing Advance
     int timingAdvance;
     
-    enum class RESID {
-        timerValue = 0,
-        timingAdvance = 1,
-        
-    };
+};
+
+enum class RESID {
+    timerValue = 0,
+    timingAdvance = 1,
+    
 };
 
 /* \brief Class for object 3369 - macTimingAdvanceEvent
@@ -38,8 +42,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3369::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3369::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3369::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3369::RESID c1) { return (uint16_t) c1 == c2; }
 	

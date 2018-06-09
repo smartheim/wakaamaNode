@@ -4,6 +4,25 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2053 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef RequestOrigin2053
+    class RequestOriginType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RequestContext2053
+    class RequestContextType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RequestCharacteristics2053
+    class RequestCharacteristicsType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef LimitsDelAggregation2053
+    class LimitsDelAggregationType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 2053 - CmdhLimits
  *  This Object represents limits for CMDH related parameter values.
  */
@@ -14,11 +33,11 @@ public:
     int Order;
     
     // 1 - List of zero or more Local AE-IDs, App-IDs, or the strings “localAE” or “thisCSE”
-    PreallocString<30> RequestOrigin;
+    RequestOriginType RequestOrigin;
     
     // Optional resource
     // 2 - Represents the Dynamic Context condition under which CMDH parameter limits defined inside the concerned CmdhLimits Object Instance is applicable.
-    PreallocString<30> RequestContext;
+    RequestContextType RequestContext;
     
     // Optional resource
     // 3 - Contains true/false flag indicating whether or not notification procedures apply.
@@ -26,7 +45,7 @@ public:
     
     // Optional resource
     // 4 - Represents conditions pertaining to the request itself, (e.g. the requested Response Type  ) than needs to be matched
-    PreallocString<30> RequestCharacteristics;
+    RequestCharacteristicsType RequestCharacteristics;
     
     // 5 - Allowed values for the Event Category parameter in a request of any of the Originators indicated in the requestOrigin attribute.
     int LimitsEventCategory;
@@ -44,22 +63,23 @@ public:
     int LimitsRespPersistence;
     
     // 10 - Contains the permitted settings of the DeliveryAggregation parameter of request primitives. '0' means 'False' '1' means 'True' '0 1' means 'False' or 'True'
-    PreallocString<30> LimitsDelAggregation;
+    LimitsDelAggregationType LimitsDelAggregation;
     
-    enum class RESID {
-        Order = 0,
-        RequestOrigin = 1,
-        RequestContext = 2,
-        RequestContextNotificatio = 3,
-        RequestCharacteristics = 4,
-        LimitsEventCategory = 5,
-        LimitsRequestExpTime = 6,
-        LimitsResultExpTime = 7,
-        LimitsOptExpTime = 8,
-        LimitsRespPersistence = 9,
-        LimitsDelAggregation = 10,
-        
-    };
+};
+
+enum class RESID {
+    Order = 0,
+    RequestOrigin = 1,
+    RequestContext = 2,
+    RequestContextNotificatio = 3,
+    RequestCharacteristics = 4,
+    LimitsEventCategory = 5,
+    LimitsRequestExpTime = 6,
+    LimitsResultExpTime = 7,
+    LimitsOptExpTime = 8,
+    LimitsRespPersistence = 9,
+    LimitsDelAggregation = 10,
+    
 };
 
 /* \brief Class for object 2053 - CmdhLimits
@@ -107,8 +127,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2053::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2053::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2053::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2053::RESID c1) { return (uint16_t) c1 == c2; }
 	

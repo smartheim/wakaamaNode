@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10264 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ScheduleUTCOffset10264
+    class ScheduleUTCOffsetType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10264 - Delivery Schedule
  *  The Delivery Schedule object provides a means for controlling the periodic delivery
  *  of interval and event data to the LwM2M server.
@@ -15,7 +22,7 @@ public:
     int ScheduleStartTime;
     
     // 1 - The Schedule UTC Offset resource is a readable and writable resource representing the time zone offset for the Schedule Start Time Resource for this Delivery Schedule instance. If this resource is empty, the application should use the UTC offset provided in the Device [/3/0/14] object instance resource or UTC if not provided.  UTC+X [ISO 8601].
-    PreallocString<30> ScheduleUTCOffset;
+    ScheduleUTCOffsetType ScheduleUTCOffset;
     
     // 2 - The Delivery Frequency resource is a readable and writable resource representing the number of seconds between deliveries. It is recommended that the Delivery Frequency be set to a devisor of 24 hours (86400 seconds) to provide a consistent interval period. Examples of Delivery Frequency include:-30 = Every 30 seconds600 = Every 10 minutes1800 = Every 30 minutes3600 = Hourly7200 = Every 2 hours14400 = Every 4 hours43200 = Every 12 hours86400 = Every Day172600 = Every Second Day
     int DeliveryFrequency;
@@ -32,15 +39,16 @@ public:
     // 5 - The Retry Period resource is a readable and writable resource representing the number of seconds between each application level retry. 
     int RetryPeriod;
     
-    enum class RESID {
-        ScheduleStartTime = 0,
-        ScheduleUTCOffset = 1,
-        DeliveryFrequency = 2,
-        RandomisedDeliveryWindow = 3,
-        NumberofRetries = 4,
-        RetryPeriod = 5,
-        
-    };
+};
+
+enum class RESID {
+    ScheduleStartTime = 0,
+    ScheduleUTCOffset = 1,
+    DeliveryFrequency = 2,
+    RandomisedDeliveryWindow = 3,
+    NumberofRetries = 4,
+    RetryPeriod = 5,
+    
 };
 
 /* \brief Class for object 10264 - Delivery Schedule
@@ -74,8 +82,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10264::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10264::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10264::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10264::RESID c1) { return (uint16_t) c1 == c2; }
 	

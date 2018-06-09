@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2 - LwM2M Access Control
  *  Access Control Object is used to check whether the LwM2M Server has access right for
  *  performing an operation.
@@ -24,13 +27,14 @@ public:
     // 3 - Short Server ID of a certain LwM2M Server; only such an LwM2M Server can manage the Resources of this Object Instance. The specific value MAX_ID=65535 means this Access Control Object Instance is created and modified during a Bootstrap phase only.
     int AccessControlOwner;
     
-    enum class RESID {
-        ObjectID = 0,
-        ObjectInstanceID = 1,
-        ACL = 2,
-        AccessControlOwner = 3,
-        
-    };
+};
+
+enum class RESID {
+    ObjectID = 0,
+    ObjectInstanceID = 1,
+    ACL = 2,
+    AccessControlOwner = 3,
+    
 };
 
 /* \brief Class for object 2 - LwM2M Access Control
@@ -56,8 +60,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2::RESID c1) { return (uint16_t) c1 == c2; }
 	

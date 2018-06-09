@@ -14,7 +14,7 @@ static_assert(offset_of(&TestB::b)==sizeof(int),"offset_of doesn't work");
 int lwm2m_object_prepare_full_response(lwm2m_data_t ** dataArrayP, Lwm2mObjectBase* metaP)
 {
     *dataArrayP = lwm2m_data_new(metaP->resources_len());
-    if (*dataArrayP == NULL) return -1;
+    if (*dataArrayP == nullptr) return -1;
     int readable = 0;
     for(unsigned i=0;i<metaP->resources_len();++i)
     {
@@ -146,17 +146,19 @@ static uint8_t prv_read(uint16_t instanceId,
     return COAP_205_CONTENT;
 }
 
-/// Support for function results as value ///
+/// Write value to function or to object instance member ///
 template<class T>
-static uint8_t writeToMemberOrToMethod(uint8_t access, void* memberP, T value) {
+static uint8_t writeToMemberOrToMethod(uint8_t access, void* memberP, T value, int len) {
     if ((access & O_RES_E) == O_RES_E)
     {
         if ((access & O_RES_RW)==O_RES_RW){
             IndirectReadWrite<T> *cbStr =reinterpret_cast<IndirectReadWrite<T>*>(memberP);
-            cbStr->write(value);
+            DynArray<T> d(value,len);
+            cbStr->write(d);
         } else if ((access & O_RES_W)==O_RES_W){
             IndirectWrite<T> f = *reinterpret_cast<IndirectWrite<T>*>(memberP);
-            f(value);
+            DynArray<T> d(value,len);
+            f(d);
         } else
             return COAP_405_METHOD_NOT_ALLOWED;
     } else {
@@ -237,54 +239,54 @@ static uint8_t prv_write(uint16_t instanceId,
         case O_RES_BOOL:
             if (1 != lwm2m_data_decode_bool(&dataArray[i], &temp.b))
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod(resP->access,memberP,temp.b);
+            writeToMemberOrToMethod(resP->access,memberP,temp.b,sizeof(temp.b));
             break;
         case O_RES_DOUBLE:
             if (1 != lwm2m_data_decode_float(&dataArray[i], &temp.d))
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod(resP->access,memberP,temp.d);
+            writeToMemberOrToMethod(resP->access,memberP,temp.d,sizeof(temp.d));
             break;
         case O_RES_INT8:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i) || temp.i < INT8_MIN || temp.i > INT8_MAX)
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<int8_t>(resP->access,memberP, temp.i);
+            writeToMemberOrToMethod<int8_t>(resP->access,memberP, temp.i,sizeof(temp.i));
             break;
         case O_RES_UINT8:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i) || temp.i < 0 || temp.i > UINT8_MAX)
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<uint8_t>(resP->access,memberP,temp.i);
+            writeToMemberOrToMethod<uint8_t>(resP->access,memberP,temp.i,sizeof(temp.i));
             break;
         case O_RES_INT16:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i) || temp.i < INT16_MIN || temp.i > INT16_MAX)
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<int16_t>(resP->access,memberP,temp.i);
+            writeToMemberOrToMethod<int16_t>(resP->access,memberP,temp.i,sizeof(temp.i));
             break;
         case O_RES_UINT16:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i) || temp.i < 0 || temp.i > UINT16_MAX)
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<uint16_t>(resP->access,memberP,temp.i);
+            writeToMemberOrToMethod<uint16_t>(resP->access,memberP,temp.i,sizeof(temp.i));
             break;
         case O_RES_INT32:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i) || temp.i < INT32_MIN || temp.i > INT32_MAX)
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<int32_t>(resP->access,memberP,temp.i);
+            writeToMemberOrToMethod<int32_t>(resP->access,memberP,temp.i,sizeof(temp.i));
             break;
         case O_RES_UINT32:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i) || temp.i < 0 || temp.i > UINT32_MAX)
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<uint32_t>(resP->access,memberP,temp.i);
+            writeToMemberOrToMethod<uint32_t>(resP->access,memberP,temp.i,sizeof(temp.i));
             break;
         case O_RES_INT64:
             if (1 != lwm2m_data_decode_int(&dataArray[i], &temp.i))
                 return COAP_400_BAD_REQUEST;
-            writeToMemberOrToMethod<int64_t>(resP->access,memberP,temp.i);
+            writeToMemberOrToMethod<int64_t>(resP->access,memberP,temp.i,sizeof(temp.i));
             break;
         case O_RES_STRING:
             if (!(resP->access & O_RES_E))
                 return COAP_400_BAD_REQUEST;
             else {
                 temp.c = (char*)dataArray[i].value.asBuffer.buffer;
-                writeToMemberOrToMethod<const char*>(resP->access,memberP,temp.c);
+                writeToMemberOrToMethod<const char*>(resP->access,memberP,temp.c,dataArray[i].value.asBuffer.length);
                 break;
             }
         default:
@@ -428,6 +430,12 @@ static uint8_t prv_create(uint16_t instanceId,
     }
 
     return result;
+}
+
+void Lwm2mObjectBase::resChanged(lwm2m_context_t * contextP, uint16_t object_instance_id, uint16_t res_id) {
+    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID,
+                       object.objID, object_instance_id, res_id};
+    lwm2m_resource_value_changed(contextP, &uri);
 }
 
 Lwm2mObjectInstance* Lwm2mObjectBase::createInstance(uint16_t) {return nullptr;}

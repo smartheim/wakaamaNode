@@ -3,11 +3,6 @@
 #include "wakaama/liblwm2m.h"
 #include "wakaama/internals.h"
 
-#ifndef LWM2M_WITH_LOGS
-void lwm2m_printfAA(const char * format, ...) {
-}
-#endif
-
 void print_state(lwm2m_context_t * lwm2mH)
 {
     lwm2m_server_t * targetP;

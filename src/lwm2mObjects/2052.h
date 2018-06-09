@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id2052 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 2052 - CmdhEcDefParamValues
  *  This Object represents a specific set of default values for the CMDH related parameters
  *  Request Expiration Timestamp, Result Expiration Timestamp, Operational Execution
@@ -31,15 +34,16 @@ public:
     // 5 - Contains the default value of the Delivery Aggregation  parameter when such a parameter is not set in the request  
     int DefaultDelAggregation;
     
-    enum class RESID {
-        ApplicableEventCategory = 0,
-        DefaultRequestExpTime = 1,
-        DefaultResultExpTime = 2,
-        DefaultOpExecTime = 3,
-        DefaultRespPersistence = 4,
-        DefaultDelAggregation = 5,
-        
-    };
+};
+
+enum class RESID {
+    ApplicableEventCategory = 0,
+    DefaultRequestExpTime = 1,
+    DefaultResultExpTime = 2,
+    DefaultOpExecTime = 3,
+    DefaultRespPersistence = 4,
+    DefaultDelAggregation = 5,
+    
 };
 
 /* \brief Class for object 2052 - CmdhEcDefParamValues
@@ -72,8 +76,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id2052::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id2052::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id2052::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id2052::RESID c1) { return (uint16_t) c1 == c2; }
 	

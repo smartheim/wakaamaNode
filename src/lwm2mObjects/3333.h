@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3333 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef CurrentTime3333
+    class CurrentTimeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3333
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3333 - Time
  *  This IPSO object is used to report the current time in seconds since January 1, 1970 UTC.
  *  There is also a fractional time counter that has a range of less than one second.
@@ -12,7 +23,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 5506 - Unix Time. A signed integer representing the number of seconds since Jan 1st, 1970 in the UTC time zone.
-    PreallocString<30> CurrentTime; // Time
+    CurrentTimeType CurrentTime; // Time
     
     // Optional resource
     // 5507 - For shorter times of a fraction of a second (i.e. 0.23).
@@ -20,14 +31,15 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        CurrentTime = 5506,
-        FractionalTime = 5507,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    CurrentTime = 5506,
+    FractionalTime = 5507,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3333 - Time
@@ -51,8 +63,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3333::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3333::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3333::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3333::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -121,14 +121,25 @@ Implement this function in your object class to allow to delete an object instan
 
 ```cpp
 /**
+ * @param lwm2mContext The Wakaama context.
+ * @param object_instance_id Object instance id
+ * @param res_id Resource id
+ */
+void resChanged(void* lwm2mContext, uint16_t object_instance_id, uint16_t res_id);
+```
+
+Call this method if you have changed a resource of the given instance with the given resource id.
+
+```cpp
+/**
  * @param instance Object instance that is going to be modified
  * @param res_id The resource that will get changed
  * @return Return true if change is accepted or false if change is denied.
  */
-virtual bool verifyWrite(Lwm2mObjectInstance* instance, uint16_t res_id);
+void* verifyWrite(Lwm2mObjectInstance* instance, uint16_t res_id);
 ```
 
-Implement this function in your object class to verify a change on an object instance resource.
+Implement a function with the above signature and assign it to the `verifyWrite` object field to verify a change on an object instance resource.
 
 
 ### Lwm2mObjectInstance class

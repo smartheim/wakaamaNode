@@ -39,6 +39,7 @@ OBJECT_META(test_object_instance_t, test_object_meta, 1024, test_object_write_ve
     {16, O_RES_R|O_RES_E,O_RES_STRING,   offsetof(test_object_instance_t,test_read_fun_string)},
     {17, O_RES_W|O_RES_E,O_RES_STRING,   offsetof(test_object_instance_t,test_write_fun_string)},
     {18, O_RES_RW|O_RES_E,O_RES_STRING,  offsetof(test_object_instance_t,test_readWrite_fun_string)},
+    {19, O_RES_RW,O_RES_OPAQUE_PREALLOC, offsetof(test_object_instance_t,test_oaque_empty)},
 )
 
 lwm2m_object_t *get_test_object() {
@@ -82,6 +83,9 @@ lwm2m_list_t* test_object_create_instance(uint16_t instance_id,
     memcpy(targetP->test_opaque_prealloc.data, "ab\0\nab", 6);
     targetP->test_opaque_prealloc.reserved_len = 20;
     targetP->test_opaque_prealloc.used_len = 6;
+
+    targetP->test_oaque_empty.reserved_len = 20;
+    targetP->test_oaque_empty.used_len = 0;
 
     targetP->test_read_fun_int8 = readFun8;
     targetP->test_read_fun_uint32 = readFun32;

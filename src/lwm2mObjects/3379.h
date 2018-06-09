@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3379 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3379 - pucchPowerControl
  *  PUCCH TX power control information
  */
@@ -22,13 +25,14 @@ public:
     // 3 - Downlink path loss calculated in UE (0..255)
     int dlPathLoss;
     
-    enum class RESID {
-        sysFrameNumber = 6037,
-        subFrameNumber = 6038,
-        pucchTxPowerValue = 2,
-        dlPathLoss = 3,
-        
-    };
+};
+
+enum class RESID {
+    sysFrameNumber = 6037,
+    subFrameNumber = 6038,
+    pucchTxPowerValue = 2,
+    dlPathLoss = 3,
+    
 };
 
 /* \brief Class for object 3379 - pucchPowerControl
@@ -52,8 +56,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3379::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3379::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3379::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3379::RESID c1) { return (uint16_t) c1 == c2; }
 	

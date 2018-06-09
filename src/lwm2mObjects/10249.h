@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10249 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 10249 - Connected UE Report
  *  This LWM2M Object provides a range of information related to the connected UEs.
  */
@@ -38,18 +41,19 @@ public:
     // 8 - A link to the "Neighbour Cell Report" object for each neighbour cell reported to the CrowdBox by the connected UE
     // Objlnk resources are not supported yet - NeighbourCellReport;
     
-    enum class RESID {
-        ConnectedUserMMEC = 0,
-        ConnectedUserMTMSI = 1,
-        ServingCellCrowdBoxeNBRSRP = 2,
-        ServingCellCrowdBoxeNBRSRQ = 3,
-        CumulativeTimingAdvanceperConnectedUser = 4,
-        LastdownlinkCQIreportperConnectedUser = 5,
-        CumulativeDownlinkThroughputperConnectedUser = 6,
-        CumulativeUplinkThroughputperConnectedUser = 7,
-        NeighbourCellReport = 8,
-        
-    };
+};
+
+enum class RESID {
+    ConnectedUserMMEC = 0,
+    ConnectedUserMTMSI = 1,
+    ServingCellCrowdBoxeNBRSRP = 2,
+    ServingCellCrowdBoxeNBRSRQ = 3,
+    CumulativeTimingAdvanceperConnectedUser = 4,
+    LastdownlinkCQIreportperConnectedUser = 5,
+    CumulativeDownlinkThroughputperConnectedUser = 6,
+    CumulativeUplinkThroughputperConnectedUser = 7,
+    NeighbourCellReport = 8,
+    
 };
 
 /* \brief Class for object 10249 - Connected UE Report
@@ -89,8 +93,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10249::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10249::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10249::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10249::RESID c1) { return (uint16_t) c1 == c2; }
 	

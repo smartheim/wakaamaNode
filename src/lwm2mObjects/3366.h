@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3366 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3366 - macRachAttemptEvent
  *  RACH information. Logged at RACH TX
  */
@@ -37,18 +40,19 @@ public:
     // 8 - Timing Adjustment Value
     int timingAdjustmentValue;
     
-    enum class RESID {
-        rachAttemptCounter = 0,
-        MacRachAttemptEventType = 1,
-        contentionBased = 2,
-        rachMessage = 3,
-        preambleIndex = 4,
-        preamblePowerOffset = 5,
-        backoffTime = 6,
-        msg2Result = 7,
-        timingAdjustmentValue = 8,
-        
-    };
+};
+
+enum class RESID {
+    rachAttemptCounter = 0,
+    MacRachAttemptEventType = 1,
+    contentionBased = 2,
+    rachMessage = 3,
+    preambleIndex = 4,
+    preamblePowerOffset = 5,
+    backoffTime = 6,
+    msg2Result = 7,
+    timingAdjustmentValue = 8,
+    
 };
 
 /* \brief Class for object 3366 - macRachAttemptEvent
@@ -87,8 +91,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3366::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3366::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3366::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3366::RESID c1) { return (uint16_t) c1 == c2; }
 	

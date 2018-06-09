@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3359 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3359 - cellBlacklistEvent
  *  Cell blacklist information
  */
@@ -16,11 +19,12 @@ public:
     // 6033 - cell Identity
     int cellID;
     
-    enum class RESID {
-        dlEarfcn = 6032,
-        cellID = 6033,
-        
-    };
+};
+
+enum class RESID {
+    dlEarfcn = 6032,
+    cellID = 6033,
+    
 };
 
 /* \brief Class for object 3359 - cellBlacklistEvent
@@ -38,8 +42,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3359::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3359::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3359::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3359::RESID c1) { return (uint16_t) c1 == c2; }
 	

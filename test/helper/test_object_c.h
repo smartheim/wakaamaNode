@@ -38,6 +38,7 @@ typedef struct _test_object_instance_
     // Read only c-string O_RES_STRING
     char* test_str;
 
+    OpaqueType(20) test_oaque_empty;
     OpaqueType(20) test_str_prealloc;
     OpaqueIndirect test_opaque;
     OpaqueType(20) test_opaque_prealloc;

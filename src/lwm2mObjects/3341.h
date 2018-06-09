@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3341 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Text3341
+    class TextType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3341
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3341 - Addressable Text Display
  *  This IPSO object is used to send text to a text-only or text mode graphics display. POSTing
  *  a string of text to the text resource causes it to be displayed at the selected X and Y locations
@@ -19,7 +30,7 @@ class instance : public Lwm2mObjectInstance {
 public:
 
     // 5527 - A string of text.
-    PreallocString<30> Text;
+    TextType Text;
     
     // Optional resource
     // 5528 - X Coordinate.
@@ -51,20 +62,21 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        Text = 5527,
-        XCoordinate = 5528,
-        YCoordinate = 5529,
-        MaxXCoordinate = 5545,
-        MaxYCoordinate = 5546,
-        ClearDisplay = 5530,
-        Dimmer = 5851,
-        Contrast = 5531,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    Text = 5527,
+    XCoordinate = 5528,
+    YCoordinate = 5529,
+    MaxXCoordinate = 5545,
+    MaxYCoordinate = 5546,
+    ClearDisplay = 5530,
+    Dimmer = 5851,
+    Contrast = 5531,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3341 - Addressable Text Display
@@ -119,8 +131,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3341::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3341::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3341::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3341::RESID c1) { return (uint16_t) c1 == c2; }
 	

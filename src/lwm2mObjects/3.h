@@ -4,6 +4,53 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef Manufacturer3
+    class ManufacturerType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ModelNumber3
+    class ModelNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SerialNumber3
+    class SerialNumberType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef FirmwareVersion3
+    class FirmwareVersionType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef CurrentTime3
+    class CurrentTimeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef UTCOffset3
+    class UTCOffsetType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef Timezone3
+    class TimezoneType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SupportedBindingandModes3
+    class SupportedBindingandModesType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef DeviceType3
+    class DeviceTypeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef HardwareVersion3
+    class HardwareVersionType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SoftwareVersion3
+    class SoftwareVersionType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3 - Device
  *  This LwM2M Object provides a range of device related information which can be queried
  *  by the LwM2M Server, and a device reboot and factory reset function.
@@ -13,19 +60,19 @@ public:
 
     // Optional resource
     // 0 - Human readable manufacturer name
-    PreallocString<30> Manufacturer;
+    ManufacturerType Manufacturer;
     
     // Optional resource
     // 1 - A model identifier (manufacturer specified string)
-    PreallocString<30> ModelNumber;
+    ModelNumberType ModelNumber;
     
     // Optional resource
     // 2 - Serial Number
-    PreallocString<30> SerialNumber;
+    SerialNumberType SerialNumber;
     
     // Optional resource
     // 3 - Current firmware version of the Device.The Firmware Management function could rely on this resource.
-    PreallocString<30> FirmwareVersion;
+    FirmwareVersionType FirmwareVersion;
     
     // 4 - Reboot the LwM2M Device to restore the Device from unexpected firmware failure.
     Executable Reboot;
@@ -63,30 +110,30 @@ public:
 
     // Optional resource
     // 13 - Current UNIX time of the LwM2M Client.The LwM2M Client should be responsible to increase this time value as every second elapses.The LwM2M Server is able to write this Resource to make the LwM2M Client synchronized with the LwM2M Server.
-    PreallocString<30> CurrentTime; // Time
+    CurrentTimeType CurrentTime; // Time
     
     // Optional resource
     // 14 - Indicates the UTC offset currently in effect for this LwM2M Device. UTC+X [ISO 8601].
-    PreallocString<30> UTCOffset;
+    UTCOffsetType UTCOffset;
     
     // Optional resource
     // 15 - Indicates in which time zone the LwM2M Device is located, in IANA Timezone (TZ) database format.
-    PreallocString<30> Timezone;
+    TimezoneType Timezone;
     
     // 16 - Indicates which bindings and modes are supported in the LwM2M Client. The possible values of Resource are combination of "U" or "UQ" and "S" or "SQ".
-    PreallocString<30> SupportedBindingandModes;
+    SupportedBindingandModesType SupportedBindingandModes;
     
     // Optional resource
     // 17 - Type of the device (manufacturer specified string: e.g., smart meters / dev Class…)
-    PreallocString<30> DeviceType;
+    DeviceTypeType DeviceType;
     
     // Optional resource
     // 18 - Current hardware version of the device
-    PreallocString<30> HardwareVersion;
+    HardwareVersionType HardwareVersion;
     
     // Optional resource
     // 19 - Current software version of the device (manufacturer specified string). On elaborated LwM2M device, SW could be split in 2 parts: a firmware one and a higher level software on top.Both pieces of Software are together managed by LwM2M Firmware Update Object (Object ID 5)
-    PreallocString<30> SoftwareVersion;
+    SoftwareVersionType SoftwareVersion;
     
     // Optional resource
     // 20 - This value is only valid for the Device Internal Battery if present (one Available Power Sources Resource Instance value is 1).BatteryStatus	Meaning	Description0	Normal	The battery is operating normally and not on power.1	Charging	The battery is currently charging.2	Charge Complete	The battery is fully charged and still on power.3	Damaged	The battery has some problem.4	Low Battery	The battery is low on charge.5	Not Installed	The battery is not installed.6	Unknown	The battery information is not available.
@@ -100,32 +147,33 @@ public:
     // 22 - Reference to external “Device” object instance containing information. For example, such an external device can be a Host Device, which is a device into which the Device containing the LwM2M client is embedded. This Resource may be used to retrieve information about the Host Device.
     // Objlnk resources are not supported yet - ExtDevInfo;
     
-    enum class RESID {
-        Manufacturer = 0,
-        ModelNumber = 1,
-        SerialNumber = 2,
-        FirmwareVersion = 3,
-        Reboot = 4,
-        FactoryReset = 5,
-        AvailablePowerSources = 6,
-        PowerSourceVoltage = 7,
-        PowerSourceCurrent = 8,
-        BatteryLevel = 9,
-        MemoryFree = 10,
-        ErrorCode = 11,
-        ResetErrorCode = 12,
-        CurrentTime = 13,
-        UTCOffset = 14,
-        Timezone = 15,
-        SupportedBindingandModes = 16,
-        DeviceType = 17,
-        HardwareVersion = 18,
-        SoftwareVersion = 19,
-        BatteryStatus = 20,
-        MemoryTotal = 21,
-        ExtDevInfo = 22,
-        
-    };
+};
+
+enum class RESID {
+    Manufacturer = 0,
+    ModelNumber = 1,
+    SerialNumber = 2,
+    FirmwareVersion = 3,
+    Reboot = 4,
+    FactoryReset = 5,
+    AvailablePowerSources = 6,
+    PowerSourceVoltage = 7,
+    PowerSourceCurrent = 8,
+    BatteryLevel = 9,
+    MemoryFree = 10,
+    ErrorCode = 11,
+    ResetErrorCode = 12,
+    CurrentTime = 13,
+    UTCOffset = 14,
+    Timezone = 15,
+    SupportedBindingandModes = 16,
+    DeviceType = 17,
+    HardwareVersion = 18,
+    SoftwareVersion = 19,
+    BatteryStatus = 20,
+    MemoryTotal = 21,
+    ExtDevInfo = 22,
+    
 };
 
 /* \brief Class for object 3 - Device
@@ -227,8 +275,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3::RESID c1) { return (uint16_t) c1 == c2; }
 	

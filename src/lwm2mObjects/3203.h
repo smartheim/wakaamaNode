@@ -4,6 +4,13 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3203 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3203
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3203 - Analog Output
  *  This IPSO object is a generic object that can be used with any kind of analog output interface.
  */
@@ -15,7 +22,7 @@ public:
     
     // Optional resource
     // 5750 - If present, the application type of the actuator as a string, for instance, “Thermostat”
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
     // Optional resource
     // 5603 - The minimum value that can be measured by the sensor
@@ -25,13 +32,14 @@ public:
     // 5604 - The maximum value that can be measured by the sensor
     float MaxRangeValue;
     
-    enum class RESID {
-        AnalogOutputCurrentValue = 5650,
-        ApplicationType = 5750,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        
-    };
+};
+
+enum class RESID {
+    AnalogOutputCurrentValue = 5650,
+    ApplicationType = 5750,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    
 };
 
 /* \brief Class for object 3203 - Analog Output
@@ -58,8 +66,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3203::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3203::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3203::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3203::RESID c1) { return (uint16_t) c1 == c2; }
 	

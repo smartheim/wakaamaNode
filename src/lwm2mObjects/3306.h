@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3306 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef MutistateOutput3306
+    class MutistateOutputType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3306
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3306 - Actuation
  *  This IPSO object is dedicated to remote actuation such as ON/OFF action or dimming.
  *  A multi-state output can also be described as a string. This is useful to send pilot wire
@@ -26,20 +37,21 @@ public:
     
     // Optional resource
     // 5853 - A string describing a state for multiple level output such as Pilot Wire
-    PreallocString<30> MutistateOutput;
+    MutistateOutputType MutistateOutput;
     
     // Optional resource
     // 5750 - The Application type of the device, for example “Motion Closure”.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        OnOff = 5850,
-        Dimmer = 5851,
-        OnTime = 5852,
-        MutistateOutput = 5853,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    OnOff = 5850,
+    Dimmer = 5851,
+    OnTime = 5852,
+    MutistateOutput = 5853,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3306 - Actuation
@@ -73,8 +85,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3306::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3306::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3306::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3306::RESID c1) { return (uint16_t) c1 == c2; }
 	

@@ -4,6 +4,17 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id10258 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef SensorUnits10258
+    class SensorUnitsType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType10258
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 10258 - Current Loop Output
  *  This LWM2M Object provides a representation of a current loop source, which may be used
  *  to carry control signals.
@@ -24,25 +35,26 @@ public:
     
     // Optional resource
     // 5701 - Measurement Units Definition e.g. “Cel” for Temperature in Celsius.
-    PreallocString<30> SensorUnits;
+    SensorUnitsType SensorUnits;
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string, for instance, “Air Pressure”.
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
     // Optional resource
     // 5821 - Read or Write the current calibration coefficient
     float CurrentCalibration;
     
-    enum class RESID {
-        CurrentLoopOutputCurrentValue = 0,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        SensorUnits = 5701,
-        ApplicationType = 5750,
-        CurrentCalibration = 5821,
-        
-    };
+};
+
+enum class RESID {
+    CurrentLoopOutputCurrentValue = 0,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    SensorUnits = 5701,
+    ApplicationType = 5750,
+    CurrentCalibration = 5821,
+    
 };
 
 /* \brief Class for object 10258 - Current Loop Output
@@ -78,8 +90,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id10258::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id10258::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id10258::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id10258::RESID c1) { return (uint16_t) c1 == c2; }
 	

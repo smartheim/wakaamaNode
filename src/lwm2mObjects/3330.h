@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3330 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ResetMinandMaxMeasuredValues3330
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+    #ifndef CurrentCalibration3330
+    class CurrentCalibrationType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ApplicationType3330
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 3330 - Distance
  *  This IPSO object should be used to report a distance measurement. It also provides resources
  *  for minimum and maximum measured values, as well as the minimum and maximum range that
@@ -41,24 +56,25 @@ public:
 
     // Optional resource
     // 5821 - Read or Write the current calibration coefficient
-    PreallocString<30> CurrentCalibration;
+    CurrentCalibrationType CurrentCalibration;
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string depending on the use case
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
-    enum class RESID {
-        SensorValue = 5700,
-        SensorUnits = 5701,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        ResetMinandMaxMeasuredValues = 5605,
-        CurrentCalibration = 5821,
-        ApplicationType = 5750,
-        
-    };
+};
+
+enum class RESID {
+    SensorValue = 5700,
+    SensorUnits = 5701,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    ResetMinandMaxMeasuredValues = 5605,
+    CurrentCalibration = 5821,
+    ApplicationType = 5750,
+    
 };
 
 /* \brief Class for object 3330 - Distance
@@ -107,8 +123,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3330::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3330::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3330::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3330::RESID c1) { return (uint16_t) c1 == c2; }
 	

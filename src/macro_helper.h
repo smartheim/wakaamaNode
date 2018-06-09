@@ -2,6 +2,7 @@
 /**
  * This file contains some helper templates and macros.
  * - offset_of(&Object::member)
+ * - is_base_of_template<Derived, Base> with Base<N> and N -> int
  */
 
 #include <type_traits>
@@ -27,10 +28,43 @@ struct baseof_member_pointer<T Parent::*> {
   typedef Parent type;
 };
 
+template <template <int...> class C, int...Ts>
+std::true_type is_base_of_template_impl(const C<Ts...>*);
+
+template <template <int...> class C>
+std::false_type is_base_of_template_impl(...);
+
+template <typename T, template <int...> class C>
+using is_base_of_template = decltype(is_base_of_template_impl<C>(std::declval<T*>()));
+
+template <template <typename...> class C, typename...Ts>
+std::true_type is_base_of_template_impl_f(const C<Ts...>*);
+
+template <template <typename...> class C>
+std::false_type is_base_of_template_impl_f(...);
+
+template <typename T, template <typename...> class C>
+using is_base_of_template_f = decltype(is_base_of_template_impl_f<C>(std::declval<T*>()));
+
+template <typename T>
+struct is_foo {
+    template<typename U>
+    static auto check(int) ->
+    decltype( static_cast< void (U::*)() const >(&U::foo), std::true_type() );
+    //                     ^^^^^^^^^^^^^^^^^^^
+    //                     the desired signature goes here
+
+    template<typename>
+    static std::false_type check(...);
+
+    static constexpr bool value = decltype(check<T>(0))::value;
+};
+
 // We need to determine the offset of c++ class members.
 // That's not an easy task to do in compile time.
-// This mixture of templates and a macro works with some
-// compiler warnings, which we ignore.
+// This mixture of templates and a macro works for clang with some
+// compiler warnings, which we ignore. Gcc is not entirely standard
+// conform by allowing dynamic_casts in constant expressions.
 #ifdef __GNUC__
 template <typename T1, typename T2>
 struct offset_of_impl {

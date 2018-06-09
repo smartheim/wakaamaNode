@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id4 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef IPAddresses4
+    class IPAddressesType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef RouterIPAddresses4
+    class RouterIPAddressesType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef APN4
+    class APNType : public PreallocString<30> {};
+    #endif
+    
+
 /* \brief Class for object 4 - Connectivity Monitoring
  *  This LwM2M Object enables monitoring of parameters related to network connectivity.In
  *  this general connectivity Object, the Resources are limited to the most general cases
@@ -31,11 +46,11 @@ public:
     int LinkQuality;
     
     // 4 - The IP addresses assigned to the connectivity interface. (e.g., IPv4, IPv6, etc.)
-    PreallocString<30> IPAddresses;
+    IPAddressesType IPAddresses;
     
     // Optional resource
     // 5 - The IP address of the next-hop IP router, on each of the interfaces specified in resource 4 (IP Addresses).Note: This IP Address doesn’t indicate the Server IP address.
-    PreallocString<30> RouterIPAddresses;
+    RouterIPAddressesType RouterIPAddresses;
     
     // Optional resource
     // 6 - The average utilization of the link to the next-hop IP router in %.
@@ -43,7 +58,7 @@ public:
     
     // Optional resource
     // 7 - Access Point Name in case Network Bearer Resource is a Cellular Network.
-    PreallocString<30> APN;
+    APNType APN;
     
     // Optional resource
     // 8 - Serving Cell ID in case Network Bearer Resource is a Cellular Network.As specified in TS [3GPP 23.003] and in [3GPP. 24.008]. Range (0…65535) in GSM/EDGEUTRAN Cell ID has a length of 28 bits.Cell Identity in WCDMA/TD-SCDMA. Range: (0..268435455).LTE Cell ID has a length of 28 bits.Parameter definitions in [3GPP 25.331].
@@ -57,20 +72,21 @@ public:
     // 10 - Serving Mobile Country Code. In case Network Bearer Resource has 0 (cellular network). Range (0…999).As specified in TS [3GPP 23.003].
     int SMCC;
     
-    enum class RESID {
-        NetworkBearer = 0,
-        AvailableNetworkBearer = 1,
-        RadioSignalStrength = 2,
-        LinkQuality = 3,
-        IPAddresses = 4,
-        RouterIPAddresses = 5,
-        LinkUtilization = 6,
-        APN = 7,
-        CellID = 8,
-        SMNC = 9,
-        SMCC = 10,
-        
-    };
+};
+
+enum class RESID {
+    NetworkBearer = 0,
+    AvailableNetworkBearer = 1,
+    RadioSignalStrength = 2,
+    LinkQuality = 3,
+    IPAddresses = 4,
+    RouterIPAddresses = 5,
+    LinkUtilization = 6,
+    APN = 7,
+    CellID = 8,
+    SMNC = 9,
+    SMCC = 10,
+    
 };
 
 /* \brief Class for object 4 - Connectivity Monitoring
@@ -129,8 +145,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id4::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id4::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id4::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id4::RESID c1) { return (uint16_t) c1 == c2; }
 	

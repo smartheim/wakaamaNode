@@ -4,6 +4,21 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3202 {
+// Custom, overrideable types for Opaque and String resources
+
+    #ifndef ApplicationType3202
+    class ApplicationTypeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef SensorType3202
+    class SensorTypeType : public PreallocString<30> {};
+    #endif
+    
+    #ifndef ResetMinandMaxMeasuredValues3202
+    class ResetMinandMaxMeasuredValuesType : public Opaque<30> {};
+    #endif
+    
+
 /* \brief Class for object 3202 - Analog Input
  *  Generic analog input for non-specific sensors
  */
@@ -31,27 +46,28 @@ public:
     
     // Optional resource
     // 5750 - The application type of the sensor or actuator as a string, for instance, “Air Pressure”
-    PreallocString<30> ApplicationType;
+    ApplicationTypeType ApplicationType;
     
     // Optional resource
     // 5751 - The type of the sensor, for instance PIR type
-    PreallocString<30> SensorType;
+    SensorTypeType SensorType;
     
     // Optional resource
     // 5605 - Reset the Min and Max Measured Values to Current Value
     Executable ResetMinandMaxMeasuredValues;
 
-    enum class RESID {
-        AnalogInputCurrentValue = 5600,
-        MinMeasuredValue = 5601,
-        MaxMeasuredValue = 5602,
-        MinRangeValue = 5603,
-        MaxRangeValue = 5604,
-        ApplicationType = 5750,
-        SensorType = 5751,
-        ResetMinandMaxMeasuredValues = 5605,
-        
-    };
+};
+
+enum class RESID {
+    AnalogInputCurrentValue = 5600,
+    MinMeasuredValue = 5601,
+    MaxMeasuredValue = 5602,
+    MinRangeValue = 5603,
+    MaxRangeValue = 5604,
+    ApplicationType = 5750,
+    SensorType = 5751,
+    ResetMinandMaxMeasuredValues = 5605,
+    
 };
 
 /* \brief Class for object 3202 - Analog Input
@@ -94,8 +110,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3202::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3202::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3202::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3202::RESID c1) { return (uint16_t) c1 == c2; }
 	

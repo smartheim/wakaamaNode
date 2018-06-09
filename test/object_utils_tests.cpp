@@ -25,6 +25,8 @@
 
 #include "lwm2mObjects/known.h"
 
+using namespace KnownObjects;
+
 #include <memory>
 
 extern "C" {
@@ -33,17 +35,21 @@ extern "C" {
 
 bool executed = false;
 char writeFunStrResult[100];
+int writeLenResult = 0;
 
-void executeFun() {
+void executeFun(uint8_t *,
+                int) {
     executed = true;
 }
 
-void writeFunStr(const char* data){
+void writeFunStr(const char* data, int len){
+    writeLenResult = len;
     strncpy(writeFunStrResult,data,100);
 }
 
-void writeFunStrCPP(const char*& data){
-    strncpy(writeFunStrResult,data,100);
+void writeFunStrCPP(DynArray<const char*>& data){
+    writeLenResult = data.len;
+    strncpy(writeFunStrResult,data.data,100);
 }
 
 int8_t readFun8() {
@@ -64,14 +70,14 @@ void Reading(lwm2m_context_t * lwm2mH) {
     std::string fullRead;
     {
         size_t buffer_len;
-        char* buffer;
+        char* buffer=nullptr;
         uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
         ASSERT_EQ(s, CONTENT_2_05);
         fullRead.assign(buffer,buffer_len);
         lwm2m_free(buffer);
     }
 
-    const char expect[] = "{\"bn\":\"/1024/10/\",\"e\":[{\"n\":\"0\",\"v\":15},{\"n\":\"1\",\"v\":-15},{\"n\":\"2\",\"v\":4095},{\"n\":\"3\",\"v\":-4095},{\"n\":\"4\",\"v\":268435455},{\"n\":\"5\",\"v\":-268435455},{\"n\":\"6\",\"v\":-281474976710655},{\"n\":\"7\",\"v\":0.12},{\"n\":\"8\",\"bv\":true},{\"n\":\"9\",\"sv\":\"test\"},{\"n\":\"10\",\"sv\":\"test\"},{\"n\":\"11\",\"sv\":\"dGVzdA==\"},{\"n\":\"12\",\"sv\":\"YWIACmFi\"},{\"n\":\"14\",\"v\":-12},{\"n\":\"15\",\"v\":65535},{\"n\":\"16\",\"sv\":\"testR\"},{\"n\":\"18\",\"sv\":\"testR\"}]}";
+    const char expect[] = "{\"bn\":\"/1024/10/\",\"e\":[{\"n\":\"0\",\"v\":15},{\"n\":\"1\",\"v\":-15},{\"n\":\"2\",\"v\":4095},{\"n\":\"3\",\"v\":-4095},{\"n\":\"4\",\"v\":268435455},{\"n\":\"5\",\"v\":-268435455},{\"n\":\"6\",\"v\":-281474976710655},{\"n\":\"7\",\"v\":0.12},{\"n\":\"8\",\"bv\":true},{\"n\":\"9\",\"sv\":\"test\"},{\"n\":\"10\",\"sv\":\"test\"},{\"n\":\"11\",\"sv\":\"dGVzdA==\"},{\"n\":\"12\",\"sv\":\"YWIACmFi\"},{\"n\":\"14\",\"v\":-12},{\"n\":\"15\",\"v\":65535},{\"n\":\"16\",\"sv\":\"testR\"},{\"n\":\"18\",\"sv\":\"testR\"},{\"n\":\"19\",\"sv\":\"\"}]}";
 
     ASSERT_STREQ(expect, fullRead.c_str());
     ASSERT_EQ(sizeof(expect),fullRead.size()+1);
@@ -109,14 +115,14 @@ void Discover(lwm2m_context_t * lwm2mH){
     std::string fullRead;
     {
         size_t buffer_len;
-        char* buffer;
+        char* buffer=nullptr;
         uint8_t s = object_discover(lwm2mH,&uri,&server,(uint8_t**)&buffer, &buffer_len);
         ASSERT_EQ(s, CONTENT_2_05);
         fullRead.assign(buffer,buffer_len);
         lwm2m_free(buffer);
     }
 
-    const char expect[] = "</1024/10>,</1024/10/0>,</1024/10/1>,</1024/10/2>,</1024/10/3>,</1024/10/4>,</1024/10/5>,</1024/10/6>,</1024/10/7>,</1024/10/8>,</1024/10/9>,</1024/10/10>,</1024/10/11>,</1024/10/12>,</1024/10/13>,</1024/10/14>,</1024/10/15>,</1024/10/16>,</1024/10/17>,</1024/10/18>";
+    const char expect[] = "</1024/10>,</1024/10/0>,</1024/10/1>,</1024/10/2>,</1024/10/3>,</1024/10/4>,</1024/10/5>,</1024/10/6>,</1024/10/7>,</1024/10/8>,</1024/10/9>,</1024/10/10>,</1024/10/11>,</1024/10/12>,</1024/10/13>,</1024/10/14>,</1024/10/15>,</1024/10/16>,</1024/10/17>,</1024/10/18>,</1024/10/19>";
     ASSERT_STREQ(expect, fullRead.c_str());
     ASSERT_EQ(sizeof(expect),fullRead.size()+1);
 }
@@ -203,7 +209,7 @@ void ReadWriteStringIndirect(lwm2m_context_t * lwm2mH){
     {
         lwm2m_media_type_t format = LWM2M_CONTENT_TEXT;
         size_t buffer_len;
-        char* buffer;
+        char* buffer=nullptr;
         s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer, &buffer_len);
         ASSERT_EQ(COAP_205_CONTENT, s);
         fullRead.assign(buffer,buffer_len);
@@ -229,6 +235,13 @@ void WriteOpaquePreAlloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
     const char* value = "newcontent"; size_t len = 11;
     T * targetP = (T *)test_object->instanceList;
     uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    ASSERT_EQ(COAP_204_CHANGED, s);
+    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+
+    // Test derived opaque object
+    uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 19};
+    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
     ASSERT_EQ(COAP_204_CHANGED, s);
     ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
     ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
@@ -260,7 +273,7 @@ protected:
     virtual void TearDown() {
         lwm2m_object_instance_remove(lwm2mH, test_object, 10);
         lwm2m_client_close();
-        lwm2mH = NULL;
+        lwm2mH = nullptr;
         ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
     }
 
@@ -312,7 +325,7 @@ protected:
     virtual void TearDown() {
         object.removeInstance(lwm2mH, 10);
         lwm2m_client_close();
-        lwm2mH = NULL;
+        lwm2mH = nullptr;
         ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
     }
 
@@ -324,9 +337,9 @@ protected:
         lwm2mH = lwm2m_client_init("testClient");
         ASSERT_TRUE(lwm2mH) << "Failed to initialize wakaama\r\n";
 
-        ASSERT_EQ(19, object.resources_len());
         MyTestObjectSecond s;
         ASSERT_EQ(7, s.resources_len());
+        ASSERT_EQ(20, object.resources_len());
 
         instance = MyTestObjectInstance( executeFun,
                                          readFun8,
@@ -345,6 +358,16 @@ protected:
         ASSERT_FALSE(object_isInstanceNew(lwm2mH, 1024, 10));
     }
 };
+
+TEST_F(ObjectAPI_CPP, KnownObject3311) {
+    id3311::object o;
+    id3311::instance i;
+    i.id = 0;
+    o.addInstance(lwm2mH,&i);
+    o.registerObject(lwm2mH, false);
+    ASSERT_FALSE(object_isInstanceNew(lwm2mH, 3311, 0));
+
+}
 
 TEST_F(ObjectAPI_CPP, Reading) { Reading(lwm2mH); }
 TEST_F(ObjectAPI_CPP, ExecutingNonExecutable) { ExecutingNonExecutable(lwm2mH); }

@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3377 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3377 - Message3Report
  *  RACH message 3 report information
  */
@@ -37,18 +40,19 @@ public:
     // 8 - Redundancy Version Index
     int redundancyVersionIndex;
     
-    enum class RESID {
-        tpc = 0,
-        resourceIndicatorValue = 1,
-        cqi = 2,
-        uplinkDelay = 3,
-        hoppingEnabled = 4,
-        numRb = 5,
-        transportBlockSizeIndex = 6,
-        ModulationType = 7,
-        redundancyVersionIndex = 8,
-        
-    };
+};
+
+enum class RESID {
+    tpc = 0,
+    resourceIndicatorValue = 1,
+    cqi = 2,
+    uplinkDelay = 3,
+    hoppingEnabled = 4,
+    numRb = 5,
+    transportBlockSizeIndex = 6,
+    ModulationType = 7,
+    redundancyVersionIndex = 8,
+    
 };
 
 /* \brief Class for object 3377 - Message3Report
@@ -87,8 +91,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3377::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3377::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3377::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3377::RESID c1) { return (uint16_t) c1 == c2; }
 	

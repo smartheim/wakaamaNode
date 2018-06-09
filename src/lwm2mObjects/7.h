@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id7 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 7 - Connectivity Statistics
  *  This LwM2M Objects enables client to collect statistical information and enables
  *  the LwM2M Server to retrieve these information, set the collection duration and reset
@@ -49,18 +52,19 @@ public:
     // 8 - The default collection period in seconds. The value 0 indicates that the collection period is not set.
     int CollectionPeriod;
     
-    enum class RESID {
-        SMSTxCounter = 0,
-        SMSRxCounter = 1,
-        TxData = 2,
-        RxData = 3,
-        MaxMessageSize = 4,
-        AverageMessageSize = 5,
-        Start = 6,
-        Stop = 7,
-        CollectionPeriod = 8,
-        
-    };
+};
+
+enum class RESID {
+    SMSTxCounter = 0,
+    SMSRxCounter = 1,
+    TxData = 2,
+    RxData = 3,
+    MaxMessageSize = 4,
+    AverageMessageSize = 5,
+    Start = 6,
+    Stop = 7,
+    CollectionPeriod = 8,
+    
 };
 
 /* \brief Class for object 7 - Connectivity Statistics
@@ -111,8 +115,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id7::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id7::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id7::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id7::RESID c1) { return (uint16_t) c1 == c2; }
 	

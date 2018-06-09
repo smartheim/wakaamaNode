@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3364 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3364 - emmFailureCauseEvent
  *  Triggered at EMM failure - failure cause is logged
  */
@@ -13,10 +16,11 @@ public:
     // 0 - EMM Failure Causes - 3GPP 24.301
     int EMMCause;
     
-    enum class RESID {
-        EMMCause = 0,
-        
-    };
+};
+
+enum class RESID {
+    EMMCause = 0,
+    
 };
 
 /* \brief Class for object 3364 - emmFailureCauseEvent
@@ -31,8 +35,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3364::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3364::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3364::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3364::RESID c1) { return (uint16_t) c1 == c2; }
 	

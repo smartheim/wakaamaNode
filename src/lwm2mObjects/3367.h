@@ -4,6 +4,9 @@
 #include "lwm2m_objects.hpp"
 namespace KnownObjects {
 namespace id3367 {
+// Custom, overrideable types for Opaque and String resources
+
+
 /* \brief Class for object 3367 - macRachAttemptReasonEvent
  *  RACH Information - reason for initiating RACH
  */
@@ -25,14 +28,15 @@ public:
     // 4 - 0: Group A, 1: Group B
     bool preambleGroupChosen;
     
-    enum class RESID {
-        MacRachAttemptReasonType = 0,
-        ueID = 1,
-        contentionBased = 2,
-        preamble = 3,
-        preambleGroupChosen = 4,
-        
-    };
+};
+
+enum class RESID {
+    MacRachAttemptReasonType = 0,
+    ueID = 1,
+    contentionBased = 2,
+    preamble = 3,
+    preambleGroupChosen = 4,
+    
 };
 
 /* \brief Class for object 3367 - macRachAttemptReasonEvent
@@ -59,8 +63,7 @@ public:
 };
 
 } // end of id namespace
-inline bool operator== (id3367::instance::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
-inline bool operator== (uint16_t c2, id3367::instance::RESID c1) { return (uint16_t) c1 == c2; }
-
 } // end of KnownObjects namespace
+inline bool operator== (KnownObjects::id3367::RESID c1, uint16_t c2) { return (uint16_t) c1 == c2; }
+inline bool operator== (uint16_t c2, KnownObjects::id3367::RESID c1) { return (uint16_t) c1 == c2; }
 	
