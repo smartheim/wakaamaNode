@@ -1,3 +1,8 @@
+/**
+ * @file
+ * NETDB API (sockets)
+ */
+
 /*
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -33,8 +38,7 @@
 
 #if LWIP_DNS && LWIP_SOCKET
 
-#include <stddef.h> /* for size_t */
-
+#include "lwip/arch.h"
 #include "lwip/inet.h"
 #include "lwip/sockets.h"
 
@@ -125,10 +129,14 @@ int lwip_getaddrinfo(const char *nodename,
        struct addrinfo **res);
 
 #if LWIP_COMPAT_SOCKETS
+/** @ingroup netdbapi */
 #define gethostbyname(name) lwip_gethostbyname(name)
+/** @ingroup netdbapi */
 #define gethostbyname_r(name, ret, buf, buflen, result, h_errnop) \
        lwip_gethostbyname_r(name, ret, buf, buflen, result, h_errnop)
+/** @ingroup netdbapi */
 #define freeaddrinfo(addrinfo) lwip_freeaddrinfo(addrinfo)
+/** @ingroup netdbapi */
 #define getaddrinfo(nodname, servname, hints, res) \
        lwip_getaddrinfo(nodname, servname, hints, res)
 #endif /* LWIP_COMPAT_SOCKETS */

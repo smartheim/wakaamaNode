@@ -63,7 +63,7 @@ if (USE_LWIP)
         ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.h
         ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
     set(HELPER_INCLUDE_DIRS
-        "${CMAKE_CURRENT_LIST_DIR}/with_lwip"
+        "${CMAKE_CURRENT_LIST_DIR}/with_lwip/include"
         "${CMAKE_CURRENT_LIST_DIR}/helper/"
         "${LWIP_DIR}/include")
 else()

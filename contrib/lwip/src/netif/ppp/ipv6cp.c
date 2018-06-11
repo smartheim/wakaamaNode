@@ -139,7 +139,7 @@
  */
 
 /*
- * TODO: 
+ * @todo: 
  *
  * Proxy Neighbour Discovery.
  *
@@ -147,7 +147,7 @@
  *   interface up / set address.
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
@@ -435,7 +435,7 @@ static void ipv6cp_init(ppp_pcb *pcb) {
     f->callbacks = &ipv6cp_callbacks;
     fsm_init(f);
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
     memset(wo, 0, sizeof(*wo));
     memset(ao, 0, sizeof(*ao));
 #endif /* 0 */
@@ -1093,7 +1093,7 @@ static void ipv6_check_options() {
 
     if (!wo->opt_local) {	/* init interface identifier */
 	if (wo->use_ip && eui64_iszero(wo->ourid)) {
-	    eui64_setlo32(wo->ourid, ntohl(ipcp_wantoptions[0].ouraddr));
+	    eui64_setlo32(wo->ourid, lwip_ntohl(ipcp_wantoptions[0].ouraddr));
 	    if (!eui64_iszero(wo->ourid))
 		wo->opt_local = 1;
 	}
@@ -1104,7 +1104,7 @@ static void ipv6_check_options() {
 
     if (!wo->opt_remote) {
 	if (wo->use_ip && eui64_iszero(wo->hisid)) {
-	    eui64_setlo32(wo->hisid, ntohl(ipcp_wantoptions[0].hisaddr));
+	    eui64_setlo32(wo->hisid, lwip_ntohl(ipcp_wantoptions[0].hisaddr));
 	    if (!eui64_iszero(wo->hisid))
 		wo->opt_remote = 1;
 	}
@@ -1416,7 +1416,7 @@ static int ipv6cp_printpkt(const u_char *p, int plen,
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= (int)sizeof(ipv6cp_codenames) / (int)sizeof(char *))
+    if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(ipv6cp_codenames))
 	printer(arg, " %s", ipv6cp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

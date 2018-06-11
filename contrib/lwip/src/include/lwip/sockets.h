@@ -1,3 +1,8 @@
+/**
+ * @file
+ * Socket API (to be used from non-TCPIP threads)
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -38,11 +43,10 @@
 
 #if LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
 
-#include <stddef.h> /* for size_t */
-
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/inet.h"
+#include "lwip/errno.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -422,6 +426,8 @@ typedef struct fd_set
 
 #elif LWIP_SOCKET_OFFSET
 #error LWIP_SOCKET_OFFSET does not work with external FD_SET!
+#elif FD_SETSIZE < MEMP_NUM_NETCONN
+#error "external FD_SETSIZE too small for number of sockets"
 #endif /* FD_SET */
 
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
@@ -502,39 +508,65 @@ int lwip_fcntl(int s, int cmd, int val);
 
 #if LWIP_COMPAT_SOCKETS
 #if LWIP_COMPAT_SOCKETS != 2
+/** @ingroup socket */
 #define accept(s,addr,addrlen)                    lwip_accept(s,addr,addrlen)
+/** @ingroup socket */
 #define bind(s,name,namelen)                      lwip_bind(s,name,namelen)
+/** @ingroup socket */
 #define shutdown(s,how)                           lwip_shutdown(s,how)
+/** @ingroup socket */
 #define getpeername(s,name,namelen)               lwip_getpeername(s,name,namelen)
+/** @ingroup socket */
 #define getsockname(s,name,namelen)               lwip_getsockname(s,name,namelen)
+/** @ingroup socket */
 #define setsockopt(s,level,optname,opval,optlen)  lwip_setsockopt(s,level,optname,opval,optlen)
+/** @ingroup socket */
 #define getsockopt(s,level,optname,opval,optlen)  lwip_getsockopt(s,level,optname,opval,optlen)
+/** @ingroup socket */
 #define closesocket(s)                            lwip_close(s)
+/** @ingroup socket */
 #define connect(s,name,namelen)                   lwip_connect(s,name,namelen)
+/** @ingroup socket */
 #define listen(s,backlog)                         lwip_listen(s,backlog)
+/** @ingroup socket */
 #define recv(s,mem,len,flags)                     lwip_recv(s,mem,len,flags)
+/** @ingroup socket */
 #define recvfrom(s,mem,len,flags,from,fromlen)    lwip_recvfrom(s,mem,len,flags,from,fromlen)
+/** @ingroup socket */
 #define send(s,dataptr,size,flags)                lwip_send(s,dataptr,size,flags)
+/** @ingroup socket */
 #define sendmsg(s,message,flags)                  lwip_sendmsg(s,message,flags)
+/** @ingroup socket */
 #define sendto(s,dataptr,size,flags,to,tolen)     lwip_sendto(s,dataptr,size,flags,to,tolen)
+/** @ingroup socket */
 #define socket(domain,type,protocol)              lwip_socket(domain,type,protocol)
+/** @ingroup socket */
 #define select(maxfdp1,readset,writeset,exceptset,timeout)     lwip_select(maxfdp1,readset,writeset,exceptset,timeout)
+/** @ingroup socket */
 #define ioctlsocket(s,cmd,argp)                   lwip_ioctl(s,cmd,argp)
 
 #if LWIP_POSIX_SOCKETS_IO_NAMES
+/** @ingroup socket */
 #define read(s,mem,len)                           lwip_read(s,mem,len)
+/** @ingroup socket */
 #define write(s,dataptr,len)                      lwip_write(s,dataptr,len)
+/** @ingroup socket */
 #define writev(s,iov,iovcnt)                      lwip_writev(s,iov,iovcnt)
+/** @ingroup socket */
 #define close(s)                                  lwip_close(s)
+/** @ingroup socket */
 #define fcntl(s,cmd,val)                          lwip_fcntl(s,cmd,val)
+/** @ingroup socket */
 #define ioctl(s,cmd,argp)                         lwip_ioctl(s,cmd,argp)
 #endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
 #endif /* LWIP_COMPAT_SOCKETS != 2 */
 
 #if LWIP_IPV4 && LWIP_IPV6
+/** @ingroup socket */
 #define inet_ntop(af,src,dst,size) \
     (((af) == AF_INET6) ? ip6addr_ntoa_r((const ip6_addr_t*)(src),(dst),(size)) \
      : (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL))
+/** @ingroup socket */
 #define inet_pton(af,src,dst) \
     (((af) == AF_INET6) ? ip6addr_aton((src),(ip6_addr_t*)(dst)) \
      : (((af) == AF_INET) ? ip4addr_aton((src),(ip4_addr_t*)(dst)) : 0))

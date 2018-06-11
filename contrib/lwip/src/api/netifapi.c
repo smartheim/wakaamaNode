@@ -2,6 +2,13 @@
  * @file
  * Network Interface Sequential API module
  *
+ * @defgroup netifapi NETIF API
+ * @ingroup sequential_api
+ * Thread-safe functions to be called from non-TCPIP threads
+ * 
+ * @defgroup netifapi_netif NETIF related
+ * @ingroup netifapi
+ * To be called from non-TCPIP threads 
  */
 
 /*
@@ -41,7 +48,7 @@
 
 #define NETIFAPI_VAR_REF(name)      API_VAR_REF(name)
 #define NETIFAPI_VAR_DECLARE(name)  API_VAR_DECLARE(struct netifapi_msg, name)
-#define NETIFAPI_VAR_ALLOC(name)    API_VAR_ALLOC(struct netifapi_msg, MEMP_NETIFAPI_MSG, name)
+#define NETIFAPI_VAR_ALLOC(name)    API_VAR_ALLOC(struct netifapi_msg, MEMP_NETIFAPI_MSG, name, ERR_MEM)
 #define NETIFAPI_VAR_FREE(name)     API_VAR_FREE(MEMP_NETIFAPI_MSG, name)
 
 /**
@@ -50,7 +57,9 @@
 static err_t
 netifapi_do_netif_add(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
   
   if (!netif_add( msg->netif,
 #if LWIP_IPV4
@@ -74,7 +83,9 @@ netifapi_do_netif_add(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
 
   netif_set_addr( msg->netif,
                   API_EXPR_REF(msg->msg.add.ipaddr),
@@ -91,7 +102,9 @@ netifapi_do_netif_set_addr(struct tcpip_api_call_data *m)
 static err_t
 netifapi_do_netif_common(struct tcpip_api_call_data *m)
 {
-  struct netifapi_msg *msg = (struct netifapi_msg*)m;
+  /* cast through void* to silence alignment warnings. 
+   * We know it works because the structs have been instantiated as struct netifapi_msg */
+  struct netifapi_msg *msg = (struct netifapi_msg*)(void*)m;
 
   if (msg->msg.common.errtfunc != NULL) {
     return msg->msg.common.errtfunc(msg->netif);
@@ -102,6 +115,7 @@ netifapi_do_netif_common(struct tcpip_api_call_data *m)
 }
 
 /**
+ * @ingroup netifapi_netif
  * Call netif_add() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *
@@ -120,13 +134,13 @@ netifapi_netif_add(struct netif *netif,
 
 #if LWIP_IPV4
   if (ipaddr == NULL) {
-    ipaddr = IP4_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY4;
   }
   if (netmask == NULL) {
-    netmask = IP4_ADDR_ANY;
+    netmask = IP4_ADDR_ANY4;
   }
   if (gw == NULL) {
-    gw = IP4_ADDR_ANY;
+    gw = IP4_ADDR_ANY4;
   }
 #endif /* LWIP_IPV4 */
 
@@ -146,6 +160,7 @@ netifapi_netif_add(struct netif *netif,
 
 #if LWIP_IPV4
 /**
+ * @ingroup netifapi_netif
  * Call netif_set_addr() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *
@@ -162,13 +177,13 @@ netifapi_netif_set_addr(struct netif *netif,
   NETIFAPI_VAR_ALLOC(msg);
 
   if (ipaddr == NULL) {
-    ipaddr = IP4_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY4;
   }
   if (netmask == NULL) {
-    netmask = IP4_ADDR_ANY;
+    netmask = IP4_ADDR_ANY4;
   }
   if (gw == NULL) {
-    gw = IP4_ADDR_ANY;
+    gw = IP4_ADDR_ANY4;
   }
 
   NETIFAPI_VAR_REF(msg).netif = netif;

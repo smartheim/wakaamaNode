@@ -11,6 +11,7 @@ inline lwm2m_context_t * lwm2m_client_get_context() {
 }
 
 void lwm2m_client_close(void) {
+    if (!contextP) return;
     lwm2m_close(contextP);
     lwm2m_network_close(contextP);
 

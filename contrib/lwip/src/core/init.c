@@ -33,7 +33,6 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
- *
  */
 
 #include "lwip/opt.h"
@@ -50,16 +49,36 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/priv/tcp_priv.h"
-#include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
-#include "lwip/timers.h"
-#include "netif/etharp.h"
+#include "lwip/timeouts.h"
+#include "lwip/etharp.h"
 #include "lwip/ip6.h"
 #include "lwip/nd6.h"
 #include "lwip/mld6.h"
 #include "lwip/api.h"
+
+#include "netif/ppp/ppp_opts.h"
 #include "netif/ppp/ppp_impl.h"
+
+#ifndef LWIP_SKIP_PACKING_CHECK
+
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct packed_struct_test
+{
+  PACK_STRUCT_FLD_8(u8_t  dummy1);
+  PACK_STRUCT_FIELD(u32_t dummy2);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+#define PACKED_STRUCT_TEST_EXPECTED_SIZE 5
+
+#endif
 
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
@@ -122,7 +141,7 @@
 #if (LWIP_TCP && (TCP_WND > 0xffffffff))
   #error "If you want to use TCP, TCP_WND must fit in an u32_t, so, you have to reduce it in your lwipopts.h"
 #endif
-#if (LWIP_TCP && LWIP_WND_SCALE && (TCP_RCV_SCALE > 14))
+#if (LWIP_TCP && (TCP_RCV_SCALE > 14))
   #error "The maximum valid window scale value is 14!"
 #endif
 #if (LWIP_TCP && (TCP_WND > (0xFFFFU << TCP_RCV_SCALE)))
@@ -199,17 +218,11 @@
 #if !LWIP_ETHERNET && (LWIP_ARP || PPPOE_SUPPORT)
   #error "LWIP_ETHERNET needs to be turned on for LWIP_ARP or PPPOE_SUPPORT"
 #endif
-#if (LWIP_IGMP || LWIP_IPV6) && !defined(LWIP_RAND)
-  #error "When using IGMP or IPv6, LWIP_RAND() needs to be defined to a random-function returning an u32_t random value"
-#endif
 #if LWIP_TCPIP_CORE_LOCKING_INPUT && !LWIP_TCPIP_CORE_LOCKING
   #error "When using LWIP_TCPIP_CORE_LOCKING_INPUT, LWIP_TCPIP_CORE_LOCKING must be enabled, too"
 #endif
 #if LWIP_TCP && LWIP_NETIF_TX_SINGLE_PBUF && !TCP_OVERSIZE
   #error "LWIP_NETIF_TX_SINGLE_PBUF needs TCP_OVERSIZE enabled to create single-pbuf TCP packets"
-#endif
-#if IP_FRAG && IP_FRAG_USES_STATIC_BUF && LWIP_NETIF_TX_SINGLE_PBUF
-  #error "LWIP_NETIF_TX_SINGLE_PBUF does not work with IP_FRAG_USES_STATIC_BUF==1 as that creates pbuf queues"
 #endif
 #if LWIP_NETCONN && LWIP_TCP
 #if NETCONN_COPY != TCP_WRITE_FLAG_COPY
@@ -250,6 +263,9 @@
 #ifdef ETHARP_ALWAYS_INSERT
   #error "ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h."
 #endif
+#if !NO_SYS && LWIP_TCPIP_CORE_LOCKING && LWIP_COMPAT_MUTEX && !defined(LWIP_COMPAT_MUTEX_ALLOWED)
+  #error "LWIP_COMPAT_MUTEX cannot prevent priority inversion. It is recommended to implement priority-aware mutexes. (Define LWIP_COMPAT_MUTEX_ALLOWED to disable this error.)"
+#endif
 
 #ifndef LWIP_DISABLE_TCP_SANITY_CHECKS
 #define LWIP_DISABLE_TCP_SANITY_CHECKS  0
@@ -259,9 +275,9 @@
 #endif
 
 /* MEMP sanity checks */
-#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
-#if LWIP_NETCONN
 #if MEMP_MEM_MALLOC
+#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
+#if LWIP_NETCONN || LWIP_SOCKET
 #if !MEMP_NUM_NETCONN && LWIP_SOCKET
 #error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN cannot be 0 when using sockets!"
 #endif
@@ -269,9 +285,15 @@
 #if MEMP_NUM_NETCONN > (MEMP_NUM_TCP_PCB+MEMP_NUM_TCP_PCB_LISTEN+MEMP_NUM_UDP_PCB+MEMP_NUM_RAW_PCB)
 #error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN should be less than the sum of MEMP_NUM_{TCP,RAW,UDP}_PCB+MEMP_NUM_TCP_PCB_LISTEN. If you know what you are doing, define LWIP_DISABLE_MEMP_SANITY_CHECKS to 1 to disable this error."
 #endif
-#endif /* MEMP_MEM_MALLOC */
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 #endif /* !LWIP_DISABLE_MEMP_SANITY_CHECKS */
+#if MEM_USE_POOLS
+#error "MEMP_MEM_MALLOC and MEM_USE_POOLS cannot be enabled at the same time"
+#endif
+#ifdef LWIP_HOOK_MEMP_AVAILABLE
+#error "LWIP_HOOK_MEMP_AVAILABLE doesn't make sense with MEMP_MEM_MALLOC"
+#endif
+#endif /* MEMP_MEM_MALLOC */
 
 /* TCP sanity checks */
 #if !LWIP_DISABLE_TCP_SANITY_CHECKS
@@ -294,10 +316,10 @@
 #if TCP_SNDQUEUELOWAT >= TCP_SND_QUEUELEN
   #error "lwip_sanity_check: WARNING: TCP_SNDQUEUELOWAT must be less than TCP_SND_QUEUELEN. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
-#if !MEMP_MEM_MALLOC && (PBUF_POOL_BUFSIZE <= (PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
+#if !MEMP_MEM_MALLOC && PBUF_POOL_SIZE && (PBUF_POOL_BUFSIZE <= (PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
   #error "lwip_sanity_check: WARNING: PBUF_POOL_BUFSIZE does not provide enough space for protocol headers. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
-#if !MEMP_MEM_MALLOC && (TCP_WND > (PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - (PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))))
+#if !MEMP_MEM_MALLOC && PBUF_POOL_SIZE && (TCP_WND > (PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - (PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))))
   #error "lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - protocol headers). If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
 #endif
 #if TCP_WND < TCP_MSS
@@ -307,11 +329,22 @@
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
+ * @ingroup lwip_nosys
  * Initialize all modules.
+ * Use this in NO_SYS mode. Use tcpip_init() otherwise.
  */
 void
 lwip_init(void)
 {
+#ifndef LWIP_SKIP_CONST_CHECK
+  int a = 0;
+  LWIP_UNUSED_ARG(a);
+  LWIP_ASSERT("LWIP_CONST_CAST not implemented correctly. Check your lwIP port.", LWIP_CONST_CAST(void*, &a) == &a);
+#endif
+#ifndef LWIP_SKIP_PACKING_CHECK
+  LWIP_ASSERT("Struct packing not implemented correctly. Check your lwIP port.", sizeof(struct packed_struct_test) == PACKED_STRUCT_TEST_EXPECTED_SIZE);
+#endif
+
   /* Modules initialization */
   stats_init();
 #if !NO_SYS
@@ -336,9 +369,6 @@ lwip_init(void)
 #if LWIP_TCP
   tcp_init();
 #endif /* LWIP_TCP */
-#if LWIP_AUTOIP
-  autoip_init();
-#endif /* LWIP_AUTOIP */
 #if LWIP_IGMP
   igmp_init();
 #endif /* LWIP_IGMP */
@@ -348,7 +378,7 @@ lwip_init(void)
 #if PPP_SUPPORT
   ppp_init();
 #endif
-
+ 
 #if LWIP_TIMERS
   sys_timeouts_init();
 #endif /* LWIP_TIMERS */

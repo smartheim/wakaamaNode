@@ -1,7 +1,16 @@
 /**
  * @file
- * Incluse internet checksum functions.
+ * Incluse internet checksum functions.\n
  *
+ * These are some reference implementations of the checksum algorithm, with the
+ * aim of being simple, correct and fully portable. Checksumming is the
+ * first thing you would want to optimize for your platform. If you create
+ * your own version, link it in and in your cc.h put:
+ *
+ * \#define LWIP_CHKSUM your_checksum_routine
+ * 
+ * Or you can select from the implementations below by defining
+ * LWIP_CHKSUM_ALGORITHM to 1, 2 or 3.
  */
 
 /*
@@ -42,19 +51,7 @@
 #include "lwip/def.h"
 #include "lwip/ip_addr.h"
 
-#include <stddef.h>
 #include <string.h>
-
-/* These are some reference implementations of the checksum algorithm, with the
- * aim of being simple, correct and fully portable. Checksumming is the
- * first thing you would want to optimize for your platform. If you create
- * your own version, link it in and in your cc.h put:
- *
- * #define LWIP_CHKSUM <your_checksum_routine>
- *
- * Or you can select from the implementations below by defining
- * LWIP_CHKSUM_ALGORITHM to 1, 2 or 3.
- */
 
 #ifndef LWIP_CHKSUM
 # define LWIP_CHKSUM lwip_standard_chksum
@@ -110,10 +107,10 @@ lwip_standard_chksum(const void *dataptr, int len)
   if ((acc & 0xffff0000UL) != 0) {
     acc = (acc >> 16) + (acc & 0x0000ffffUL);
   }
-  /* This maybe a little confusing: reorder sum using htons()
-     instead of ntohs() since it has a little less call overhead.
+  /* This maybe a little confusing: reorder sum using lwip_htons()
+     instead of lwip_ntohs() since it has a little less call overhead.
      The caller must invert bits for Internet sum ! */
-  return htons((u16_t)acc);
+  return lwip_htons((u16_t)acc);
 }
 #endif
 
@@ -285,8 +282,8 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
     acc = SWAP_BYTES_IN_WORD(acc);
   }
 
-  acc += (u32_t)htons((u16_t)proto);
-  acc += (u32_t)htons(proto_len);
+  acc += (u32_t)lwip_htons((u16_t)proto);
+  acc += (u32_t)lwip_htons(proto_len);
 
   /* Fold 32-bit sum to 16 bits
      calling this twice is probably faster than if statements... */
@@ -336,10 +333,10 @@ inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
  * IPv6 addresses are expected to be in network byte order.
  *
  * @param p chain of pbufs over that a checksum should be calculated (ip data part)
- * @param src source ipv6 address (used for checksum of pseudo header)
- * @param dst destination ipv6 address (used for checksum of pseudo header)
  * @param proto ipv6 protocol/next header (used for checksum of pseudo header)
  * @param proto_len length of the ipv6 payload (used for checksum of pseudo header)
+ * @param src source ipv6 address (used for checksum of pseudo header)
+ * @param dest destination ipv6 address (used for checksum of pseudo header)
  * @return checksum (as u16_t) to be saved directly in the protocol header
  */
 u16_t
@@ -431,8 +428,8 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
     acc = SWAP_BYTES_IN_WORD(acc);
   }
 
-  acc += (u32_t)htons((u16_t)proto);
-  acc += (u32_t)htons(proto_len);
+  acc += (u32_t)lwip_htons((u16_t)proto);
+  acc += (u32_t)lwip_htons(proto_len);
 
   /* Fold 32-bit sum to 16 bits
      calling this twice is probably faster than if statements... */
@@ -483,11 +480,11 @@ inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
  * portion of the payload.
  *
  * @param p chain of pbufs over that a checksum should be calculated (ip data part)
- * @param src source ipv6 address (used for checksum of pseudo header)
- * @param dst destination ipv6 address (used for checksum of pseudo header)
  * @param proto ipv6 protocol/next header (used for checksum of pseudo header)
  * @param proto_len length of the ipv6 payload (used for checksum of pseudo header)
  * @param chksum_len number of payload bytes used to compute chksum
+ * @param src source ipv6 address (used for checksum of pseudo header)
+ * @param dest destination ipv6 address (used for checksum of pseudo header)
  * @return checksum (as u16_t) to be saved directly in the protocol header
  */
 u16_t

@@ -49,25 +49,10 @@
 
 struct stats_ lwip_stats;
 
-#if defined(LWIP_DEBUG) || LWIP_STATS_DISPLAY
-#if MEMP_STATS
-static const char * memp_names[] = {
-#define LWIP_MEMPOOL(name,num,size,desc) desc,
-#include "lwip/priv/memp_std.h"
-};
-#endif /* MEMP_STATS */
-#endif /* LWIP_DEBUG || LWIP_STATS_DISPLAY */
-
 void
 stats_init(void)
 {
 #ifdef LWIP_DEBUG
-#if MEMP_STATS
-  int i;
-  for (i = 0; i < MEMP_MAX; i++) {
-    lwip_stats.memp[i].name = memp_names[i];
-  }
-#endif /* MEMP_STATS */
 #if MEM_STATS
   lwip_stats.mem.name = "MEM";
 #endif /* MEM_STATS */
@@ -111,7 +96,7 @@ stats_display_igmp(struct stats_igmp *igmp, const char *name)
   LWIP_PLATFORM_DIAG(("rx_report: %"STAT_COUNTER_F"\n\t", igmp->rx_report));
   LWIP_PLATFORM_DIAG(("tx_join: %"STAT_COUNTER_F"\n\t", igmp->tx_join));
   LWIP_PLATFORM_DIAG(("tx_leave: %"STAT_COUNTER_F"\n\t", igmp->tx_leave));
-  LWIP_PLATFORM_DIAG(("tx_report: %"STAT_COUNTER_F"\n\t", igmp->tx_report));
+  LWIP_PLATFORM_DIAG(("tx_report: %"STAT_COUNTER_F"\n", igmp->tx_report));
 }
 #endif /* IGMP_STATS || MLD6_STATS */
 
@@ -131,7 +116,7 @@ void
 stats_display_memp(struct stats_mem *mem, int index)
 {
   if (index < MEMP_MAX) {
-    stats_display_mem(mem, memp_names[index]);
+    stats_display_mem(mem, mem->name);
   }
 }
 #endif /* MEMP_STATS */
@@ -150,7 +135,7 @@ stats_display_sys(struct stats_sys *sys)
   LWIP_PLATFORM_DIAG(("mutex.err:  %"U32_F"\n\t", (u32_t)sys->mutex.err));
   LWIP_PLATFORM_DIAG(("mbox.used:  %"U32_F"\n\t", (u32_t)sys->mbox.used));
   LWIP_PLATFORM_DIAG(("mbox.max:   %"U32_F"\n\t", (u32_t)sys->mbox.max));
-  LWIP_PLATFORM_DIAG(("mbox.err:   %"U32_F"\n\t", (u32_t)sys->mbox.err));
+  LWIP_PLATFORM_DIAG(("mbox.err:   %"U32_F"\n", (u32_t)sys->mbox.err));
 }
 #endif /* SYS_STATS */
 

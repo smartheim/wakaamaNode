@@ -68,7 +68,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
@@ -618,7 +618,11 @@ void start_link(unit)
  * physical layer down.
  */
 void link_terminated(ppp_pcb *pcb) {
-    if (pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_MASTER)
+    if (pcb->phase == PPP_PHASE_DEAD
+#ifdef HAVE_MULTILINK
+    || pcb->phase == PPP_PHASE_MASTER
+#endif /* HAVE_MULTILINK */
+    )
 	return;
     new_phase(pcb, PPP_PHASE_DISCONNECT);
 
@@ -639,7 +643,6 @@ void link_terminated(ppp_pcb *pcb) {
 
     lcp_lowerdown(pcb);
 
-    new_phase(pcb, PPP_PHASE_DEAD);
     ppp_link_terminated(pcb);
 #if 0
     /*
@@ -699,7 +702,11 @@ void link_down(ppp_pcb *pcb) {
 
     if (!doing_multilink) {
 	upper_layers_down(pcb);
-	if (pcb->phase != PPP_PHASE_DEAD && pcb->phase != PPP_PHASE_MASTER)
+	if (pcb->phase != PPP_PHASE_DEAD
+#ifdef HAVE_MULTILINK
+	&& pcb->phase != PPP_PHASE_MASTER
+#endif /* HAVE_MULTILINK */
+	)
 	    new_phase(pcb, PPP_PHASE_ESTABLISH);
     }
     /* XXX if doing_multilink, should do something to stop
@@ -728,7 +735,9 @@ void link_established(ppp_pcb *pcb) {
 #if PPP_AUTH_SUPPORT
     int auth;
 #if PPP_SERVER
+#if PAP_SUPPORT
     lcp_options *wo = &pcb->lcp_wantoptions;
+#endif /* PAP_SUPPORT */
     lcp_options *go = &pcb->lcp_gotoptions;
 #endif /* PPP_SERVER */
     lcp_options *ho = &pcb->lcp_hisoptions;
@@ -777,7 +786,11 @@ void link_established(ppp_pcb *pcb) {
 	    set_allowed_addrs(unit, NULL, NULL);
 	} else
 #endif /* PPP_ALLOWED_ADDRS */
-	if (!wo->neg_upap || !pcb->settings.null_login) {
+	if (!pcb->settings.null_login
+#if PAP_SUPPORT
+	    || !wo->neg_upap
+#endif /* PAP_SUPPORT */
+	    ) {
 	    ppp_warn("peer refused to authenticate: terminating link");
 #if 0 /* UNUSED */
 	    status = EXIT_PEER_AUTH_FAILED;
@@ -2108,10 +2121,10 @@ set_allowed_addrs(unit, addrs, opts)
 	} else {
 	    np = getnetbyname (ptr_word);
 	    if (np != NULL && np->n_addrtype == AF_INET) {
-		a = htonl ((u32_t)np->n_net);
+		a = lwip_htonl ((u32_t)np->n_net);
 		if (ptr_mask == NULL) {
 		    /* calculate appropriate mask for net */
-		    ah = ntohl(a);
+		    ah = lwip_ntohl(a);
 		    if (IN_CLASSA(ah))
 			mask = IN_CLASSA_NET;
 		    else if (IN_CLASSB(ah))
@@ -2137,10 +2150,10 @@ set_allowed_addrs(unit, addrs, opts)
 		     ifunit, ptr_word);
 		continue;
 	    }
-	    a = htonl((ntohl(a) & mask) + offset);
+	    a = lwip_htonl((lwip_ntohl(a) & mask) + offset);
 	    mask = ~(u32_t)0;
 	}
-	ip[n].mask = htonl(mask);
+	ip[n].mask = lwip_htonl(mask);
 	ip[n].base = a & ip[n].mask;
 	++n;
 	if (~mask == 0 && suggested_ip == 0)
@@ -2221,7 +2234,7 @@ int
 bad_ip_adrs(addr)
     u32_t addr;
 {
-    addr = ntohl(addr);
+    addr = lwip_ntohl(addr);
     return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
 	|| IN_MULTICAST(addr) || IN_BADCLASS(addr);
 }

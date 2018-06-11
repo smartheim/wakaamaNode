@@ -57,7 +57,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && ECP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #include <string.h>
@@ -166,7 +166,7 @@ ecp_init(unit)
     f->callbacks = &ecp_callbacks;
     fsm_init(f);
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
     memset(&ecp_wantoptions[unit],  0, sizeof(ecp_options));
     memset(&ecp_gotoptions[unit],   0, sizeof(ecp_options));
     memset(&ecp_allowoptions[unit], 0, sizeof(ecp_options));

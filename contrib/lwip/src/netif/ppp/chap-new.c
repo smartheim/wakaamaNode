@@ -28,7 +28,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#include "netif/ppp/ppp_opts.h"
 #if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
@@ -124,7 +124,7 @@ static const struct chap_digest_type* const chap_digests[] = {
 static void chap_init(ppp_pcb *pcb) {
 	LWIP_UNUSED_ARG(pcb);
 
-#if 0 /* Not necessary, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_new() */
 	memset(&pcb->chap_client, 0, sizeof(chap_client_state));
 #if PPP_SERVER
 	memset(&pcb->chap_server, 0, sizeof(chap_server_state));
@@ -604,7 +604,7 @@ static int chap_print_pkt(const unsigned char *p, int plen,
 	if (len < CHAP_HDRLEN || len > plen)
 		return 0;
 
-	if (code >= 1 && code <= (int)sizeof(chap_code_names) / (int)sizeof(char *))
+	if (code >= 1 && code <= (int)LWIP_ARRAYSIZE(chap_code_names))
 		printer(arg, " %s", chap_code_names[code-1]);
 	else
 		printer(arg, " code=0x%x", code);

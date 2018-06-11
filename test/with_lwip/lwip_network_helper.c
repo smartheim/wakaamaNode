@@ -7,7 +7,7 @@
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/sys.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
 #include "lwip/ethip6.h"
 #include "lwip/netif.h"
 #include "netif/etharp.h"
@@ -228,8 +228,9 @@ uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets) {
       tapif_input(netifP);
     }
 
+#if NO_SYS==1
     sys_check_timeouts();
-
+#endif
     return result;
 }
 

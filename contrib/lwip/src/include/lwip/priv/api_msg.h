@@ -1,3 +1,8 @@
+/**
+ * @file
+ * netconn API lwIP internal implementations (do not use in application code)
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -38,29 +43,25 @@
 /* Note: Netconn API is always available when sockets are enabled -
  * sockets are implemented on top of them */
 
-#include <stddef.h> /* for size_t */
-
+#include "lwip/arch.h"
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "lwip/igmp.h"
 #include "lwip/api.h"
+#include "lwip/priv/tcpip_priv.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #if LWIP_MPU_COMPATIBLE
-#define API_MSG_M_DEF(m)      m
-#define API_MSG_M_DEF_C(t, m) t m
 #if LWIP_NETCONN_SEM_PER_THREAD
 #define API_MSG_M_DEF_SEM(m)  *m
 #else
 #define API_MSG_M_DEF_SEM(m)  API_MSG_M_DEF(m)
 #endif
 #else /* LWIP_MPU_COMPATIBLE */
-#define API_MSG_M_DEF(m)      *m
-#define API_MSG_M_DEF_C(t, m) const t * m
 #define API_MSG_M_DEF_SEM(m)  API_MSG_M_DEF(m)
 #endif /* LWIP_MPU_COMPATIBLE */
 
@@ -175,6 +176,10 @@ struct dns_api_msg {
   err_t API_MSG_M_DEF(err);
 };
 #endif /* LWIP_DNS */
+
+#if LWIP_TCP
+extern u8_t netconn_aborted;
+#endif /* LWIP_TCP */
 
 void lwip_netconn_do_newconn         (void *m);
 void lwip_netconn_do_delconn         (void *m);

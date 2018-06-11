@@ -52,10 +52,37 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <pthread.h>
+#include <errno.h>
+
+#include "lwip/def.h"
+
+#ifdef LWIP_UNIX_MACH
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#endif
 
 #include "lwip/sys.h"
 #include "lwip/opt.h"
 #include "lwip/stats.h"
+#include "lwip/tcpip.h"
+
+static void
+get_monotonic_time(struct timespec *ts)
+{
+#ifdef LWIP_UNIX_MACH
+  /* darwin impl (no CLOCK_MONOTONIC) */
+  uint64_t t = mach_absolute_time();
+  mach_timebase_info_data_t timebase_info = {0, 0};
+  mach_timebase_info(&timebase_info);
+  uint64_t nano = (t * timebase_info.numer) / (timebase_info.denom);
+  uint64_t sec = nano/1000000000L;
+  nano -= sec * 1000000000L;
+  ts->tv_sec = sec;
+  ts->tv_nsec = nano;
+#else
+  clock_gettime(CLOCK_MONOTONIC, ts);
+#endif
+}
 
 #if !NO_SYS
 
@@ -85,6 +112,10 @@ struct sys_sem {
   pthread_mutex_t mutex;
 };
 
+struct sys_mutex {
+  pthread_mutex_t mutex;
+};
+
 struct sys_thread {
   struct sys_thread *next;
   pthread_t pthread;
@@ -103,6 +134,7 @@ static u32_t cond_wait(pthread_cond_t * cond, pthread_mutex_t * mutex,
                        u32_t timeout);
 
 /*-----------------------------------------------------------------------------------*/
+/* Threads */
 static struct sys_thread * 
 introduce_thread(pthread_t id)
 {
@@ -120,7 +152,7 @@ introduce_thread(pthread_t id)
 
   return thread;
 }
-/*-----------------------------------------------------------------------------------*/
+
 sys_thread_t
 sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksize, int prio)
 {
@@ -148,7 +180,47 @@ sys_thread_new(const char *name, lwip_thread_fn function, void *arg, int stacksi
   }
   return st;
 }
+
+#if !NO_SYS
+#if LWIP_TCPIP_CORE_LOCKING
+static pthread_t lwip_core_lock_holder_thread_id;
+void sys_lock_tcpip_core(void)
+{
+  sys_mutex_lock(&lock_tcpip_core);
+  lwip_core_lock_holder_thread_id = pthread_self();
+}
+
+void sys_unlock_tcpip_core(void)
+{
+  lwip_core_lock_holder_thread_id = 0;
+  sys_mutex_unlock(&lock_tcpip_core);
+}
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+
+static pthread_t lwip_tcpip_thread_id;
+void sys_mark_tcpip_thread(void)
+{
+  lwip_tcpip_thread_id = pthread_self();
+}
+
+void sys_check_core_locking(void)
+{
+  /* Embedded systems should check we are NOT in an interrupt context here */
+
+  if (lwip_tcpip_thread_id != 0) {
+    pthread_t current_thread_id = pthread_self();
+
+#if LWIP_TCPIP_CORE_LOCKING
+    LWIP_ASSERT("Function called without core lock", current_thread_id == lwip_core_lock_holder_thread_id);
+#else /* LWIP_TCPIP_CORE_LOCKING */
+    LWIP_ASSERT("Function called from wrong thread", current_thread_id == lwip_tcpip_thread_id);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+  }
+}
+#endif /* !NO_SYS */
+
 /*-----------------------------------------------------------------------------------*/
+/* Mailbox */
 err_t
 sys_mbox_new(struct sys_mbox **mb, int size)
 {
@@ -169,7 +241,7 @@ sys_mbox_new(struct sys_mbox **mb, int size)
   *mb = mbox;
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_mbox_free(struct sys_mbox **mb)
 {
@@ -186,7 +258,7 @@ sys_mbox_free(struct sys_mbox **mb)
     free(mbox);
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 sys_mbox_trypost(struct sys_mbox **mb, void *msg)
 {
@@ -223,7 +295,13 @@ sys_mbox_trypost(struct sys_mbox **mb, void *msg)
 
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
+err_t
+sys_mbox_trypost_fromisr(sys_mbox_t *q, void *msg)
+{
+  return sys_mbox_trypost(q, msg);
+}
+
 void
 sys_mbox_post(struct sys_mbox **mb, void *msg)
 {
@@ -260,7 +338,7 @@ sys_mbox_post(struct sys_mbox **mb, void *msg)
 
   sys_sem_signal(&mbox->mutex);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u32_t
 sys_arch_mbox_tryfetch(struct sys_mbox **mb, void **msg)
 {
@@ -293,7 +371,7 @@ sys_arch_mbox_tryfetch(struct sys_mbox **mb, void **msg)
 
   return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
 u32_t
 sys_arch_mbox_fetch(struct sys_mbox **mb, void **msg, u32_t timeout)
 {
@@ -342,7 +420,9 @@ sys_arch_mbox_fetch(struct sys_mbox **mb, void **msg, u32_t timeout)
 
   return time_needed;
 }
+
 /*-----------------------------------------------------------------------------------*/
+/* Semaphore */
 static struct sys_sem *
 sys_sem_new_internal(u8_t count)
 {
@@ -352,13 +432,15 @@ sys_sem_new_internal(u8_t count)
   if (sem != NULL) {
     sem->c = count;
     pthread_condattr_init(&(sem->condattr));
+#if !(defined(LWIP_UNIX_MACH) || (defined(LWIP_UNIX_ANDROID) && __ANDROID_API__ < 21))
     pthread_condattr_setclock(&(sem->condattr), CLOCK_MONOTONIC);
+#endif
     pthread_cond_init(&(sem->cond), &(sem->condattr));
     pthread_mutex_init(&(sem->mutex), NULL);
   }
   return sem;
 }
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 sys_sem_new(struct sys_sem **sem, u8_t count)
 {
@@ -369,7 +451,7 @@ sys_sem_new(struct sys_sem **sem, u8_t count)
   }
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 static u32_t
 cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, u32_t timeout)
 {
@@ -382,7 +464,12 @@ cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, u32_t timeout)
   }
 
   /* Get a timestamp and add the timeout value. */
-  clock_gettime(CLOCK_MONOTONIC, &rtime1);
+  get_monotonic_time(&rtime1);
+#if defined(LWIP_UNIX_MACH) || (defined(LWIP_UNIX_ANDROID) && __ANDROID_API__ < 21)
+  ts.tv_sec = timeout / 1000L;
+  ts.tv_nsec = (timeout % 1000L) * 1000000L;
+  ret = pthread_cond_timedwait_relative_np(cond, mutex, &ts);
+#else
   ts.tv_sec = rtime1.tv_sec + timeout / 1000L;
   ts.tv_nsec = rtime1.tv_nsec + (timeout % 1000L) * 1000000L;
   if (ts.tv_nsec >= 1000000000L) {
@@ -391,21 +478,22 @@ cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex, u32_t timeout)
   }
 
   ret = pthread_cond_timedwait(cond, mutex, &ts);
+#endif
   if (ret == ETIMEDOUT) {
     return SYS_ARCH_TIMEOUT;
   }
 
   /* Calculate for how long we waited for the cond. */
-  clock_gettime(CLOCK_MONOTONIC, &rtime2);
+  get_monotonic_time(&rtime2);
   ts.tv_sec = rtime2.tv_sec - rtime1.tv_sec;
   ts.tv_nsec = rtime2.tv_nsec - rtime1.tv_nsec;
   if (ts.tv_nsec < 0) {
     ts.tv_sec--;
     ts.tv_nsec += 1000000000L;
   }
-  return ts.tv_sec * 1000L + ts.tv_nsec / 1000000L;
+  return (u32_t)(ts.tv_sec * 1000L + ts.tv_nsec / 1000000L);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u32_t
 sys_arch_sem_wait(struct sys_sem **s, u32_t timeout)
 {
@@ -433,7 +521,7 @@ sys_arch_sem_wait(struct sys_sem **s, u32_t timeout)
   pthread_mutex_unlock(&(sem->mutex));
   return (u32_t)time_needed;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_sem_signal(struct sys_sem **s)
 {
@@ -451,7 +539,7 @@ sys_sem_signal(struct sys_sem **s)
   pthread_cond_broadcast(&(sem->cond));
   pthread_mutex_unlock(&(sem->mutex));
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 sys_sem_free_internal(struct sys_sem *sem)
 {
@@ -460,7 +548,7 @@ sys_sem_free_internal(struct sys_sem *sem)
   pthread_mutex_destroy(&(sem->mutex));
   free(sem);
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_sem_free(struct sys_sem **sem)
 {
@@ -469,23 +557,90 @@ sys_sem_free(struct sys_sem **sem)
     sys_sem_free_internal(*sem);
   }
 }
-#endif /* !NO_SYS */
+
 /*-----------------------------------------------------------------------------------*/
+/* Mutex */
+/** Create a new mutex
+ * @param mutex pointer to the mutex to create
+ * @return a new mutex */
+err_t
+sys_mutex_new(struct sys_mutex **mutex)
+{
+  struct sys_mutex *mtx;
+
+  mtx = (struct sys_mutex *)malloc(sizeof(struct sys_mutex));
+  if (mtx != NULL) {
+    pthread_mutex_init(&(mtx->mutex), NULL);
+    *mutex = mtx;
+    return ERR_OK;
+  }
+  else {
+    return ERR_MEM;
+  }
+}
+
+/** Lock a mutex
+ * @param mutex the mutex to lock */
+void
+sys_mutex_lock(struct sys_mutex **mutex)
+{
+  pthread_mutex_lock(&((*mutex)->mutex));
+}
+
+/** Unlock a mutex
+ * @param mutex the mutex to unlock */
+void
+sys_mutex_unlock(struct sys_mutex **mutex)
+{
+  pthread_mutex_unlock(&((*mutex)->mutex));
+}
+
+/** Delete a mutex
+ * @param mutex the mutex to delete */
+void
+sys_mutex_free(struct sys_mutex **mutex)
+{
+  pthread_mutex_destroy(&((*mutex)->mutex));
+  free(*mutex);
+}
+
+#endif /* !NO_SYS */
+
+/*-----------------------------------------------------------------------------------*/
+/* Time */
 u32_t
 sys_now(void)
 {
   struct timespec ts;
 
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  return ts.tv_sec * 1000L + ts.tv_nsec / 1000000L;
+  get_monotonic_time(&ts);
+  return (u32_t)(ts.tv_sec * 1000L + ts.tv_nsec / 1000000L);
 }
+
+u32_t
+sys_jiffies(void)
+{
+  struct timespec ts;
+
+  get_monotonic_time(&ts);
+  return (u32_t)(ts.tv_sec * 1000000000L + ts.tv_nsec);
+}
+
 /*-----------------------------------------------------------------------------------*/
+/* Init */
+
 void
 sys_init(void)
 {
 }
+
 /*-----------------------------------------------------------------------------------*/
+/* Critical section */
 #if SYS_LIGHTWEIGHT_PROT
+static pthread_mutex_t lwprot_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_t lwprot_thread = (pthread_t)0xDEAD;
+static int lwprot_count = 0;
+
 /** sys_prot_t sys_arch_protect(void)
 
 This optional function does a "fast" critical region protection and returns
@@ -519,7 +674,7 @@ sys_arch_protect(void)
         lwprot_count++;
     return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /** void sys_arch_unprotect(sys_prot_t pval)
 
 This optional function does a "fast" set of critical region protection to the
@@ -533,7 +688,8 @@ sys_arch_unprotect(sys_prot_t pval)
     LWIP_UNUSED_ARG(pval);
     if (lwprot_thread == pthread_self())
     {
-        if (--lwprot_count == 0)
+        lwprot_count--;
+        if (lwprot_count == 0)
         {
             lwprot_thread = (pthread_t) 0xDEAD;
             pthread_mutex_unlock(&lwprot_mutex);
@@ -541,12 +697,3 @@ sys_arch_unprotect(sys_prot_t pval)
     }
 }
 #endif /* SYS_LIGHTWEIGHT_PROT */
-/*-----------------------------------------------------------------------------------*/
-u32_t
-sys_jiffies(void)
-{
-  struct timespec ts;
-
-  clock_gettime(CLOCK_MONOTONIC, &ts);
-  return ts.tv_sec * 1000000000L + ts.tv_nsec;
-}

@@ -1,3 +1,8 @@
+/**
+ * @file
+ * NETBIOS name service responder options
+ */
+
 /*
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
@@ -29,15 +34,11 @@
 
 #include "lwip/opt.h"
 
-/** Since there's no standard function for case-insensitive string comparision,
- * we need another define here:
- * define this to stricmp() for windows or strcasecmp() for linux.
- * If not defined, comparision is case sensitive and the provided hostname must be
- * uppercase.
+/**
+ * @defgroup netbiosns_opts Options
+ * @ingroup netbiosns
+ * @{
  */
-#ifndef NETBIOS_STRCMP
-#define NETBIOS_STRCMP(str1, str2) strcmp(str1, str2)
-#endif
 
 /** NetBIOS name of lwip device
  * This must be uppercase until NETBIOS_STRCMP() is defined to a string
@@ -47,7 +48,12 @@
  *
  * If this is not defined, netbiosns_set_name() can be called at runtime to change the name.
  */
-/*#define NETBIOS_LWIP_NAME "NETBIOSLWIPDEV"*/
+#ifdef __DOXYGEN__
+#define NETBIOS_LWIP_NAME "NETBIOSLWIPDEV"
+#endif
 
+/**
+ * @}
+ */
 
 #endif /* LWIP_HDR_APPS_NETBIOS_OPTS_H */

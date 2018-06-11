@@ -15,6 +15,8 @@
 
 #include "lwip/api.h"
 #include "lwip/sys.h"
+#include "lwip/sys.h"
+#include "lwip/timeouts.h"
 #include "lwip/udp.h"
 #include "lwip/dns.h"
 
@@ -105,20 +107,10 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
     }
 
     if (connP != NULL) {
-        #if (LWIP_IPV4 && LWIP_IPV6)
-        lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
-                    p->tot_len,
-                    connP->addr.type==IPADDR_TYPE_V4 ?
-                    ipaddr_ntoa(&connP->addr.u_addr.ip4) :
-                    ipaddr_ntoa(&connP->addr.u_addr.ip6),
-                    connP->port);
-        #endif
-        #ifdef LWIP_IPV4
         lwm2m_printf("Receiving %d bytes from [%s]:%hu\r\n",
                     p->tot_len,
                     ipaddr_ntoa(&connP->addr),
                     connP->port);
-        #endif
         lwm2m_handle_packet(contextP, p->payload, p->tot_len, connP);
     } else {
         lwm2m_printf("received bytes ignored!\r\n");
@@ -128,7 +120,9 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
 }
 
 bool lwm2m_network_client_process(lwm2m_context_t * contextP) {
+#if NO_SYS==1
     sys_check_timeouts();
+#endif
     return true;
 }
 
@@ -160,15 +154,13 @@ uint8_t __attribute__((weak)) lwm2m_buffer_send(void * sessionH,
 
     #ifdef LWM2M_WITH_LOGS
     #if LWIP_IPV4 && LWIP_IPV6
-    const char* a = connP->addr.type==IPADDR_TYPE_V4 ?
-                ipaddr_ntoa(&connP->addr.u_addr.ip4) :
-                ipaddr_ntoa(&connP->addr.u_addr.ip6);
+    const char* a = ipaddr_ntoa(&connP->addr);
     const char* b;
     if (network->net_if_out)
     {
         b = connP->addr.type==IPADDR_TYPE_V4 ?
-                ipaddr_ntoa(&netif_ip_addr4((struct netif *)network->net_if_out)->u_addr.ip4) :
-                ipaddr_ntoa(&netif_ip_addr6((struct netif *)network->net_if_out, 0)->u_addr.ip6);
+                ipaddr_ntoa(netif_ip_addr4((struct netif *)network->net_if_out)) :
+                ipaddr_ntoa(netif_ip_addr6((struct netif *)network->net_if_out, 0));
     }
     else
     {
