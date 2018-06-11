@@ -46,78 +46,121 @@ target_include_directories(${PROJECT_NAME} PRIVATE {WAKAAMA_SIMPLE_CLIENT_INCLUD
 
 ## Bare minimum sketch
 
-The following example shows how to connect to a lwm2m server, optionally with
-a preshared key DTLS connection. It is still your responsibility to connect to the
-wifi/network and to bootstrap the device with the lwm2m server address if it is not a fixed address.
+The following example shows you some key aspects of the library. In particular:
 
+* How to connect to a lwm2m server, if enabled with a preshared key DTLS connection. (It is assumed that you are network connected already.)
+* How to set device describing attributes.
+* How to use a predefined object and object instance: In this case object 3311 (light control).
+* How to react to an object write via the `verifyWrite` function.
+* How to update an object instance resource via the `lights.resChanged` call.
 
 ```cpp
+#include <new>
+#include <time.h>
 #include <Arduino.h>
 
-#include "wakaama_simple_client.h"
-#include "wakaama_network.h"
-#include "wakaama_object_utils.h"
+#include "lwm2m_connect.h"
+#include "network.h"
+#include "lwm2m_objects.hpp"
+#include "client_debug.h"
 
-lwm2m_context_t * lwm2mH;
+#include "lwm2mObjects/3311.h"
 
+using namespace KnownObjects;
+
+id3311::object lights;
+id3311::instance ledsInstance;
+
+lwm2m_context_t * client_context;
 void setup() {
-    // connect to network/wifi
-    // ......
+    std::set_new_handler([](){ESP.restart();}); // Reboot on heap memory outage
     
-    // Tell something about this device. This will be published as lwM2M device object (#3).
     device_instance_t * device_data = lwm2m_device_data_get();
     device_data->manufacturer = "test manufacturer";
     device_data->model_name = "test model";
     device_data->device_type = "led";
     device_data->firmware_ver = "1.0";
     device_data->serial_number = "140234-645235-12353";
-    
-    // The client name will be used by the lwm2m server for identification.
-    lwm2mH = lwm2m_client_init("testClient");
-    
-    // You don't need to use the network helper methods. If you do, call
-    // the lwm2m_network_init() method early in your code.
-    // Posix and LwIP network stacks are support
-    lwm2m_network_init(lwm2mH, nullptr);
-    
-    // Add your lwm2m objects here
-    // .....
+    client_context = lwm2m_client_init("testClient");
+    if (client_context == 0)
+    {
+        printf("Failed to initialize wakaama\n");
+        return;
+    }
+
+    // Overwrite the verifyFunction and "abuse" it as value changed event.
+    lights.verifyWrite = [](Lwm2mObjectInstance* instance, uint16_t res_id) {
+        auto inst = instance->as<id3311::instance>();
+        // Is it instance 0 and the OnOff resource?
+        if (inst->id == 0 && id3311::RESID::OnOff == res_id) {
+            // Change the led pin depending on the OnOff value
+            digitalWrite(LED_BUILTIN, inst->OnOff);
+        }
+        // Return true to accept the value and ACK to the server
+        return true;
+    };
+
+    ledsInstance.id = 0; // set instance id
+    lights.addInstance(client_context, &ledsInstance);
+    lights.registerObject(client_context, false);
+
+    // Initialize the LED_BUILTIN pin as an output
+    pinMode(LED_BUILTIN, OUTPUT);
+
+    // Wait for network to connect
+
+    // Init lwm2m network
+    uint8_t bound_sockets = lwm2m_network_init(client_context, NULL);
+    if (bound_sockets == 0)
+        printf("Failed to open socket\n");
     
     // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
     // unsend messages. The host url is either coap:// or coaps://.
-    lwm2m_add_server(123, "coap://192.168.1.18", 100, false)
+    lwm2m_add_server(123, "coap://192.168.1.18", 100, false);
     
-    // If you want to establish a DTLS secured connection, you need to alter the security
-    // information:
-    // lwm2m_server_security_preshared(123, "publicid", "PSK", sizeof("PSK"));
+    // Enter your DTLS secured connection information
+    #ifdef LWM2M_WITH_DTLS
+    lwm2m_server_security_preshared(123, "publicid", "PSK", sizeof("PSK"));
+    #endif
 }
 
-void disconnect() {
+// Toggle the led with a button press and inform the lwm2m server about the new state
+void push_button_pressed(bool newState) {
+    ledsInstance.OnOff = newState;
+    digitalWrite(LED_BUILTIN, ledsInstance.OnOff);
+    lights.resChanged(client_context, ledsInstance.id, (uint16_t)id3311::RESID::OnOff);
+}
+
+// If you want to disconnect from the network, you should be so kind and let the lwm2m server know.
+void disconnect_from_lwm2m_server() {
     // Deregisters from the lwm2m server, frees ressources taken by wakaama.
     lwm2m_client_close();
     // Close the network connection and release network ressoures.
-    lwm2m_network_close(lwm2mH);
+    lwm2m_network_close(client_context);
 }
 
 void loop() {
-    // Call the lwm2m state machine (lwm2m_step) periodically. 
-    // tv will be used as output variable.
-    // Wakaama tells us about the next required call to lwm2m_step().    
-    // In this simple example we ignore this request and call
-    // the state machine in each main loop cycle.
-    struct timeval tv = {5,0};
-    uint8_t result = lwm2m_step(lwm2mH, &tv.tv_sec);
-    
-    // let the network stack do its thing.
-    lwm2m_network_process(lwm2mH);
+    time_t tv_sec;
+
+    uint8_t result = lwm2m_step(client_context, &tv_sec);
+    if (result == COAP_503_SERVICE_UNAVAILABLE) {
+        // No server found so far
+    } else if (result != 0) {
+        // Unexpected error
+        printf("lwm2m_step() failed: 0x%X\n", result);
+        print_state(client_context);
+    }
+
+    lwm2m_network_process(client_context);
 }
+
 ```
 
-## Configure features with config_wakama.h
+## Configure features with wakaama_config.h
 
 Copy the
-[<img src="../../assets/github.png" style="width:20px"> examples/nodemcu_with_led_object/src/config_wakama.h](https://github.com/Openhab-Nodes/wakaamaNode/blob/master/examples/nodemcu_with_led_object/src/config_wakama.h)
-file to your project or create a `config_wakama.h` file in your project source directory with the following
+[<img src="../../assets/github.png" style="width:20px"> examples/nodemcu_with_led_object/src/wakaama_config.h](https://github.com/Openhab-Nodes/wakaamaNode/blob/master/examples/nodemcu_with_led_object/src/wakaama_config.h)
+file to your project or create a `wakaama_config.h` file in your project source directory with the following
 content:
 
 ```cpp
@@ -160,6 +203,6 @@ Edit the file to your needs, by commenting out unwanted features.
 An example for the ESP8266 and for linux/windows is located in
 [<img src="../../assets/github.png" style="width:20px"> src/examples](https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/examples).
 
-* Execute ``pio run -e esp01`` or ``pio run -e nodemcu`` to compile an example with a simple l2mwm object (res id 1024) with a boolean state ressource at ID 0. True/False switches the BUILTIN_LED on/off. Use ``pio run -e esp01 -t upload`` to upload the example.
+* Execute ``pio run -e esp01`` or ``pio run -e nodemcu`` to compile an example with a predefined lwm2m object (the light control object) to switch the built-in led. Use ``pio run -e esp01 -t upload`` to upload the example.
 * Execute ``pio run -e native`` to compile a linux/windows compatible example for switching on/off the current monitor screen. The firmware provides a lwm2m object (res id 1024) with a boolean state ressource at ID 0 for switching the screen on/off. At ID 1 there a read only string ressource which states the host name and at ID 2 there is a read only "name" string ressource.
 

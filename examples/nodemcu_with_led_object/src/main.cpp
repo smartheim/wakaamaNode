@@ -1,26 +1,19 @@
 /*****
- ESP8266 Led via lwm2m
- Blink the blue LED on the ESP-01 or the seperate red or blue led on the nodeMCU module
+ Switch ESP8266 Led via lwm2m.
  This example code is in the public domain.
  
  The blue LED on the ESP-01 module is connected to GPIO1 
  (which is also the TXD pin; so we cannot use Serial.print() at the same time)
 *****/
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <errno.h>
 #include <new>
-
 #include <time.h>
-
 #include <Arduino.h>
 
 #include "lwm2m_connect.h"
 #include "network.h"
 #include "lwm2m_objects.hpp"
+#include "client_debug.h"
 
 #include "lwm2mObjects/3311.h"
 
@@ -76,21 +69,38 @@ void setup() {
     // unsend messages. The host url is either coap:// or coaps://.
     lwm2m_add_server(123, "coap://192.168.1.18", 100, false);
     
-    // If you want to establish a DTLS secured connection, you need to alter the security
-    // information:
-    // lwm2m_server_security_preshared(123, "publicid", "password", sizeof("password"));
+    // Enter your DTLS secured connection information
+    #ifdef LWM2M_WITH_DTLS
+    lwm2m_server_security_preshared(123, "publicid", "PSK", sizeof("PSK"));
+    #endif
+}
+
+// Toggle the led with a button press and inform the lwm2m server about the new state
+void push_button_pressed(bool newState) {
+    ledsInstance.OnOff = newState;
+    digitalWrite(LED_BUILTIN, ledsInstance.OnOff);
+    lights.resChanged(client_context, ledsInstance.id, (uint16_t)id3311::RESID::OnOff);
+}
+
+// If you want to disconnect from the network, you should be so kind and let the lwm2m server know.
+void disconnect_from_lwm2m_server() {
+    // Deregisters from the lwm2m server, frees ressources taken by wakaama.
+    lwm2m_client_close();
+    // Close the network connection and release network ressoures.
+    lwm2m_network_close(client_context);
 }
 
 void loop() {
     time_t tv_sec;
 
-    //print_state(client_context);
-
     uint8_t result = lwm2m_step(client_context, &tv_sec);
-    if (result == COAP_503_SERVICE_UNAVAILABLE)
-        printf("No server found so far\n");
-    else if (result != 0)
+    if (result == COAP_503_SERVICE_UNAVAILABLE) {
+        // No server found so far
+    } else if (result != 0) {
+        // Unexpected error
         printf("lwm2m_step() failed: 0x%X\n", result);
+        print_state(client_context);
+    }
 
     lwm2m_network_process(client_context);
 }

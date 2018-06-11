@@ -8,9 +8,10 @@ WakaamaNode provides ready-to-consume C++ objects for all lwM2M objects of the r
 special implementations exist for object ID 1 (LWM2M Server), 2 (Access Control), 3 (device) and 5 (firmware)
 and you should not use the auto generated ones.
 
-## Example
+## How to use a predefined object
 
-For example if you want to use the "Light Control" lwM2M object:
+A full example can be found in [Get started](/quickstart/getting-started.md).
+Necessary steps are usually looking like below. For example if you want to use the "Light Control" lwM2M object:
 
 * Search the list below for "Light Control".
 * Find it under object id 3311.
@@ -21,10 +22,10 @@ For example if you want to use the "Light Control" lwM2M object:
 
 ```cpp
 #include "lwm2mObjects/3311.h"
-#include "Arduino.h"
 
 using namespace KnownObjects;
 
+// Define the object and as many instances as you need
 id3311::object lights;
 id3311::instance led;
 
@@ -49,7 +50,7 @@ void setup() {
 void push_button_pressed(bool newState) {
     led.OnOff = newState;
     digitalWrite(LED_BUILTIN, led.OnOff);
-    void resChanged(lwm2mContext, led.id, (uint16_t)id3311::RESID::OnOff);
+    lights.resChanged(lwm2mContext, led.id, (uint16_t)id3311::RESID::OnOff);
 }
 ```
 
