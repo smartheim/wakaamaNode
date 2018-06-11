@@ -13,7 +13,7 @@
 #include "netif/etharp.h"
 #include "lwipopts.h"
 
-#include "wakaama_simple_client.h" // for simple_lwm2m_printf
+#include "client_debug.h" // for lwm2m_printf
 #include "network_helper.h"
 #include "internals.h"
 
@@ -173,12 +173,12 @@ bool network_init()
       strncpy(nm_str, ip4addr_ntoa(&netmask), sizeof(nm_str));
       strncpy(gw_str, ip4addr_ntoa(&gw), sizeof(gw_str));
 
-      simple_lwm2m_printf("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
+      lwm2m_printf("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
 
         netif_add(&netifs[tapDevices], &ipaddr, &netmask, &gw, NULL, tapif_init, ethernet_input);
       err_t tapIfOK = tapif_real_init(tapDevices);
       if (tapIfOK != ERR_OK) {
-        simple_lwm2m_printf("tapif_real_init failed with %i\n", tapIfOK);
+        lwm2m_printf("tapif_real_init failed with %i\n", tapIfOK);
         lwip_init_done = false;
         return false;
       }

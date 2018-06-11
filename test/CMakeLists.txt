@@ -52,17 +52,20 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic")
 
 ## Prepare for coverage measuring
 if(${COVERAGE})
-	set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
 endif()
 
 # All cpp files in this directory are considered testcase files.
 file(GLOB TESTS_FILES ${TEST_DIR}/*.cpp ${TEST_DIR}/*.c ${TEST_DIR}/*.h)
 if (USE_LWIP)
     file(GLOB_RECURSE HELPER_FILES ${LWIP_DIR}/api/*.c ${LWIP_DIR}/core/*.c ${LWIP_DIR}/include/*.h ${LWIP_DIR}/netif/*.c
-        ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.c ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.h
+        ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.c
+        ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.h
         ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
-    set(HELPER_INCLUDE_DIRS "${CMAKE_CURRENT_LIST_DIR}/with_lwip"
-        "${LWIP_DIR}/include" "${CMAKE_CURRENT_LIST_DIR}/helper/")
+    set(HELPER_INCLUDE_DIRS
+        "${CMAKE_CURRENT_LIST_DIR}/with_lwip"
+        "${CMAKE_CURRENT_LIST_DIR}/helper/"
+        "${LWIP_DIR}/include")
 else()
     file(GLOB_RECURSE HELPER_FILES ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
     set(HELPER_FILES ${HELPER_FILES} ${CMAKE_CURRENT_LIST_DIR}/with_posix_sockets/posix_network_helper.c)
