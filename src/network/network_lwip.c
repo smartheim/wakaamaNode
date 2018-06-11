@@ -16,9 +16,13 @@
 #include "lwip/api.h"
 #include "lwip/sys.h"
 #include "lwip/sys.h"
-#include "lwip/timeouts.h"
+
 #include "lwip/udp.h"
 #include "lwip/dns.h"
+
+// it is either timers.h or since Jul 19, 2016 timeouts.h
+//#include "lwip/timeouts.h"
+#include "lwip/timers.h"
 
 typedef struct udp_pcb udp_pcb_t;
 
