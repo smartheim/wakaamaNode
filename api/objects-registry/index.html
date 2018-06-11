@@ -436,8 +436,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#example" title="Example" class="md-nav__link">
-    Example
+  <a href="#how-to-use-a-predefined-object" title="How to use a predefined object" class="md-nav__link">
+    How to use a predefined object
   </a>
   
 </li>
@@ -642,8 +642,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#example" title="Example" class="md-nav__link">
-    Example
+  <a href="#how-to-use-a-predefined-object" title="How to use a predefined object" class="md-nav__link">
+    How to use a predefined object
   </a>
   
 </li>
@@ -681,8 +681,9 @@ New objects and resources can be proposed via the <a href="http://devtoolkit.ope
 <p>WakaamaNode provides ready-to-consume C++ objects for all lwM2M objects of the registry. Just be aware that
 special implementations exist for object ID 1 (LWM2M Server), 2 (Access Control), 3 (device) and 5 (firmware)
 and you should not use the auto generated ones.</p>
-<h2 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h2>
-<p>For example if you want to use the "Light Control" lwM2M object:</p>
+<h2 id="how-to-use-a-predefined-object">How to use a predefined object<a class="headerlink" href="#how-to-use-a-predefined-object" title="Permanent link">&para;</a></h2>
+<p>A full example can be found in <a href="quickstart/getting-started.md">Get started</a>.
+Necessary steps are usually looking like below. For example if you want to use the "Light Control" lwM2M object:</p>
 <ul>
 <li>Search the list below for "Light Control".</li>
 <li>Find it under object id 3311.</li>
@@ -691,10 +692,10 @@ and you should not use the auto generated ones.</p>
 <li>Make the object itself known to WakaamaNode with <code class="codehilite">object.register(lwm2mContext)</code>.</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;lwm2mObjects/3311.h&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&quot;Arduino.h&quot;</span><span class="cp"></span>
 
 <span class="k">using</span> <span class="k">namespace</span> <span class="n">KnownObjects</span><span class="p">;</span>
 
+<span class="c1">// Define the object and as many instances as you need</span>
 <span class="n">id3311</span><span class="o">::</span><span class="n">object</span> <span class="n">lights</span><span class="p">;</span>
 <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span> <span class="n">led</span><span class="p">;</span>
 
@@ -719,7 +720,7 @@ and you should not use the auto generated ones.</p>
 <span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">led</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
     <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
-    <span class="kt">void</span> <span class="n">resChanged</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 

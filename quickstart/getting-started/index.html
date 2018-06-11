@@ -376,8 +376,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configure-features-with-config_wakamah" title="Configure features with config_wakama.h" class="md-nav__link">
-    Configure features with config_wakama.h
+  <a href="#configure-features-with-wakaama_configh" title="Configure features with wakaama_config.h" class="md-nav__link">
+    Configure features with wakaama_config.h
   </a>
   
 </li>
@@ -686,8 +686,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#configure-features-with-config_wakamah" title="Configure features with config_wakama.h" class="md-nav__link">
-    Configure features with config_wakama.h
+  <a href="#configure-features-with-wakaama_configh" title="Configure features with wakaama_config.h" class="md-nav__link">
+    Configure features with wakaama_config.h
   </a>
   
 </li>
@@ -753,74 +753,118 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 </pre></div>
 
 <h2 id="bare-minimum-sketch">Bare minimum sketch<a class="headerlink" href="#bare-minimum-sketch" title="Permanent link">&para;</a></h2>
-<p>The following example shows how to connect to a lwm2m server, optionally with
-a preshared key DTLS connection. It is still your responsibility to connect to the
-wifi/network and to bootstrap the device with the lwm2m server address if it is not a fixed address.</p>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;Arduino.h&gt;</span><span class="cp"></span>
+<p>The following example shows you some key aspects of the library. In particular:</p>
+<ul>
+<li>How to connect to a lwm2m server, if enabled with a preshared key DTLS connection. (It is assumed that you are network connected already.)</li>
+<li>How to set device describing attributes.</li>
+<li>How to use a predefined object and object instance: In this case object 3311 (light control).</li>
+<li>How to react to an object write via the <code class="codehilite">verifyWrite</code> function.</li>
+<li>How to update an object instance resource via the <code class="codehilite">lights.resChanged</code> call.</li>
+</ul>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;new&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;Arduino.h&gt;</span><span class="cp"></span>
 
-<span class="cp">#include</span> <span class="cpf">&quot;wakaama_simple_client.h&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&quot;wakaama_network.h&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&quot;wakaama_object_utils.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2m_connect.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;network.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2m_objects.hpp&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;client_debug.h&quot;</span><span class="cp"></span>
 
-<span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">lwm2mH</span><span class="p">;</span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2mObjects/3311.h&quot;</span><span class="cp"></span>
 
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">KnownObjects</span><span class="p">;</span>
+
+<span class="n">id3311</span><span class="o">::</span><span class="n">object</span> <span class="n">lights</span><span class="p">;</span>
+<span class="n">id3311</span><span class="o">::</span><span class="n">instance</span> <span class="n">ledsInstance</span><span class="p">;</span>
+
+<span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">client_context</span><span class="p">;</span>
 <span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">// connect to network/wifi</span>
-    <span class="c1">// ......</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">set_new_handler</span><span class="p">([](){</span><span class="n">ESP</span><span class="p">.</span><span class="n">restart</span><span class="p">();});</span> <span class="c1">// Reboot on heap memory outage</span>
 
-    <span class="c1">// Tell something about this device. This will be published as lwM2M device object (#3).</span>
     <span class="n">device_instance_t</span> <span class="o">*</span> <span class="n">device_data</span> <span class="o">=</span> <span class="n">lwm2m_device_data_get</span><span class="p">();</span>
     <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="s">&quot;test manufacturer&quot;</span><span class="p">;</span>
     <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">&quot;test model&quot;</span><span class="p">;</span>
     <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">device_type</span> <span class="o">=</span> <span class="s">&quot;led&quot;</span><span class="p">;</span>
     <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.0&quot;</span><span class="p">;</span>
     <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">serial_number</span> <span class="o">=</span> <span class="s">&quot;140234-645235-12353&quot;</span><span class="p">;</span>
+    <span class="n">client_context</span> <span class="o">=</span> <span class="n">lwm2m_client_init</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">client_context</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to initialize wakaama</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>
+    <span class="p">}</span>
 
-    <span class="c1">// The client name will be used by the lwm2m server for identification.</span>
-    <span class="n">lwm2mH</span> <span class="o">=</span> <span class="n">lwm2m_client_init</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+    <span class="c1">// Overwrite the verifyFunction and &quot;abuse&quot; it as value changed event.</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">auto</span> <span class="n">inst</span> <span class="o">=</span> <span class="n">instance</span><span class="o">-&gt;</span><span class="n">as</span><span class="o">&lt;</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">&gt;</span><span class="p">();</span>
+        <span class="c1">// Is it instance 0 and the OnOff resource?</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span> <span class="o">==</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
+            <span class="c1">// Change the led pin depending on the OnOff value</span>
+            <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">inst</span><span class="o">-&gt;</span><span class="n">OnOff</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="c1">// Return true to accept the value and ACK to the server</span>
+        <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="p">};</span>
 
-    <span class="c1">// You don&#39;t need to use the network helper methods. If you do, call</span>
-    <span class="c1">// the lwm2m_network_init() method early in your code.</span>
-    <span class="c1">// Posix and LwIP network stacks are support</span>
-    <span class="n">lwm2m_network_init</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">,</span> <span class="k">nullptr</span><span class="p">);</span>
+    <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// set instance id</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ledsInstance</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
 
-    <span class="c1">// Add your lwm2m objects here</span>
-    <span class="c1">// .....</span>
+    <span class="c1">// Initialize the LED_BUILTIN pin as an output</span>
+    <span class="n">pinMode</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">OUTPUT</span><span class="p">);</span>
+
+    <span class="c1">// Wait for network to connect</span>
+
+    <span class="c1">// Init lwm2m network</span>
+    <span class="kt">uint8_t</span> <span class="n">bound_sockets</span> <span class="o">=</span> <span class="n">lwm2m_network_init</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">bound_sockets</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to open socket</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 
     <span class="c1">// Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of</span>
     <span class="c1">// unsend messages. The host url is either coap:// or coaps://.</span>
-    <span class="n">lwm2m_add_server</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;coap://192.168.1.18&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">false</span><span class="p">)</span>
+    <span class="n">lwm2m_add_server</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;coap://192.168.1.18&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
 
-    <span class="c1">// If you want to establish a DTLS secured connection, you need to alter the security</span>
-    <span class="c1">// information:</span>
-    <span class="c1">// lwm2m_server_security_preshared(123, &quot;publicid&quot;, &quot;PSK&quot;, sizeof(&quot;PSK&quot;));</span>
+    <span class="c1">// Enter your DTLS secured connection information</span>
+    <span class="cp">#ifdef LWM2M_WITH_DTLS</span>
+    <span class="n">lwm2m_server_security_preshared</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;publicid&quot;</span><span class="p">,</span> <span class="s">&quot;PSK&quot;</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="s">&quot;PSK&quot;</span><span class="p">));</span>
+    <span class="cp">#endif</span>
 <span class="p">}</span>
 
-<span class="kt">void</span> <span class="nf">disconnect</span><span class="p">()</span> <span class="p">{</span>
+<span class="c1">// Toggle the led with a button press and inform the lwm2m server about the new state</span>
+<span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
+    <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// If you want to disconnect from the network, you should be so kind and let the lwm2m server know.</span>
+<span class="kt">void</span> <span class="nf">disconnect_from_lwm2m_server</span><span class="p">()</span> <span class="p">{</span>
     <span class="c1">// Deregisters from the lwm2m server, frees ressources taken by wakaama.</span>
     <span class="n">lwm2m_client_close</span><span class="p">();</span>
     <span class="c1">// Close the network connection and release network ressoures.</span>
-    <span class="n">lwm2m_network_close</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">);</span>
+    <span class="n">lwm2m_network_close</span><span class="p">(</span><span class="n">client_context</span><span class="p">);</span>
 <span class="p">}</span>
 
 <span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">// Call the lwm2m state machine (lwm2m_step) periodically. </span>
-    <span class="c1">// tv will be used as output variable.</span>
-    <span class="c1">// Wakaama tells us about the next required call to lwm2m_step().    </span>
-    <span class="c1">// In this simple example we ignore this request and call</span>
-    <span class="c1">// the state machine in each main loop cycle.</span>
-    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">tv</span> <span class="o">=</span> <span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">};</span>
-    <span class="kt">uint8_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">lwm2m_step</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">);</span>
+    <span class="kt">time_t</span> <span class="n">tv_sec</span><span class="p">;</span>
 
-    <span class="c1">// let the network stack do its thing.</span>
-    <span class="n">lwm2m_network_process</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">);</span>
+    <span class="kt">uint8_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">lwm2m_step</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv_sec</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">COAP_503_SERVICE_UNAVAILABLE</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// No server found so far</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Unexpected error</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;lwm2m_step() failed: 0x%X</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+        <span class="n">print_state</span><span class="p">(</span><span class="n">client_context</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">lwm2m_network_process</span><span class="p">(</span><span class="n">client_context</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
-<h2 id="configure-features-with-config_wakamah">Configure features with config_wakama.h<a class="headerlink" href="#configure-features-with-config_wakamah" title="Permanent link">&para;</a></h2>
+<h2 id="configure-features-with-wakaama_configh">Configure features with wakaama_config.h<a class="headerlink" href="#configure-features-with-wakaama_configh" title="Permanent link">&para;</a></h2>
 <p>Copy the
-<a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/examples/nodemcu_with_led_object/src/config_wakama.h"><img src="../../assets/github.png" style="width:20px"> examples/nodemcu_with_led_object/src/config_wakama.h</a>
-file to your project or create a <code class="codehilite">config_wakama.h</code> file in your project source directory with the following
+<a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/examples/nodemcu_with_led_object/src/wakaama_config.h"><img src="../../assets/github.png" style="width:20px"> examples/nodemcu_with_led_object/src/wakaama_config.h</a>
+file to your project or create a <code class="codehilite">wakaama_config.h</code> file in your project source directory with the following
 content:</p>
 <div class="codehilite"><pre><span></span><span class="c1">// Enables the wifi object where you may provide information about the wifi strength, connected ssid etc.</span>
 <span class="cp">#define LWM2M_DEV_INFO_WIFI_METRICS</span>
@@ -860,7 +904,7 @@ content:</p>
 <p>An example for the ESP8266 and for linux/windows is located in
 <a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/examples"><img src="../../assets/github.png" style="width:20px"> src/examples</a>.</p>
 <ul>
-<li>Execute <code class="codehilite">pio run -e esp01</code> or <code class="codehilite">pio run -e nodemcu</code> to compile an example with a simple l2mwm object (res id 1024) with a boolean state ressource at ID 0. True/False switches the BUILTIN_LED on/off. Use <code class="codehilite">pio run -e esp01 -t upload</code> to upload the example.</li>
+<li>Execute <code class="codehilite">pio run -e esp01</code> or <code class="codehilite">pio run -e nodemcu</code> to compile an example with a predefined lwm2m object (the light control object) to switch the built-in led. Use <code class="codehilite">pio run -e esp01 -t upload</code> to upload the example.</li>
 <li>Execute <code class="codehilite">pio run -e native</code> to compile a linux/windows compatible example for switching on/off the current monitor screen. The firmware provides a lwm2m object (res id 1024) with a boolean state ressource at ID 0 for switching the screen on/off. At ID 1 there a read only string ressource which states the host name and at ID 2 there is a read only "name" string ressource.</li>
 </ul>
                 
