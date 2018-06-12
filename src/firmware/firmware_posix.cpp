@@ -78,6 +78,11 @@ void startup(const char* lpApplicationName) {
 
 #if (defined(_WIN32) || defined(__unix__))
 
+KnownObjects::id5::object firmwareObject;
+KnownObjects::id5::instance firmwareObjectInstance;
+
+inline void processFirmwareUpgrade() {}
+
 inline bool exists (const std::string& name) {
     ifstream f(name.c_str());
     return f.good();

@@ -1,19 +1,28 @@
 {
-  "name": "WakamaNode",
-  "keywords": "coap, rest, http, web, json, lwm2m, wakaama",
-  "description": "Complete lwm2m Implementation in C for embedded systems.",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Openhab-Nodes/wakaamaNode.git"
-  },
-  "version": "1.0",
-  "authors": {
-    "name": "David Gräff",
-    "url": "https://openhab-nodes.github.io/wakaamaNode"
-  },
-  "exclude": [
-    "test", "tmp"
-  ],
-  "frameworks": "arduino",
-  "platforms": "*"
+    "name": "WakamaNode",
+    "keywords": "coap, json, lwm2m, wakaama, m2m, protocol",
+    "description": "Leightweight machine to machine (lwM2M) Implementation for embedded systems.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Openhab-Nodes/wakaamaNode.git"
+    },
+    "version": "0.9",
+    "authors": {
+        "name": "David Gräff",
+        "url": "https://openhab-nodes.github.io/wakaamaNode"
+    },
+    "exclude": [
+        "test", "tmp", "contrib"
+    ],
+    "frameworks": "arduino",
+    "platforms": "*",
+    "extraScript":"extra.py",
+    "build": {
+        "flags": [
+            "-Isrc",
+            "-Isrc/wakaama",
+            "-Isrc/network/mbedtls/include",
+            "-Isrc/network/mbedtls/library"
+        ]
+    }
 }

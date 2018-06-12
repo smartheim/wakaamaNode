@@ -26,14 +26,6 @@ void lwm2m_client_close(void) {
     contextP = NULL;
 }
 
-void lwm2m_device_res_has_changed(uint16_t res_id) {
-    lwm2m_uri_t uri;
-    uri.flag = 0;
-    uri.objectId = 3; // device
-    uri.instanceId = 0;
-    uri.resourceId = res_id;
-    lwm2m_resource_value_changed(contextP, &uri);
-}
 
 bool lwm2m_get_server_uri(uint16_t security_instance_id, char* uriBuffer, size_t buffer_len) {
     lwm2m_object_t * securityObjP = contextP->objectList;
@@ -141,6 +133,7 @@ bool lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifetime
     return true;
 }
 
+#ifdef LWM2M_WITH_DTLS
 void lwm2m_server_security_preshared(uint16_t shortServerID, const char* publicId, const char* psk, size_t pskLen) {
     lwm2m_object_t * securityObjP = contextP->objectList;
     security_instance_t * securityInstance;
@@ -148,9 +141,8 @@ void lwm2m_server_security_preshared(uint16_t shortServerID, const char* publicI
     if (securityInstance == NULL)
         return;
 
-    #ifdef LWM2M_WITH_DTLS
     if (publicId == NULL || psk == NULL)
-    securityInstance->securityMode = LWM2M_SECURITY_MODE_NONE;
+        securityInstance->securityMode = LWM2M_SECURITY_MODE_NONE;
     else
         securityInstance->securityMode = LWM2M_SECURITY_MODE_PRE_SHARED_KEY;
     if (securityInstance->publicIdentity) lwm2m_free(securityInstance->publicIdentity);
@@ -159,13 +151,14 @@ void lwm2m_server_security_preshared(uint16_t shortServerID, const char* publicI
     securityInstance->publicIdLen = strlen(publicId);
     if (securityInstance->secretKey) lwm2m_free(securityInstance->secretKey);
     if (psk) {
-       securityInstance->secretKey = lwm2m_malloc(psk, pskLen);
+       securityInstance->secretKey = lwm2m_malloc(pskLen);
        memcpy(securityInstance->secretKey, psk, pskLen);
     } else
        securityInstance->secretKey = NULL;
     securityInstance->secretKeyLen = pskLen;
-    #endif
 }
+#endif
+
 bool lwm2m_is_connected() {
     return contextP->state == STATE_READY;
 }

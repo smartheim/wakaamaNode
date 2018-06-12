@@ -115,8 +115,8 @@ class PkgVersionType : public PreallocString<30> {};
 }
 #include "lwm2mObjects/5.h"
 
-KnownObjects::id5::object firmwareObject;
-KnownObjects::id5::instance firmwareObjectInstance;
+extern KnownObjects::id5::object firmwareObject;
+extern KnownObjects::id5::instance firmwareObjectInstance;
 
 #ifdef POSIX
 /**
@@ -131,5 +131,9 @@ KnownObjects::id5::instance firmwareObjectInstance;
  */
 void checkIsUpdated(int argc, char** argv);
 #endif
+
+// Call this in your main loop to check for new updates,
+// initiate the download and restart if necessary
+void processFirmwareUpgrade();
 
 #endif

@@ -11,6 +11,7 @@
 #include "internal.h"
 #include "lwm2m_objects.h"
 #include "object_device.h"
+#include "lwm2m_connect.h"
 
 // Configures the lwm2m device object instance
 #include "wakaama_config.h"
@@ -238,4 +239,13 @@ lwm2m_object_t *init_device_object() {
     device_instance.time_offset.reserved_len = 7;
     #endif
     return device_object;
+}
+
+void lwm2m_device_res_has_changed(uint16_t res_id) {
+    lwm2m_uri_t uri;
+    uri.flag = 0;
+    uri.objectId = 3; // device
+    uri.instanceId = 0;
+    uri.resourceId = res_id;
+    lwm2m_resource_value_changed(lwm2m_client_get_context(), &uri);
 }

@@ -1,10 +1,13 @@
+/*****
+ Linux/Windows C-API Example with custom object 1024 to switch screens on/off via lwm2m.
+ To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
+*****/
+
 #include "lwm2m_connect.h"
 #include "lwm2m_objects.h"
 #include "client_debug.h"
 #include "network.h"
 #include "screen_object.h"
-// For c++ projects with firmware support
-// #include "object_firmware.hpp"
 
 #include <string.h>
 #include <stdlib.h>
@@ -15,6 +18,9 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <signal.h>
+
+// For c++ projects with firmware support
+// #include "object_firmware.hpp"
 
 static int g_quit = 0;
 

@@ -1,6 +1,6 @@
 /*****
- Switch ESP8266 Led via lwm2m.
- This example code is in the public domain.
+ Switch ESP8266 Led (LED_BUILTIN) via lwm2m.
+ To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
  
  The blue LED on the ESP-01 module is connected to GPIO1 
  (which is also the TXD pin; so we cannot use Serial.print() at the same time)
@@ -9,6 +9,7 @@
 #include <new>
 #include <time.h>
 #include <Arduino.h>
+#include <ESP8266WiFi.h>
 
 #include "lwm2m_connect.h"
 #include "network.h"
@@ -23,18 +24,28 @@ id3311::object lights;
 id3311::instance ledsInstance;
 
 lwm2m_context_t * client_context;
-void setup() {
-    std::set_new_handler([](){ESP.restart();}); // Reboot on heap memory outage
-    
+
+// Called by the device object for resource 4 (RES_M_REBOOT)
+void lwm2m_reboot() {
+    ESP.restart();
+}
+
+inline void setupDeviceInformation() {
     device_instance_t * device_data = lwm2m_device_data_get();
     device_data->manufacturer = "test manufacturer";
     device_data->model_name = "test model";
     device_data->device_type = "led";
     device_data->firmware_ver = "1.0";
     device_data->serial_number = "140234-645235-12353";
+}
+
+void setup() {
+    // Reboot on heap memory outage
+    std::set_new_handler([](){ESP.restart();});
+    
+    setupDeviceInformation();
     client_context = lwm2m_client_init("testClient");
-    if (client_context == 0)
-    {
+    if (client_context == 0) {
         printf("Failed to initialize wakaama\n");
         return;
     }
@@ -59,6 +70,10 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     // Wait for network to connect
+    WiFi.begin("network-name", "pass-to-network");
+    while (WiFi.status() != WL_CONNECTED) {
+        delay(500);
+    }
 
     // Init lwm2m network
     uint8_t bound_sockets = lwm2m_network_init(client_context, NULL);
