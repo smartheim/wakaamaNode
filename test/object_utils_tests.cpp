@@ -28,6 +28,7 @@
 using namespace KnownObjects;
 
 #include <memory>
+#include <algorithm>
 
 extern "C" {
 #include "internals.h"

@@ -19,7 +19,7 @@
  *
  */
 
-#include "screen_object.h"
+#include "custom_object.h"
 
 #include <stdio.h>
 #include <stdlib.h>

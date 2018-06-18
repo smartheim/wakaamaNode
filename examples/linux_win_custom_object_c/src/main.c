@@ -7,7 +7,7 @@
 #include "lwm2m/objects.h"
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
-#include "screen_object.h"
+#include "custom_object.h"
 
 #include <string.h>
 #include <stdlib.h>

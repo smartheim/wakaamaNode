@@ -12,8 +12,8 @@ include_directories (${WAKAAMA_SOURCES_DIR} ${WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS
 
 SET(SOURCES
     src/main.c
-    src/screen_object.c
-    src/screen_object.h
+    src/custom_object.c
+    src/custom_object.h
     src/wakaama_config.h
     src/debug_utils.h
     )
