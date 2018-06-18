@@ -39,6 +39,7 @@
 #include <mutex>
 #include <memory>
 #include <functional>
+#include <algorithm>
 
 extern "C" {
 #include "internals.h"

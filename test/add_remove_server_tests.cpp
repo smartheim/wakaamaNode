@@ -27,6 +27,7 @@
 
 #include <thread>
 #include <memory>
+#include <algorithm>
 
 extern "C" {
 #include "internals.h"

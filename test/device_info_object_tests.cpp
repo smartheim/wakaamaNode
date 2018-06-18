@@ -19,6 +19,7 @@
 #include "lwm2m/network.h"
 #include <stdint.h>
 #include "memory.h"
+#include <algorithm>
 
 extern "C" {
     #include "internals.h"
