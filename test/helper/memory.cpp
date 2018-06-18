@@ -1,3 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
 #include "memory.h"
 #include <string.h>
 #include <stdlib.h>
@@ -32,7 +45,17 @@ std::string hexify(T i)
     return buf.str().c_str();
 }
 
+bool contains(const std::string& src, const char* expr) {
+    return src.find(expr)!=std::string::npos;
+}
+
+template <class ... Types>
+bool contains(const std::string& src, const char* expr, Types* ... more) {
+    return contains(src, expr) || contains(src, more...);
+}
+
 #ifdef WITH_LIB_UNWIND
+
 
 std::string print_trace (void)
 {
@@ -51,7 +74,7 @@ std::string print_trace (void)
         if (pc == 0) {
           break;
         }
-        a += hexify(pc) + " ";
+        //a += hexify(pc) + " ";
 
         char sym[256];
         if (unw_get_proc_name(&cursor, sym, sizeof(sym), &offset) == 0) {
@@ -60,8 +83,9 @@ std::string print_trace (void)
             char* demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
             if (status == 0) nameptr = demangled;
             std::string l(nameptr);
-            if (l.find("TestBody")!=std::string::npos) continue;
-            a += l + " (" + hexify(offset)+") \n";
+            if (l.empty()||l=="lwm2m_malloc"||l=="main"||l=="clone"||l=="_start"||l=="start_thread"||
+                    contains(l,"testing::", "TestBody", "std::thread", "std::error_code", "_start_main", "_invoke")) continue;
+            a += "\t" + l + " (" + hexify(offset)+") \n";
         } else {
             a += "no symbol for this frame\n";
         }
@@ -94,7 +118,24 @@ std::string print_trace (void)
     return a;
 }
 #else
-std::string print_trace (void) { return std::string(); }
+#include "backward.hpp"
+std::string print_trace (void) {
+    std::string s;
+    using namespace backward;
+    StackTrace st; st.load_here(32);
+    TraceResolver tr; tr.load_stacktrace(st);
+    for (size_t i = 3; i < st.size(); ++i) {
+        ResolvedTrace trace = tr.resolve(st[i]);
+        std::string l(trace.object_function);
+        if (l.empty()||l=="main"||l=="clone"||l=="_start"||l=="start_thread"||
+                contains(l,"testing::", "TestBody", "std::thread", "std::error_code", "_start_main", "_invoke")) continue;
+        s += "\t#" + std::to_string(i)
+            + " " +trace.source.filename+"#L" + std::to_string(trace.source.line)
+            + " " + trace.object_function
+            + " [" + hexify(trace.addr) + "]\n";
+    }
+    return s;
+}
 #endif
 
 

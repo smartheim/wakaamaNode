@@ -564,7 +564,7 @@
  *      MBEDTLS_TLS_PSK_WITH_3DES_EDE_CBC_SHA
  *      MBEDTLS_TLS_PSK_WITH_RC4_128_SHA
  */
-//#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
+#define MBEDTLS_KEY_EXCHANGE_PSK_ENABLED
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_DHE_PSK_ENABLED
@@ -633,7 +633,7 @@
  *      MBEDTLS_TLS_RSA_PSK_WITH_3DES_EDE_CBC_SHA
  *      MBEDTLS_TLS_RSA_PSK_WITH_RC4_128_SHA
  */
-#define MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED
+//#define MBEDTLS_KEY_EXCHANGE_RSA_PSK_ENABLED
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
@@ -661,7 +661,7 @@
  *      MBEDTLS_TLS_RSA_WITH_RC4_128_SHA
  *      MBEDTLS_TLS_RSA_WITH_RC4_128_MD5
  */
-#define MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
+// #define MBEDTLS_KEY_EXCHANGE_RSA_ENABLED
 
 /**
  * \def MBEDTLS_KEY_EXCHANGE_DHE_RSA_ENABLED
@@ -900,7 +900,7 @@
  *
  * Uncomment this macro to prevent loading of default entropy functions.
  */
-//#define MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES
+#define MBEDTLS_NO_DEFAULT_ENTROPY_SOURCES
 
 /**
  * \def MBEDTLS_NO_PLATFORM_ENTROPY
@@ -1044,7 +1044,7 @@
  *
  * Uncomment to enable the smaller implementation of SHA256.
  */
-//#define MBEDTLS_SHA256_SMALLER
+#define MBEDTLS_SHA256_SMALLER
 
 /**
  * \def MBEDTLS_SSL_AEAD_RANDOM_IV
@@ -1161,7 +1161,7 @@
  *
  * Comment this macro to disable 1/n-1 record splitting.
  */
-#define MBEDTLS_SSL_CBC_RECORD_SPLITTING
+//#define MBEDTLS_SSL_CBC_RECORD_SPLITTING
 
 /**
  * \def MBEDTLS_SSL_RENEGOTIATION
@@ -1229,7 +1229,7 @@
  *
  * Comment this macro to disable support for TLS 1.0
  */
-#define MBEDTLS_SSL_PROTO_TLS1
+//#define MBEDTLS_SSL_PROTO_TLS1
 
 /**
  * \def MBEDTLS_SSL_PROTO_TLS1_1
@@ -1268,7 +1268,7 @@
  *
  * Comment this macro to disable support for DTLS
  */
-//#define MBEDTLS_SSL_PROTO_DTLS
+#define MBEDTLS_SSL_PROTO_DTLS
 
 /**
  * \def MBEDTLS_SSL_ALPN
@@ -1277,7 +1277,7 @@
  *
  * Comment this macro to disable support for ALPN.
  */
-//#define MBEDTLS_SSL_ALPN
+#define MBEDTLS_SSL_ALPN
 
 /**
  * \def MBEDTLS_SSL_DTLS_ANTI_REPLAY
@@ -1310,7 +1310,7 @@
  *
  * Comment this to disable support for HelloVerifyRequest.
  */
-//#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
+#define MBEDTLS_SSL_DTLS_HELLO_VERIFY
 
 /**
  * \def MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
@@ -1326,7 +1326,7 @@
  *
  * Comment this to disable support for clients reusing the source port.
  */
-//#define MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
+#define MBEDTLS_SSL_DTLS_CLIENT_PORT_REUSE
 
 /**
  * \def MBEDTLS_SSL_DTLS_BADMAC_LIMIT
@@ -1519,7 +1519,9 @@
  *
  * This modules adds support for the AES-NI instructions on x86-64
  */
+#ifdef __unix__
 #define MBEDTLS_AESNI_C
+#endif
 
 /**
  * \def MBEDTLS_AES_C
@@ -1645,7 +1647,9 @@
  *          library/x509write_crt.c
  *          library/mbedtls_x509write_csr.c
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_ASN1_WRITE_C
+#endif
 
 /**
  * \def MBEDTLS_BASE64_C
@@ -1657,7 +1661,9 @@
  *
  * This module is required for PEM support (required by X.509).
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_BASE64_C
+#endif
 
 /**
  * \def MBEDTLS_BIGNUM_C
@@ -1813,7 +1819,7 @@
  *
  * This module provides debugging functions.
  */
-//#define MBEDTLS_DEBUG_C
+#define MBEDTLS_DEBUG_C
 
 /**
  * \def MBEDTLS_DES_C
@@ -2080,9 +2086,7 @@
  *
  * This module provides networking routines.
  */
-#ifdef __unix__
-#define MBEDTLS_NET_C
-#endif
+// #define MBEDTLS_NET_C
 
 /**
  * \def MBEDTLS_OID_C
@@ -2137,7 +2141,9 @@
  *
  * This modules adds support for decoding / parsing PEM files.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_PEM_PARSE_C
+#endif
 
 /**
  * \def MBEDTLS_PEM_WRITE_C
@@ -2153,7 +2159,9 @@
  *
  * This modules adds support for encoding / writing PEM files.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_PEM_WRITE_C
+#endif
 
 /**
  * \def MBEDTLS_PK_C
@@ -2198,7 +2206,9 @@
  *
  * Uncomment to enable generic public key write functions.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_PK_WRITE_C
+#endif
 
 /**
  * \def MBEDTLS_PKCS5_C
@@ -2384,7 +2394,7 @@
  * Module:  library/ssl_cookie.c
  * Caller:
  */
-//#define MBEDTLS_SSL_COOKIE_C
+#define MBEDTLS_SSL_COOKIE_C
 
 /**
  * \def MBEDTLS_SSL_TICKET_C
@@ -2424,7 +2434,9 @@
  *
  * This module is required for SSL/TLS server support.
  */
+#ifdef __unix__
 #define MBEDTLS_SSL_SRV_C
+#endif
 
 /**
  * \def MBEDTLS_SSL_TLS_C
@@ -2543,7 +2555,9 @@
  *
  * This module is required for X.509 CRL parsing.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_X509_CRL_PARSE_C
+#endif
 
 /**
  * \def MBEDTLS_X509_CSR_PARSE_C
@@ -2557,7 +2571,9 @@
  *
  * This module is used for reading X.509 certificate request.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_X509_CSR_PARSE_C
+#endif
 
 /**
  * \def MBEDTLS_X509_CREATE_C
@@ -2570,7 +2586,9 @@
  *
  * This module is the basis for creating X.509 certificates and CSRs.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_X509_CREATE_C
+#endif
 
 /**
  * \def MBEDTLS_X509_CRT_WRITE_C
@@ -2583,7 +2601,9 @@
  *
  * This module is required for X.509 certificate creation.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_X509_CRT_WRITE_C
+#endif
 
 /**
  * \def MBEDTLS_X509_CSR_WRITE_C
@@ -2596,7 +2616,9 @@
  *
  * This module is required for X.509 certificate request writing.
  */
+#ifdef LWM2M_WITH_DTLS_X509
 #define MBEDTLS_X509_CSR_WRITE_C
+#endif
 
 /**
  * \def MBEDTLS_XTEA_C
@@ -2623,7 +2645,7 @@
  *         library/ecdh.c
  *         library/ecdsa.c
  */
-#define MBEDTLS_ED25519_C
+//#define MBEDTLS_ED25519_C
 
 /**
  * \def MBEDTLS_SRP_C
@@ -2717,16 +2739,6 @@ extern unsigned int max_content_len;
 //#define MBEDTLS_SSL_COOKIE_TIMEOUT        60 /**< Default expiration delay of DTLS cookies, in seconds if HAVE_TIME, or in number of cookies issued */
 
 /**
- * \def ESP8266_PLATFORM
- *
- * Enable the ESP8266 PLATFORM.
- *
- * Module:  library/ssl_tls.c
- * Caller:
- */
-//#define ESP8266_PLATFORM
-
-/**
  * Complete list of ciphersuites to use, in order of preference.
  *
  * \warning No dependency checking is done on that field! This option can only
@@ -2744,10 +2756,6 @@ extern unsigned int max_content_len;
 //#define MBEDTLS_X509_MAX_INTERMEDIATE_CA   8   /**< Maximum number of intermediate CAs in a verification chain. */
 
 /* \} name SECTION: Module configuration options */
-
-#if defined(TARGET_LIKE_MBED)
-#include "mbedtls/target_config.h"
-#endif
 
 /*
  * Allow user to override any previous default.

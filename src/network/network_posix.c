@@ -1,18 +1,30 @@
-#if !defined(LWIP) && (defined(_WIN32) || defined(__unix__) || defined(POSIX_NETWORK))
+/*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+#include "network_common.h"
 
-#include "network.h"
-#include "lwm2m_connect.h"
-#include "network_utils.h"
-#include "client_debug.h"
-#include "internals.h"
+typedef int make_iso_compilers_happy; // if not POSIX_NETWORK
+
+#ifdef POSIX_NETWORK
+
+#include "lwm2m/network.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/debug.h"
+#include "../internal.h"
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-
-#ifndef MAX_PACKET_SIZE
-#define MAX_PACKET_SIZE 1024
-#endif
 
 #ifdef _WIN32
     #define WIN32_LEAN_AND_MEAN
@@ -32,36 +44,12 @@
     #include <netdb.h>
 #endif
 
-typedef struct _connection_t_
-{
-    struct _connection_t *  next;
-    int                     sock;
-    struct sockaddr_in6     addr;
-    size_t                  addrLen;
-} connection_t;
+inline void closeSocket(network_t* network, unsigned socket_handle) {
+    close(network->socket_handle[socket_handle]);
+}
 
-connection_t * connection_find(connection_t * connList, struct sockaddr_storage * addr, size_t addrLen);
-connection_t * connection_create(network_t * network, char * host, char * port);
-void connection_free(connection_t * connList);
-
-uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
-    // The network can only be initialized once. We also need the userdata pointer
-    // and therefore check if it is not used so far.
-    if (contextP->userData != NULL)
-    {
-        return 0;
-    }
-
-    // Allocate memory for the network structure
-    contextP->userData = lwm2m_malloc(sizeof(network_t));
-    if (contextP->userData == NULL)
-    {
-        return 0;
-    }
-
-    network_t* network = (network_t*)contextP->userData;
-    memset(network, 0, sizeof(network_t));
-
+uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, const char *localPort) {
+    (void)contextP;
     #ifdef _WIN32
     struct WSAData d;
     if (WSAStartup(MAKEWORD(2, 2), &d) != 0) {
@@ -96,15 +84,11 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
     }
 
     if (0 != r || res == NULL)
-    {
-        return -1;
-    }
+        return 0;
 
     network->open_listen_sockets = 0;
     for(p = res ; p != NULL && s == -1 ; p = p->ai_next)
         ++network->open_listen_sockets;
-
-    network->socket_handle = (int*)lwm2m_malloc(sizeof(int)*network->open_listen_sockets);
 
     network->open_listen_sockets = 0;
     for(p = res ; p != NULL; p = p->ai_next)
@@ -119,207 +103,151 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char *localPort) {
             } else
             {
                 ++network->open_listen_sockets;
+                // Don't use more sockets than we have size in our array
+                if ((unsigned long)network->open_listen_sockets>sizeof(network->socket_handle)/sizeof(int)) break;
             }
         }
     }
 
     freeaddrinfo(res);
 
-    return network->open_listen_sockets;
+    return (uint8_t)network->open_listen_sockets;
 }
 
-#ifdef LWM2M_WITH_LOGS
-void prv_log_addr(connection_t * connP, size_t length, bool sending)
+#ifdef LWM2M_NETWORK_LOGGING
+void connection_log_io(connection_t* connection, int length, bool sending)
 {
+    const struct sockaddr_storage addr = connection->addr.addr;
+    const network_process_type_t isServer = connection->network->type;
+
     char s[INET6_ADDRSTRLEN];
-    in_port_t port;
+    in_port_t port=0;
 
     s[0] = 0;
 
-    if (AF_INET == connP->addr.sin6_family)
+    if (AF_INET == addr.ss_family)
     {
-        struct sockaddr_in *saddr = (struct sockaddr_in *)&connP->addr;
-        inet_ntop(saddr->sin_family, &saddr->sin_addr, s, INET6_ADDRSTRLEN);
-        port = saddr->sin_port;
+        struct sockaddr_in *saddr = (struct sockaddr_in *)&addr;
+        inet_ntop(saddr->sin_family, &saddr->sin_addr, s, INET_ADDRSTRLEN);
+        port = ntohs(saddr->sin_port);
     }
-    else if (AF_INET6 == connP->addr.sin6_family)
+    else if (AF_INET6 == addr.ss_family)
     {
-        struct sockaddr_in6 *saddr = (struct sockaddr_in6 *)&connP->addr;
+        struct sockaddr_in6 *saddr = (struct sockaddr_in6 *)&addr;
         inet_ntop(saddr->sin6_family, &saddr->sin6_addr, s, INET6_ADDRSTRLEN);
-        port = saddr->sin6_port;
+        port = ntohs(saddr->sin6_port);
     }
 
+#ifdef LWM2M_WITH_DTLS
+    const int ssl_handshake = connection->ssl.state;
+#else
+    const int ssl_handshake = 0;
+#endif
+
     if (sending)
-        printf("Sending %d bytes to [%s]:%hu\r\n", (int)length, s, ntohs(port));
+        network_log_info("Sending %d bytes to [%s]:%hu (server: %i, dtls handshake: %i )\r\n",
+                (int)length, s, port, isServer, ssl_handshake);
     else
-        printf("Receiving %d bytes from [%s]:%hu\r\n", (int)length, s, ntohs(port));
+        network_log_info("Receiving %d bytes from [%s]:%hu (server: %i, dtls handshake: %i)\r\n",
+                (int)length, s, port, isServer, ssl_handshake);
 
     //output_buffer(stderr, buffer, length, 0);
 }
-#else
-#define prv_log_addr(...) {}
 #endif
 
-bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
+bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutInSec) {
     network_t* network = (network_t*)contextP->userData;
-    uint8_t buffer[MAX_PACKET_SIZE];
-    int numBytes;
-    struct sockaddr_storage addr;
-    socklen_t addrLen = sizeof(addr);
-
     for (unsigned c = 0; c < network->open_listen_sockets; ++c)
     {
-        numBytes = recvfrom(network->socket_handle[c], buffer, MAX_PACKET_SIZE, 0, (struct sockaddr *)&addr, &addrLen);
+        uint8_t buffer[MAX_PACKET_SIZE];
+        size_t numBytes = MAX_PACKET_SIZE;
+        struct sockaddr_storage addr={0};
+        socklen_t addrLen = sizeof(addr);
+        
+        ssize_t r = recvfrom(network->socket_handle[c], buffer, numBytes,
+                         MSG_PEEK|MSG_DONTWAIT, (struct sockaddr *)&addr, &addrLen);
 
-        if (numBytes < 0)
+        if (r < 0)
         {
-            lwm2m_printf("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+            network_log_error("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
             continue;
-        } else if (numBytes == 0)
+        } else if (r == 0)
             continue; // no new data
 
-        connection_t * connP = connection_find(network->connection_list, &addr, addrLen);
+        // Find connection with given address (or create it in server mode)
+        addr_t t;
+        t.addr = addr;
+        connection_t * connection = internal_connection_find(network, t);
+        if (!connection) continue;
+        connection->sock = network->socket_handle[c];
+        connection->addr = t;
 
-        if (connP == NULL && network->type == NET_SERVER_PROCESS) {
-            connP = (connection_t *)malloc(sizeof(connection_t));
-            if (connP == NULL)
-            {
-                lwm2m_printf("memory alloc for new connection failed");
-                continue;
-            }
-
-            connP->sock = network->socket_handle[c];
-            memcpy(&(connP->addr), (struct sockaddr *)&addr, addrLen);
-            connP->addrLen = addrLen;
-            connP->next = (struct _connection_t *)network->connection_list;
-            network->connection_list = connP;
-        }
-
-        if (connP != NULL) {
-            prv_log_addr(connP, numBytes, false);
-            lwm2m_handle_packet(contextP, buffer, numBytes, connP);
-        } else {
-            lwm2m_printf("received bytes ignored!\r\n");
-        }
+        //connection_log_io(connection,r,false);
+        internal_network_read(contextP, buffer, numBytes, connection);
     }
-
+    internal_check_timer(contextP, timeoutInSec);
     return network->open_listen_sockets >= 1;
 }
 
-void __attribute__((weak)) lwm2m_network_close(lwm2m_context_t * contextP) {
-    if (!contextP->userData) return;
+#define IPADDRSIZE(connP) (connP->addr.addr.ss_family==AF_INET?sizeof(struct sockaddr_in):sizeof(struct sockaddr_in6))
+#define IPADDR(connP) (struct sockaddr *)&(connP->addr.addr)
 
-    network_t* network = (network_t*)contextP->userData;
-    for (unsigned c = 0; c < network->open_listen_sockets; ++c)
-    {
-        close(network->socket_handle[c]);
-    }
-    lwm2m_free(network->socket_handle);
-    network->open_listen_sockets = 0;
-
-    lwm2m_free(network);
-    contextP->userData = NULL;
-}
-
-uint8_t lwm2m_buffer_send(void * sessionH,
-                          uint8_t * buffer,
-                          size_t length,
-                          void * userdata)
-{
-    //network_t* network = (network_t*)userdata;
-    connection_t * connP = (connection_t*) sessionH;
-
-    if (connP == NULL)
-    {
-        fprintf(stderr, "#> failed sending %lu bytes, missing connection\r\n", length);
-        return COAP_500_INTERNAL_SERVER_ERROR ;
-    }
-
-    prv_log_addr(connP, length, true);
-
-    int nbSent;
+int mbedtls_net_send(void *ctx, const unsigned char *buffer, size_t length) {
+    connection_t * connection = (connection_t*)ctx;
+    ssize_t nbSent = 0;
     size_t offset = 0;
     while (offset != length)
     {
-        nbSent = sendto(connP->sock, buffer + offset, length - offset, 0, (struct sockaddr *)&(connP->addr), connP->addrLen);
+        nbSent = sendto(connection->sock, buffer + offset, length - offset, MSG_DONTWAIT,
+                        IPADDR(connection), IPADDRSIZE(connection));
+
+        connection_log_io(connection, (int)length, true);
         if (nbSent == -1)
-        {
-            fprintf(stderr, "#> failed sending %lu bytes\r\n", length);
-            return COAP_500_INTERNAL_SERVER_ERROR ;
-        }
-        offset += nbSent;
+            break;
+        offset += (size_t)nbSent;
     }
-
-    return COAP_NO_ERROR;
-}
-
-bool lwm2m_session_is_equal(void * session1,
-                            void * session2,
-                            void * userData)
-{
-    return (session1 == session2);
-}
-
-void * lwm2m_connect_server(uint16_t secObjInstID,
-                            void * userData)
-{
-
-    char * host;
-    char * port;
-    char uri[255];
-
-    if (!lwm2m_get_server_uri(secObjInstID, uri, sizeof(uri)))
-        return NULL;
-
-    lwm2m_printf("Connecting to %s\r\n", uri);
-
-    decode_uri(uri, &host, &port);
-
-    network_t* network = (network_t*)userData;
-    connection_t * newConnP = connection_create(network, host, port);
-    if (newConnP == NULL) {
-        fprintf(stderr, "Connection creation failed.\r\n");
+    if (nbSent>=0) return (int)nbSent;
+    if (errno==EAGAIN||errno==EWOULDBLOCK){
+        errno=0;
+        #ifdef LWM2M_WITH_DTLS
+        return MBEDTLS_ERR_SSL_WANT_WRITE;
+        #else
+        return 0;
+        #endif
     }
-    else {
-        network->connection_list = newConnP;
+    network_log_error( "#> failed sending %lu bytes\r\n", length);
+    #ifdef LWM2M_WITH_DTLS
+    return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+    #else
+    return COAP_500_INTERNAL_SERVER_ERROR;
+    #endif
+}
+
+int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
+    connection_t * connection = (connection_t*)ctx;
+    struct sockaddr_storage addr;
+    socklen_t addrLen = sizeof(addr);
+
+    ssize_t r = recvfrom(connection->sock, buf, len, MSG_DONTWAIT, (struct sockaddr *)&addr, &addrLen);
+    connection_log_io(connection, (int)r, false);
+    if (r>=0) return (int)r;
+    if (errno==EAGAIN||errno==EWOULDBLOCK){
+        errno=0;
+        #ifdef LWM2M_WITH_DTLS
+        return MBEDTLS_ERR_SSL_WANT_READ;
+        #else
+        return 0;
+        #endif
     }
-
-    return (void *)newConnP;
+    network_log_error("recvfrom failed %i", (int)r);
+    #ifdef LWM2M_WITH_DTLS
+    return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
+    #else
+    return COAP_500_INTERNAL_SERVER_ERROR;
+    #endif
 }
 
-void lwm2m_close_connection(void * sessionH,
-                            void * userData)
-{
-    network_t* network = (network_t*)userData;
-    connection_free(network->connection_list);
-}
-
-void lwm2m_network_force_interface(lwm2m_context_t * contextP, void* interface)
-{
-    // do nothing for posix sockets
-}
-
-connection_t * connection_find(connection_t * connList,
-                               struct sockaddr_storage * addr,
-                               size_t addrLen)
-{
-    connection_t * connP;
-
-    connP = connList;
-    while (connP != NULL)
-    {
-        if ((connP->addrLen == addrLen)
-         && (memcmp(&(connP->addr), addr, addrLen) == 0))
-        {
-            return connP;
-        }
-        connP = (connection_t*)connP->next;
-    }
-
-    return connP;
-}
-
-connection_t * connection_create(network_t* network,
+connection_t * internal_connection_create(network_t* network,
                                  char * host,
                                  char * port)
 {
@@ -330,9 +258,7 @@ connection_t * connection_create(network_t* network,
     struct addrinfo *servinfo = NULL;
     struct addrinfo *p;
     int s;
-    struct sockaddr *sa;
-    socklen_t sl;
-    connection_t * connP = NULL;
+    struct sockaddr_storage destip={0};
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -349,8 +275,7 @@ connection_t * connection_create(network_t* network,
         for (unsigned sock_no = 0; sock_no < network->open_listen_sockets; ++sock_no)
         {
             s = network->socket_handle[sock_no];
-            sa = p->ai_addr;
-            sl = p->ai_addrlen;
+            memcpy(&destip, p->ai_addr, p->ai_addrlen);
             // We test if the given socket is able to connect to the ip address
             if (-1 != connect(s, p->ai_addr, p->ai_addrlen))
             {
@@ -366,15 +291,16 @@ connection_t * connection_create(network_t* network,
         }
     }
 
+    connection_t * connection = NULL;
     if (s >= 0)
     {
-        connP = (connection_t *)lwm2m_malloc(sizeof(connection_t));
-        if (connP != NULL)
+        connection = (connection_t *)lwm2m_malloc(sizeof(connection_t));
+        if (connection != NULL)
         {
-            connP->sock = s;
-            memcpy(&(connP->addr), sa, sl);
-            connP->addrLen = sl;
-            connP->next = (struct _connection_t *)network->connection_list;
+            memset(connection, 0, sizeof(connection_t));
+            connection->sock = s;
+            connection->addr.addr = destip;
+            connection->next = (struct _connection_t *)network->connection_list;
         }
     }
 
@@ -382,19 +308,45 @@ connection_t * connection_create(network_t* network,
         freeaddrinfo(servinfo);
     }
 
-    return connP;
+    return connection;
 }
 
-void connection_free(connection_t * connList)
-{
-    while (connList != NULL)
-    {
-        connection_t * nextP;
+/////// Compare IP addresses on POSIX systems
 
-        nextP = (connection_t*)connList->next;
-        lwm2m_free(connList);
+#define SOCK_ADDR_PTR(ptr)	((struct sockaddr *)(ptr))
+#define SOCK_ADDR_FAMILY(ptr)	SOCK_ADDR_PTR(ptr)->sa_family
 
-        connList = nextP;
+#define SOCK_ADDR_IN_PTR(sa)	((struct sockaddr_in *)(sa))
+#define SOCK_ADDR_IN_ADDR(sa)	SOCK_ADDR_IN_PTR(sa)->sin_addr
+
+#define SOCK_ADDR_LEN(sa) \
+   (SOCK_ADDR_PTR(sa)->sa_family == AF_INET6 ? \
+    sizeof(struct sockaddr_in6) : sizeof(struct sockaddr_in))
+
+#define SOCK_ADDR_IN6_PTR(sa)	((struct sockaddr_in6 *)(sa))
+#define SOCK_ADDR_IN6_ADDR(sa)	SOCK_ADDR_IN6_PTR(sa)->sin6_addr
+
+#define SOCK_ADDR_EQ_ADDR(sa, sb) \
+   ((SOCK_ADDR_FAMILY(sa) == AF_INET && SOCK_ADDR_FAMILY(sb) == AF_INET \
+     && SOCK_ADDR_IN_ADDR(sa).s_addr == SOCK_ADDR_IN_ADDR(sb).s_addr) \
+    || (SOCK_ADDR_FAMILY(sa) == AF_INET6 && SOCK_ADDR_FAMILY(sb) == AF_INET6 \
+        && memcmp((char *) &(SOCK_ADDR_IN6_ADDR(sa)), \
+                  (char *) &(SOCK_ADDR_IN6_ADDR(sb)), \
+                  sizeof(SOCK_ADDR_IN6_ADDR(sa))) == 0))
+
+inline bool ip_equal(addr_t a, addr_t b) {
+    const struct sockaddr * sa = (struct sockaddr*)&a.addr;
+    const struct sockaddr * sb = (struct sockaddr*)&b.addr;
+    if (sa->sa_family != sb->sa_family) return false;
+
+    if (sa->sa_family == AF_INET) {
+        return 0==(SOCK_ADDR_IN_ADDR(sa).s_addr - SOCK_ADDR_IN_ADDR(sb).s_addr);
+    } else if (sa->sa_family == AF_INET6) {
+        return (0==memcmp((char *) &(SOCK_ADDR_IN6_ADDR(sa)),
+               (char *) &(SOCK_ADDR_IN6_ADDR(sb)),
+               sizeof(SOCK_ADDR_IN6_ADDR(sa))));
+    } else {
+        return false;
     }
 }
 

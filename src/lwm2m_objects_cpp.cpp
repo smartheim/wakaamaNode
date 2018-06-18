@@ -1,4 +1,4 @@
-#include "lwm2m_objects.hpp"
+#include "lwm2m/objects.hpp"
 #include <cstring>
 
 // Test offset_of

@@ -8,13 +8,14 @@
 
 #include <new>
 #include <time.h>
+#include <sys/time.h>
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 
-#include "lwm2m_connect.h"
-#include "network.h"
-#include "lwm2m_objects.hpp"
-#include "client_debug.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/network.h"
+#include "lwm2m/objects.hpp"
+#include "lwm2m/debug.h"
 
 #include "lwm2mObjects/3311.h"
 
@@ -76,7 +77,12 @@ void setup() {
     }
 
     // Init lwm2m network
-    uint8_t bound_sockets = lwm2m_network_init(client_context, NULL);
+    #ifdef LWM2M_WITH_DTLS
+    const bool dtls = true;
+    #else
+    const bool dtls = false;
+    #endif
+    uint8_t bound_sockets = lwm2m_network_init(client_context, NULL, dtls);
     if (bound_sockets == 0)
         printf("Failed to open socket\n");
     
@@ -86,7 +92,7 @@ void setup() {
     
     // Enter your DTLS secured connection information
     #ifdef LWM2M_WITH_DTLS
-    lwm2m_server_security_preshared(123, "publicid", "PSK", sizeof("PSK"));
+    lwm2m_security_use_preshared(123, "publicid", "PSK", sizeof("PSK"));
     #endif
 }
 
@@ -106,9 +112,9 @@ void disconnect_from_lwm2m_server() {
 }
 
 void loop() {
-    time_t tv_sec;
+    struct timeval tv = {5,0};
 
-    uint8_t result = lwm2m_step(client_context, &tv_sec);
+    uint8_t result = lwm2m_step(client_context, &tv.tv_sec);
     if (result == COAP_503_SERVICE_UNAVAILABLE) {
         // No server found so far
     } else if (result != 0) {
@@ -117,6 +123,6 @@ void loop() {
         print_state(client_context);
     }
 
-    lwm2m_network_process(client_context);
+    lwm2m_network_process(client_context, &tv);
 }
 

@@ -5,7 +5,7 @@ This library is designed to be used as a single instance. You cannot request or 
 
 ## Connection API
 
-Include `wakaama_simple_client.h`.
+Include `lwm2m/connect.h`.
 
 ```cpp
 /**

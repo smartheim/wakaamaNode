@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016  MSc. David Graeff <david.graeff@web.de>
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -13,11 +13,11 @@
  */
 
 #include <gtest/gtest.h>
-#include "lwm2m_connect.h"
-#include "lwm2m_objects.h"
-#include "lwm2m_objects.hpp"
-#include "client_debug.h"
-#include "network.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/objects.h"
+#include "lwm2m/objects.hpp"
+#include "lwm2m/debug.h"
+#include "lwm2m/network.h"
 #include <stdint.h>
 #include "test_object_c.h"
 #include "test_object_cpp.h"
@@ -274,7 +274,10 @@ protected:
         lwm2m_object_instance_remove(lwm2mH, test_object, 10);
         lwm2m_client_close();
         lwm2mH = nullptr;
-        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
+        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+                      [](MemoryObserver::MemAreas::value_type it){
+            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+        });
     }
 
     virtual void SetUp() {
@@ -326,7 +329,10 @@ protected:
         object.removeInstance(lwm2mH, 10);
         lwm2m_client_close();
         lwm2mH = nullptr;
-        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
+        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+                      [](MemoryObserver::MemAreas::value_type it){
+            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+        });
     }
 
     virtual void SetUp() {

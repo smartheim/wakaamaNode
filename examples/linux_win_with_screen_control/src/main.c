@@ -3,10 +3,10 @@
  To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
 *****/
 
-#include "lwm2m_connect.h"
-#include "lwm2m_objects.h"
-#include "client_debug.h"
-#include "network.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/objects.h"
+#include "lwm2m/debug.h"
+#include "lwm2m/network.h"
 #include "screen_object.h"
 
 #include <string.h>
@@ -58,7 +58,7 @@ int main(int argc, char *argv[])
     lwm2m_add_initialize_object(lwm2mH, test_object, false);
     lwm2m_object_instance_add(lwm2mH, test_object, get_screen_instance());
 
-    uint8_t bound_sockets = lwm2m_network_init(lwm2mH, NULL);
+    uint8_t bound_sockets = lwm2m_network_init(lwm2mH, NULL, false);
 
     if (bound_sockets == 0)
     {
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
         {
             if (result > 0 && FD_ISSET(lwm2m_network_native_sock(lwm2mH, c), &readfds))
             {
-                lwm2m_network_process(lwm2mH);
+                lwm2m_network_process(lwm2mH, &tv);
             }
         }
     }

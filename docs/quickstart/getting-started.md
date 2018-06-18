@@ -59,10 +59,10 @@ The following example shows you some key aspects of the library. In particular:
 #include <time.h>
 #include <Arduino.h>
 
-#include "lwm2m_connect.h"
-#include "network.h"
-#include "lwm2m_objects.hpp"
-#include "client_debug.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/network.h"
+#include "lwm2m/objects.hpp"
+#include "lwm2m/debug.h"
 
 #include "lwm2mObjects/3311.h"
 
@@ -193,8 +193,14 @@ content:
 // Enables the firmware update mechanism.
 #define LWM2M_FIRMWARE_UPGRADES
 
-// Enable DTLS support
+// Enable DTLS support (preshared and public key)
 #define LWM2M_WITH_DTLS
+
+// Enable additional support for X.509 certificates and PEM data
+#define LWM2M_WITH_DTLS_X509
+
+// Overwrite maximum packet size. Defaults to 1024 bytes
+// #define MAX_PACKET_SIZE 1024
 ```
 
 Edit the file to your needs, by commenting out unwanted features.

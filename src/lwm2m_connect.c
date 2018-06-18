@@ -1,43 +1,62 @@
-#include "lwm2m_connect.h"
+#include "lwm2m/connect.h"
 #include "internal.h"
 #include "wakaama/internals.h"
-#include "client_debug.h"
-#include "network.h"
+#include "lwm2m/debug.h"
+#include "lwm2m/network.h"
 
-lwm2m_context_t * contextP;
+static lwm2m_context_t * contextP;
 
-inline lwm2m_context_t * lwm2m_client_get_context() {
+lwm2m_context_t * lwm2m_client_get_context() {
     return contextP;
 }
 
 void lwm2m_client_close(void) {
     if (!contextP) return;
-    lwm2m_close(contextP);
-    lwm2m_network_close(contextP);
 
     lwm2m_object_t * securityObjP = contextP->objectList;
     lwm2m_object_t * serverObjP = securityObjP->next;
 
+    #ifdef LWM2M_WITH_DTLS
+    // Destructor for securityObj instances
+    {
+        security_instance_t* s = (security_instance_t*)securityObjP->instanceList;
+        while (s) {
+            lwm2m_free(s->publicIdentity);
+            lwm2m_free(s->serverPublicKey);
+            lwm2m_free(s->secretKey);
+            s = s->next;
+        }
+    }
+    #endif
     lwm2m_list_free(securityObjP->instanceList);
     securityObjP->instanceList = NULL;
+
     lwm2m_list_free(serverObjP->instanceList);
     serverObjP->instanceList = NULL;
+
+    lwm2m_network_close(contextP);
+    lwm2m_close(contextP);
 
     contextP = NULL;
 }
 
+inline security_instance_t* lwm2m_get_security_object(uint16_t security_instance_id){
+    return (security_instance_t *)LWM2M_LIST_FIND(lwm2m_client_get_context()->objectList->instanceList, security_instance_id);
+}
 
-bool lwm2m_get_server_uri(uint16_t security_instance_id, char* uriBuffer, size_t buffer_len) {
-    lwm2m_object_t * securityObjP = contextP->objectList;
-    security_instance_t * securityInstance;
-    securityInstance = (security_instance_t *)LWM2M_LIST_FIND(securityObjP->instanceList, security_instance_id);
+inline static security_instance_t* get_security_object_by_server_id(uint16_t shortServerID) {
+    security_instance_t * securityInstance=(security_instance_t *)contextP->objectList->instanceList;
+    while (NULL != securityInstance) {
+        if(securityInstance->shortID == shortServerID) return securityInstance;
+        securityInstance = securityInstance->next;
+    }
+    return NULL;
+}
 
-    if (securityInstance == NULL)
-        return false;
-
-    strncpy(uriBuffer, securityInstance->uri, buffer_len);
-    uriBuffer[buffer_len-1] = '\0';
-    return true;
+const char* lwm2m_get_server_uri(uint16_t shortServerID) {
+    security_instance_t * securityInstance = get_security_object_by_server_id(shortServerID);
+    if (securityInstance == NULL) return NULL;
+    return securityInstance->uri;
 }
 
 bool lwm2m_unregister_server(uint16_t security_instance_id)
@@ -77,6 +96,21 @@ void lwm2m_remove_unregistered_servers()
         securityObjP->instanceList = LWM2M_LIST_RM(securityObjP->instanceList, security_instance_id, &securityInstance);
         if (securityInstance != NULL)
         {
+            #ifdef LWM2M_WITH_DTLS
+            // Destructor for securityObj instances
+            if (securityInstance->secretKey) {
+                lwm2m_free(securityInstance->secretKey);
+                securityInstance->secretKey=NULL;
+                securityInstance->secretKeyLen=0;
+            }
+
+            if (securityInstance->publicIdentity) {
+                lwm2m_free(securityInstance->publicIdentity);
+                securityInstance->publicIdentity=NULL;
+                securityInstance->publicIdLen=0;
+            }
+            #endif
+
             lwm2m_free(securityInstance);
         }
 
@@ -134,37 +168,48 @@ bool lwm2m_add_server(uint16_t shortServerID, const char* uri, uint32_t lifetime
 }
 
 #ifdef LWM2M_WITH_DTLS
-void lwm2m_server_security_preshared(uint16_t shortServerID, const char* publicId, const char* psk, size_t pskLen) {
-    lwm2m_object_t * securityObjP = contextP->objectList;
-    security_instance_t * securityInstance;
-    securityInstance = (security_instance_t *)LWM2M_LIST_FIND(securityObjP->instanceList, shortServerID);
-    if (securityInstance == NULL)
-        return;
+bool lwm2m_security_use_preshared(uint16_t shortServerID, const char* publicId, const char* psk, unsigned short pskLen) {
+    security_instance_t * securityInstance=get_security_object_by_server_id(shortServerID);
+    if (NULL == securityInstance) return false;
 
-    if (publicId == NULL || psk == NULL)
+    if (securityInstance->secretKey) {
+        lwm2m_free(securityInstance->secretKey);
+        securityInstance->secretKey=NULL;
+        securityInstance->secretKeyLen=0;
+    }
+
+    if (securityInstance->publicIdentity) {
+        lwm2m_free(securityInstance->publicIdentity);
+        securityInstance->publicIdentity=NULL;
+        securityInstance->publicIdLen=0;
+    }
+
+    if (publicId == NULL || psk == NULL) {
         securityInstance->securityMode = LWM2M_SECURITY_MODE_NONE;
-    else
+        securityInstance->publicIdentity = NULL;
+    } else {
         securityInstance->securityMode = LWM2M_SECURITY_MODE_PRE_SHARED_KEY;
-    if (securityInstance->publicIdentity) lwm2m_free(securityInstance->publicIdentity);
-    securityInstance->publicIdentity = NULL;
-    securityInstance->publicIdentity = strdup(publicId);
-    securityInstance->publicIdLen = strlen(publicId);
-    if (securityInstance->secretKey) lwm2m_free(securityInstance->secretKey);
+        securityInstance->publicIdLen = (unsigned short)strlen(publicId);
+        securityInstance->publicIdentity = lwm2m_malloc(securityInstance->publicIdLen+1);
+        strcpy(securityInstance->publicIdentity, publicId);
+    }
+
     if (psk) {
        securityInstance->secretKey = lwm2m_malloc(pskLen);
        memcpy(securityInstance->secretKey, psk, pskLen);
-    } else
-       securityInstance->secretKey = NULL;
-    securityInstance->secretKeyLen = pskLen;
+       securityInstance->secretKeyLen = pskLen;
+    }
+
+    return true;
 }
 #endif
 
-bool lwm2m_is_connected() {
+bool lwm2m_is_connected(void) {
     return contextP->state == STATE_READY;
 }
 
-uint8_t lwm2m_client_process(time_t* timeoutInSec) {
-    return lwm2m_step(contextP, timeoutInSec);
+inline int lwm2m_client_process(time_t* timeoutInSec) {
+    return lwm2m_step(lwm2m_client_get_context(), timeoutInSec);
 }
 
 lwm2m_context_t * lwm2m_client_init(const char * endpointName)
@@ -191,5 +236,6 @@ lwm2m_context_t * lwm2m_client_init(const char * endpointName)
         lwm2m_printf("lwm2m_configure() failed: 0x%X\r\n", result);
         return NULL;
     }
+
     return contextP;
 }

@@ -1,4 +1,4 @@
-#include "lwm2m_objects.h"
+#include "lwm2m/objects.h"
 #include "wakaama/liblwm2m.h"
 #include "wakaama/internals.h"
 
@@ -40,6 +40,7 @@ uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object
     lwm2m_object_util_type_t res_type = resP->type;
 
     void* memberP = (void*)((char*)instanceP + resP->struct_member_offset);
+    assert(memberP!=NULL);
 
     /// Support for function results as value ///
     if ((resP->access & O_RES_E)==O_RES_E)
@@ -47,7 +48,7 @@ uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object
         if ((resP->access & O_RES_RW)==O_RES_RW) {
             struct
             {
-                void*(*read)();
+                void*(*read)(void);
                 void(*write)(void*);
             } *cbStr = memberP;
             // We do not know the result type of f() yet and use a generic "void*"

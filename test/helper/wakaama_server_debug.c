@@ -1,14 +1,25 @@
+/*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
 #include "wakaama_server_debug.h"
-#include "lwm2m_connect.h"
-#include "wakaama/liblwm2m.h"
-#include "wakaama/internals.h"
-#include "client_debug.h"
+#include "lwm2m/connect.h"
+#include "../src/wakaama/internals.h"
+#include "lwm2m/debug.h"
 
 #include <stdio.h>
 
 #define CODE_TO_STRING(X)   case X : return #X
 
-#ifdef LWM2M_WITH_LOGS
 static const char* prv_status_to_string(int status)
 {
     switch(status)
@@ -30,20 +41,18 @@ static const char* prv_status_to_string(int status)
     default: return "";
     }
 }
-#else
-#define prv_status_to_string(s)
-#endif
 
 void print_status(uint8_t status)
 {
-    lwm2m_printf("%d.%02d (%s)", (status&0xE0)>>5, status&0x1F, prv_status_to_string(status));
+    fprintf(stderr, "%d.%02d (%s)",
+            (status&0xE0)>>5, status&0x1F, prv_status_to_string(status));
 }
 
 void prv_print_error(uint8_t status)
 {
-    fprintf(stdout, "Error: ");
+    fprintf(stderr, "Error status: ");
     print_status(status);
-    fprintf(stdout, "\r\n");
+    fprintf(stderr, "\r\n");
 }
 
 char * prv_dump_binding(lwm2m_binding_t binding)

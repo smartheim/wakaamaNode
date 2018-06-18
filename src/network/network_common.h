@@ -1,0 +1,145 @@
+/*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
+#pragma once
+
+#include "lwm2m/connect.h"
+#include "wakaama_config.h"
+
+#if defined(LWIP) && defined(POSIX_NETWORK)
+#error "You cannot define LWIP and POSIX_NETWORK!"
+#endif
+
+#if !defined(LWIP) && !defined(POSIX_NETWORK)
+    #if defined(_WIN32) || defined(__unix__) || defined(__posix__) || defined(__linux) || defined(linux)
+    #define POSIX_NETWORK 1
+    #else
+    #error "Must be LWIP or POSIX_NETWORK"
+    #endif
+#endif
+
+#ifdef LWM2M_WITH_DTLS
+#include "mbedtls/ssl.h"
+#include "mbedtls/ssl_cookie.h"
+#include "mbedtls/entropy.h"
+#include "mbedtls/ctr_drbg.h"
+#include "mbedtls/debug.h"
+#endif
+
+#ifdef POSIX_NETWORK
+#include "network_posix.h"
+#endif
+
+#ifdef LWIP
+#include "network_lwip.h"
+#endif
+
+#include <stdint.h>
+#include <stdbool.h>
+#include <sys/time.h>
+
+typedef struct _network_t_ network_t;
+
+// Connection structures form a linked list and consist of
+// an identifier (socket number), and the destination address,
+// as well as the ssl/dtls connection context.
+typedef struct _connection_t
+{
+    struct _connection_t *  next;
+    network_t* network;
+    uint16_t shortServerID;  ///< The lwm2m short server id. Is always 0 on a lwm2m server.
+    addr_t addr;             ///< The IP address/port of this connection
+    sock_t sock;             ///< Connection socket reference
+    #ifdef LWM2M_WITH_DTLS
+    mbedtls_ssl_context ssl; ///< Connection ssl context
+    mbedtls_ssl_config conf; ///< Connection ssl configuration
+    bool dtls;               ///< Is this a dtls connection?
+    uint32_t tmr_intermediate_ms;
+    uint32_t tmr_final_ms;   ///< A timer is active if this is != 0
+    struct timeval tmr_current;
+    #endif
+    #ifdef LWIP
+    struct pbuf *p;          ///< Receive buffer
+    #endif
+} connection_t;
+
+typedef enum {
+    NET_CLIENT_PROCESS,
+    NET_SERVER_PROCESS
+} network_process_type_t;
+
+// This structure is stored in the wakama context custom object
+// and consists of all open/bound network sockets, network interfaces,
+// and dtls common stuff like entropy and random generator.
+typedef struct _network_t_ {
+    sock_t socket_handle[10]; // Array of socket handles
+    unsigned open_listen_sockets;
+    connection_t* connection_list;
+    network_process_type_t type;
+    #ifdef LWM2M_WITH_DTLS
+    bool dtls;
+    mbedtls_entropy_context entropy;
+    mbedtls_ctr_drbg_context ctr_drbg;
+    connection_t* cached_next_timer_connection;
+    #endif
+    // In server mode with enabled DTLS, we need the preshared information
+    #if defined(LWM2M_WITH_DTLS) && defined(LWM2M_SERVER_MODE)
+    char *                       publicIdentity;
+    uint16_t                     publicIdLen;
+    char *                       serverPublicKey;
+    uint16_t                     serverPublicKeyLen;
+    char *                       secretKey;
+    uint16_t                     secretKeyLen;
+    #ifdef LWM2M_WITH_DTLS_CERTIFICATES
+    mbedtls_x509_crt             certs;
+    mbedtls_pk_context           pkey;
+    #endif
+    #ifdef MBEDTLS_SSL_DTLS_HELLO_VERIFY
+    mbedtls_ssl_cookie_ctx cookies;
+    #endif
+    #endif
+} network_t;
+
+void internal_network_add_conn(network_t* network, connection_t* conn);
+
+// Parse uri in the form "coap[s]://[host]:[port]". host can be an IPv6 address ( "[::]" ).
+// The original c-string is modified and host and port will
+// contain a reference to the respective part of the uri c-string.
+// Return 1 on success and non-secured, 2 on success for a secured host and 0 otherwise.
+uint8_t decode_uri(char* uri, char** host, char** port);
+
+connection_t * internal_connection_find(network_t * network, addr_t addr);
+connection_t * internal_connection_create(network_t * network, char * host, char * port);
+uint8_t internal_init_sockets(lwm2m_context_t *contextP, network_t* network, const char *localPort);
+bool ip_equal(addr_t a, addr_t b);
+void closeSocket(network_t* network, unsigned socket_handle);
+
+void internal_network_read(lwm2m_context_t* contextP, void* dest, size_t len, connection_t* connection);
+void internal_check_timer(lwm2m_context_t* contextP, struct timeval* next_event);
+
+#ifdef LWM2M_NETWORK_LOGGING
+void connection_log_io(connection_t* conn, int length, bool sending);
+#define network_log_info(...) fprintf(stdout, __VA_ARGS__)
+#define network_log_error(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define connection_log_io(...) {}
+#define network_log_info(...)
+#define network_log_error(...)
+#endif
+
+#ifndef MAX_PACKET_SIZE
+#define MAX_PACKET_SIZE 1024
+#endif
+
+int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len );
+int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len );

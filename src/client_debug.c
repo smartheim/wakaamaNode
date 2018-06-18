@@ -1,12 +1,10 @@
-#include "client_debug.h"
+#include "lwm2m/debug.h"
 #include "wakaama_config.h"
 #include "wakaama/liblwm2m.h"
 #include "wakaama/internals.h"
 
 void print_state(lwm2m_context_t * lwm2mH)
 {
-    lwm2m_server_t * targetP;
-
     lwm2m_printf("State: ");
     switch(lwm2mH->state)
     {
@@ -28,13 +26,10 @@ void print_state(lwm2m_context_t * lwm2mH)
     case STATE_READY:
         lwm2m_printf("STATE_READY");
         break;
-    default:
-        lwm2m_printf("Unknown !");
-        break;
     }
     lwm2m_printf("\r\n");
 
-    targetP = lwm2mH->bootstrapServerList;
+    lwm2m_server_t * targetP;
 
     if (lwm2mH->bootstrapServerList == NULL)
     {

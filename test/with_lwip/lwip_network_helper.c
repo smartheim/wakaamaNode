@@ -13,7 +13,7 @@
 #include "netif/etharp.h"
 #include "lwipopts.h"
 
-#include "client_debug.h" // for lwm2m_printf
+#include "lwm2m/debug.h" // for lwm2m_printf
 #include "network_helper.h"
 #include "internals.h"
 
@@ -86,7 +86,7 @@ static void tapif_input(struct netif *netif)
   }
 }
 
-void network_close()
+void test_network_close()
 {
     //close((intptr_t)netifs[0].state);
     //close((intptr_t)netifs[1].state);
@@ -146,7 +146,7 @@ err_t tapif_real_init(int netIfNo)
     return ERR_OK;
 }
 
-bool network_init()
+bool test_network_init()
 {
     // LwIP can only be initialited once
     static bool lwip_init_done = false;

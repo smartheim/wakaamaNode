@@ -26,7 +26,7 @@ Define your custom objects either via C or the C++ interface.
 
 ## Object definition C++ API
 
-Include `lwm2m_objects.hpp`.
+Include `lwm2m/objects.hpp`.
 
 ### Lwm2mObject class
 
@@ -273,7 +273,7 @@ MyObject o(my_read_method);
 
 ## Object definition C API
 
-Include `lwm2m_objects.h`.
+Include `lwm2m/objects.h`.
 
 ```cpp
 /**

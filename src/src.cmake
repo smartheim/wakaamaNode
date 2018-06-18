@@ -3,66 +3,52 @@
 include(${CMAKE_CURRENT_LIST_DIR}/wakaama/wakaama.cmake)
 set(WAKAAMA_NODE_DIR ${CMAKE_CURRENT_LIST_DIR})
 
-file(GLOB KNOWN_OBJECTS "${WAKAAMA_NODE_DIR}/lwm2mObjects/*.h")
-set(PLATFORM_HEADERS
-    ${WAKAAMA_NODE_DIR}/lwm2m_connect.h
-    ${WAKAAMA_NODE_DIR}/lwm2m_objects.h
-    ${WAKAAMA_NODE_DIR}/lwm2m_objects.hpp
-    ${WAKAAMA_NODE_DIR}/object_firmware.hpp
-    ${WAKAAMA_NODE_DIR}/object_device.h
-    ${WAKAAMA_NODE_DIR}/client_debug.h
-    ${WAKAAMA_NODE_DIR}/network.h
+file(GLOB KNOWN_OBJECTS "${WAKAAMA_NODE_DIR}/include/lwm2mObjects/*.h")
+set(HEADERS
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/connect.h
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/server.h
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/objects.h
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/objects.hpp
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/object_firmware.hpp
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/object_device.h
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/debug.h
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/network.h
     ${KNOWN_OBJECTS}
     )
 
-set(PLATFORM_PRIVATE_HEADERS
-    ${WAKAAMA_NODE_DIR}/network/network_utils.h
+set(PRIVATE_HEADERS
+    ${WAKAAMA_NODE_DIR}/internal.h
+    ${WAKAAMA_NODE_DIR}/macro_helper.h
     )
 
-set(PLATFORM_SOURCES
-    ${WAKAAMA_NODE_DIR}/network/network_utils.c
-    ${WAKAAMA_NODE_DIR}/network/network_utils.h
-    )
-
-if(NOT DONT_USE_POSIX)
-    list(APPEND PLATFORM_SOURCES
-    ${WAKAAMA_NODE_DIR}/platform/platform_posix.c
-    ${WAKAAMA_NODE_DIR}/firmware/firmware_posix.cpp
-    )
-endif()
-
-if(USE_FREERTOS)
-    list(APPEND PLATFORM_SOURCES
-    ${WAKAAMA_NODE_DIR}/platform/platform_freertos.c
-    )
-endif()
-
-if(USE_ESP8266)
-    list(APPEND PLATFORM_SOURCES
-    ${WAKAAMA_NODE_DIR}/platform/platform_esp8266sdk.c
-    ${WAKAAMA_NODE_DIR}/firmware/arduinoOTA.cpp
-    )
-endif()
+set(PLATFORM_SOURCES "")
 
 file(GLOB_RECURSE NETWORK_MBEDTLS_H "${WAKAAMA_NODE_DIR}/network/mbedtls/include/*.h")
 file(GLOB NETWORK_MBEDTLS "${WAKAAMA_NODE_DIR}/network/mbedtls/library/*.c")
 file(GLOB NETWORK_MBEDTLS_PL "${WAKAAMA_NODE_DIR}/network/mbedtls/platform/*.c")
-if(USE_LWIP)
-    list(APPEND PLATFORM_SOURCES ${WAKAAMA_NODE_DIR}/network/network_lwip.c
-        ${NETWORK_MBEDTLS_H} ${NETWORK_MBEDTLS} ${NETWORK_MBEDTLS_PL})
-else()
-    list(APPEND PLATFORM_SOURCES ${WAKAAMA_NODE_DIR}/network/network_posix.c
-        ${NETWORK_MBEDTLS_H} ${NETWORK_MBEDTLS} ${NETWORK_MBEDTLS_PL})
-endif()
+list(APPEND PLATFORM_SOURCES
+    ${WAKAAMA_NODE_DIR}/network/network_common.c
+    ${WAKAAMA_NODE_DIR}/network/network_common.h
+    ${WAKAAMA_NODE_DIR}/platform/platform_posix.c
+    ${WAKAAMA_NODE_DIR}/firmware/firmware_posix.cpp
+    ${WAKAAMA_NODE_DIR}/platform/platform_freertos.c
+    ${WAKAAMA_NODE_DIR}/platform/platform_esp8266sdk.c
+    ${WAKAAMA_NODE_DIR}/firmware/arduinoOTA.cpp
+    ${WAKAAMA_NODE_DIR}/network/network_lwip.c ${WAKAAMA_NODE_DIR}/network/network_posix.c
+    ${WAKAAMA_NODE_DIR}/network/network_lwip.h ${WAKAAMA_NODE_DIR}/network/network_posix.h
+    ${NETWORK_MBEDTLS_H} ${NETWORK_MBEDTLS} ${NETWORK_MBEDTLS_PL})
 
 
 set(WAKAAMA_NODE_DIR_INCLUDE_DIRS
     ${WAKAAMA_SOURCES_DIR}
-    ${WAKAAMA_NODE_DIR}
-    "${WAKAAMA_NODE_DIR}/network/mbedtls/include"
-    "${WAKAAMA_NODE_DIR}/platform/")
+    "${WAKAAMA_NODE_DIR}/include"
+    "${WAKAAMA_NODE_DIR}/network/mbedtls/include")
 
-set(WAKAAMA_NODE_DIR_SOURCES  ${WAKAAMA_SOURCES} ${PLATFORM_HEADERS} ${PLATFORM_SOURCES} ${PLATFORM_PRIVATE_HEADERS}
+set(WAKAAMA_NODE_DIR_SOURCES
+    ${WAKAAMA_SOURCES}
+    ${HEADERS}
+    ${PRIVATE_HEADERS}
+    ${PLATFORM_SOURCES}
     ${WAKAAMA_NODE_DIR}/object_device.c
     ${WAKAAMA_NODE_DIR}/object_security.c
     ${WAKAAMA_NODE_DIR}/object_server.c
@@ -70,5 +56,6 @@ set(WAKAAMA_NODE_DIR_SOURCES  ${WAKAAMA_SOURCES} ${PLATFORM_HEADERS} ${PLATFORM_
     ${WAKAAMA_NODE_DIR}/lwm2m_objects_cpp.cpp
     ${WAKAAMA_NODE_DIR}/lwm2m_objects.c
     ${WAKAAMA_NODE_DIR}/lwm2m_connect.c
+    ${WAKAAMA_NODE_DIR}/lwm2m_server.c
     )
 

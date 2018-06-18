@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016  MSc. David Graeff <david.graeff@web.de>
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -13,26 +13,32 @@
  */
 
 #include <gtest/gtest.h>
-#include "lwm2m_connect.h"
-#include "lwm2m_objects.h"
-#include "client_debug.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/server.h"
+#include "lwm2m/objects.h"
+#include "lwm2m/debug.h"
 #include "wakaama_server_debug.h"
-#include "network.h"
-#include "internal.h"
+#include "lwm2m/network.h"
+#include "../src/internal.h"
+#include "../src/network/network_common.h"
 #include "network_helper.h"
 #include "memory.h"
 
 #ifdef TAP_SERVER_ADDR
 #define LWM2M_SERVER_ADDR "coap://" TAP_SERVER_ADDR
+#define LWM2M_SERVER_ADDR_SEC "coaps://" TAP_SERVER_ADDR
 #else
 #define LWM2M_SERVER_ADDR "coap://127.0.0.1"
+#define LWM2M_SERVER_ADDR_SEC "coaps://127.0.0.1"
 #endif
 
 #include <stdint.h>
 #include <stdio.h>
 
 #include <thread>
+#include <mutex>
 #include <memory>
+#include <functional>
 
 extern "C" {
 #include "internals.h"
@@ -44,7 +50,6 @@ public:
     lwm2m_context_t * client_context = nullptr;
     lwm2m_object_t * securityObj = nullptr;
     lwm2m_object_t * serverObj = nullptr;
-    std::unique_ptr<std::thread> serverThread;
     volatile bool server_running = false;
 
     lwm2m_context_t * server_context;
@@ -57,21 +62,26 @@ public:
 
  protected:
     virtual void TearDown() {
+        if(server_context) {
+            lwm2m_network_close(server_context);
+            lwm2m_close (server_context);
+            server_context = nullptr;
+        }
         if (!client_context) return;
         ASSERT_TRUE(client_context->userData);
-
-        lwm2m_network_close(client_context);
         lwm2m_client_close();
+        test_network_close();
 
-        network_close();
-
-        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
+        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+                      [](MemoryObserver::MemAreas::value_type it){
+            GTEST_FATAL_FAILURE_(it.second.c_str ());
+        });
     }
 
     virtual void SetUp() {
         memoryObserver.reset();
 
-        ASSERT_TRUE(network_init());
+        ASSERT_TRUE(test_network_init());
         client_context = lwm2m_client_init(client_name);
         ASSERT_TRUE(client_context) << "Failed to initialize wakaama\r\n";
 
@@ -92,12 +102,10 @@ public:
             ASSERT_TRUE(resP->struct_member_offset);
         }
 
-        client_bound_sockets = lwm2m_network_init(client_context, NULL);
-        ASSERT_GE(client_bound_sockets, 1);
-        ASSERT_TRUE(client_context->userData);
-
         server_context = nullptr;
     }
+
+    void runTest(bool useDtls);
 };
 
 static void prv_monitor_callback(uint16_t clientID,
@@ -134,7 +142,19 @@ static void prv_monitor_callback(uint16_t clientID,
     }
 }
 
-TEST_F(ConnectServerTests, ConnectServer) {
+void ConnectServerTests::runTest(bool useDtls) {
+    const char PSK[] = "psk";
+    const char PUBLICID[] = "publicid";
+
+    std::mutex mutex;
+
+    using deleted_unique_ptr = std::unique_ptr<std::thread,std::function<void(std::thread*)>>;
+    deleted_unique_ptr serverThread;
+
+    client_bound_sockets = lwm2m_network_init(client_context, nullptr, useDtls);
+    ASSERT_GE(client_bound_sockets, 1);
+    ASSERT_TRUE(client_context->userData);
+
     int server_bound_sockets;
 
     //// init server thread ////
@@ -142,10 +162,18 @@ TEST_F(ConnectServerTests, ConnectServer) {
     server_context->state = STATE_READY;
     ASSERT_TRUE(server_context);
 
+    // Install a monitoring callback for the server lwm2m context.
+    // We check for the COAP_201_CREATED and COAP_202_DELETED events
     lwm2m_set_monitoring_callback(server_context, prv_monitor_callback, this);
-    server_bound_sockets = lwm2m_network_init(server_context, LWM2M_DEFAULT_SERVER_PORT);
+    server_bound_sockets = lwm2m_network_init(server_context,
+                                              useDtls ? LWM2M_DEFAULT_SECURE_SERVER_PORT : LWM2M_DEFAULT_SERVER_PORT,
+                                              useDtls);
     ASSERT_LE(1, server_bound_sockets);
     ASSERT_TRUE(server_context->userData);
+
+    //// If DTLS: Set server public ID and preshared key
+    if (useDtls)
+        lwm2m_server_dtls_psk(server_context,PUBLICID,PSK,sizeof(PSK));
 
     client_updated = 0;
     connected_client_name = nullptr;
@@ -155,34 +183,66 @@ TEST_F(ConnectServerTests, ConnectServer) {
     server_bound_sockets = 1;
     lwm2m_network_force_interface(server_context, network_get_interface(server_bound_sockets));
     #endif
-    serverThread = std::unique_ptr<std::thread>(new std::thread([this,server_bound_sockets]() {
+
+    // Start server thread with custom unique ptr deleter that joins the thread again
+    serverThread =deleted_unique_ptr( new std::thread([this,&mutex,server_bound_sockets]() {
         while (server_running) {
+            usleep(1000);
+            std::lock_guard<std::mutex> guard(mutex);
             network_step_blocking(server_context,server_bound_sockets);
         }
-    }));
+        int last10 = 10;
+        while (last10--) {
+            usleep(1000);
+            std::lock_guard<std::mutex> guard(mutex);
+            network_step_blocking(server_context,server_bound_sockets);
+        }
+    }),[this](std::thread* t){
+        server_running=false;
+        t->join();
+    });
 
     //// client: add server and register ////
-    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false));
+    ASSERT_TRUE(lwm2m_add_server(123, useDtls ? LWM2M_SERVER_ADDR_SEC : LWM2M_SERVER_ADDR, 100, false));
+
+    //// client: set dtls psk ////
+    if (useDtls) {
+        lwm2m_security_use_preshared(123,PUBLICID,PSK,sizeof(PSK));
+    }
 
     uint8_t steps = 0;
     uint8_t result;
 
     #ifdef TAP_SERVER_ADDR //lwip
-    client_bound_sockets = 0; // use the first lwip network interface for the server
+    client_bound_sockets = 0; // use the first lwip network interface for the client
     lwm2m_network_force_interface(client_context, network_get_interface(client_bound_sockets));
     #endif
 
-    while (steps++ < 10) {
+    // Client and server threads are doing network_step_blocking() in sequence for easier
+    // step debugging if necessary
+    while (steps++ < 15) {
+        usleep(1000);
+        std::lock_guard<std::mutex> guard(mutex);
         result = network_step_blocking(client_context,client_bound_sockets);
         if (result == COAP_NO_ERROR) {
-            if (client_context->state == STATE_READY)
-                break;
+            if (useDtls) {
+                network_t* network = (network_t*)client_context->userData;
+                connection_t* c = network->connection_list;
+                bool inHandshake = false;
+                while (c) {
+                    inHandshake |= c->dtls && c->ssl.state!=MBEDTLS_SSL_HANDSHAKE_OVER;
+                    c = c->next;
+                }
+                if (!inHandshake)
+                    if(client_context->state == STATE_READY)
+                        break;
+            } else if (client_context->state == STATE_READY)
+                    break;
         } else {
             prv_print_error(result);
             // print_status(result);
             print_state(client_context);
         }
-        usleep(1000*20);
     }
 
     ASSERT_EQ(COAP_NO_ERROR, result);
@@ -197,6 +257,8 @@ TEST_F(ConnectServerTests, ConnectServer) {
     // All further steps make sure, the result does not change.
     steps = 0;
     while (steps++ < 10) {
+        usleep(1000);
+        std::lock_guard<std::mutex> guard(mutex);
         result = network_step_blocking(client_context,client_bound_sockets);
         if (result == COAP_503_SERVICE_UNAVAILABLE) {
             if (client_context->state == STATE_BOOTSTRAP_REQUIRED)
@@ -214,14 +276,19 @@ TEST_F(ConnectServerTests, ConnectServer) {
 
     ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
     ASSERT_EQ(STATE_BOOTSTRAP_REQUIRED, client_context->state);
+
+    if (serverThread){
+       serverThread.reset();
+    }
     ASSERT_EQ(nullptr, connected_client_name);
-
-
-    server_running = false;
-    if (serverThread)
-        serverThread->join();
-
-    lwm2m_network_close(server_context);
-    lwm2m_close(server_context);
-    server_context = nullptr;
 }
+
+TEST_F(ConnectServerTests, ConnectServer) {
+    runTest(false);
+}
+
+#if defined(LWM2M_WITH_DTLS) && defined(LWM2M_SERVER_MODE)
+TEST_F(ConnectServerTests, ConnectServerDtlsPSK) {
+    runTest(true);
+}
+#endif

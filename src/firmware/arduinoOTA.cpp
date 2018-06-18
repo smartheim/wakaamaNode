@@ -1,5 +1,5 @@
-#include "lwm2m_connect.h"
-#include "object_firmware.hpp"
+#include "lwm2m/connect.h"
+#include "lwm2m/object_firmware.hpp"
 #if !defined(_WIN32) && !defined(__unix__) && defined(LWM2M_FIRMWARE_UPGRADES)
 #include <ArduinoOTA.h>
 #include <ESP8266httpUpdate.h>

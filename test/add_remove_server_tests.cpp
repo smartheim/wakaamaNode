@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2016  MSc. David Graeff <david.graeff@web.de>
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -13,12 +13,12 @@
  */
 
 #include <gtest/gtest.h>
-#include "lwm2m_connect.h"
-#include "lwm2m_objects.h"
-#include "client_debug.h"
+#include "lwm2m/connect.h"
+#include "lwm2m/objects.h"
+#include "lwm2m/debug.h"
 #include "wakaama_server_debug.h"
-#include "network.h"
-#include "internal.h"
+#include "lwm2m/network.h"
+#include "../src/internal.h"
 #include "network_helper.h"
 #include "memory.h"
 
@@ -57,15 +57,18 @@ public:
         }
 
 
-        network_close();
+        test_network_close();
 
-        ASSERT_STREQ("", memoryObserver.printIfNotEmpty().c_str());
+        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+                      [](MemoryObserver::MemAreas::value_type it){
+            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+        });
     }
 
     virtual void SetUp() {
         memoryObserver.reset();
         // Necessary for lwip to initialize the memory module
-        ASSERT_TRUE(network_init());
+        ASSERT_TRUE(test_network_init());
 
         ASSERT_TRUE(lwm2m_client_init(client_name)) << "Failed to initialize wakaama\r\n";
 
@@ -78,7 +81,7 @@ public:
 
         server_context = nullptr;
 
-        ASSERT_GE(lwm2m_network_init(lwm2m_client_get_context(), "12345"), 1);
+        ASSERT_GE(lwm2m_network_init(lwm2m_client_get_context(), NULL, false), 1);
     }
 };
 
@@ -94,9 +97,7 @@ TEST_F(AddRemoveServerTests, AddServer) {
     ASSERT_EQ(123, secInstance->shortID);
     ASSERT_EQ(123, serverInstance->shortServerId);
 
-    char uriBuffer[100];
-    ASSERT_TRUE(lwm2m_get_server_uri(secInstance->instanceId,uriBuffer, sizeof(uriBuffer)));
-    ASSERT_STREQ(uriBuffer, LWM2M_SERVER_ADDR);
+    ASSERT_STREQ(lwm2m_get_server_uri(123), LWM2M_SERVER_ADDR);
 
     time_t timeout;
     uint8_t result = lwm2m_step(lwm2m_client_get_context(), &timeout);

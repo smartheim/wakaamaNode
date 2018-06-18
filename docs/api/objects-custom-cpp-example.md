@@ -53,6 +53,8 @@ You inherit from `Lwm2mObjectInstance` for the object instance data holder.
 Declare an object class that describes object 1024 to the library:
 
 ```cpp
+#include "lwm2m/objects.hpp"
+
 // Object with LwM2M ID 1024
 class MyObject: public Lwm2mObject<1024,MyObject,MyObjectInstance>
 {

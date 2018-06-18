@@ -1,22 +1,16 @@
 /*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
  *
- * Copyright (c) 2013, 2014 Intel Corporation and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * and Eclipse Distribution License v1.0 which accompany this distribution.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
  *
- * The Eclipse Public License is available at
- *    http://www.eclipse.org/legal/epl-v10.html
- * The Eclipse Distribution License is available at
- *    http://www.eclipse.org/org/documents/edl-v10.php.
- *
- * Contributors:
- *    David Navarro, Intel Corporation - initial API and implementation
- *    Julien Vermillard, Sierra Wireless
- *    Bosch Software Innovations GmbH - Please refer to git log
- *    Pascal Rieux - Please refer to git log
- *
- *******************************************************************************/
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
 
 /*
  *  Resources:
