@@ -9,10 +9,10 @@ before_install:
   - test/setup_gtest.sh
 
 before_script:
-  - if [ "$TRAVIS_EVENT_TYPE" == "api" ]; then
+  - if [ "$TRAVIS_EVENT_TYPE" == "api_DISABLE" ]; then
        ./update_wakaama.sh;
     fi;
-  - if [ "$TRAVIS_EVENT_TYPE" == "cron" ]; then
+  - if [ "$TRAVIS_EVENT_TYPE" == "cron_DISABLE" ]; then
        ./update_wakaama.sh;
     fi;
 
