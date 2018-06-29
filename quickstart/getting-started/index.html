@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/quickstart/getting-started/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -255,8 +257,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -392,6 +420,12 @@
       
       
       
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
       
     </ul>
   
@@ -587,6 +621,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -602,11 +660,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -622,6 +716,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -703,6 +821,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -765,10 +889,9 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 <span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;Arduino.h&gt;</span><span class="cp"></span>
 
-<span class="cp">#include</span> <span class="cpf">&quot;lwm2m_connect.h&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&quot;network.h&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&quot;lwm2m_objects.hpp&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&quot;client_debug.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2m/connect.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2m/objects.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2m/debug.h&quot;</span><span class="cp"></span>
 
 <span class="cp">#include</span> <span class="cpf">&quot;lwm2mObjects/3311.h&quot;</span><span class="cp"></span>
 
@@ -777,87 +900,80 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 <span class="n">id3311</span><span class="o">::</span><span class="n">object</span> <span class="n">lights</span><span class="p">;</span>
 <span class="n">id3311</span><span class="o">::</span><span class="n">instance</span> <span class="n">ledsInstance</span><span class="p">;</span>
 
-<span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">client_context</span><span class="p">;</span>
+<span class="c1">// If this context object goes out of scope, you will be</span>
+<span class="c1">// disconnected from all connected servers automatically.</span>
+<span class="n">LwM2MConnect</span> <span class="nf">context</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+
 <span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
     <span class="n">std</span><span class="o">::</span><span class="n">set_new_handler</span><span class="p">([](){</span><span class="n">ESP</span><span class="p">.</span><span class="n">restart</span><span class="p">();});</span> <span class="c1">// Reboot on heap memory outage</span>
 
-    <span class="n">device_instance_t</span> <span class="o">*</span> <span class="n">device_data</span> <span class="o">=</span> <span class="n">lwm2m_device_data_get</span><span class="p">();</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="s">&quot;test manufacturer&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">&quot;test model&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">device_type</span> <span class="o">=</span> <span class="s">&quot;led&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.0&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">serial_number</span> <span class="o">=</span> <span class="s">&quot;140234-645235-12353&quot;</span><span class="p">;</span>
-    <span class="n">client_context</span> <span class="o">=</span> <span class="n">lwm2m_client_init</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">client_context</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="p">{</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to initialize wakaama</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="p">}</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="s">&quot;test manufacturer&quot;</span><span class="p">;</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">&quot;test model&quot;</span><span class="p">;</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">device_type</span> <span class="o">=</span> <span class="s">&quot;sensor&quot;</span><span class="p">;</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.0&quot;</span><span class="p">;</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">serial_number</span> <span class="o">=</span> <span class="s">&quot;140234-645235-12353&quot;</span><span class="p">;</span>
+    <span class="c1">// if LWM2M_DEV_INFO_TIME is enabled</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">time_offset</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">timezone</span> <span class="o">=</span> <span class="s">&quot;+05:00&quot;</span><span class="p">;</span>
 
-    <span class="c1">// Overwrite the verifyFunction and &quot;abuse&quot; it as value changed event.</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
-        <span class="k">auto</span> <span class="n">inst</span> <span class="o">=</span> <span class="n">instance</span><span class="o">-&gt;</span><span class="n">as</span><span class="o">&lt;</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">&gt;</span><span class="p">();</span>
+    <span class="c1">// Overwrite the verify function and &quot;abuse&quot; it as value changed event.</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span> <span class="n">i</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
         <span class="c1">// Is it instance 0 and the OnOff resource?</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">inst</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span> <span class="o">==</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">i</span><span class="o">-&gt;</span><span class="n">id</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">res_id</span> <span class="o">==</span> <span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">)</span> <span class="p">{</span>
             <span class="c1">// Change the led pin depending on the OnOff value</span>
-            <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">inst</span><span class="o">-&gt;</span><span class="n">OnOff</span><span class="p">);</span>
+            <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">i</span><span class="o">-&gt;</span><span class="n">OnOff</span><span class="p">);</span>
         <span class="p">}</span>
         <span class="c1">// Return true to accept the value and ACK to the server</span>
         <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
     <span class="p">};</span>
 
     <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// set instance id</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ledsInstance</span><span class="p">);</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">ledsInstance</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="nb">false</span><span class="p">);</span>
 
     <span class="c1">// Initialize the LED_BUILTIN pin as an output</span>
     <span class="n">pinMode</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">OUTPUT</span><span class="p">);</span>
 
     <span class="c1">// Wait for network to connect</span>
 
-    <span class="c1">// Init lwm2m network</span>
-    <span class="kt">uint8_t</span> <span class="n">bound_sockets</span> <span class="o">=</span> <span class="n">lwm2m_network_init</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">bound_sockets</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">context</span><span class="p">.</span><span class="n">socket_count</span><span class="p">())</span>
         <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to open socket</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 
     <span class="c1">// Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of</span>
     <span class="c1">// unsend messages. The host url is either coap:// or coaps://.</span>
-    <span class="n">lwm2m_add_server</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;coap://192.168.1.18&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">add_server</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;coap://192.168.1.18&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
 
-    <span class="c1">// Enter your DTLS secured connection information</span>
+    <span class="c1">// Enter your DTLS connection information</span>
     <span class="cp">#ifdef LWM2M_WITH_DTLS</span>
-    <span class="n">lwm2m_server_security_preshared</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;publicid&quot;</span><span class="p">,</span> <span class="s">&quot;PSK&quot;</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="s">&quot;PSK&quot;</span><span class="p">));</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">use_dtls_psk</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;publicid&quot;</span><span class="p">,</span> <span class="s">&quot;PSK&quot;</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="s">&quot;PSK&quot;</span><span class="p">));</span>
     <span class="cp">#endif</span>
 <span class="p">}</span>
 
-<span class="c1">// Toggle the led with a button press and inform the lwm2m server about the new state</span>
+<span class="c1">// Toggle the led by a button press and inform the lwm2m server about the new state</span>
 <span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
     <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="c1">// If you want to disconnect from the network, you should be so kind and let the lwm2m server know.</span>
-<span class="kt">void</span> <span class="nf">disconnect_from_lwm2m_server</span><span class="p">()</span> <span class="p">{</span>
-    <span class="c1">// Deregisters from the lwm2m server, frees ressources taken by wakaama.</span>
-    <span class="n">lwm2m_client_close</span><span class="p">();</span>
-    <span class="c1">// Close the network connection and release network ressoures.</span>
-    <span class="n">lwm2m_network_close</span><span class="p">(</span><span class="n">client_context</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
 <span class="p">}</span>
 
 <span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kt">time_t</span> <span class="n">tv_sec</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">time_to_next_call</span><span class="p">{</span><span class="mi">20</span><span class="p">,</span><span class="mi">0</span><span class="p">};</span>
 
-    <span class="kt">uint8_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">lwm2m_step</span><span class="p">(</span><span class="n">client_context</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv_sec</span><span class="p">);</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">COAP_503_SERVICE_UNAVAILABLE</span><span class="p">)</span> <span class="p">{</span>
-        <span class="c1">// No server found so far</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">process</span><span class="p">(</span><span class="o">&amp;</span><span class="n">time_to_next_call</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="n">COAP_505_NO_NETWORK_CONNECTION</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Couldn&#39;t open UDP sockets.</span>
+        <span class="c1">// Call lwm2m_network_init again after network is availabe again.</span>
     <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
         <span class="c1">// Unexpected error</span>
-        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;lwm2m_step() failed: 0x%X</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
-        <span class="n">print_state</span><span class="p">(</span><span class="n">client_context</span><span class="p">);</span>
+        <span class="n">print_state</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
     <span class="p">}</span>
+    <span class="c1">// If a server connetion gets lost, the lwm2m state machine will change into</span>
+    <span class="c1">// BOOTSTRAP_REQUIRED state. The following method will reset the state machine</span>
+    <span class="c1">// and the next process() call will attempt a reconnect.</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">watch_and_reconnect</span><span class="p">(</span><span class="o">&amp;</span><span class="n">time_to_next_call</span><span class="p">,</span> <span class="mi">5</span><span class="p">);</span>
 
-    <span class="n">lwm2m_network_process</span><span class="p">(</span><span class="n">client_context</span><span class="p">);</span>
+    <span class="c1">// You may go into low power mode on an µC or use context.block_wait() on posix:</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">block_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">next_event</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -895,8 +1011,14 @@ content:</p>
 <span class="c1">// Enables the firmware update mechanism.</span>
 <span class="cp">#define LWM2M_FIRMWARE_UPGRADES</span>
 
-<span class="c1">// Enable DTLS support</span>
+<span class="c1">// Enable DTLS support (preshared and public key)</span>
 <span class="cp">#define LWM2M_WITH_DTLS</span>
+
+<span class="c1">// Enable additional support for X.509 certificates and PEM data</span>
+<span class="c1">// #define LWM2M_WITH_DTLS_X509</span>
+
+<span class="c1">// Overwrite maximum packet size. Defaults to 1024 bytes</span>
+<span class="c1">// #define MAX_PACKET_SIZE 1024</span>
 </pre></div>
 
 <p>Edit the file to your needs, by commenting out unwanted features.</p>
@@ -914,6 +1036,22 @@ content:</p>
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/quickstart/getting-started/";
+      this.page.identifier =
+        "quickstart/getting-started/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>

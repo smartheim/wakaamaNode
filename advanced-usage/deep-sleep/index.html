@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/advanced-usage/deep-sleep/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -102,7 +104,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -253,8 +255,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -526,6 +554,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -541,11 +593,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -561,6 +649,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -596,21 +708,23 @@
                 
                   <h1>Deep sleep</h1>
                 
-                <p>After a deep sleep a new IP may be assigned, which requires a new DTLS security context and a new lwM2M handshake, therefore a proper session closing is recommended. To ensure that all messages are sent and the session is shutdown correctly,  do a <code class="codehilite">lwm2m_network_close(lwm2mH);</code> and <code class="codehilite">lwm2m_client_close();</code>. This will disconnect everything cleanly, so that you can call <code class="codehilite">ESP.deepSleep()</code>. </p>
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">reconnect</span><span class="p">()</span> <span class="p">{</span>
-  <span class="c1">// ...</span>
-<span class="p">}</span>
+                <p>After a long deep sleep a new IP may be assigned by the DHCP/stateless-address-autoconfiguration part of your network layer.
+This requires a new DTLS security context and a new lwM2M handshake,
+therefore a proper session closing is recommended before entering deep sleep.</p>
+<p>To ensure that all messages are sent and the (DTLS) session is shutdown correctly,
+use the function <code class="codehilite">lwm2m_network_close(context)</code>. Reinitialize
+the network after the deep sleep has finished with <code class="codehilite">lwm2m_network_init(context,port)</code>.</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;lwm2m/network.h&quot;</span><span class="cp"></span>
 
 <span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span> <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">requestDeepsleep</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">requestDeepsleep</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
-    <span class="n">lwm2m_network_close</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">);</span>
-    <span class="n">lwm2m_client_close</span><span class="p">();</span>
+    <span class="n">lwm2m_network_close</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
 
-    <span class="n">ESP</span><span class="p">.</span><span class="n">deepSleep</span><span class="p">();</span>
+    <span class="n">ESP</span><span class="p">.</span><span class="n">deepSleep</span><span class="p">();</span> <span class="c1">// Example call to enter deep sleep</span>
+    <span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span> <span class="c1">// Some time for the OS and network layer to recover</span>
 
-    <span class="n">sleep</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
-    <span class="n">reconnect</span><span class="p">();</span>
+    <span class="n">lwm2m_network_init</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="mi">0</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
@@ -621,6 +735,22 @@
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/advanced-usage/deep-sleep/";
+      this.page.identifier =
+        "advanced-usage/deep-sleep/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>
@@ -649,13 +779,13 @@
           </a>
         
         
-          <a href="../../others/limitations-and-known-issues/" title="Limitations and known issues" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../own-mainloop/" title="Own mainloop" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Limitations and known issues
+                Own mainloop
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">

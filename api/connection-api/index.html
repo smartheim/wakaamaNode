@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/api/connection-api/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -97,7 +99,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
     
-      <a href="#connectiondevice-api" tabindex="1" class="md-skip">
+      <a href="#connectiondevicefirmware-api" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -257,8 +259,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -388,8 +416,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#connection-api" title="Connection API" class="md-nav__link">
-    Connection API
+  <a href="#connection-c-api" title="Connection C-API" class="md-nav__link">
+    Connection C-API
   </a>
   
     <nav class="md-nav">
@@ -408,8 +436,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#provide-device-information-api" title="Provide device information API" class="md-nav__link">
-    Provide device information API
+  <a href="#connection-c-api_1" title="Connection C++-API" class="md-nav__link">
+    Connection C++-API
   </a>
   
     <nav class="md-nav">
@@ -428,15 +456,68 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#device-information-api" title="Device information API" class="md-nav__link">
+    Device information API
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_2" title="Example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#firmware-update-ota" title="Firmware update / OTA" class="md-nav__link">
     Firmware update / OTA
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#update-method" title="Update method" class="md-nav__link">
+    Update method
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-api" title="C++ API" class="md-nav__link">
+    C++ API
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_3" title="Example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
       
       
       
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
       
     </ul>
   
@@ -601,6 +682,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -616,11 +721,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -636,6 +777,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -675,8 +840,8 @@
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#connection-api" title="Connection API" class="md-nav__link">
-    Connection API
+  <a href="#connection-c-api" title="Connection C-API" class="md-nav__link">
+    Connection C-API
   </a>
   
     <nav class="md-nav">
@@ -695,8 +860,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#provide-device-information-api" title="Provide device information API" class="md-nav__link">
-    Provide device information API
+  <a href="#connection-c-api_1" title="Connection C++-API" class="md-nav__link">
+    Connection C++-API
   </a>
   
     <nav class="md-nav">
@@ -715,15 +880,68 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#device-information-api" title="Device information API" class="md-nav__link">
+    Device information API
+  </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example_2" title="Example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#firmware-update-ota" title="Firmware update / OTA" class="md-nav__link">
     Firmware update / OTA
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#update-method" title="Update method" class="md-nav__link">
+    Update method
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c-api" title="C++ API" class="md-nav__link">
+    C++ API
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_3" title="Example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
       
       
       
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
       
     </ul>
   
@@ -740,165 +958,401 @@
                   <a href="https://github.com/Openhab-Nodes/wakaamaNode/edit/master/docs/api/connection-api.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <h1 id="connectiondevice-api">Connection/Device API<a class="headerlink" href="#connectiondevice-api" title="Permanent link">&para;</a></h1>
-<p>The connection/device API is implemented in C.
-This library is designed to be used as a single instance. You cannot request or manage multiple Wakaama contexts.</p>
-<h2 id="connection-api">Connection API<a class="headerlink" href="#connection-api" title="Permanent link">&para;</a></h2>
-<p>Include <code class="codehilite">wakaama_simple_client.h</code>.</p>
+                <h1 id="connectiondevicefirmware-api">Connection/Device/Firmware API<a class="headerlink" href="#connectiondevicefirmware-api" title="Permanent link">&para;</a></h1>
+<p>Find the documentation and examples for the connection C and C++ API in this document.
+The last sections describe the device- and firware update API.</p>
+<h2 id="connection-c-api">Connection C-API<a class="headerlink" href="#connection-c-api" title="Permanent link">&para;</a></h2>
+<p>Include <code class="codehilite">lwm2m/c_connect.h</code>.</p>
+<p>In your main file declare a variable of type <code class="codehilite">lwm2m_client_context_t</code>.</p>
+<div class="admonition example">
+<p class="admonition-title">Define a client context global variable</p>
+<p><code class="codehilite">lwm2m_client_context_t context;</code></p>
+</div>
+<p>This type contains the lwm2m context of type <code class="codehilite">lwm2m_context_t</code>, that is required for most API calls.
+Usually you do not need to access any of the member fields directly.</p>
+<p>Because it is so common to extract the <code class="codehilite">lwm2m_context_t*</code>, there is the <code class="codehilite">CTX(context)</code> macro doing this for you.</p>
+<div class="admonition example">
+<p class="admonition-title">Example on how to use CTX</p>
+<div class="codehilite"><pre><span></span><span class="n">lwm2m_client_context_t</span> <span class="n">context</span><span class="p">;</span>
+<span class="n">lwm2m_process</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
+</pre></div>
+
+</div>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param context Wakaama client context. May not be NULL.</span>
 <span class="cm"> * @param endpointName The server uses this name to identify a client over multiple sessions</span>
-<span class="cm"> * @return A wakaama context.</span>
+<span class="cm"> * @return Return 0 if socket binding failed. Otherwise returns the number</span>
+<span class="cm"> *     of sockets the method could bind to (for IPv4 and IPv6 each on all available interfaces).</span>
 <span class="cm"> */</span>
-<span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="nf">lwm2m_client_init</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">endpointName</span><span class="p">);</span>
+<span class="kt">uint8_t</span> <span class="nf">lwm2m_client_init</span><span class="p">(</span><span class="n">lwm2m_client_context_t</span><span class="o">*</span> <span class="n">context</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">endpointName</span><span class="p">);</span>
 </pre></div>
 
-<p>Initialize wakaame in client mode.
-Will allocate objects and initializes them.
-This method can only be called once! Close the client context with lwm2m_client_close().</p>
+<p>Initialize the given wakaame client context and the network module.
+Close the client context with <code class="codehilite">lwm2m_client_close()</code>.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * @brief Return the context created by lwm2m_client_init().</span>
-<span class="cm"> * @return A wakaama context.</span>
+<span class="cm"> * @param context Wakaama client context. May not be NULL.</span>
 <span class="cm"> */</span>
-<span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="nf">lwm2m_client_get_context</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">lwm2m_client_close</span><span class="p">(</span><span class="n">lwm2m_client_context_t</span><span class="o">*</span> <span class="n">context</span><span class="p">);</span>
 </pre></div>
 
-<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">lwm2m_client_close</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
-</pre></div>
-
-<p>Close the wakaama client context and release dynamically aquired ressources.
+<p>Close the given wakaama client context.</p>
+<p>Will release dynamically aquired ressources and calls lwm2m_network_close().
+All added servers are gone after this call.
 This will not release objects created by lwm2m_object_create.</p>
-<div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * Adds a new server to the lwm2m client. The client statemachine will try to connect to this</span>
-<span class="cm"> * server in the next iteration (usually caused by calling lwm2m_network_process(context)).</span>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param contextP Wakaama context</span>
+<span class="cm"> * @param next_event Returns a timeval value that tells you when the next call is due.</span>
+<span class="cm"> * It does not modify timeval if it already has a value that is sooner than the next due time.</span>
+<span class="cm"> * @return Returns a wakaama error code (the result value of lwm2m_step())</span>
+<span class="cm"> */</span>
+<span class="kt">int</span> <span class="nf">lwm2m_process</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeval</span><span class="o">*</span> <span class="n">next_event</span><span class="p">);</span>
+</pre></div>
+Call this method periodically. Internally it will process new network packages as well as progress in the wakaamas state machine.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>On Posix Systems you can call <code class="codehilite">lwm2m_block_wait(context, next_event)</code> to wait for
+either received network packets or for the due time of the next event.</p>
+</div>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param contextP Wakaama context</span>
+<span class="cm"> * @param next_event Uses and returns a timeval value that tells you when the next call is due.</span>
+<span class="cm"> * It does not modify timeval if it already has a value that is sooner than the next due time.</span>
+<span class="cm"> * @param reconnectTime Reconnect time in seconds</span>
+<span class="cm"> */</span>
+<span class="kt">void</span> <span class="nf">lwm2m_watch_and_reconnect</span><span class="p">(</span><span class="n">wm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeval</span><span class="o">*</span> <span class="n">next_event</span><span class="p">,</span> <span class="kt">int</span> <span class="n">reconnectTime</span><span class="p">);</span>
+</pre></div>
+Watch server connections and reset the lwm2m state machine to force reconnects,
+if the current state is STATE_BOOTSTRAP_REQUIRED. Usually you want to call this after <code class="codehilite">lwm2m_process</code>
+for automatic reconnection.</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param contextP Wakaama context</span>
 <span class="cm"> * @param shortServerID A unique server id</span>
-<span class="cm"> * @param shortServerID The server URI</span>
+<span class="cm"> * @param uri The server URI</span>
 <span class="cm"> * @param lifetime A lifetime in seconds</span>
 <span class="cm"> * @param storing If notifications should be stored and resend if a server connection was interruppted and then reconnected.</span>
+<span class="cm"> * @return Return true if successfully added and false if aborted due to no memory.</span>
+<span class="cm"> */</span>
+<span class="kt">bool</span> <span class="nf">lwm2m_add_server</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">contextP</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">,</span>
+                      <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">uri</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">lifetime</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">storing</span><span class="p">);</span>
+</pre></div>
+Adds a new server to the lwm2m client. The client statemachine will try to connect to this
+server with the next iteration (usually caused by calling <code class="codehilite">lwm2m_process()</code>).</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param contextP A Wakaama client context</span>
+<span class="cm"> * @param shortServerID A unique server id</span>
 <span class="cm"> * @param publicId publicIdentity for DTLS. May be NULL if no secure connection is used.</span>
-<span class="cm"> * @param psk Passkey if DTLS is used. May be NULL.</span>
+<span class="cm"> * The expected c-string is copied to a new memory location.</span>
+<span class="cm"> * @param psk Passkey if DTLS is used. May be NULL. The byte array is copied to a new memory location.</span>
 <span class="cm"> * @param pskLen Passkey length. Should be 0 if no passkey is used.</span>
 <span class="cm"> * @return Return true if successfully added and false if aborted due to no memory.</span>
 <span class="cm"> */</span>
-<span class="kt">bool</span> <span class="nf">lwm2m_add_server</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">uri</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">lifetime</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">storing</span><span class="p">,</span>
-    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">publicId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">psk</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">pskLen</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="nf">lwm2m_use_dtls_psk</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">contextP</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">publicId</span><span class="p">,</span>
+                        <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">psk</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">pskLen</span><span class="p">);</span>
 </pre></div>
-
+Alters a servers security details by adding preshared key DTLS information. Call this before entering the
+main loop (<code class="codehilite">lwm2m_process()</code>).
+You may also remove DTLS information by providing a NULL argument to psk and publicid.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>If you have specified a "coap://" URI in lwm2m_add_server(...), then
+publicId and psk will be set to NULL on a connection attempt.</p>
+</div>
+<p>The LwM2M specification V1.0 says:</p>
+<div class="admonition quote">
+<p class="admonition-title">Quote</p>
+<p>Since the security of the default PSK Cipher Suites
+rely on the length and the entropy of this shared secret
+it is RECOMMENDED to provision a 16 byte (128 bit) key".</p>
+</div>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * Unregisteres from a connected server.</span>
+<span class="cm"> * @param contextP Wakaama context</span>
 <span class="cm"> * @param security_instance_id The security instance id which refers to a specific server</span>
 <span class="cm"> */</span>
-<span class="kt">bool</span> <span class="nf">lwm2m_unregister_server</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">security_instance_id</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="nf">lwm2m_unregister_server</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">contextP</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">security_instance_id</span><span class="p">);</span>
 </pre></div>
 
-<div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * Removes all unregistered server, by removing all related security objects.</span>
-<span class="cm"> * Puts the client back to STATE_INITIAL if the server list has been altered.</span>
+<p>Informs the lwm2m server about a disconnect and flags the connection as disconnected.
+Disconnected servers are still available until <code class="codehilite">lwm2m_remove_unregistered_servers</code> is called.</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param contextP Wakaama context</span>
 <span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_remove_unregistered_servers</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">lwm2m_remove_unregistered_servers</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">contextP</span><span class="p">);</span>
 </pre></div>
-
-<div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * Returns the uri of a server by providing the security object id of that server connection.</span>
+Removes all unregistered server, by removing all related security objects.
+Puts the client back to STATE_INITIAL if the server list has been altered.</p>
+<p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm"> * @param contextP Wakaama context</span>
 <span class="cm"> * @param security_instance_id The security instance id which refers to a specific server</span>
-<span class="cm"> * @param uriBuffer The destination buffer</span>
-<span class="cm"> * @param buffer_len The destination buffer length</span>
 <span class="cm"> */</span>
-<span class="kt">bool</span> <span class="nf">lwm2m_get_server_uri</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">security_instance_id</span><span class="p">,</span> <span class="kt">char</span><span class="o">*</span> <span class="n">uriBuffer</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">buffer_len</span><span class="p">);</span>
+<span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="nf">lwm2m_get_server_uri</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">contextP</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">);</span>
 </pre></div>
-
+Returns the uri of a server by providing the security object id of that server connection.</p>
+<p>The c-string is not copied and valid as long as the respective security object is alive.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * @brief Return true if wakaama is connected to a lwm2m server.</span>
-<span class="cm"> * @return</span>
+<span class="cm"> * @param contextP Wakaama context</span>
 <span class="cm"> */</span>
-<span class="kt">bool</span> <span class="nf">lwm2m_is_connected</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">bool</span> <span class="nf">lwm2m_is_connected</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">contextP</span><span class="p">);</span>
 </pre></div>
 
+<p>Return true if wakaama is connected to a lwm2m server.</p>
 <h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
-<p>To setup the library, you would follow the the outlined schema of the following C code:</p>
+<p>To setup the library, you would follow the outlined schema of the following C code:</p>
 <div class="codehilite"><pre><span></span><span class="c1">// The client name will be used by the lwm2m server for identification.</span>
-<span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">lwm2mH</span> <span class="o">=</span> <span class="n">lwm2m_client_init</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+<span class="n">lwm2m_client_context_t</span> <span class="nf">context</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
 <span class="c1">// Posix and Lwip network support is implemented.</span>
-<span class="n">lwm2m_network_init</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+<span class="n">lwm2m_client_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">context</span><span class="p">);</span>
 
 <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
-   <span class="c1">// Call the lwm2m state machine (lwm2m_step) periodically. </span>
-   <span class="c1">// tv will be used as output variable. Wakaama tells us about the next required call to lwm2m_step().</span>
-   <span class="c1">// In this simple example we ignore this request and call the state machine in each main loop cycle.</span>
+   <span class="c1">// Call the lwm2m state machine (lwm2m_process) periodically. </span>
+   <span class="c1">// tv will be used as output variable.</span>
+   <span class="c1">// The library tells us about the next required call to lwm2m_process().</span>
+   <span class="c1">// In this simple example we ignore this request.</span>
    <span class="k">struct</span> <span class="n">timeval</span> <span class="n">tv</span> <span class="o">=</span> <span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">};</span>
-   <span class="kt">uint8_t</span> <span class="n">result</span> <span class="o">=</span> <span class="n">lwm2m_step</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">.</span><span class="n">tv_sec</span><span class="p">);</span>
-   <span class="c1">// let the network stack do its thing.</span>
-   <span class="n">lwm2m_network_process</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">);</span>
+   <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">lwm2m_process</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">tv</span><span class="p">);</span>
+   <span class="c1">// Error handling of `result`.</span>
 <span class="p">}</span>
 
 <span class="c1">// Deregisters from the lwm2m server, frees ressources taken by wakaama.</span>
-<span class="n">lwm2m_client_close</span><span class="p">();</span>
-<span class="c1">// Close the network connection and release network ressoures.</span>
-<span class="n">lwm2m_network_close</span><span class="p">(</span><span class="n">lwm2mH</span><span class="p">);</span>
+<span class="c1">// Also closes the network connection and release network ressoures.</span>
+<span class="n">lwm2m_client_close</span><span class="p">(</span><span class="o">&amp;</span><span class="n">context</span><span class="p">);</span>
 </pre></div>
 
-<h2 id="provide-device-information-api">Provide device information API<a class="headerlink" href="#provide-device-information-api" title="Permanent link">&para;</a></h2>
+<h2 id="connection-c-api_1">Connection C++-API<a class="headerlink" href="#connection-c-api_1" title="Permanent link">&para;</a></h2>
+<p>The C++ API is only a slim wrapper around the C API.
+All methods are named the same (expect the missing <code class="codehilite">lwm2m_</code> prefix)
+and have the same signature as their C-equivalent,
+except that no <code class="codehilite">lwm2m_context_t</code> need to be passed.</p>
+<p>Include <code class="codehilite">lwm2m/connect.h</code>.</p>
+<div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">LwM2MConnect</span> <span class="o">:</span> <span class="k">public</span> <span class="n">lwm2m_client_context_t</span> <span class="p">{</span>
+<span class="k">public</span><span class="o">:</span>
+    <span class="n">LwM2MConnect</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span> <span class="n">endpointName</span><span class="p">);</span>
+    <span class="o">~</span><span class="n">LwM2MConnect</span><span class="p">();</span>
+
+    <span class="kt">int</span> <span class="nf">process</span><span class="p">(</span><span class="k">struct</span> <span class="n">timeval</span><span class="o">*</span> <span class="n">next_event</span><span class="p">);</span>
+    <span class="kt">int</span> <span class="nf">process_blocking</span><span class="p">();</span>
+
+    <span class="kt">void</span> <span class="nf">watch_and_reconnect</span><span class="p">(</span><span class="k">struct</span> <span class="n">timeval</span><span class="o">*</span> <span class="n">next_event</span><span class="p">,</span> <span class="kt">int</span> <span class="n">reconnectTime</span><span class="p">);</span>
+
+    <span class="kt">bool</span> <span class="nf">add_server</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">uri</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">lifetime</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">storing</span><span class="p">);</span>
+
+    <span class="kt">bool</span> <span class="nf">use_dtls_psk</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">publicId</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">psk</span><span class="p">,</span> <span class="kt">unsigned</span> <span class="kt">short</span> <span class="n">pskLen</span><span class="p">);</span>
+
+    <span class="kt">bool</span> <span class="nf">unregister_server</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">security_instance_id</span><span class="p">);</span>
+
+    <span class="kt">void</span> <span class="nf">remove_unregistered_servers</span><span class="p">();</span>
+
+    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="nf">get_server_uri</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">shortServerID</span><span class="p">);</span>
+
+    <span class="kt">bool</span> <span class="nf">is_connected</span><span class="p">();</span>
+<span class="p">};</span>
+</pre></div>
+
+<h3 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h3>
+<p>To setup the library, you would follow the outlined schema of the following CPP code:</p>
+<div class="codehilite"><pre><span></span><span class="n">LwM2MConnect</span> <span class="nf">context</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+
+<span class="k">struct</span> <span class="n">timeval</span> <span class="n">tv</span><span class="p">{</span><span class="mi">5</span><span class="p">,</span><span class="mi">0</span><span class="p">};</span>
+<span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+   <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">process</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tv</span><span class="p">);</span>
+   <span class="cp">#ifdef POSIX_NETWORK</span>
+   <span class="n">context</span><span class="p">.</span><span class="n">block_wait</span><span class="p">(</span><span class="n">tv</span><span class="p">);</span>
+   <span class="cp">#endif</span>
+<span class="p">}</span>
+</pre></div>
+
+<h2 id="device-information-api">Device information API<a class="headerlink" href="#device-information-api" title="Permanent link">&para;</a></h2>
 <p>The library implements the lwm2m device object for you.</p>
 <blockquote>
-<p>The Device Object provides a range of device related information which can be queried by the LWM2M Server, and a device reboot and factory reset function.</p>
+<p>The Device Object provides an optional device reboot and factory reset function as well as a range of device related information which can be queried by the LWM2M Server.</p>
 </blockquote>
-<p>In this section you learn how to enable some optional information fields
-of the device object and how to feed data into that object.</p>
-<div class="codehilite"><pre><span></span><span class="n">device_instance_t</span> <span class="o">*</span> <span class="nf">lwm2m_device_data_get</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
-</pre></div>
-
-<p>Return the device information object.
-Change this object before you connect to a server.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param res_id The ressource id of the value you have changed in device_instance_t.</span>
 <span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_device_res_has_changed</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">lwm2m_device_res_has_changed</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">context</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">);</span>
 </pre></div>
 
-<p>Call this if you have changed a ressource in the device_instance_t object.
+<p>Call this if you have changed a ressource of the <code class="codehilite">device_instance_t</code> object.
 You only have to do this after you have connected to a lwm2m server.</p>
 <p>To change a device information (version number etc), do the following:
-<div class="codehilite"><pre><span></span><span class="n">device_instance_t</span><span class="o">*</span> <span class="n">device</span> <span class="o">=</span> <span class="n">lwm2m_device_data_get</span><span class="p">();</span>
-<span class="n">device</span><span class="o">-&gt;</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.2&quot;</span><span class="p">;</span>
-<span class="n">lwm2m_device_res_has_changed</span><span class="p">(</span><span class="n">RES_O_FIRMWARE_VERSION</span><span class="p">);</span>
-</pre></div></p>
-<p>Some device information are obtained by calling a function.
-The battery level is an example.
-Just call <code class="codehilite">lwm2m_device_res_has_changed(RES_O_BATTERY_LEVEL)</code> periodically or after
-the battery level has changed and the runtime will retrieve the new data by
-from <code class="codehilite">lwm2m_get_bat_level()</code>.</p>
-<h3 id="example_1">Example<a class="headerlink" href="#example_1" title="Permanent link">&para;</a></h3>
-<p>You need to provide some static c-strings stating the manufacturer, the model_name, device_type,
-firmware version and a serial number, before you connect to a lwm2m server (but after you called <code class="codehilite">lwm2m_client_init</code>).
-You would do this like in the following example:</p>
-<div class="codehilite"><pre><span></span>    <span class="c1">// do initalisation first</span>
-    <span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">lwm2mH</span> <span class="o">=</span> <span class="n">lwm2m_client_init</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+<div class="codehilite"><pre><span></span><span class="n">lwm2m_client_context_t</span> <span class="n">context</span><span class="p">;</span> <span class="c1">// Your global client context variable</span>
 
-    <span class="c1">// Get the device object instance.</span>
-    <span class="n">device_instance_t</span> <span class="o">*</span> <span class="n">device_data</span> <span class="o">=</span> <span class="n">lwm2m_device_data_get</span><span class="p">();</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="s">&quot;test manufacturer&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">&quot;test model&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">device_type</span> <span class="o">=</span> <span class="s">&quot;sensor&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.0&quot;</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">serial_number</span> <span class="o">=</span> <span class="s">&quot;140234-645235-12353&quot;</span><span class="p">;</span>
-    <span class="c1">// if LWM2M_DEV_INFO_TIME is enabled</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">time_offset</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
-    <span class="n">device_data</span><span class="o">-&gt;</span><span class="n">timezone</span> <span class="o">=</span> <span class="s">&quot;+05:00&quot;</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.2&quot;</span><span class="p">;</span>
+<span class="c1">// Only do this if you have called lwm2m_process at least once already</span>
+<span class="n">lwm2m_device_res_has_changed</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="n">RES_O_FIRMWARE_VERSION</span><span class="p">);</span>
+</pre></div></p>
+<p>The following device information are obtained by calling a function:</p>
+<table>
+<thead>
+<tr>
+<th>ResID</th>
+<th align="center">Name</th>
+<th align="center">Configuration option</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>9</td>
+<td align="center">Battery level</td>
+<td align="center">LWM2M_DEVICE_INFO_WITH_BATTERY</td>
+<td>uint8_t lwm2m_get_bat_level()</td>
+</tr>
+<tr>
+<td>20</td>
+<td align="center">Battery status</td>
+<td align="center">same</td>
+<td>uint8_t lwm2m_get_bat_status</td>
+</tr>
+<tr>
+<td>10</td>
+<td align="center">Free memory</td>
+<td align="center">LWM2M_DEVICE_INFO_WITH_MEMINFO</td>
+<td>int64_t lwm2m_get_free_mem()</td>
+</tr>
+<tr>
+<td>21</td>
+<td align="center">Total memory</td>
+<td align="center">same</td>
+<td>int64_t lwm2m_get_total_mem()</td>
+</tr>
+<tr>
+<td>11</td>
+<td align="center">Last error code</td>
+<td align="center">LWM2M_DEVICE_INFO_WITH_ERRCODE</td>
+<td>int64_t lwm2m_get_last_error()</td>
+</tr>
+<tr>
+<td>13</td>
+<td align="center">Current time (s)</td>
+<td align="center"></td>
+<td>int64_t lwm2m_gettime()</td>
+</tr>
+</tbody>
+</table>
+<p>You need to implement the corresponding function if you enable the respective configuration option.</p>
+<div class="admonition info">
+<p class="admonition-title">Notify the server about a new value</p>
+<p><code class="codehilite">lwm2m_device_res_has_changed(CTX(context), RES_O_BATTERY_LEVEL)</code></p>
+</div>
+<p>Some configuration options require you to implement further functions, see the table below:</p>
+<table>
+<thead>
+<tr>
+<th>ResID</th>
+<th align="center">Name</th>
+<th align="center">Configuration option</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>4</td>
+<td align="center">Reboot device</td>
+<td align="center">LWM2M_DEVICE_WITH_REBOOT</td>
+<td>void lwm2m_reboot()</td>
+</tr>
+<tr>
+<td>5</td>
+<td align="center">Factory reset</td>
+<td align="center">LWM2M_DEVICE_WITH_FACTORY_RESET</td>
+<td>void lwm2m_factory_reset()</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example_2">Example<a class="headerlink" href="#example_2" title="Permanent link">&para;</a></h3>
+<p>You may want to provide some c-strings stating the manufacturer, the model_name, device_type,
+firmware version and a serial number, before you connect to a lwm2m server.
+You would do this like in the following example:</p>
+<div class="codehilite"><pre><span></span><span class="c1">// C-API</span>
+<span class="n">lwm2m_client_context_t</span> <span class="n">context</span><span class="p">;</span>
+<span class="n">lwm2m_client_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">context</span><span class="p">,</span> <span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+
+<span class="c1">// C++ API</span>
+<span class="n">LwM2MConnect</span> <span class="n">context</span><span class="p">;</span>
+
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="s">&quot;test manufacturer&quot;</span><span class="p">;</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">&quot;test model&quot;</span><span class="p">;</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">device_type</span> <span class="o">=</span> <span class="s">&quot;sensor&quot;</span><span class="p">;</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">firmware_ver</span> <span class="o">=</span> <span class="s">&quot;1.0&quot;</span><span class="p">;</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">serial_number</span> <span class="o">=</span> <span class="s">&quot;140234-645235-12353&quot;</span><span class="p">;</span>
+<span class="c1">// if LWM2M_DEV_INFO_TIME is enabled</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">time_offset</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+<span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">timezone</span> <span class="o">=</span> <span class="s">&quot;+05:00&quot;</span><span class="p">;</span>
 </pre></div>
 
+<div class="admonition info">
+<p class="admonition-title">Info</p>
 <p>If you change data after you have connected to a server, you need to call
-<code class="codehilite">lwm2m_device_res_has_changed(res_id)</code> after the change.</p>
+<code class="codehilite">lwm2m_device_res_has_changed(context, res_id)</code> after the change.</p>
+</div>
 <h2 id="firmware-update-ota">Firmware update / OTA<a class="headerlink" href="#firmware-update-ota" title="Permanent link">&para;</a></h2>
 <p>To enable OTA, define LWM2M_FIRMWARE_UPGRADES in <code class="codehilite">config_wakama.h</code>.</p>
 <p>An implementation exist for posix/win32 systems and for Arduino OTA compliant platforms.</p>
-<p>Control how firmware updates can be performed by defining 
-LWM2M_FIRMWARE_UPGRADE_METHOD to <strong>HTTP</strong>, <strong>HTTPS</strong> or <strong>COAP</strong>, <strong>COAPS</strong>. If you do no define
-LWM2M_FIRMWARE_UPGRADE_METHOD, the best option is choosen.
-ESP8266 prefers <strong>HTTP</strong>, posix/win32 systems prefer <strong>COAP</strong>.</p>
-<p>The Http(s) method signals the lwM2M server that only firmware polling is enabled
-and that a URL should be provided where the new firmware can be found.</p>
+<h3 id="update-method">Update method<a class="headerlink" href="#update-method" title="Permanent link">&para;</a></h3>
+<p>There are generally two methods for updating.</p>
+<ul>
+<li>
+<p>The Http(s) method signals the lwM2M server that a URL should be provided where the new firmware can be found.
+  Use UPDATE_PROTOCOL_HTTP or UPDATE_PROTOCOL_HTTPS for the <code class="codehilite">FirmwareUpdate</code> constructor.</p>
+</li>
+<li>
 <p>The Coap(s) method makes the server send the new firmware via coap as an opaque data chunk.
-Because that data chunk is expected to be huge and need to be memory buffered, ESP8266 does
-not support this method.</p>
+  Because that data chunk is expected to be huge and need to be memory buffered, small µC probably do not support this method.
+  Use UPDATE_PROTOCOL_COAP or UPDATE_PROTOCOL_COAPS for the <code class="codehilite">FirmwareUpdate</code> constructor.</p>
+</li>
+</ul>
+<h3 id="c-api">C++ API<a class="headerlink" href="#c-api" title="Permanent link">&para;</a></h3>
+<p>Include the <code class="codehilite">firmware.h</code> file and create an object of <code class="codehilite">FirmwareUpdate</code>.</p>
+<div class="codehilite"><pre><span></span><span class="cm">/**</span>
+<span class="cm">* Creates a firmware update object.</span>
+<span class="cm">*</span>
+<span class="cm">* @param context A lwm2m context</span>
+<span class="cm">* @param app_version The current APP version</span>
+<span class="cm">*/</span>
+<span class="n">FirmwareUpdate</span><span class="o">::</span><span class="n">FirmwareUpdate</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span><span class="n">context</span><span class="p">,</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">app_version</span><span class="p">,</span>
+    <span class="n">lwm2m_update_protocol</span> <span class="n">protocol</span><span class="p">);</span>
+
+<span class="cm">/**</span>
+<span class="cm">* Only for POSIX compatible systems.</span>
+<span class="cm">* Check if this executable is the new updated one.</span>
+<span class="cm">* If this is the new one:</span>
+<span class="cm">* Waits for the old executable to finish. We expect a</span>
+<span class="cm">* command line parameter &quot;oldexe=PID&quot; with the PID of the</span>
+<span class="cm">* old executable. To notify the old executable about our</span>
+<span class="cm">* successful start up, a POSIX signal USR1 is send.</span>
+<span class="cm">*</span>
+<span class="cm">* @param argc Command line argument count</span>
+<span class="cm">* @param argv Command line arguments</span>
+<span class="cm">*/</span>
+<span class="kt">void</span> <span class="n">FirmwareUpdate</span><span class="o">::</span><span class="n">checkIsUpdated</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">);</span>
+
+<span class="cm">/**</span>
+<span class="cm">* Call this in your main loop to check for new updates,</span>
+<span class="cm">* initiate the download and restart if necessary</span>
+<span class="cm">*/</span>
+<span class="kt">void</span> <span class="n">FirmwareUpdate</span><span class="o">::</span><span class="n">process</span><span class="p">();</span>
+</pre></div>
+
+<h3 id="example_3">Example<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;lwm2m/firmware.h&quot;</span><span class="cp"></span>
+<span class="n">LwM2MConnect</span> <span class="n">context</span><span class="p">;</span>
+<span class="n">FirmwareUpdate</span> <span class="nf">firmwareUpdate</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="s">&quot;1.0&quot;</span><span class="p">,</span> <span class="n">UPDATE_PROTOCOL_HTTP</span><span class="p">);</span>
+
+<span class="p">...</span>
+
+<span class="kt">void</span> <span class="n">loop</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">context</span><span class="p">.</span><span class="n">process</span><span class="p">(...);</span>
+    <span class="n">firmwareUpdate</span><span class="p">.</span><span class="n">process</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="p">...</span>
+<span class="c1">// if POSIX</span>
+<span class="kt">int</span> <span class="n">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">firmwareUpdate</span><span class="p">.</span><span class="n">checkIsUpdated</span><span class="p">(</span><span class="n">argc</span><span class="p">,</span> <span class="n">argv</span><span class="p">);</span>
+    <span class="p">...</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="n">loop</span><span class="p">();</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
                 
                   
                 
@@ -906,6 +1360,22 @@ not support this method.</p>
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/api/connection-api/";
+      this.page.identifier =
+        "api/connection-api/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>

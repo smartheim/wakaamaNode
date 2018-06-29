@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/api/objects-registry/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -257,8 +259,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -453,6 +481,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -568,6 +602,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -583,11 +641,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -603,6 +697,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -659,6 +777,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -683,15 +807,18 @@ special implementations exist for object ID 1 (LWM2M Server), 2 (Access Control)
 and you should not use the auto generated ones.</p>
 <h2 id="how-to-use-a-predefined-object">How to use a predefined object<a class="headerlink" href="#how-to-use-a-predefined-object" title="Permanent link">&para;</a></h2>
 <p>A full example can be found in <a href="../../quickstart/getting-started/">Get started</a>.
-Necessary steps are usually looking like below. For example if you want to use the "Light Control" lwM2M object:</p>
+For example if you want to use the "Light Control" lwM2M object:</p>
 <ul>
 <li>Search the list below for "Light Control".</li>
 <li>Find it under object id 3311.</li>
 <li>Include <code class="codehilite">src/lwm2mObjects/3311.h</code> and use the class <code class="codehilite">object</code> in namespace <em>KnownObjects/id311</em>.</li>
-<li>Create as many object instances as you need and add them to the object via <code class="codehilite">object.addInstance(objectInstance)</code>.</li>
+<li>Create as many object instances as you need and add them to the object via <code class="codehilite">object.addInstance(lwm2mContext, objectInstance)</code>.</li>
 <li>Make the object itself known to WakaamaNode with <code class="codehilite">object.register(lwm2mContext)</code>.</li>
 </ul>
 <div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;lwm2mObjects/3311.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&quot;lwm2m/connect.h&quot;</span><span class="cp"></span>
+
+<span class="n">lwm2m_client_context_t</span> <span class="n">context</span><span class="p">;</span>
 
 <span class="k">using</span> <span class="k">namespace</span> <span class="n">KnownObjects</span><span class="p">;</span>
 
@@ -713,14 +840,14 @@ Necessary steps are usually looking like below. For example if you want to use t
     <span class="p">};</span>
 
     <span class="n">led</span><span class="p">.</span><span class="n">id</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="c1">// set instance id</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">led</span><span class="p">);</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">addInstance</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="o">&amp;</span><span class="n">led</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">registerObject</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">));</span>
 <span class="p">}</span>
 
 <span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
     <span class="n">led</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
     <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">lwm2mContext</span><span class="p">,</span> <span class="n">led</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="n">led</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
@@ -2089,6 +2216,22 @@ Necessary steps are usually looking like below. For example if you want to use t
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/api/objects-registry/";
+      this.page.identifier =
+        "api/objects-registry/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>

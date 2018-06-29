@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/api/objects-custom/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -257,8 +259,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -568,6 +596,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -671,6 +705,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -686,11 +744,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -706,6 +800,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -865,6 +983,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -933,7 +1057,7 @@ Thereafter you will find the C++ and C API for lwm2m object definitions.</p>
 make use of the <a href="http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html">predefined resource ids (range: 2048..26240)</a>.</p>
 <p>Define your custom objects either via C or the C++ interface.</p>
 <h2 id="object-definition-c-api">Object definition C++ API<a class="headerlink" href="#object-definition-c-api" title="Permanent link">&para;</a></h2>
-<p>Include <code class="codehilite">lwm2m_objects.hpp</code>.</p>
+<p>Include <code class="codehilite">lwm2m/objects.h</code>.</p>
 <h3 id="lwm2mobject-class">Lwm2mObject class<a class="headerlink" href="#lwm2mobject-class" title="Permanent link">&para;</a></h3>
 <div class="codehilite"><pre><span></span><span class="k">class</span> <span class="nc">Lwm2mObject</span><span class="o">&lt;</span><span class="n">ObjectID</span><span class="p">,</span> <span class="n">DerivedObject</span><span class="p">,</span> <span class="n">ObjectInstance</span><span class="o">&gt;</span>
 </pre></div>
@@ -993,9 +1117,8 @@ The object is automatically registered to the lwM2M server, if already connected
 <span class="k">virtual</span> <span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="nf">createInstance</span><span class="p">(</span><span class="kt">uint16_t</span> <span class="n">instance_id</span><span class="p">);</span>
 </pre></div>
 
-<p>Implement this function in your object class and either return <code class="codehilite">nullptr</code>
-if creating instances dynamically by the server or with the given ID is not supported or
-return a working object instance with the given instance ID.</p>
+<p>If creating instances dynamically by the server or with the given ID is not supported return <code class="codehilite">nullptr</code>.
+Return a working object instance with the given instance ID otherwise.</p>
 <p>The default does nothing and returns a <code class="codehilite">nullptr</code>.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param instance Object instance to delete</span>
@@ -1004,7 +1127,7 @@ return a working object instance with the given instance ID.</p>
 <span class="k">virtual</span> <span class="kt">int</span> <span class="nf">deleteInstance</span><span class="p">(</span><span class="n">Lwm2mObjectInstance</span><span class="o">*</span> <span class="n">instance</span><span class="p">);</span>
 </pre></div>
 
-<p>Implement this function in your object class to allow to delete an object instance.</p>
+<p>Implement this function in your object class to allow to delete an object instance by the server.</p>
 <div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param lwm2mContext The Wakaama context.</span>
 <span class="cm"> * @param object_instance_id Object instance id</span>
@@ -1104,26 +1227,30 @@ the resource value from a function call, or store a new resource value by callin
 <span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
 </pre></div>
 
-<p>As you can see, you will use the templated classes <code class="codehilite">IndirectRead</code>, <code class="codehilite">IndirectWrite</code> and <code class="codehilite">IndirectReadWrite</code>.
-The first two expect a parameter tuple (type, variable name). The third expects the type only.</p>
+<p>As you can see, you will use the templated classes <code class="codehilite">IndirectRead</code>, <code class="codehilite">IndirectWrite</code> and <code class="codehilite">IndirectReadWrite</code>.</p>
 <p>The library will crash, if the function pointer is dangling / not assigned to a valid function!</p>
-<p>An example object looks like this, with a constructor setting the function pointer:</p>
-<div class="codehilite"><pre><span></span><span class="kr">int</span> <span class="nx">my_read_method() {</span> <span class="k">return</span> <span class="mi">12</span><span class="p">;</span> <span class="p">}</span>
-<span class="nx">using</span> <span class="nx">MyReadIntFunction</span> <span class="o">=</span> <span class="kr">int</span> <span class="p">(</span><span class="o">*</span><span class="p">)();</span>
+<p>The signature of the read and write methods will always pass the object instance as first parameter,
+see the definition of <code class="codehilite">my_read_method</code> and <code class="codehilite">string_write_method</code> in the example below.</p>
+<p>An example object looks like this, with a constructor setting the function pointers:</p>
+<div class="codehilite"><pre><span></span><span class="nx">uint32_t</span> <span class="nx">my_read_method</span><span class="p">(</span><span class="nx">Lwm2mObjectInstance</span><span class="o">*</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="mi">12</span><span class="p">;</span> <span class="p">}</span>
+
+<span class="k">void</span> <span class="nx">string_write_method</span><span class="p">(</span><span class="nx">Lwm2mObjectInstance</span><span class="o">*</span><span class="p">,</span> <span class="kr">const</span> <span class="kr">char</span><span class="o">*</span> <span class="nx">v</span><span class="p">)</span> <span class="p">{}</span>
 
 <span class="kr">class</span> <span class="nx">MyObject</span>: <span class="kt">public</span> <span class="nx">Lwm2mObject</span><span class="o">&lt;</span><span class="mi">1024</span><span class="p">,</span><span class="nx">MyObject</span><span class="p">,</span><span class="nx">MyObjectInstance</span><span class="o">&gt;</span>
 <span class="p">{</span>
 <span class="kr">public</span><span class="o">:</span>
-    <span class="nx">Resource</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">readFunctionPtr</span><span class="p">)</span> <span class="nx">readFunctionPtr</span><span class="p">;</span>
+    <span class="nx">Resource</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">test_read_fun_uint32</span><span class="p">)</span> <span class="nx">test_read_fun_uint32</span><span class="p">;</span>
+    <span class="nx">Resource</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="o">&amp;</span><span class="nx">MyObjectInstance</span><span class="o">::</span><span class="nx">test_write_fun_string</span><span class="p">)</span> <span class="nx">test_write_fun_string</span><span class="p">;</span>
 
-    <span class="nx">MyObject</span><span class="p">(</span><span class="nx">MyReadIntFunction</span> <span class="nx">fun</span><span class="p">)</span> <span class="o">:</span> <span class="nx">readFunctionPtr</span><span class="p">(</span><span class="nx">fun</span><span class="p">)</span> <span class="p">{}</span>
+    <span class="nx">MyObject</span><span class="p">(</span><span class="nx">IndirectRead</span><span class="o">&lt;</span><span class="nx">uint32_t</span><span class="o">&gt;</span> <span class="nx">readfun</span><span class="p">,</span> <span class="nx">IndirectRead</span><span class="o">&lt;</span><span class="nx">uint32_t</span><span class="o">&gt;</span> <span class="nx">writefun</span><span class="p">)</span> <span class="o">:</span>
+        <span class="nx">test_read_fun_uint32</span><span class="p">(</span><span class="nx">readfun</span><span class="p">),</span> <span class="nx">test_write_fun_string</span><span class="p">(</span><span class="nx">writeFun</span><span class="p">)</span> <span class="p">{}</span>
 <span class="p">};</span>
 
-<span class="nx">MyObject</span> <span class="nx">o</span><span class="p">(</span><span class="nx">my_read_method</span><span class="p">);</span>
+<span class="nx">MyObject</span> <span class="nx">o</span><span class="p">(</span><span class="nx">my_read_method</span><span class="p">,</span> <span class="nx">string_write_method</span><span class="p">);</span>
 </pre></div>
 
 <h2 id="object-definition-c-api_1">Object definition C API<a class="headerlink" href="#object-definition-c-api_1" title="Permanent link">&para;</a></h2>
-<p>Include <code class="codehilite">lwm2m_objects.h</code>.</p>
+<p>Include <code class="codehilite">lwm2m/c_objects.h</code>.</p>
 <p><div class="codehilite"><pre><span></span><span class="cm">/**</span>
 <span class="cm"> * @param context   The wakaama context.</span>
 <span class="cm"> * @param object   The wakaama lwm2m object with meta information attached.</span>
@@ -1181,7 +1308,7 @@ lwm2m_object_meta_information_t. Imagine you have defined an object instance loo
 <span class="p">}</span> <span class="n">your_object_instance_t</span><span class="p">;</span>
 </pre></div>
 
-<p>Use OBJECT_META() for the machine readable description part:</p>
+<p>Use OBJECT_META() to describe your object to the library:</p>
 <div class="codehilite"><pre><span></span><span class="n">OBJECT_META</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span> <span class="n">test_object</span><span class="p">,</span> <span class="mi">1024</span><span class="p">,</span> <span class="n">test_object_write_verify_cb</span><span class="p">,</span>
     <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="n">O_RES_RW</span><span class="p">,</span><span class="n">O_RES_UINT8</span> <span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">test</span><span class="p">)},</span>
     <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="n">O_RES_E</span> <span class="p">,</span><span class="n">O_RES_EXEC</span>  <span class="p">,</span> <span class="n">offsetof</span><span class="p">(</span><span class="n">your_object_instance_t</span><span class="p">,</span><span class="n">exec</span><span class="p">)},</span>
@@ -1189,9 +1316,9 @@ lwm2m_object_meta_information_t. Imagine you have defined an object instance loo
 <span class="p">);</span>
 </pre></div>
 
-<p>Which results in a <code class="codehilite">test_object</code> variable, that can be handed over to <code class="codehilite">lwm2m_add_initialize_object</code>.</p>
-<p>OBJECT_META expects the object instance (here: <code class="codehilite">your_object_instance_t</code>), and the variable name for the object via
-the first and second argument.</p>
+<p>Which results in a <code class="codehilite">test_object</code> object declaration as well as a pointer to it <code class="codehilite">test_objectP</code>, that can be handed over to <code class="codehilite">lwm2m_add_initialize_object</code>.</p>
+<p>OBJECT_META expects the object instance (here: <code class="codehilite">your_object_instance_t</code>),
+and the variable name for the object via the first and second argument.</p>
 <p>The third argument is the object ID.</p>
 <p>The 4<sup>th</sup> argument may be set to NULL. Otherwise set it to a callback method which is called on
 a write to your object instance. You may react on a write in this method and you may deny the write if the new value
@@ -1305,6 +1432,22 @@ The first two expect a parameter tuple (type, variable name). The third expects 
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/api/objects-custom/";
+      this.page.identifier =
+        "api/objects-custom/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>

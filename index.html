@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="./assets/logo_s.webp" width="24" height="24">
           
@@ -255,8 +257,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -362,8 +390,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#automatic-synchronisation-to-the-latest-wakaamambed-tls-sources" title="Automatic synchronisation to the latest Wakaama/mbed TLS sources" class="md-nav__link">
-    Automatic synchronisation to the latest Wakaama/mbed TLS sources
+  <a href="#periodic-synchronisation-to-the-latest-wakaamambedtls-sources" title="Periodic synchronisation to the latest Wakaama/mbedTLS sources" class="md-nav__link">
+    Periodic synchronisation to the latest Wakaama/mbedTLS sources
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-tests" title="Automated tests" class="md-nav__link">
+    Automated tests
   </a>
   
 </li>
@@ -585,6 +620,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -600,11 +659,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -620,6 +715,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -680,8 +799,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#automatic-synchronisation-to-the-latest-wakaamambed-tls-sources" title="Automatic synchronisation to the latest Wakaama/mbed TLS sources" class="md-nav__link">
-    Automatic synchronisation to the latest Wakaama/mbed TLS sources
+  <a href="#periodic-synchronisation-to-the-latest-wakaamambedtls-sources" title="Periodic synchronisation to the latest Wakaama/mbedTLS sources" class="md-nav__link">
+    Periodic synchronisation to the latest Wakaama/mbedTLS sources
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#automated-tests" title="Automated tests" class="md-nav__link">
+    Automated tests
   </a>
   
 </li>
@@ -752,25 +878,57 @@ Optional DTLS (Datagram TLS) ensures secure communication between LWM2M Servers 
 <li>Connection API and object API compilable with a C-only compiler (OTA support requires a c++ compiler though)</li>
 </ul>
 <h2 id="target-device-requirements">Target device requirements<a class="headerlink" href="#target-device-requirements" title="Permanent link">&para;</a></h2>
-<p>A target device needs <strong>5kb RAM</strong> and <strong>10kb ROM</strong> for the library and some user defined  objects.</p>
+<p>A target device needs <strong>5kb RAM</strong> and <strong>10kb ROM</strong> for the library without DTLS and some user defined objects.</p>
 <p>Most of the API can be used in a staticly allocated memory environment.
 Wakaama on the other hand uses dynamic memory allocation for events like server
-connections, message receiving, message resends. 
-The DTLS implementation that is included (mbedTLS) makes use of dynamic memory allocation.</p>
+connections, message receiving, message resends. </p>
 <div class="admonition info">
 <p class="admonition-title">Info</p>
 <p>You may influence the memory layout by implementing <code class="codehilite">lwm2m_malloc</code>, <code class="codehilite">lwm2m_free</code> and <code class="codehilite">lwm2m_strdup</code> accordingly.</p>
 </div>
-<h2 id="automatic-synchronisation-to-the-latest-wakaamambed-tls-sources">Automatic synchronisation to the latest Wakaama/mbed TLS sources<a class="headerlink" href="#automatic-synchronisation-to-the-latest-wakaamambed-tls-sources" title="Permanent link">&para;</a></h2>
-<p>Travis CI is executed on every commit and additionally every day by a travis cron job.
-The CI script syncronizes:</p>
+<p>The DTLS implementation that is optionally included (mbedTLS) makes use of dynamic memory allocation.</p>
+<div class="admonition info">
+<p class="admonition-title">Info</p>
+<p>You may influence the memory layout by implementing <code class="codehilite">mbedtls_malloc</code> and <code class="codehilite">mbedtls_free</code> accordingly.</p>
+</div>
+<h2 id="periodic-synchronisation-to-the-latest-wakaamambedtls-sources">Periodic synchronisation to the latest Wakaama/mbedTLS sources<a class="headerlink" href="#periodic-synchronisation-to-the-latest-wakaamambedtls-sources" title="Permanent link">&para;</a></h2>
+<p>Travis CI runs every day by a travis cron job to synchronize sources listed below back into the library:</p>
 <ul>
-<li>the <code class="codehilite">src/wakaama</code> directory to the latest code found in the core directory of
+<li>the <code class="codehilite">src/wakaama</code> directory to the latest code found in the <em>core</em> directory of
 <a href="https://github.com/eclipse/wakaama.git">https://github.com/eclipse/wakaama.git</a>.</li>
-<li>the <code class="codehilite">src/network/mbedtls</code> directory to the latest code found in the inc/mbedtls/ and src/ directory of
+<li>the <code class="codehilite">src/network/mbedtls</code> directory to the latest code found in the <em>inc/mbedtls/</em> and <em>src/</em> directory of
 <a href="https://github.com/ARMmbed/mbed-os/tree/master/features/mbedtls">https://github.com/ARMmbed/mbed-os/tree/master/features/mbedtls</a>.</li>
 </ul>
-<p>This may cause tests in the master branch to fail, please use a tagged release of the library in this case.</p>
+<p>This may cause tests in the master branch to fail, please use a tagged release of the library in this case.
+If the tests do not fail, it is safe to assume that the library works as expected. Current status:</p>
+<p><a href="https://travis-ci.org/Openhab-Nodes/wakaamaNode"><img alt="Build Status" src="https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master" /></a></p>
+<h2 id="automated-tests">Automated tests<a class="headerlink" href="#automated-tests" title="Permanent link">&para;</a></h2>
+<p>Travis CI is executed on every commit. The following functionality is tested:</p>
+<ul>
+<li>The Object API for C</li>
+<li>Reading/Writing of c-strings and opaque memory</li>
+<li>Reading/Writing of boolean, int, double.</li>
+<li>Executing of function pointers.</li>
+<li>WriteVerify method is called correctly</li>
+<li>Object discovery works</li>
+<li>The Object API for C++</li>
+<li>Reading/Writing of c-strings and opaque memory</li>
+<li>Reading/Writing of boolean, int, double.</li>
+<li>Reading/Writing of all types above via indirect reading from a function, writing to a function</li>
+<li>WriteVerify method is called correctly</li>
+<li>Executable resources: Execute a function pointer</li>
+<li>Object discovery works</li>
+<li>The connect API on Posix</li>
+<li>Add/Remove servers</li>
+<li>Connect to a server and on the server side: Make sure client objects are discovered</li>
+<li>Connect to a server via dtls and on the server side: Make sure client objects are discovered</li>
+<li>The connect API on LWIP</li>
+<li>Building the implementation</li>
+<li><strong>Not tested</strong>: A running example with LWIP. tun/tap is required on travis for this to work.</li>
+<li>Examples</li>
+<li>Build all examples</li>
+<li><strong>Not tested</strong>: If the linux example can connect to a public lwm2m server.</li>
+</ul>
 <h2 id="license">License<a class="headerlink" href="#license" title="Permanent link">&para;</a></h2>
 <p>This platform code and API wrappers are provided under the MIT license.
 Wakaama is provided under the Eclipse Public License - v2.0.</p>

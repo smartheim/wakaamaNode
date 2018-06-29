@@ -13,7 +13,7 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
-        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/advanced-usage/custom-network/">
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/advanced-usage/own-mainloop/">
       
       
         <meta name="author" content="David Gräff">
@@ -42,7 +42,7 @@
     
     
       
-        <title>Custom network stack - WakaamaNode</title>
+        <title>Own mainloop - WakaamaNode</title>
       
     
     
@@ -99,7 +99,7 @@
     <input class="md-toggle" data-md-toggle="search" type="checkbox" id="search" autocomplete="off">
     <label class="md-overlay" data-md-component="overlay" for="drawer"></label>
     
-      <a href="#network-integration" tabindex="1" class="md-skip">
+      <a href="#add-own-file-descriptors-to-lwm2m_block_wait" tabindex="1" class="md-skip">
         Skip to content
       </a>
     
@@ -125,7 +125,7 @@
                 WakaamaNode
               </span>
               <span class="md-header-nav__topic">
-                Custom network stack
+                Own mainloop
               </span>
             
           
@@ -519,62 +519,11 @@
           
           
 
-  
 
-
-  <li class="md-nav__item md-nav__item--active">
-    
-    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
-    
-      
-    
-    
-      <label class="md-nav__link md-nav__link--active" for="toc">
-        Custom network stack
-      </label>
-    
-    <a href="./" title="Custom network stack" class="md-nav__link md-nav__link--active">
+  <li class="md-nav__item">
+    <a href="../custom-network/" title="Custom network stack" class="md-nav__link">
       Custom network stack
     </a>
-    
-      
-<nav class="md-nav md-nav--secondary">
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="toc">Table of contents</label>
-    <ul class="md-nav__list" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#required-methods" title="Required methods" class="md-nav__link">
-    Required methods
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#dtls" title="DTLS" class="md-nav__link">
-    DTLS
-  </a>
-  
-</li>
-      
-      
-      
-      
-      
-        <li class="md-nav__item">
-          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
-            Comments
-          </a>
-        </li>
-      
-    </ul>
-  
-</nav>
-    
   </li>
 
         
@@ -606,11 +555,58 @@
           
           
 
+  
 
-  <li class="md-nav__item">
-    <a href="../own-mainloop/" title="Own mainloop" class="md-nav__link">
+
+  <li class="md-nav__item md-nav__item--active">
+    
+    <input class="md-toggle md-nav__toggle" data-md-toggle="toc" type="checkbox" id="toc">
+    
+    
+      <label class="md-nav__link md-nav__link--active" for="toc">
+        Own mainloop
+      </label>
+    
+    <a href="./" title="Own mainloop" class="md-nav__link md-nav__link--active">
       Own mainloop
     </a>
+    
+      
+<nav class="md-nav md-nav--secondary">
+  
+  
+  
+    <label class="md-nav__title" for="toc">Table of contents</label>
+    <ul class="md-nav__list" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#add-own-file-descriptors-to-lwm2m_block_wait" title="Add own file descriptors to lwm2m_block_wait" class="md-nav__link">
+    Add own file descriptors to lwm2m_block_wait
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#example-implementation-of-a-select-based-lwm2m_block_wait" title="Example implementation of a select() based lwm2m_block_wait" class="md-nav__link">
+    Example implementation of a select() based lwm2m_block_wait
+  </a>
+  
+</li>
+      
+      
+      
+      
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
+    </ul>
+  
+</nav>
+    
   </li>
 
         
@@ -753,22 +749,20 @@
 <nav class="md-nav md-nav--secondary">
   
   
-    
-  
   
     <label class="md-nav__title" for="toc">Table of contents</label>
     <ul class="md-nav__list" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#required-methods" title="Required methods" class="md-nav__link">
-    Required methods
+  <a href="#add-own-file-descriptors-to-lwm2m_block_wait" title="Add own file descriptors to lwm2m_block_wait" class="md-nav__link">
+    Add own file descriptors to lwm2m_block_wait
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#dtls" title="DTLS" class="md-nav__link">
-    DTLS
+  <a href="#example-implementation-of-a-select-based-lwm2m_block_wait" title="Example implementation of a select() based lwm2m_block_wait" class="md-nav__link">
+    Example implementation of a select() based lwm2m_block_wait
   </a>
   
 </li>
@@ -795,70 +789,57 @@
             <article class="md-content__inner md-typeset">
               
                 
-                  <a href="https://github.com/Openhab-Nodes/wakaamaNode/edit/master/docs/advanced-usage/custom-network.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
+                  <a href="https://github.com/Openhab-Nodes/wakaamaNode/edit/master/docs/advanced-usage/own-mainloop.md" title="Edit this page" class="md-icon md-content__icon">&#xE3C9;</a>
                 
                 
-                <h1 id="network-integration">Network integration<a class="headerlink" href="#network-integration" title="Permanent link">&para;</a></h1>
-<p>Currently the lwip stack and a posix compatible stack as well as the windows network stack is supported.</p>
-<p>Basically an implementation has to keep track of open connections, open up an udp connection and close an udp connection.</p>
-<p>The implementation is expected to reside in the
-<a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/network"><img src="../../assets/github.png" style="width:20px"> src/network</a>
-directory.</p>
-<h2 id="required-methods">Required methods<a class="headerlink" href="#required-methods" title="Permanent link">&para;</a></h2>
-<p>Network stack code need to implement the following methods:</p>
-<div class="codehilite"><pre><span></span><span class="cm">/**</span>
-<span class="cm"> * @brief Initializes the network layer</span>
-<span class="cm"> *</span>
-<span class="cm"> * @param contextP  The wakaama context. Network socket information is stored in the</span>
-<span class="cm"> *                  contexts userdata.</span>
-<span class="cm"> * @param localPort Must be 0 for clients in which case a port is automatically choosen.</span>
-<span class="cm"> *                  For servers LWM2M_DEFAULT_SERVER_PORT is recommended.</span>
-<span class="cm"> * @return Return 0 if socket binding failed. Otherwise returns the number</span>
-<span class="cm"> *     of sockets we could bind to (for IPv4 and IPv6 each on all available interfaces).</span>
-<span class="cm"> */</span>
-<span class="kt">uint8_t</span> <span class="nf">lwm2m_network_init</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">localPort</span><span class="p">);</span>
+                  <h1>Own mainloop</h1>
+                
+                <p>The library can be integrated into your own select/poll/epoll based mainloop fairly easy,
+because you have access to the native socket handlers via <code class="codehilite">lwm2m_network_native_sock(context,sock_no)</code>
+and the next due time to call <code class="codehilite">lwm2m_process(context,next_event)</code>.</p>
+<p>If you are already using the linux <code class="codehilite">epoll</code> API (or <code class="codehilite">wepoll</code> on Windows), you should have a look at the implementation of <code class="codehilite">lwm2m_block_wait</code> in<br />
+<a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/network/network_posix.c#L326"><img src="../../assets/github.png" style="width:20px"> network/network_posix.c</a>.</p>
+<h3 id="add-own-file-descriptors-to-lwm2m_block_wait">Add own file descriptors to lwm2m_block_wait<a class="headerlink" href="#add-own-file-descriptors-to-lwm2m_block_wait" title="Permanent link">&para;</a></h3>
+<p>You can access the epoll descriptor this way:</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&quot;lwm2m/../../network/network_common.h&quot;</span><span class="cp"></span>
 
-<span class="cm">/**</span>
-<span class="cm"> * @brief Return the native socket handler for the given socket number.</span>
-<span class="cm"> * Usually this method is relevant if posix sockets are used and you need the socket handlers for select().</span>
-<span class="cm"> * @param contextP The wakaama context.</span>
-<span class="cm"> * @param sock_no Number from 0..v-1 where v has been returned by lwm2m_network_init().</span>
-<span class="cm"> * @return Native socket handler for the given socket number</span>
-<span class="cm"> */</span>
-<span class="kt">int</span> <span class="nf">lwm2m_network_native_sock</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span> <span class="kt">uint8_t</span> <span class="n">sock_no</span><span class="p">);</span>
-
-<span class="cm">/**</span>
-<span class="cm"> * @brief lwm2m_network_process</span>
-<span class="cm"> * Processes incoming network traffic and calls lwm2m_handle_packet.</span>
-<span class="cm"> * @param contextP The wakaama context.</span>
-<span class="cm"> * @return Return false if no open sockets are available.</span>
-<span class="cm"> */</span>
-<span class="kt">bool</span> <span class="nf">lwm2m_network_process</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">);</span>
-
-<span class="cm">/**</span>
-<span class="cm"> * @brief Closes all opened sockets and clean context-&gt;userdata.</span>
-<span class="cm"> * @param contextP The wakaama context.</span>
-<span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_network_close</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">);</span>
-
-<span class="cm">/**</span>
-<span class="cm"> * @brief Force the network stack to use the given network interface</span>
-<span class="cm"> * This is useful for testing purposes. The routing table will be ignored</span>
-<span class="cm"> * and the given interface will be used for outgoing traffic.</span>
-<span class="cm"> * @param contextP The wakaama context.</span>
-<span class="cm"> * @param interface A generic value which can be used to point to a network</span>
-<span class="cm"> * interface. The interpretation depends on the network backend.</span>
-<span class="cm"> */</span>
-<span class="kt">void</span> <span class="nf">lwm2m_network_force_interface</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">interface</span><span class="p">);</span>
+<span class="n">network_t</span><span class="o">*</span> <span class="n">network</span> <span class="o">=</span> <span class="p">(</span><span class="n">network_t</span><span class="o">*</span><span class="p">)</span><span class="n">contextP</span><span class="o">-&gt;</span><span class="n">userData</span><span class="p">;</span>
+<span class="kt">int</span> <span class="n">epoll_desc</span> <span class="o">=</span> <span class="n">network</span><span class="o">-&gt;</span><span class="n">epfd</span><span class="p">;</span>
 </pre></div>
 
-<h2 id="dtls">DTLS<a class="headerlink" href="#dtls" title="Permanent link">&para;</a></h2>
-<p>A reference network stack implementation for a DTLS secured connection based on mbed TLS is included.
-You need to define <code class="codehilite">#define LWM2M_WITH_DTLS</code> in your <code class="codehilite">wakaama_config.h</code>.
-Do not expect this to be safe in any way without a security audit on your side!</p>
-<p><a href="https://tls.mbed.org/kb/how-to/how-do-i-port-mbed-tls-to-a-new-environment-OS">https://tls.mbed.org/kb/how-to/how-do-i-port-mbed-tls-to-a-new-environment-OS</a> explains the required
-platform and network code for mbed TLS to work.</p>
-<p>Please be aware that mbed TLS uses heap memory and maximum buffer sizes need to be tuned for your use-cases.</p>
+<p>Add your file descriptor:</p>
+<div class="codehilite"><pre><span></span><span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">ev</span><span class="o">=</span><span class="p">{</span> <span class="p">.</span><span class="n">events</span><span class="o">=</span><span class="n">EPOLLIN</span> <span class="o">|</span> <span class="n">EPOLLPRI</span> <span class="o">|</span> <span class="n">EPOLLERR</span> <span class="o">|</span> <span class="n">EPOLLHUP</span><span class="p">,</span> <span class="p">{</span><span class="mi">0</span><span class="p">}</span> <span class="p">};</span>
+<span class="n">ev</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">fd</span><span class="o">=</span><span class="n">your_file_desc</span><span class="p">;</span>
+<span class="n">epoll_ctl</span><span class="p">(</span><span class="n">epoll_desc</span><span class="p">,</span> <span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">your_file_desc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">ev</span><span class="p">);</span>
+</pre></div>
+
+<h3 id="example-implementation-of-a-select-based-lwm2m_block_wait">Example implementation of a select() based lwm2m_block_wait<a class="headerlink" href="#example-implementation-of-a-select-based-lwm2m_block_wait" title="Permanent link">&para;</a></h3>
+<div class="codehilite"><pre><span></span><span class="kt">int</span> <span class="nf">lwm2m_block_wait</span><span class="p">(</span><span class="n">lwm2m_context_t</span> <span class="o">*</span> <span class="n">contextP</span><span class="p">,</span> <span class="k">struct</span> <span class="n">timeval</span> <span class="n">next_event</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">fd_set</span> <span class="n">readfds</span> <span class="o">=</span> <span class="p">{{</span><span class="mi">0</span><span class="p">}};</span>
+    <span class="kt">unsigned</span> <span class="n">sockets</span> <span class="o">=</span> <span class="p">((</span><span class="n">network_t</span><span class="o">*</span><span class="p">)</span><span class="n">contextP</span><span class="o">-&gt;</span><span class="n">userData</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">open_listen_sockets</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">sockets</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">intptr_t</span> <span class="n">sock</span> <span class="o">=</span> <span class="n">lwm2m_network_native_sock</span><span class="p">(</span><span class="n">contextP</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">sock</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
+        <span class="n">FD_SET</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">readfds</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">const</span> <span class="kt">int</span> <span class="n">select_result</span> <span class="o">=</span> <span class="n">select</span><span class="p">(</span><span class="n">FD_SETSIZE</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">readfds</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">next_event</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">select_result</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">errno</span> <span class="o">!=</span> <span class="n">EINTR</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Error in select(): %d %s</span><span class="se">\r\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">errno</span><span class="p">,</span> <span class="n">strerror</span><span class="p">(</span><span class="n">errno</span><span class="p">));</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="kt">unsigned</span> <span class="n">c</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">c</span> <span class="o">&lt;</span> <span class="n">sockets</span><span class="p">;</span> <span class="o">++</span><span class="n">c</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">const</span> <span class="kt">intptr_t</span> <span class="n">sock</span> <span class="o">=</span> <span class="n">lwm2m_network_native_sock</span><span class="p">(</span><span class="n">contextP</span><span class="p">,</span> <span class="n">c</span><span class="p">);</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">sock</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">&amp;&amp;</span> <span class="n">FD_ISSET</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">readfds</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">c</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
                 
                   
                 
@@ -871,9 +852,9 @@ platform and network code for mbed TLS to work.</p>
   <div id="disqus_thread"></div>
   <script>
     var disqus_config = function () {
-      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/advanced-usage/custom-network/";
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/advanced-usage/own-mainloop/";
       this.page.identifier =
-        "advanced-usage/custom-network/";
+        "advanced-usage/own-mainloop/";
     };
     (function() {
       var d = document, s = d.createElement("script");
@@ -895,7 +876,7 @@ platform and network code for mbed TLS to work.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../custom-platform/" title="Custom platform" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../deep-sleep/" title="Deep sleep" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -904,19 +885,19 @@ platform and network code for mbed TLS to work.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Custom platform
+                Deep sleep
               </span>
             </div>
           </a>
         
         
-          <a href="../ota/" title="Over-the-air updates" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
+          <a href="../thread-safety/" title="Thread safety" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
             <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
               <span class="md-flex__ellipsis">
                 <span class="md-footer-nav__direction">
                   Next
                 </span>
-                Over-the-air updates
+                Thread safety
               </span>
             </div>
             <div class="md-flex__cell md-flex__cell--shrink">

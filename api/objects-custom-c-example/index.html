@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/api/objects-custom-c-example/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -257,8 +259,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="../../others/limitations-and-known-issues/" title="Others" class="md-tabs__link">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -503,6 +531,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -582,6 +616,30 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -597,11 +655,47 @@
       <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
     
     <label class="md-nav__link" for="nav-6">
-      Others
+      Examples
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
       <label class="md-nav__title" for="nav-6">
-        Others
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
+    
+    <label class="md-nav__link" for="nav-7">
+      Limitations
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -617,6 +711,30 @@
     </a>
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -687,6 +805,12 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
@@ -732,8 +856,6 @@ WakamaNode provides ready-to-use, auto-generated c++ classes for all those objec
 <th>Name</th>
 <th align="center">ID</th>
 <th>Operations</th>
-<th align="center">Mult Inst</th>
-<th align="center">Mandatory</th>
 <th>Type</th>
 <th>Range</th>
 <th>Description</th>
@@ -744,8 +866,6 @@ WakamaNode provides ready-to-use, auto-generated c++ classes for all those objec
 <td>test</td>
 <td align="center">1</td>
 <td>R/W</td>
-<td align="center">No</td>
-<td align="center">Yes</td>
 <td>Integer</td>
 <td>0-128</td>
 <td></td>
@@ -754,8 +874,6 @@ WakamaNode provides ready-to-use, auto-generated c++ classes for all those objec
 <td>exec</td>
 <td align="center">2</td>
 <td>E</td>
-<td align="center">No</td>
-<td align="center">Yes</td>
 <td></td>
 <td></td>
 <td></td>
@@ -764,8 +882,6 @@ WakamaNode provides ready-to-use, auto-generated c++ classes for all those objec
 <td>dec</td>
 <td align="center">3</td>
 <td>R/W</td>
-<td align="center">No</td>
-<td align="center">Yes</td>
 <td>Float</td>
 <td></td>
 <td></td>
@@ -796,10 +912,15 @@ and all read/write/execute handling is done for you. </p>
 <span class="p">);</span>
 
 <span class="n">lwm2m_object_meta_information_t</span> <span class="o">*</span><span class="nf">test_object_get_meta</span><span class="p">()</span> <span class="p">{</span>
-    <span class="k">return</span> <span class="o">&amp;</span><span class="n">test_object_meta</span><span class="p">;</span>
+    <span class="k">return</span> <span class="o">&amp;</span><span class="n">test_object_metaP</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
 
+<p>Remember that we do not use the <code class="codehilite">result_variable_name</code> (in this case <code class="codehilite">test_object_meta</code>) directly.
+It is of type <code class="codehilite">lwm2m_object_meta_information_t</code>,
+which is not understood by the WakamaNode and Wakaama API. But thankfully <code class="codehilite">OBJECT_META</code> also defines
+a pointer of type <code class="codehilite">lwm2m_object_t</code>, which is named like the given <code class="codehilite">result_variable_name</code> with a <strong>P</strong> suffix.
+In this case: <code class="codehilite">test_object_metaP</code>.</p>
 <p>The ressources are described each with an entry of the following form:
 <code class="codehilite">{RES_ID, RES_ACCESS, RES_TYPE, offsetof(object_struct, res_name)}</code>.</p>
 <h3 id="input-validation">Input validation<a class="headerlink" href="#input-validation" title="Permanent link">&para;</a></h3>
@@ -871,6 +992,22 @@ the register call will be a little bit more expensive, because the object need t
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/api/objects-custom-c-example/";
+      this.page.identifier =
+        "api/objects-custom-c-example/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>

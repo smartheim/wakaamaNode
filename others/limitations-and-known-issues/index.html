@@ -13,6 +13,8 @@
         <meta name="description" content="The WakaamaNode (lwM2M library) documentation.">
       
       
+        <link rel="canonical" href="https://Openhab-Nodes.github.io/wakaamaNode/others/limitations-and-known-issues/">
+      
       
         <meta name="author" content="David Gräff">
       
@@ -40,7 +42,7 @@
     
     
       
-        <title>Limitations and known issues - WakaamaNode</title>
+        <title>Limitations - WakaamaNode</title>
       
     
     
@@ -106,7 +108,7 @@
   <nav class="md-header-nav md-grid">
     <div class="md-flex">
       <div class="md-flex__cell md-flex__cell--shrink">
-        <a href="../.." title="WakaamaNode" class="md-header-nav__button md-logo">
+        <a href="https://Openhab-Nodes.github.io/wakaamaNode/" title="WakaamaNode" class="md-header-nav__button md-logo">
           
             <img src="../../assets/logo_s.webp" width="24" height="24">
           
@@ -123,7 +125,7 @@
                 WakaamaNode
               </span>
               <span class="md-header-nav__topic">
-                Limitations and known issues
+                Limitations
               </span>
             
           
@@ -257,8 +259,34 @@
   
     <li class="md-tabs__item">
       
-        <a href="./" title="Others" class="md-tabs__link md-tabs__link--active">
-          Others
+        <a href="../../examples/" title="Examples" class="md-tabs__link">
+          Examples
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="./" title="Limitations" class="md-tabs__link md-tabs__link--active">
+          Limitations
+        </a>
+      
+    </li>
+  
+
+      
+        
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../troubleshooting/" title="Troubleshooting" class="md-tabs__link">
+          Troubleshooting
         </a>
       
     </li>
@@ -521,6 +549,66 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/own-mainloop/" title="Own mainloop" class="md-nav__link">
+      Own mainloop
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/thread-safety/" title="Thread safety" class="md-nav__link">
+      Thread safety
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6">
+    
+    <label class="md-nav__link" for="nav-6">
+      Examples
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-6">
+        Examples
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../examples/" title="Examples" class="md-nav__link">
+      Examples
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -535,14 +623,14 @@
 
   <li class="md-nav__item md-nav__item--active md-nav__item--nested">
     
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-6" type="checkbox" id="nav-6" checked>
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7" checked>
     
-    <label class="md-nav__link" for="nav-6">
-      Others
+    <label class="md-nav__link" for="nav-7">
+      Limitations
     </label>
     <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-6">
-        Others
+      <label class="md-nav__title" for="nav-7">
+        Limitations
       </label>
       <ul class="md-nav__list" data-md-scrollfix>
         
@@ -562,11 +650,11 @@
     
     
       <label class="md-nav__link md-nav__link--active" for="toc">
-        Limitations and known issues
+        Limitations
       </label>
     
-    <a href="./" title="Limitations and known issues" class="md-nav__link md-nav__link--active">
-      Limitations and known issues
+    <a href="./" title="Limitations" class="md-nav__link md-nav__link--active">
+      Limitations
     </a>
     
       
@@ -587,8 +675,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#object-link-resources" title="Object link resources" class="md-nav__link">
-    Object link resources
+  <a href="#resources-object-links" title="Resources: Object links" class="md-nav__link">
+    Resources: Object links
   </a>
   
 </li>
@@ -596,6 +684,20 @@
         <li class="md-nav__item">
   <a href="#resources-multiple-instances" title="Resources: Multiple instances" class="md-nav__link">
     Resources: Multiple instances
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dtls-certificate-based-encryption-public-raw-key" title="DTLS: Certificate based encryption + public raw key" class="md-nav__link">
+    DTLS: Certificate based encryption + public raw key
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dtls-handshake" title="DTLS: Handshake" class="md-nav__link">
+    DTLS: Handshake
   </a>
   
 </li>
@@ -611,12 +713,42 @@
       
       
       
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
+      
     </ul>
   
 </nav>
     
   </li>
 
+        
+      </ul>
+    </nav>
+  </li>
+
+    
+      
+      
+      
+
+
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
+    
+    <label class="md-nav__link" for="nav-8">
+      Troubleshooting
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-8">
+        Troubleshooting
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
         
           
           
@@ -663,8 +795,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#object-link-resources" title="Object link resources" class="md-nav__link">
-    Object link resources
+  <a href="#resources-object-links" title="Resources: Object links" class="md-nav__link">
+    Resources: Object links
   </a>
   
 </li>
@@ -672,6 +804,20 @@
         <li class="md-nav__item">
   <a href="#resources-multiple-instances" title="Resources: Multiple instances" class="md-nav__link">
     Resources: Multiple instances
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dtls-certificate-based-encryption-public-raw-key" title="DTLS: Certificate based encryption + public raw key" class="md-nav__link">
+    DTLS: Certificate based encryption + public raw key
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dtls-handshake" title="DTLS: Handshake" class="md-nav__link">
+    DTLS: Handshake
   </a>
   
 </li>
@@ -686,6 +832,12 @@
       
       
       
+      
+        <li class="md-nav__item">
+          <a href="#__comments" title="Comments" class="md-nav__link md-nav__link--active">
+            Comments
+          </a>
+        </li>
       
     </ul>
   
@@ -704,15 +856,26 @@
                 
                 <h1 id="limitations">Limitations<a class="headerlink" href="#limitations" title="Permanent link">&para;</a></h1>
 <h2 id="auto-generated-registry-objects">Auto generated registry objects<a class="headerlink" href="#auto-generated-registry-objects" title="Permanent link">&para;</a></h2>
-<p>Unfortunately the lwm2m description does not consistently contain information about the size of a string or an opaque block.
-Currently strings and opaque resources are hardcoded to 30 bytes in size.</p>
-<h2 id="object-link-resources">Object link resources<a class="headerlink" href="#object-link-resources" title="Permanent link">&para;</a></h2>
+<p>Unfortunately the lwm2m description does not consistently contain information about the maximum size of a string or an opaque block.
+Currently strings and opaque resources are hardcoded to 30 bytes in size. Each string and opaque resource is defined as Macro
+and can be overridden before including the respective header file.</p>
+<h2 id="resources-object-links">Resources: Object links<a class="headerlink" href="#resources-object-links" title="Permanent link">&para;</a></h2>
 <p>The library does not support object links as resources if you use the C or C++ objects API.</p>
 <h2 id="resources-multiple-instances">Resources: Multiple instances<a class="headerlink" href="#resources-multiple-instances" title="Permanent link">&para;</a></h2>
-<p>The library does not support multiple instances of resources. Those are mostly used for object links anyway.</p>
+<p>The library does not support multiple instances of resources. Those are mostly used for object links though.</p>
+<h2 id="dtls-certificate-based-encryption-public-raw-key">DTLS: Certificate based encryption + public raw key<a class="headerlink" href="#dtls-certificate-based-encryption-public-raw-key" title="Permanent link">&para;</a></h2>
+<p>The library only supports to configure the embedded mbedtls to use preshared (PSK) ciphers suits. Public raw keys are not yet fully supported by mbedtls
+and certificate based encryption needs further configuration tuning of mbedtls.</p>
+<h2 id="dtls-handshake">DTLS: Handshake<a class="headerlink" href="#dtls-handshake" title="Permanent link">&para;</a></h2>
+<p>The lwm2m state machine will freeze as soon as a dtls handshake takes place.
+This avoids the state machine to issue new packets or setup timers, while the actuall
+connection have not been established yet.
+If multiple servers are configured, all dtls handshakes take place in parallel.</p>
+<p>But only if all have finished (successfully or timed out), the lwm2m state machine and lwm2m handshake will be processed.</p>
 <h2 id="main-loop-timing">Main loop timing<a class="headerlink" href="#main-loop-timing" title="Permanent link">&para;</a></h2>
-<p>A connection to a lwM2M server may be interrupted if the the libraries main loop method is not called in time.
-Do not <code class="codehilite">delay()</code> or ADC read for too long.</p>
+<p>A connection to a lwM2M server or a dtls session may get expired if the libraries main loop method is not called in time.
+Do not <code class="codehilite">delay()</code>/<code class="codehilite">sleep()</code> or call blocking functions for too long. The <code class="codehilite">lwm2m_process</code> method will return a <code class="codehilite">timeval</code> value
+in microseconds+seconds to let you know when the next call is due.</p>
                 
                   
                 
@@ -720,6 +883,22 @@ Do not <code class="codehilite">delay()</code> or ADC read for too long.</p>
               
                 
 
+
+  <h2 id="__comments">Comments</h2>
+  <div id="disqus_thread"></div>
+  <script>
+    var disqus_config = function () {
+      this.page.url = "https://Openhab-Nodes.github.io/wakaamaNode/others/limitations-and-known-issues/";
+      this.page.identifier =
+        "others/limitations-and-known-issues/";
+    };
+    (function() {
+      var d = document, s = d.createElement("script");
+      s.src = "//https-openhab-nodes-github-io-wakaamanode.disqus.com/embed.js";
+      s.setAttribute("data-timestamp", +new Date());
+      (d.head || d.body).appendChild(s);
+    })();
+  </script>
 
               
             </article>
@@ -733,7 +912,7 @@ Do not <code class="codehilite">delay()</code> or ADC read for too long.</p>
     <div class="md-footer-nav">
       <nav class="md-footer-nav__inner md-grid">
         
-          <a href="../../advanced-usage/deep-sleep/" title="Deep sleep" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
+          <a href="../../examples/" title="Examples" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
             <div class="md-flex__cell md-flex__cell--shrink">
               <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
             </div>
@@ -742,7 +921,7 @@ Do not <code class="codehilite">delay()</code> or ADC read for too long.</p>
                 <span class="md-footer-nav__direction">
                   Previous
                 </span>
-                Deep sleep
+                Examples
               </span>
             </div>
           </a>
