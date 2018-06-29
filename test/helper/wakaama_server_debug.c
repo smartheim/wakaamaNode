@@ -12,7 +12,7 @@
  * all copies or substantial portions of the Software.
  */
 #include "wakaama_server_debug.h"
-#include "lwm2m/connect.h"
+#include "lwm2m/c_connect.h"
 #include "../src/wakaama/internals.h"
 #include "lwm2m/debug.h"
 
@@ -42,13 +42,13 @@ static const char* prv_status_to_string(int status)
     }
 }
 
-void print_status(uint8_t status)
+void print_status(int status)
 {
     fprintf(stderr, "%d.%02d (%s)",
             (status&0xE0)>>5, status&0x1F, prv_status_to_string(status));
 }
 
-void prv_print_error(uint8_t status)
+void prv_print_error(int status)
 {
     fprintf(stderr, "Error status: ");
     print_status(status);

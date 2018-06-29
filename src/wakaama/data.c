@@ -20,6 +20,9 @@
 #include "internals.h"
 #include <float.h>
 
+#define LOG_DATA(...) {}
+#define LOG_DATA_ARG(...) {}
+
 #define _PRV_STR_LENGTH 32
 
 // dataP array length is assumed to be 1.
@@ -140,7 +143,7 @@ lwm2m_data_t * lwm2m_data_new(int size)
 {
     lwm2m_data_t * dataP;
 
-    LOG_ARG("size: %d", size);
+    LOG_DATA_ARG("size: %d", size);
     if (size <= 0) return NULL;
 
     dataP = (lwm2m_data_t *)lwm2m_malloc(size * sizeof(lwm2m_data_t));
@@ -158,7 +161,7 @@ void lwm2m_data_free(int size,
 {
     int i;
 
-    LOG_ARG("size: %d", size);
+    LOG_DATA_ARG("size: %d", size);
     if (size == 0 || dataP == NULL) return;
 
     for (i = 0; i < size; i++)
@@ -192,7 +195,7 @@ void lwm2m_data_encode_string(const char * string,
     size_t len;
     int res;
 
-    LOG_ARG("\"%s\"", string);
+    LOG_DATA_ARG("\"%s\"", string);
     if (string == NULL)
     {
         len = 0;
@@ -229,7 +232,7 @@ void lwm2m_data_encode_opaque(uint8_t * buffer,
 {
     int res;
 
-    LOG_ARG("length: %d", length);
+    LOG_DATA_ARG("length: %d", length);
     if (length == 0)
     {
         dataP->value.asBuffer.length = 0;
@@ -255,7 +258,7 @@ void lwm2m_data_encode_nstring(const char * string,
                                size_t length,
                                lwm2m_data_t * dataP)
 {
-    LOG_ARG("length: %d, string: \"%s\"", length, string);
+    LOG_DATA_ARG("length: %d, string: \"%s\"", length, string);
     lwm2m_data_encode_opaque((uint8_t *)string, length, dataP);
 
     if (dataP->type == LWM2M_TYPE_OPAQUE)
@@ -267,7 +270,7 @@ void lwm2m_data_encode_nstring(const char * string,
 void lwm2m_data_encode_int(int64_t value,
                            lwm2m_data_t * dataP)
 {
-    LOG_ARG("value: %" PRId64 "", value);
+    LOG_DATA_ARG("value: %" PRId64 "", value);
     dataP->type = LWM2M_TYPE_INTEGER;
     dataP->value.asInteger = value;
 }
@@ -277,7 +280,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
 {
     int result;
 
-    LOG("Entering");
+    LOG_DATA("Entering");
     switch (dataP->type)
     {
     case LWM2M_TYPE_INTEGER:
@@ -332,7 +335,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
     default:
         return 0;
     }
-    LOG_ARG("result: %d, value: %" PRId64, result, *valueP);
+    LOG_DATA_ARG("result: %d, value: %" PRId64, result, *valueP);
 
     return result;
 }
@@ -340,7 +343,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
 void lwm2m_data_encode_float(double value,
                              lwm2m_data_t * dataP)
 {
-    LOG_ARG("value: %f", value);
+    LOG_DATA_ARG("value: %f", value);
     dataP->type = LWM2M_TYPE_FLOAT;
     dataP->value.asFloat = value;
 }
@@ -350,7 +353,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
 {
     int result;
 
-    LOG("Entering");
+    LOG_DATA("Entering");
     switch (dataP->type)
     {
     case LWM2M_TYPE_FLOAT:
@@ -395,7 +398,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
         result = 0;
     }
 
-    LOG_ARG("result: %d, value: %f", result, *valueP);
+    LOG_DATA_ARG("result: %d, value: %f", result, *valueP);
 
     return result;
 }
@@ -403,7 +406,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
 void lwm2m_data_encode_bool(bool value,
                             lwm2m_data_t * dataP)
 {
-    LOG_ARG("value: %s", value?"true":"false");
+    LOG_DATA_ARG("value: %s", value?"true":"false");
     dataP->type = LWM2M_TYPE_BOOLEAN;
     dataP->value.asBoolean = value;
 }
@@ -413,7 +416,7 @@ int lwm2m_data_decode_bool(const lwm2m_data_t * dataP,
 {
     int result;
 
-    LOG("Entering");
+    LOG_DATA("Entering");
     switch (dataP->type)
     {
     case LWM2M_TYPE_BOOLEAN:
@@ -464,7 +467,7 @@ int lwm2m_data_decode_bool(const lwm2m_data_t * dataP,
         break;
     }
 
-    LOG_ARG("result: %d, value: %s", result, *valueP ? "true" : "false");
+    LOG_DATA_ARG("result: %d, value: %s", result, *valueP ? "true" : "false");
 
     return result;
 }
@@ -473,7 +476,7 @@ void lwm2m_data_encode_objlink(uint16_t objectId,
                            uint16_t objectInstanceId,
                            lwm2m_data_t * dataP)
 {
-    LOG_ARG("value: %d/%d", objectId, objectInstanceId);
+    LOG_DATA_ARG("value: %d/%d", objectId, objectInstanceId);
     dataP->type = LWM2M_TYPE_OBJECT_LINK;
     dataP->value.asObjLink.objectId = objectId;
     dataP->value.asObjLink.objectInstanceId = objectInstanceId;
@@ -483,7 +486,7 @@ void lwm2m_data_include(lwm2m_data_t * subDataP,
                         size_t count,
                         lwm2m_data_t * dataP)
 {
-    LOG_ARG("count: %d", count);
+    LOG_DATA_ARG("count: %d", count);
     if (subDataP == NULL || count == 0) return;
 
     switch (subDataP[0].type)
@@ -511,7 +514,7 @@ void lwm2m_data_encode_instances(lwm2m_data_t * subDataP,
                                  size_t count,
                                  lwm2m_data_t * dataP)
 {
-    LOG_ARG("count: %d", count);
+    LOG_DATA_ARG("count: %d", count);
     lwm2m_data_include(subDataP, count, dataP);
     dataP->type = LWM2M_TYPE_MULTIPLE_RESOURCE;
 }
@@ -524,7 +527,7 @@ int lwm2m_data_parse(lwm2m_uri_t * uriP,
 {
     int res;
 
-    LOG_ARG("format: %s, bufferLen: %d", STR_MEDIA_TYPE(format), bufferLen);
+    LOG_DATA_ARG("format: %s, bufferLen: %d", STR_MEDIA_TYPE(format), bufferLen);
     LOG_URI(uriP);
     switch (format)
     {
@@ -582,7 +585,7 @@ int lwm2m_data_serialize(lwm2m_uri_t * uriP,
                          uint8_t ** bufferP)
 {
     LOG_URI(uriP);
-    LOG_ARG("size: %d, formatP: %s", size, STR_MEDIA_TYPE(*formatP));
+    LOG_DATA_ARG("size: %d, formatP: %s", size, STR_MEDIA_TYPE(*formatP));
 
     // Check format
     if (*formatP == LWM2M_CONTENT_TEXT
@@ -605,11 +608,11 @@ int lwm2m_data_serialize(lwm2m_uri_t * uriP,
     if (*formatP == LWM2M_CONTENT_OPAQUE
      && dataP->type != LWM2M_TYPE_OPAQUE)
     {
-        LOG("Opaque format is reserved to opaque resources.");
+        LOG_DATA("Opaque format is reserved to opaque resources.");
         return -1;
     }
 
-    LOG_ARG("Final format: %s", STR_MEDIA_TYPE(*formatP));
+    LOG_DATA_ARG("Final format: %s", STR_MEDIA_TYPE(*formatP));
 
     switch (*formatP)
     {

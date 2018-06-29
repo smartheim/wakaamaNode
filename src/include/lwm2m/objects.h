@@ -12,248 +12,411 @@
  * all copies or substantial portions of the Software.
  */
 #pragma once
-#include "../../wakaama/liblwm2m.h"
-#include <assert.h>
 
 /*
- * Methods and Enums defined in this file are for easily creating a new lwM2M object definition
- * and object instances. This is for the C-API.
+ * Classes, Methods and Enums defined in this file are for easily creating a new lwM2M object definition
+ * and object instances. This is for the C++-API.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "../../wakaama/liblwm2m.h"
+#include "../../macro_helper.h"
+#include "lwm2m/c_objects.h" // We need the enums of the C-API as well
+#include <inttypes.h>
+#include <string.h>
+#include <type_traits>
+#include <functional>
 
-/**
- * @brief Implement this method to get notified of altered lwM2M resources.
- *
- * This method is only called if all verifications and validations succeeded and the
- * resource value has actually been written.
- */
-void lwm2m_resource_changed_event(uint16_t object_id, uint16_t object_instance_id, uint16_t resource_id);
+template<class T>
+class Lwm2mObjectBase;
 
-typedef char* (*readFunc) (void);
-typedef void  (*execFunc) (uint8_t * buffer,
-                           int length);
+using Lwm2mObjectBaseVoid = Lwm2mObjectBase<void>;
+class Lwm2mObjectInstance;
 
-typedef enum _lwm2m_object_util_type_ {
-    O_RES_EXEC   = 0, ///< Executable resource == no type
-    O_RES_BOOL   = 1, ///< A boolean value
-    O_RES_DOUBLE = 2, ///< A floating point decimal value
-    O_RES_INT8   = 3, ///< Int with range [-128,127]
-    O_RES_UINT8  = 4, ///< Int with range [0,255]
-    O_RES_INT16  = 5, ///< Int with range [-32000,32000]
-    O_RES_UINT16 = 6, ///< Int with range [0,65500]
-    O_RES_INT32  = 7, ///< Int with range [-2^31,2^31-1]
-    O_RES_UINT32 = 8, ///< Int with range [0, 2^32-1]
-    O_RES_INT64  = 9, ///< Int with range [-2^63, 2^63-1]
-    O_RES_STRING          = 10, ///< Readonly c-string
-    O_RES_STRING_PREALLOC = 11, ///< preallocated space. To be used with OpaqueType(N) in C or Opaque<N> in C++.
-    O_RES_OPAQUE_INDIRECT = 12, ///< To be used with type OpaqueIndirect
-    O_RES_OPAQUE_PREALLOC = 13  ///< preallocated space. To be used with OpaqueType(N) in C or Opaque<N> in C++.
-} lwm2m_object_util_type_t;
+int lwm2m_object_prepare_full_response(lwm2m_data_t ** dataArrayP, Lwm2mObjectBaseVoid* metaP);
+uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object_res_item_t* resP,
+                                         Lwm2mObjectInstance* instanceP);
+uint8_t prv_read(uint16_t instanceId,
+                        int * numDataP,
+                        lwm2m_data_t ** dataArrayP,
+                        lwm2m_object_t * objectP,
+                        lwm2m_context_t* context);
+uint8_t prv_write(uint16_t instanceId,
+                         int numData,
+                         lwm2m_data_t * dataArray,
+                         lwm2m_object_t * objectP,
+                        lwm2m_context_t* context);
+uint8_t prv_execute(uint16_t instanceId,
+                    uint16_t res_id,
+                    lwm2m_context_t* context,
+                    lwm2m_object_t * objectP);
+uint8_t prv_discover(uint16_t instanceId,
+                    int * numDataP,
+                    lwm2m_data_t ** dataArrayP,
+                    lwm2m_object_t * objectP);
+uint8_t prv_delete(uint16_t id, lwm2m_object_t * objectP);
+uint8_t prv_create(uint16_t instanceId,
+                  int numData,
+                  lwm2m_data_t * dataArray,
+                  lwm2m_object_t * objectP, lwm2m_context_t *contextP);
 
-typedef enum _lwm2m_object_util_access_ {
-    O_RES_R  = 1, ///< Read only access
-    O_RES_W  = 2, ///< Write only access
-    O_RES_RW = O_RES_R|O_RES_W, ///< Read/Write access
-    O_RES_E  = 4, ///< Standalone: Makes this resource executable. Combinded with O_RES_R: Reads the resource value from the function.
-    O_RES_M  = 8  ///< Indicator for a resource modification. After a write this flag will be erased.
-} lwm2m_object_util_access_t;
+// The Opaque type. OpaqueIndirect is defined by the C-API.
+template<int N>
+struct Opaque {
+    uint16_t reserved_len=N;
+    uint16_t used_len=0;
+    uint8_t data[N];
 
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wpedantic"
-#endif
-#pragma GCC diagnostic ignored "-Wpedantic"
-typedef struct _lwm2m_object_res_item_t_ {
-    uint16_t ressource_id;
-    uint8_t access:4;
-    uint8_t type:4;
-    uint8_t struct_member_offset;
-} lwm2m_object_res_item_t;
-#pragma GCC diagnostic pop
+    template<typename T>
+    inline void copy(T* d, int size) {
+        memcpy(data, d, size);
+        used_len = size;
+    }
+};
 
-/**
- * Use this type for an opaque memory, referened indirectly through a pointer
- */
-typedef struct _lwm2m_object_res_opaque_t_ {
-    uint16_t reserved_len;
-    uint16_t used_len;
-    uint8_t* data;
-} OpaqueIndirect;
+// Preallocated string
+template<int N>
+struct PreallocString {
+    uint16_t reserved_len=N;
+    uint16_t used_len=0;
+    uint8_t data[N];
 
-/**
- * Use this type for an opaque in-place memory
- */
-#define OpaqueType(N) struct { \
-    uint16_t reserved_len; \
-    uint16_t used_len; \
-    uint8_t data[N]; \
-}
+    template<typename T>
+    inline void copy(T* d) {
+        used_len = strlen(d);
+        if (used_len>reserved_len){
+            used_len=reserved_len;
+        }
+        memcpy(data, d, used_len+1);
+    }
+};
 
-typedef void(*ExecutableType)(uint8_t * buffer,
-                              int length);
-#define IndirectReadType(TYPE,NAME) TYPE(*NAME)(void)
-#define IndirectWriteType(TYPE,NAME) void(*NAME)(TYPE,int)
+template<class T>
+struct DynArray {
+    T data;
+    int len;
+    DynArray(T& value, int len) : data(value),len(len){}
+};
 
-#define IndirectReadWriteType(TYPE) struct { \
-    TYPE(*read)(void); \
-    void(*write)(TYPE,int); \
-}
+class Lwm2mObjectInstance : public lwm2m_list_t {
+public:
+    Lwm2mObjectInstance() : lwm2m_list_t{nullptr,0} {}
+    template<class T> inline T* as() {return reinterpret_cast<T*>(this);}
+};
 
-/**
- * Internal structure. Use "OpaqueType(2) var_name;" instead.
- */
-typedef struct _lwm2m_object_res_opaque_mem_t_ {
-    uint16_t reserved_len;
-    uint16_t used_len;
-    uint8_t data[1];
-} OpaqueType_t;
+// The executable type
+using Executable = std::add_pointer<void(Lwm2mObjectInstance* instance, lwm2m_context_t* context)>::type;
+
+// The verify write callback of Lwm2mObjectBase
+template<class T>
+using VerifyWrite = bool (*)(T*, uint16_t);
+
+// The read indirect type
+template<class T>
+using IndirectRead = T (*)(Lwm2mObjectInstance*);
+
+// The write indirect type
+template<class T>
+using IndirectWrite = void (*)(Lwm2mObjectInstance*,DynArray<T>&);
+
+// The read/write indirect type
+template<class T>
+struct IndirectReadWrite {
+    typedef T type;
+    IndirectRead<T> read;
+    IndirectWrite<T> write;
+    IndirectReadWrite() = default;
+    IndirectReadWrite(IndirectRead<T> read, IndirectWrite<T> write) : read(read),write(write){}
+};
+
+template<class ObjectInstance>
+class Lwm2mObjectBase {
+    // Allow offset_of_impl to access the protected constructor
+    template<typename T1, typename T2> friend struct offset_of_impl;
+public:
+    lwm2m_object_t object{};
+    VerifyWrite<ObjectInstance> verifyWrite;
+    struct alignas(alignof (uintptr_t)) Sizes {
+        const uint16_t object;
+        const uint16_t object_instance;
+    };
+    const Sizes sizes;
+
+    static Lwm2mObjectBase* getBase(lwm2m_object_t* p) {
+        const uintptr_t objectP = reinterpret_cast<uintptr_t>(p);
+        return reinterpret_cast<Lwm2mObjectBase*>(objectP - offset_of(&Lwm2mObjectBase::object));
+    }
+    lwm2m_object_res_item_t* resource(uint16_t i) {
+        const uint16_t res_len = resources_len();
+        const uintptr_t endOfObject = reinterpret_cast<uintptr_t>(this) + sizes.object;
+        return reinterpret_cast<lwm2m_object_res_item_t*>(endOfObject - sizeof(lwm2m_object_res_item_t)*(res_len-i));
+    }
+    constexpr uint16_t resources_len() const {
+        return (sizes.object-sizeof(Lwm2mObjectBase))/sizeof(lwm2m_object_res_item_t);
+    }
+
+    lwm2m_object_res_item_t* find_ressource(uint16_t id) {
+        for (uint16_t index = 0; index < resources_len(); index++) {
+            if (resource(index)->ressource_id == id) {
+                return resource(index);
+            }
+        }
+
+        return nullptr;
+    }
+
+    constexpr Lwm2mObjectBase(uint16_t derived_size) :
+        verifyWrite(defaultVerify), sizes{derived_size,sizeof(ObjectInstance)} {}
+
+    void resChanged(lwm2m_context_t * contextP, uint16_t object_instance_id, uint16_t res_id) {
+        lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID,
+                           object.objID, object_instance_id, res_id};
+        lwm2m_resource_value_changed(contextP, &uri);
+    }
+
+    /**
+      * Add the given instance to the object and notify connected lwm2m servers.
+      */
+    void addInstance(lwm2m_context_t * contextP, Lwm2mObjectInstance* instance) {
+        if (lwm2m_list_find(object.instanceList,instance->id)) return;
+
+        object.instanceList=lwm2m_list_add(object.instanceList, instance);
+        if (contextP->state == STATE_READY && LWM2M_LIST_FIND(contextP->objectList, object.objID) != NULL)
+            lwm2m_update_registration(contextP, 0, true);
+    }
+
+    /**
+      * Remove the given instance from the object and notify connected lwm2m servers.
+      */
+    lwm2m_list_t* removeInstance(lwm2m_context_t * contextP, uint16_t instance_id) {
+        lwm2m_list_t* removed = NULL;
+        object.instanceList = lwm2m_list_remove(object.instanceList, instance_id, &removed);
+
+        if (contextP->state == STATE_READY && LWM2M_LIST_FIND(contextP->objectList, object.objID) != NULL)
+        {
+            lwm2m_update_registration(contextP, 0, true);
+        }
+        return removed;
+    }
+
+    /**
+      * Registers an object to the given lwm2m context and notifies connected lwm2m servers.
+      */
+    int registerObject(lwm2m_context_t * contextP, bool allow_dynamic_instance_creation) {
+        object.readFunc = prv_read;
+        object.writeFunc = prv_write;
+        object.discoverFunc = prv_discover;
+        object.executeFunc = prv_execute;
+
+        if (allow_dynamic_instance_creation)
+        {
+            object.createFunc = prv_create;
+            object.deleteFunc = prv_delete;
+        }
+
+        return lwm2m_add_object(contextP, &object);
+    }
+
+    /**
+      * Unregisters an object from the given lwm2m context and notifies connected lwm2m servers.
+      */
+    int unregisterObject(lwm2m_context_t * contextP) {
+        return lwm2m_remove_object(contextP, object.objID);
+    }
 
 
-/**
- * @brief A callback that if provided will verify a write to an object ressource.
- * An example implementation:
- *
- * bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {
- *     // First cast to the right instance struct.
- *     test_object_instance_t* i = (test_object_instance_t*)instance;
- *
- *     // if ressource 1 has a range from 0-128 return false if range is violated.
- *     if(changed_res_id==1 && i->test > 128) return false;
- *
- *     // You may react to a write here now. Like setting a GPIO or anything.
- *
- *     return true; // Usually accepts a write to an object
- * }
- *
- * @param instance       The object instance where the write takes place.
- * @param changed_res_id The id of the ressource that has changed.
- * @return Return false if the set value is not in range or is in any other means not
- *         not allowed on this object instance.
- */
-typedef bool (*object_write_verify_cb_t)(lwm2m_list_t* instance, uint16_t changed_res_id);
+    /**
+      * Dynamically create an instance. Will be called when a lwm2m server requests
+      * a new object instance.
+      */
+    virtual Lwm2mObjectInstance* createInstance(uint16_t instance_id){return nullptr;}
+    /**
+      * Dynamically delete an instance. Will be called when a lwm2m server requests
+      * to delete an object instance.
+      */
+    virtual int deleteInstance(Lwm2mObjectInstance* instance){return COAP_NO_ERROR;}
 
-/**
-  * See documentation of lwm2m_object_create.
-  */
-typedef struct _lwm2m_object_meta_information_ {
-    lwm2m_object_t obj;
-    uint16_t instance_object_size;            ///< sizeof(instance_t)
-    object_write_verify_cb_t write_verify_cb; ///< Verify or react to write in this callback. Optional.
-    uint8_t ressources_len;                   ///< Of how many ressources does your object instance consists of.
-    lwm2m_object_res_item_t ressources[1];     ///< Describe your instance_t / your ressources.
-} lwm2m_object_meta_information_t;
+    protected:
+    constexpr Lwm2mObjectBase() : verifyWrite(defaultVerify), sizes{0,0} {}
+    constexpr static bool defaultVerify(ObjectInstance*,uint16_t) { return true; }
+};
 
-#ifdef __cplusplus
-#define STATIC_ASSERT static_assert
-#elif __STDC_VERSION__ >= 201112L
-#define STATIC_ASSERT _Static_assert
-#else // For C89, C99
-#define STATIC_ASSERT(a, b)
-#endif
+template<uint16_t objectID, class Derived, class ObjectInstance>
+class Lwm2mObject : public Lwm2mObjectBase<ObjectInstance> {
+public:
+   Lwm2mObject() : Lwm2mObjectBase<ObjectInstance>(sizeof(Derived)) {
+       Lwm2mObjectBase<ObjectInstance>::object.objID=objectID;
+   }
+};
 
-/**
- * Usually you define and only work with an lwm2m_object_t object.
- * If you use WakaamaNode object helper methods, additionally
- * to lwm2m_object_t there is also meta data required.
- *
- * Hereby an example for the following object definition is given:
- *
- *                 Multiple
- * Object |  ID  | Instances | Mandatoty |
- *  Test  | 1024 |    Yes    |    No     |
- *
- *  Ressources:
- *              Supported    Multiple
- *  Name | ID | Operations | Instances | Mandatory |  Type   | Range | Units |      Description      |
- *  test |  1 |    R/W     |    No     |    Yes    | Integer | 0-128 |       |                       |
- *  exec |  2 |     E      |    No     |    Yes    |         |       |       |                       |
- *  dec  |  3 |    R/W     |    No     |    Yes    |  Float  |       |       |                       |
- *
- * You need a struct that may look like this:
- *
- * typedef struct {
- *    struct _prv_instance_ * next; // matches lwm2m_list_t::next
- *    uint16_t shortID;             // matches lwm2m_list_t::id
- *    uint8_t  test;   // For Res id 1
- *    double   dec;    // For Res id 3
- * } your_object_instance_t;
- *
- * Use OBJECT_META() and create a corresponding lwm2m object with an attached meta object like this:
- *
- * OBJECT_META(your_object_instance_t, test_object, test_object_write_verify_cb,
- *     {0, O_RES_RW,O_RES_UINT8 , offsetof(your_object_instance_t,test)},
- *     {1, O_RES_E ,0,          , 0},
- *     {2, O_RES_RW,O_RES_DOUBLE, offsetof(your_object_instance_t,dec)}
- * );
- *
- * You provide the object instance ("your_object_instance_t") and the variable name ("test_object")
- * for the object via the first and second argument.
- *
- * The third argument may be set to NULL. Otherwise set it to a callback method which is called on
- * a write to your object instance. You may react on a write in this method and you may deny the write if the new value
- * is not in range of your allowed values. See object_write_verify_cb_t for more information.
- *
- * The succeeding arguments describe the ressources of your object instances.
- *
- */
-#define OBJECT_META(object_instance_t, variable_name, object_id, write_cb, ...) \
-    typedef struct            \
-    {                                                                \
-        lwm2m_object_t obj;                                          \
-        uint16_t instance_object_size;                               \
-        object_write_verify_cb_t write_verify_cb;                    \
-        uint8_t ressources_len;                                      \
-        lwm2m_object_res_item_t ressources[sizeof((lwm2m_object_res_item_t[]){__VA_ARGS__}) / sizeof (lwm2m_object_res_item_t)];                        \
-    } lwm2m_object_meta_information_custom_t;                        \
-    static lwm2m_object_meta_information_custom_t meta_object =    \
-    {{NULL, object_id,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}, sizeof(object_instance_t), write_cb, sizeof((lwm2m_object_res_item_t[]){__VA_ARGS__}) / sizeof (lwm2m_object_res_item_t), {__VA_ARGS__}}; \
-    STATIC_ASSERT(sizeof(object_instance_t) > sizeof(uint8_t), "Object utils can only be used for object structs smaller than 256 bytes!"); \
-    lwm2m_object_t* variable_name = (lwm2m_object_t*)&meta_object;
+////// Fallback with error
+template<uint16_t ResID, class ObjectInstance, class ResourceType, size_t offset, uint8_t Operations, typename Enable = void>
+class ResourceRaw : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() = delete;
+};
 
-/**
- * @brief Initializes an lwm2m object, created with OBJECT_META().
- *
- * This will also add the object to the wakaama object registry. If the client
- * is already connected to a server, the server will be notified.
- *
- * Remove an object with lwm2m_remove_object(context, object_id) again.
- *
- * @param context   The wakaama context.
- * @param object   The wakaama lwm2m object with meta information attached.
- * @param allow_dynamic_instance_creation if you want a lwm2m server to be able to create new instances of your object.
- * @return The error code or COAP_NO_ERROR if no error.
- */
-extern int lwm2m_add_initialize_object(lwm2m_context_t * contextP,
-                                        lwm2m_object_t* object,
-                                        bool allow_dynamic_instance_creation);
+////// For opaque and string types
 
-/**
- * @brief Add an instance to an object.
- * Ideally you do this before you connect to a server and before you call `lwm2m_add_initialize_object`.
- *
- * @param context   The wakaama context.
- * @param object The lwm2m_object.
- * @param instance An object instance. Only adds the instance if there is none with the same instance id.
- * @return The error code or COAP_NO_ERROR if no error.
- *      Returns COAP_IGNORE if instance with same id is already existing.
- */
-int lwm2m_object_instance_add(lwm2m_context_t * contextP, lwm2m_object_t* object, lwm2m_list_t* instance);
+template<uint16_t ResID, class ObjectInstance, class ResourceType, size_t offset, uint8_t Operations>
+    class ResourceRaw<ResID,ObjectInstance,ResourceType,offset,Operations,
+            typename std::enable_if<std::is_base_of<OpaqueIndirect, ResourceType>::value, ResourceType>::type> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_OPAQUE_INDIRECT,offset} {}
+};
 
-/**
- * @brief Removes an instance from an object.
- *
- * Will inform a connected server of the updated object.
- *
- * @param context   The wakaama context.
- * @param object The lwm2m_object.
- * @param instance_id The instance id
- * @return The error code or COAP_NO_ERROR if no error.
- */
-lwm2m_list_t* lwm2m_object_instance_remove(lwm2m_context_t * contextP, lwm2m_object_t* object, uint16_t instance_id);
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+    class ResourceRaw<ResID,ObjectInstance,OpaqueIndirect,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_OPAQUE_INDIRECT,offset} {}
+};
 
-#ifdef __cplusplus
-}
-#endif
+template<uint16_t ResID, class ObjectInstance, class ResourceType, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,ResourceType,offset,Operations,
+        typename std::enable_if<is_base_of_template<ResourceType, Opaque>::value>::type> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_OPAQUE_PREALLOC,offset} {}
+};
+
+template<uint16_t ResID, class ObjectInstance, class ResourceType, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,ResourceType,offset,Operations,
+        typename std::enable_if<is_base_of_template<ResourceType, PreallocString>::value>::type> :
+        public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_STRING_PREALLOC,offset} {}
+};
+
+////// For all other allowed types
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,char*,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_STRING,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,const char*,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_STRING,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,unsigned char*,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_STRING,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,const unsigned char*,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_STRING,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,Executable,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,O_RES_E,O_RES_EXEC,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,bool,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_BOOL,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,double,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_DOUBLE,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,float,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_DOUBLE,offset} {}
+};
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,int8_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_INT8,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,uint8_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_UINT8,offset} {}
+};
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,int16_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_INT16,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,uint16_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_UINT16,offset} {}
+};
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,int32_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_INT32,offset} {}
+};
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,uint32_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_UINT32,offset} {}
+};
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
+class ResourceRaw<ResID,ObjectInstance,int64_t,offset,Operations> : public lwm2m_object_res_item_t {
+public:
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_INT64,offset} {}
+};
+
+//////////// For indirect resources, where we do not need to define operations ///////////
+
+// Fallback for non indirect resources
+template<uint16_t ResID, class ObjectInstance, class ResourceType, size_t offset, uint8_t Operations,class Enable = void>
+class IndirectResourceRaw : public ResourceRaw<ResID,ObjectInstance,ResourceType,offset,Operations> {
+
+};
+
+// enable_if prevents this template specialisation to match an Executable
+template<uint16_t ResID, class ObjectInstance, size_t offset, typename SubType, uint8_t Operations>
+class IndirectResourceRaw<ResID,ObjectInstance,IndirectRead<SubType>,offset,Operations,
+        typename std::enable_if<!std::is_same<SubType,void>::value>::type> :
+        public ResourceRaw<ResID,ObjectInstance,SubType,offset,O_RES_R|O_RES_E> {
+};
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, typename SubType, uint8_t Operations>
+class IndirectResourceRaw<ResID,ObjectInstance,IndirectWrite<SubType>,offset,Operations> :
+        public ResourceRaw<ResID,ObjectInstance,SubType,offset,O_RES_W|O_RES_E> {
+};
+
+template<uint16_t ResID, class ObjectInstance, size_t offset, typename SubType, uint8_t Operations>
+class IndirectResourceRaw<ResID,ObjectInstance,IndirectReadWrite<SubType>,offset,Operations> :
+        public ResourceRaw<ResID,ObjectInstance,SubType,offset,O_RES_RW|O_RES_E> {
+};
+
+// Until C++17 where we have auto for template arguments this macro is necessary
+/*
+#define Resource(ResID, MemberPtr, ...) \
+  IndirectResourceRaw<ResID, baseof_member_pointer<decltype(MemberPtr)>::type, \
+            remove_member_pointer<decltype(MemberPtr)>::type, \
+            offset_of(MemberPtr) __VA_OPT__(,) __VA_ARGS__>
+*/
+
+// Until gnuc++14/c++20 where we can use __VA_OPT__
+#define Resource_2(ResID, MemberPtr) \
+  IndirectResourceRaw<ResID, baseof_member_pointer<decltype(MemberPtr)>::type, \
+            remove_member_pointer<decltype(MemberPtr)>::type, \
+            offset_of(MemberPtr), 0>
+
+#define Resource_3(ResID, MemberPtr, Operations) \
+  IndirectResourceRaw<ResID, baseof_member_pointer<decltype(MemberPtr)>::type, \
+            remove_member_pointer<decltype(MemberPtr)>::type, \
+            offset_of(MemberPtr), Operations>
+
+// The interim macro that simply strips the excess and ends up with the required macro
+#define Resource_X(x,A,B,C,D,FUNC, ...)  FUNC
+#define Resource(...)                    Resource_X(,##__VA_ARGS__,\
+                                          Resource_4(__VA_ARGS__),\
+                                          Resource_3(__VA_ARGS__),\
+                                          Resource_2(__VA_ARGS__),\
+                                          Resource_1(__VA_ARGS__),\
+                                          Resource_0(__VA_ARGS__)\
+                                         )

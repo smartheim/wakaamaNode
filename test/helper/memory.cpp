@@ -127,7 +127,7 @@ std::string print_trace (void) {
     for (size_t i = 3; i < st.size(); ++i) {
         ResolvedTrace trace = tr.resolve(st[i]);
         std::string l(trace.object_function);
-        if (l.empty()||l=="main"||l=="clone"||l=="_start"||l=="start_thread"||
+        if (l.empty()||l=="main"||l=="clone"||l=="_start"||l=="lwm2m_malloc"||l=="start_thread"||
                 contains(l,"testing::", "TestBody", "std::thread", "std::error_code", "_start_main", "_invoke")) continue;
         s += "\t#" + std::to_string(i)
             + " " +trace.source.filename+"#L" + std::to_string(trace.source.line)

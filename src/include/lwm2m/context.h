@@ -12,25 +12,26 @@
  * all copies or substantial portions of the Software.
  */
 #pragma once
-
-#include <stdint.h>
-#include "../src/wakaama/liblwm2m.h"
+#include "../../internal_objects.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// Uses lwm2m_step() to figure out what needs to be send and
-// receives from the network stack and input traffic into wakaama via lwm2m_handle_packet().
-uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets);
+/**
+  * The lwm2m client context. Need to be initalized with lwm2m_client_init()
+  * and closed with lwm2m_client_close().
+  * Use CTX(client_context) to get a pointer to the `lwm2m_context_t` for most of the APIs.
+  */
+typedef struct {
+    lwm2m_context_t context;
+    lwm2m_object_t securityObject;
+    server_object_t serverObject;
+    device_object_t deviceObject;
+    device_instance_t deviceInstance;
+} lwm2m_client_context_t;
 
-// Return true for success or if already initialized and false on error
-bool test_network_init(void);
-
-// Frees all network ressources, that were acquired in network_init()
-void test_network_close(void);
-
-void* network_get_interface(int id);
+#define CTX(completeContext) (&((completeContext).context))
 
 #ifdef __cplusplus
 }

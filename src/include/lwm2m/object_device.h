@@ -15,9 +15,8 @@
 
 #include <stdint.h>
 
-// Configures the lwm2m device object instance
 #include "wakaama_config.h"
-#include "lwm2m/objects.h"
+#include "../../wakaama/liblwm2m.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,33 +46,6 @@ extern "C" {
 #define RES_O_BATTERY_STATUS        20
 #define RES_O_MEMORY_TOTAL          21
 
-typedef struct _device_data_
-{
-    struct _security_instance_ * next;        // matches lwm2m_list_t::next
-    uint16_t                     instanceId;  // matches lwm2m_list_t::id
-
-    // Always include device info
-    const char* manufacturer;  //  0
-    const char* model_name;    //  1
-    const char* serial_number; //  2
-    const char* firmware_ver;  //  3
-    const char* device_type;   // 17
-
-    #ifdef LWM2M_DEVICE_INFO_WITH_TIME
-    // Maximal "+HH:MM\0"
-    OpaqueType(7) time_offset; // 14
-    const char* timezone;      // 15
-    #endif
-
-    #ifdef LWM2M_DEVICE_INFO_WITH_ADDITIONAL_VERSIONS
-    const char* hardware_ver;  // 18
-    const char* software_ver;  // 19
-    #endif
-
-    // Binding mode. Always "U".  16
-    OpaqueType(2) binding;
-} device_instance_t;
-
 
 #ifdef LWM2M_DEVICE_WITH_REBOOT
 extern void lwm2m_reboot(void);
@@ -84,20 +56,13 @@ extern void lwm2m_factory_reset(void);
 #endif
 
 /**
- * @brief Return the device information object.
- * Change this object before you connect to a server.
- * @return
- */
-device_instance_t * lwm2m_device_data_get(void);
-
-/**
  * @brief Call this if you have changed a ressource in the device_instance_t object.
  * You only have to do this after you have connected to a lwm2m server.
  *
  * To change a device information (version number etc), do the following:
- * - device_instance_t* device = lwm2m_device_data_get();
- * - device->firmware_ver = "1.2";
- * - lwm2m_device_res_has_changed(RES_O_FIRMWARE_VERSION);
+ * - lwm2m_client_context_t context;
+ * - context.deviceInstance.firmware_ver = "1.2";
+ * - lwm2m_device_res_has_changed(CTX(context), RES_O_FIRMWARE_VERSION);
  *
  * Some device information are obtained by calling a function.
  * The battery level is an example.
@@ -107,7 +72,7 @@ device_instance_t * lwm2m_device_data_get(void);
  *
  * @param res_id The ressource id of the value you have changed in device_instance_t.
  */
-void lwm2m_device_res_has_changed(uint16_t res_id);
+void lwm2m_device_res_has_changed(lwm2m_context_t *contextP, uint16_t res_id);
 
 
 #ifdef __cplusplus

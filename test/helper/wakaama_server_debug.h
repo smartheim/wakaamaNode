@@ -20,9 +20,9 @@
 extern "C" {
 #endif
 
-void print_status(uint8_t status);
+void print_status(int status);
 
-void prv_print_error(uint8_t status);
+void prv_print_error(int status);
 
 char * prv_dump_binding(lwm2m_binding_t binding);
 

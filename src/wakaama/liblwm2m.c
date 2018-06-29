@@ -203,7 +203,6 @@ void lwm2m_close(lwm2m_context_t * contextP)
 #endif
 
     prv_deleteTransactionList(contextP);
-    lwm2m_free(contextP);
 }
 
 #ifdef LWM2M_CLIENT_MODE
@@ -367,13 +366,10 @@ int lwm2m_step(lwm2m_context_t * contextP,
     time_t tv_sec;
     int result;
 
-    LOG_ARG("timeoutP: %" PRId64, *timeoutP);
     tv_sec = lwm2m_gettime();
     if (tv_sec < 0) return COAP_500_INTERNAL_SERVER_ERROR;
 
 #ifdef LWM2M_CLIENT_MODE
-    LOG_ARG("State: %s", STR_STATE(contextP->state));
-    // state can also be modified in bootstrap_handleCommand().
 
 next_step:
     switch (contextP->state)
@@ -390,8 +386,6 @@ next_step:
             contextP->state = STATE_BOOTSTRAP_REQUIRED;
         }
         goto next_step;
-        break;
-
     case STATE_BOOTSTRAP_REQUIRED:
 #ifdef LWM2M_BOOTSTRAP
         if (contextP->bootstrapServerList != NULL)
@@ -399,13 +393,13 @@ next_step:
             bootstrap_start(contextP);
             contextP->state = STATE_BOOTSTRAPPING;
             bootstrap_step(contextP, tv_sec, timeoutP);
+            break;
         }
         else
 #endif
         {
             return COAP_503_SERVICE_UNAVAILABLE;
         }
-        break;
 
 #ifdef LWM2M_BOOTSTRAP
     case STATE_BOOTSTRAPPING:
@@ -426,12 +420,19 @@ next_step:
         }
         break;
 #endif
+    // This is a two step phase. First a connection is established
+    // then the lwm2m handshake starts.
     case STATE_REGISTER_REQUIRED:
+        result = registration_init_connection(contextP);
+        contextP->state = STATE_REGISTER_REQUIRED2;
+        *timeoutP = 0;
+        break;
+
+    case STATE_REGISTER_REQUIRED2:
         result = registration_start(contextP);
         if (COAP_NO_ERROR != result) return result;
         contextP->state = STATE_REGISTERING;
         break;
-
     case STATE_REGISTERING:
     {
         switch (registration_getStatus(contextP))
@@ -475,9 +476,5 @@ next_step:
     registration_step(contextP, tv_sec, timeoutP);
     transaction_step(contextP, tv_sec, timeoutP);
 
-    LOG_ARG("Final timeoutP: %" PRId64, *timeoutP);
-#ifdef LWM2M_CLIENT_MODE
-    LOG_ARG("Final state: %s", STR_STATE(contextP->state));
-#endif
     return 0;
 }

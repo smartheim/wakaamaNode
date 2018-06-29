@@ -111,34 +111,13 @@ time_t lwm2m_gettime(void);
 void lwm2m_printf(const char * format, ...);
 #endif
 
-// communication layer
-#ifdef LWM2M_CLIENT_MODE
-// Returns a session handle that MUST uniquely identify a peer.
-// secObjInstID: ID of the Securty Object instance to open a connection to
-// userData: parameter to lwm2m_init()
-void * lwm2m_connect_server(uint16_t secObjInstID, void * userData);
-// Close a session created by lwm2m_connect_server()
-// sessionH: session handle identifying the peer (opaque to the core)
-// userData: parameter to lwm2m_init()
-void lwm2m_close_connection(void * sessionH, void * userData);
-#endif
-// Send data to a peer
-// Returns COAP_NO_ERROR or a COAP_NNN error code
-// sessionH: session handle identifying the peer (opaque to the core)
-// buffer, length: data to send
-// userData: parameter to lwm2m_init()
-uint8_t lwm2m_buffer_send(void * sessionH, uint8_t * buffer, size_t length, void * userData);
-// Compare two session handles
-// Returns true if the two sessions identify the same peer. false otherwise.
-// userData: parameter to lwm2m_init()
-bool lwm2m_session_is_equal(void * session1, void * session2, void * userData);
-
 /*
  * Error code
  */
 
 #define COAP_NO_ERROR                   (uint8_t)0x00
 #define COAP_IGNORE                     (uint8_t)0x01
+#define COAP_CONNECT_FAIL               (uint8_t)0x02
 
 #define COAP_201_CREATED                (uint8_t)0x41
 #define COAP_202_DELETED                (uint8_t)0x42
@@ -148,6 +127,7 @@ bool lwm2m_session_is_equal(void * session1, void * session2, void * userData);
 #define COAP_400_BAD_REQUEST            (uint8_t)0x80
 #define COAP_401_UNAUTHORIZED           (uint8_t)0x81
 #define COAP_402_BAD_OPTION             (uint8_t)0x82
+#define COAP_403_FORBIDDEN              (uint8_t)0x83
 #define COAP_404_NOT_FOUND              (uint8_t)0x84
 #define COAP_405_METHOD_NOT_ALLOWED     (uint8_t)0x85
 #define COAP_406_NOT_ACCEPTABLE         (uint8_t)0x86
@@ -385,12 +365,13 @@ int lwm2m_decode_TLV(const uint8_t * buffer, size_t buffer_len, lwm2m_data_type_
  */
 
 typedef struct _lwm2m_object_t lwm2m_object_t;
+typedef struct _lwm2m_context_t lwm2m_context_t;
 
-typedef uint8_t (*lwm2m_read_callback_t) (uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP);
+typedef uint8_t (*lwm2m_read_callback_t) (uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP,lwm2m_context_t * contextP);
 typedef uint8_t (*lwm2m_discover_callback_t) (uint16_t instanceId, int * numDataP, lwm2m_data_t ** dataArrayP, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_write_callback_t) (uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_execute_callback_t) (uint16_t instanceId, uint16_t resourceId, uint8_t * buffer, int length, lwm2m_object_t * objectP);
-typedef uint8_t (*lwm2m_create_callback_t) (uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP);
+typedef uint8_t (*lwm2m_write_callback_t) (uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP,lwm2m_context_t * contextP);
+typedef uint8_t (*lwm2m_execute_callback_t) (uint16_t instanceId, uint16_t resourceId, lwm2m_context_t * contextP, lwm2m_object_t * objectP);
+typedef uint8_t (*lwm2m_create_callback_t) (uint16_t instanceId, int numData, lwm2m_data_t * dataArray, lwm2m_object_t * objectP,lwm2m_context_t * contextP);
 typedef uint8_t (*lwm2m_delete_callback_t) (uint16_t instanceId, lwm2m_object_t * objectP);
 
 struct _lwm2m_object_t
@@ -624,6 +605,7 @@ typedef enum
     STATE_BOOTSTRAP_REQUIRED,
     STATE_BOOTSTRAPPING,
     STATE_REGISTER_REQUIRED,
+    STATE_REGISTER_REQUIRED2,
     STATE_REGISTERING,
     STATE_READY
 } lwm2m_client_state_t;
@@ -644,7 +626,7 @@ typedef enum
 typedef int (*lwm2m_bootstrap_callback_t) (void * sessionH, uint8_t status, lwm2m_uri_t * uriP, char * name, void * userData);
 #endif
 
-typedef struct
+typedef struct _lwm2m_context_t
 {
 #ifdef LWM2M_CLIENT_MODE
     lwm2m_client_state_t state;
@@ -670,6 +652,28 @@ typedef struct
     void *                  userData;
 } lwm2m_context_t;
 
+
+// communication layer
+#ifdef LWM2M_CLIENT_MODE
+// Returns a session handle that MUST uniquely identify a peer.
+// secObjInstID: ID of the Securty Object instance to open a connection to
+// userData: parameter to lwm2m_init()
+void * lwm2m_connect_server(uint16_t secObjInstID, lwm2m_context_t * context);
+// Close a session created by lwm2m_connect_server()
+// sessionH: session handle identifying the peer (opaque to the core)
+// userData: parameter to lwm2m_init()
+void lwm2m_close_connection(void * sessionH, void * userData);
+#endif
+// Send data to a peer
+// Returns COAP_NO_ERROR or a COAP_NNN error code
+// sessionH: session handle identifying the peer (opaque to the core)
+// buffer, length: data to send
+// userData: parameter to lwm2m_init()
+uint8_t lwm2m_buffer_send(void * sessionH, uint8_t * buffer, size_t length, void * userData);
+// Compare two session handles
+// Returns true if the two sessions identify the same peer. false otherwise.
+// userData: parameter to lwm2m_init()
+bool lwm2m_session_is_equal(void * session1, void * session2, void * userData);
 
 // initialize a liblwm2m context.
 lwm2m_context_t * lwm2m_init(void * userData);

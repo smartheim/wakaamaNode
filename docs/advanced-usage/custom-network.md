@@ -1,9 +1,7 @@
 # Network integration
-This directory consists of files for different network stack integrations. Currently
-the lwip stack and a posix compatible stack as well as the windows network stack is supported.
+Currently the lwip stack and a posix compatible stack as well as the windows network stack is supported.
 
-Basically an implementation has to keep track of open connections,
-open up an udp connection and close an udp connection.
+Basically an implementation has to keep track of open connections, open up an udp connection and close an udp connection.
 
 The implementation is expected to reside in the
 [<img src="../../assets/github.png" style="width:20px"> src/network](https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/network)
@@ -19,12 +17,12 @@ Network stack code need to implement the following methods:
  *
  * @param contextP  The wakaama context. Network socket information is stored in the
  *                  contexts userdata.
- * @param localPort Must be NULL for clients in which case a port is automatically choosen.
+ * @param localPort Must be 0 for clients in which case a port is automatically choosen.
  *                  For servers LWM2M_DEFAULT_SERVER_PORT is recommended.
  * @return Return 0 if socket binding failed. Otherwise returns the number
  *     of sockets we could bind to (for IPv4 and IPv6 each on all available interfaces).
  */
-uint8_t lwm2m_network_init(lwm2m_context_t * contextP, const char* localPort);
+uint8_t lwm2m_network_init(lwm2m_context_t * contextP, uint16_t localPort);
 
 /**
  * @brief Return the native socket handler for the given socket number.

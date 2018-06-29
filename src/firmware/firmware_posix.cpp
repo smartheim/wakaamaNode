@@ -11,16 +11,18 @@
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  */
-#include "lwm2m/object_firmware.hpp"
-#include "lwm2m/connect.h"
+typedef int make_iso_compilers_happy; // if not LWIP
+
+#include "wakaama_config.h"
 
 #ifdef LWM2M_FIRMWARE_UPGRADES
+#include "lwm2m/firmware.h"
+#include "lwm2m/connect.h"
 
 #if (defined(_WIN32) || defined(__unix__))
 #include <iostream>
 #include <fstream>
 using namespace std;
-static string executableFilename;
 #endif
 
 #ifdef _WIN32
@@ -91,18 +93,16 @@ void startup(const char* lpApplicationName) {
 
 #if (defined(_WIN32) || defined(__unix__))
 
-KnownObjects::id5::object firmwareObject;
-KnownObjects::id5::instance firmwareObjectInstance;
-
-inline void processFirmwareUpgrade() {}
+void FirmwareUpdate::process() {}
 
 inline bool exists (const std::string& name) {
     ifstream f(name.c_str());
     return f.good();
 }
 
-void writeNewFirmware(DynArray<uint8_t*>& firmware) {
-    string newname = "new." + executableFilename;
+void writeNewFirmware(Lwm2mObjectInstance* o, DynArray<uint8_t*>& firmware) {
+    FirmwareUpdate* fu = static_cast<FirmwareUpdate*>(o);
+    string newname = "new." + fu->executableFilename;
     ofstream fout(newname, ofstream::trunc);
     if (!fout.is_open()) {
         cerr << "Cannot open file for writing " << newname << endl;
@@ -112,26 +112,28 @@ void writeNewFirmware(DynArray<uint8_t*>& firmware) {
     fout.close();
 }
 
-void executeFirmwareUpdate(uint8_t*, int) {
-    string newname = "new." + executableFilename;
+void executeFirmwareUpdate(Lwm2mObjectInstance* o, lwm2m_context_t* context) {
+    FirmwareUpdate* fu = static_cast<FirmwareUpdate*>(o);
+
+    string newname = "new." + fu->executableFilename;
     if (!exists(newname)) return;
 
-    if (exists("old."+executableFilename)) {
-        remove(("old."+executableFilename).c_str());
+    if (exists("old."+fu->executableFilename)) {
+        remove(("old."+fu->executableFilename).c_str());
     }
-    if (rename(executableFilename.c_str(), ("old."+executableFilename).c_str())) {
-        cerr << "Cannot move old executable " << executableFilename << endl;
+    if (rename(fu->executableFilename.c_str(), ("old."+fu->executableFilename).c_str())) {
+        cerr << "Cannot move old executable " << fu->executableFilename << endl;
         return;
     }
-    if (rename(newname.c_str(), executableFilename.c_str())) {
-        cerr << "Cannot move " << newname << " to " << executableFilename << endl;
+    if (rename(newname.c_str(), fu->executableFilename.c_str())) {
+        cerr << "Cannot move " << newname << " to " << fu->executableFilename << endl;
         return;
     }
 
-    firmwareObjectInstance.UpdateResult=UPDATE_RESULT_STATE_SUCCESS;
-    firmwareObject.resChanged(lwm2m_client_get_context(),0,(uint16_t)KnownObjects::id5::RESID::UpdateResult);
+    fu->UpdateResult=UPDATE_RESULT_STATE_SUCCESS;
+    fu->firmwareObject.resChanged(context,0,(uint16_t)KnownObjects::id5::RESID::UpdateResult);
 
-    startup(executableFilename.c_str());
+    startup(fu->executableFilename.c_str());
     sigset_t sigset{};
     sigemptyset(&sigset);
     sigaddset(&sigset,SIGKILL);
@@ -149,24 +151,23 @@ void executeFirmwareUpdate(uint8_t*, int) {
     }
 }
 
-// Initalize the KnownObjects::id5::object
-class InitModule {
-public:
-    InitModule() {
-        firmwareObjectInstance.Package = writeNewFirmware;
-        firmwareObjectInstance.Update = executeFirmwareUpdate;
-        firmwareObjectInstance.FirmwareUpdateProtocolSupport = UPDATE_PROTOCOL_COAP;
-        firmwareObjectInstance.FirmwareUpdateDeliveryMethod = UPDATE_DELIVERY_PUSH;
-        firmwareObjectInstance.PkgVersion.copy(LWM2M_APP_VERSION);
-        firmwareObjectInstance.State=exists("new." + executableFilename) ? UPDATE_STATE_DOWNLOADED :UPDATE_STATE_IDLE;
-        firmwareObjectInstance.UpdateResult=UPDATE_RESULT_STATE_IDLE;
-    }
-};
-static InitModule initModule;
+FirmwareUpdate::FirmwareUpdate(const char* app_version, lwm2m_update_protocol protocol) {
+    Package = writeNewFirmware;
+    Update = executeFirmwareUpdate;
+    FirmwareUpdateProtocolSupport = protocol;
+    FirmwareUpdateDeliveryMethod = UPDATE_DELIVERY_PUSHPULL;
+    PkgVersion.copy(app_version);
+    State = UPDATE_STATE_IDLE;
+    UpdateResult=UPDATE_RESULT_STATE_IDLE;
+}
 
-void checkIsUpdated(int argc, char** argv) {
+void FirmwareUpdate::checkIsUpdated(int argc, char** argv) {
    executableFilename = argv[0];
-   firmwareObjectInstance.PkgName.copy(argv[0]);
+   const size_t last_slash_idx = executableFilename.find_last_of("\\/");
+   if (std::string::npos != last_slash_idx)
+       executableFilename.erase(0, last_slash_idx + 1);
+   State=exists("new." + executableFilename) ? UPDATE_STATE_DOWNLOADED :UPDATE_STATE_IDLE;
+   PkgName.copy(argv[0]);
 
    int pid = -1;
    for (int i=0;i<argc;++i){

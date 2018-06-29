@@ -6945,7 +6945,10 @@ int mbedtls_ssl_read( mbedtls_ssl_context *ssl, unsigned char *buf, size_t len )
         if( ret != MBEDTLS_ERR_SSL_WAITING_SERVER_HELLO_RENEGO &&
             ret != 0 )
         {
-            MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_ssl_handshake", ret );
+            if (ret==MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED)
+                MBEDTLS_SSL_DEBUG_MSG( 3, ("MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED") );
+            else
+                MBEDTLS_SSL_DEBUG_RET( 1, "mbedtls_ssl_handshake", ret );
             return( ret );
         }
     }

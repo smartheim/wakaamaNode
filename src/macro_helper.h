@@ -46,20 +46,6 @@ std::false_type is_base_of_template_impl_f(...);
 template <typename T, template <typename...> class C>
 using is_base_of_template_f = decltype(is_base_of_template_impl_f<C>(std::declval<T*>()));
 
-template <typename T>
-struct is_foo {
-    template<typename U>
-    static auto check(int) ->
-    decltype( static_cast< void (U::*)() const >(&U::foo), std::true_type() );
-    //                     ^^^^^^^^^^^^^^^^^^^
-    //                     the desired signature goes here
-
-    template<typename>
-    static std::false_type check(...);
-
-    static constexpr bool value = decltype(check<T>(0))::value;
-};
-
 // We need to determine the offset of c++ class members.
 // That's not an easy task to do in compile time.
 // This mixture of templates and a macro works for clang with some

@@ -69,7 +69,7 @@ static int prv_getRegistrationQueryLength(lwm2m_context_t * contextP,
 {
     int index;
     int res;
-    char buffer[21];
+    uint8_t buffer[21];
 
     index = strlen(QUERY_STARTER QUERY_VERSION_FULL QUERY_DELIMITER QUERY_NAME);
     index += strlen(contextP->endpointName);
@@ -107,7 +107,7 @@ static int prv_getRegistrationQueryLength(lwm2m_context_t * contextP,
     if (0 != server->lifetime)
     {
         index += strlen(QUERY_DELIMITER QUERY_LIFETIME);
-        res = utils_intToText(server->lifetime, buffer, sizeof(buffer));
+        res = (int)utils_intToText(server->lifetime, buffer, sizeof(buffer));
         if (res == 0) return 0;
         index += res;
     }
@@ -125,16 +125,16 @@ static int prv_getRegistrationQuery(lwm2m_context_t * contextP,
 
     index = utils_stringCopy(buffer, length, QUERY_STARTER QUERY_VERSION_FULL QUERY_DELIMITER QUERY_NAME);
     if (index < 0) return 0;
-    res = utils_stringCopy(buffer + index, length - index, contextP->endpointName);
+    res = utils_stringCopy(buffer + index, length - (size_t)index, contextP->endpointName);
     if (res < 0) return 0;
     index += res;
 
     if (NULL != contextP->msisdn)
     {
-        res = utils_stringCopy(buffer + index, length - index, QUERY_DELIMITER QUERY_SMS);
+        res = utils_stringCopy(buffer + index, length - (size_t)index, QUERY_DELIMITER QUERY_SMS);
         if (res < 0) return 0;
         index += res;
-        res = utils_stringCopy(buffer + index, length - index, contextP->msisdn);
+        res = utils_stringCopy(buffer + index, length - (size_t)index, contextP->msisdn);
         if (res < 0) return 0;
         index += res;
     }
@@ -142,22 +142,22 @@ static int prv_getRegistrationQuery(lwm2m_context_t * contextP,
     switch (server->binding)
     {
     case BINDING_U:
-        res = utils_stringCopy(buffer + index, length - index, "&b=U");
+        res = utils_stringCopy(buffer + index, length - (size_t)index, "&b=U");
         break;
     case BINDING_UQ:
-        res = utils_stringCopy(buffer + index, length - index, "&b=UQ");
+        res = utils_stringCopy(buffer + index, length - (size_t)index, "&b=UQ");
         break;
     case BINDING_S:
-        res = utils_stringCopy(buffer + index, length - index, "&b=S");
+        res = utils_stringCopy(buffer + index, length - (size_t)index, "&b=S");
         break;
     case BINDING_SQ:
-        res = utils_stringCopy(buffer + index, length - index, "&b=SQ");
+        res = utils_stringCopy(buffer + index, length - (size_t)index, "&b=SQ");
         break;
     case BINDING_US:
-        res = utils_stringCopy(buffer + index, length - index, "&b=US");
+        res = utils_stringCopy(buffer + index, length - (size_t)index, "&b=US");
         break;
     case BINDING_UQS:
-        res = utils_stringCopy(buffer + index, length - index, "&b=UQS");
+        res = utils_stringCopy(buffer + index, length - (size_t)index, "&b=UQS");
         break;
     default:
         res = -1;
@@ -167,10 +167,10 @@ static int prv_getRegistrationQuery(lwm2m_context_t * contextP,
 
     if (0 != server->lifetime)
     {
-        res = utils_stringCopy(buffer + index, length - index, QUERY_DELIMITER QUERY_LIFETIME);
+        res = utils_stringCopy(buffer + index, length - (size_t)index, QUERY_DELIMITER QUERY_LIFETIME);
         if (res < 0) return 0;
         index += res;
-        res = utils_intToText(server->lifetime, buffer + index, length - index);
+        res = (int)utils_intToText(server->lifetime, (uint8_t*)buffer + index, length - (size_t)index);
         if (res == 0) return 0;
         index += res;
     }
@@ -214,7 +214,7 @@ static void prv_handleRegistrationReply(lwm2m_transaction_t * transacP,
         else
         {
             targetP->status = STATE_REG_FAILED;
-            LOG("Registration failed");
+            LOG_ARG("Registration failed 0x%x", packet != NULL ? packet->code : 0);
         }
     }
 }
@@ -223,6 +223,11 @@ static void prv_handleRegistrationReply(lwm2m_transaction_t * transacP,
 static uint8_t prv_register(lwm2m_context_t * contextP,
                             lwm2m_server_t * server)
 {
+    if (NULL == server->sessionH)
+    {
+        return COAP_503_SERVICE_UNAVAILABLE;
+    }
+
     char * query;
     int query_length;
     uint8_t * payload;
@@ -257,18 +262,6 @@ static uint8_t prv_register(lwm2m_context_t * contextP,
         lwm2m_free(payload);
         lwm2m_free(query);
         return COAP_500_INTERNAL_SERVER_ERROR;
-    }
-
-    if (server->sessionH == NULL)
-    {
-        server->sessionH = lwm2m_connect_server(server->secObjInstID, contextP->userData);
-    }
-
-    if (NULL == server->sessionH)
-    {
-        lwm2m_free(payload);
-        lwm2m_free(query);
-        return COAP_503_SERVICE_UNAVAILABLE;
     }
 
     transaction = transaction_new(server->sessionH, COAP_POST, NULL, NULL, contextP->nextMID++, 4, NULL);
@@ -323,7 +316,10 @@ static void prv_handleRegistrationUpdateReply(lwm2m_transaction_t * transacP,
         else
         {
             targetP->status = STATE_REG_FAILED;
-            LOG("Registration update failed");
+            if (packet && packet->code == COAP_404_NOT_FOUND)
+                LOG("Registration update: Server not found?");
+            else
+                LOG("Registration update failed");
         }
     }
 }
@@ -469,22 +465,46 @@ int lwm2m_update_registration(lwm2m_context_t * contextP,
     return result;
 }
 
+
+uint8_t registration_init_connection(lwm2m_context_t * contextP)
+{
+    lwm2m_server_t * targetP;
+    uint8_t result;
+
+    result = COAP_NO_ERROR;
+
+    targetP = contextP->serverList;
+    while (targetP != NULL)
+    {
+        if (targetP->status == STATE_DEREGISTERED && !targetP->sessionH)
+        {
+            targetP->sessionH = lwm2m_connect_server(targetP->secObjInstID, contextP);
+            if (!targetP->sessionH){
+                result = COAP_CONNECT_FAIL;
+                targetP->status = STATE_REG_FAILED;
+            }
+        }
+        targetP = targetP->next;
+    }
+
+    return result;
+}
+
 uint8_t registration_start(lwm2m_context_t * contextP)
 {
     lwm2m_server_t * targetP;
     uint8_t result;
 
-    LOG_ARG("State: %s", STR_STATE(contextP->state));
-
     result = COAP_NO_ERROR;
 
     targetP = contextP->serverList;
-    while (targetP != NULL && result == COAP_NO_ERROR)
+    while (targetP != NULL)
     {
-        if (targetP->status == STATE_DEREGISTERED
-         || targetP->status == STATE_REG_FAILED)
+        if ((targetP->status == STATE_DEREGISTERED
+         || targetP->status == STATE_REG_FAILED) && targetP->sessionH)
         {
-            result = prv_register(contextP, targetP);
+            uint8_t r = prv_register(contextP, targetP);
+            if (r!=COAP_NO_ERROR) result = r;
         }
         targetP = targetP->next;
     }
@@ -503,14 +523,11 @@ lwm2m_status_t registration_getStatus(lwm2m_context_t * contextP)
     lwm2m_server_t * targetP;
     lwm2m_status_t reg_status;
 
-    LOG_ARG("State: %s", STR_STATE(contextP->state));
-
     targetP = contextP->serverList;
     reg_status = STATE_REG_FAILED;
 
     while (targetP != NULL)
     {
-        LOG_ARG("targetP->status: %s", STR_STATUS(targetP->status));
         switch (targetP->status)
         {
             case STATE_REGISTERED:
@@ -533,8 +550,6 @@ lwm2m_status_t registration_getStatus(lwm2m_context_t * contextP)
             default:
                 break;
         }
-        LOG_ARG("reg_status: %s", STR_STATUS(reg_status));
-
         targetP = targetP->next;
     }
 
@@ -1300,8 +1315,6 @@ void registration_step(lwm2m_context_t * contextP,
 #ifdef LWM2M_CLIENT_MODE
     lwm2m_server_t * targetP = contextP->serverList;
 
-    LOG_ARG("State: %s", STR_STATE(contextP->state));
-
     targetP = contextP->serverList;
     while (targetP != NULL)
     {
@@ -1312,14 +1325,11 @@ void registration_step(lwm2m_context_t * contextP,
             time_t nextUpdate;
             time_t interval;
 
-            nextUpdate = targetP->lifetime;
-            if (COAP_MAX_TRANSMIT_WAIT < nextUpdate)
+            // Lifetime - 10% for next update
+            nextUpdate = targetP->lifetime - (targetP->lifetime/10);
+            if (COAP_MAX_RETRANSMIT < nextUpdate)
             {
-                nextUpdate -= COAP_MAX_TRANSMIT_WAIT;
-            }
-            else
-            {
-                nextUpdate = nextUpdate >> 1;
+                nextUpdate -= COAP_MAX_RETRANSMIT;
             }
 
             interval = targetP->registration + nextUpdate - currentTime;

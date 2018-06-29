@@ -13,11 +13,11 @@ For this example, we assume the following custom lwM2M object definition:
 
 Ressources:
 
-| Name | ID | Operations | Mult Inst | Mandatory |  Type   | Range | Description      |
-|------|:--:|------------|:---------:|:---------:|---------|-------|-----------------------|
-| test |  1 |    R/W     |    No     |    Yes    | Integer | 0-128 |                       |
-| exec |  2 |     E      |    No     |    Yes    |         |       |                       |
-| dec  |  3 |    R/W     |    No     |    Yes    |  Float  |       |                       |
+| Name | ID | Operations |  Type   | Range | Description      |
+|------|:--:|------------|---------|-------|-----------------------|
+| test |  1 |    R/W     | Integer | 0-128 |                       |
+| exec |  2 |     E      |         |       |                       |
+| dec  |  3 |    R/W     |  Float  |       |                       |
 
 If you use the object definition API, you only need to provide an object description (meta object data)
 and all read/write/execute handling is done for you. 
@@ -48,9 +48,15 @@ OBJECT_META(test_object_instance_t, test_object_meta, test_object_write_verify_c
 );
 
 lwm2m_object_meta_information_t *test_object_get_meta() {
-    return &test_object_meta;
+    return &test_object_metaP;
 }
 ```
+
+Remember that we do not use the `result_variable_name` (in this case `test_object_meta`) directly.
+It is of type `lwm2m_object_meta_information_t`,
+which is not understood by the WakamaNode and Wakaama API. But thankfully `OBJECT_META` also defines
+a pointer of type `lwm2m_object_t`, which is named like the given `result_variable_name` with a **P** suffix.
+In this case: `test_object_metaP`.
 
 The ressources are described each with an entry of the following form:
 `{RES_ID, RES_ACCESS, RES_TYPE, offsetof(object_struct, res_name)}`.

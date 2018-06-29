@@ -152,9 +152,8 @@ lwm2m_transaction_t * transaction_new(void * sessionH,
     lwm2m_transaction_t * transacP;
     int result;
 
-    LOG_ARG("method: %d, altPath: \"%s\", mID: %d, token_len: %d",
-            method, altPath, mID, token_len);
-    LOG_URI(uriP);
+//    LOG_ARG("method: %d, altPath: \"%s\", mID: %d, token_len: %d",
+//            method, altPath, mID, token_len);
 
     // no transactions without peer
     if (NULL == sessionH) return NULL;
@@ -232,7 +231,6 @@ lwm2m_transaction_t * transaction_new(void * sessionH,
         }
     }
 
-    LOG("Exiting on success");
     return transacP;
 
 error:
@@ -243,7 +241,6 @@ error:
 
 void transaction_free(lwm2m_transaction_t * transacP)
 {
-    LOG("Entering");
     if (transacP->message)
     {
        coap_free_header(transacP->message);
@@ -257,7 +254,6 @@ void transaction_free(lwm2m_transaction_t * transacP)
 void transaction_remove(lwm2m_context_t * contextP,
                         lwm2m_transaction_t * transacP)
 {
-    LOG("Entering");
     contextP->transactionList = (lwm2m_transaction_t *) LWM2M_LIST_RM(contextP->transactionList, transacP->mID, NULL);
     transaction_free(transacP);
 }
@@ -271,7 +267,6 @@ bool transaction_handleResponse(lwm2m_context_t * contextP,
     bool reset = false;
     lwm2m_transaction_t * transacP;
 
-    LOG("Entering");
     transacP = contextP->transactionList;
 
     while (NULL != transacP)
@@ -348,7 +343,6 @@ int transaction_send(lwm2m_context_t * contextP,
 {
     bool maxRetriesReached = false;
 
-    LOG("Entering");
     if (transacP->buffer == NULL)
     {
         transacP->buffer_len = coap_serialize_get_size(transacP->message);
@@ -377,7 +371,7 @@ int transaction_send(lwm2m_context_t * contextP,
 
     if (!transacP->ack_received)
     {
-        long unsigned timeout;
+        long unsigned timeout=0;
 
         if (0 == transacP->retrans_counter)
         {
@@ -386,7 +380,6 @@ int transaction_send(lwm2m_context_t * contextP,
             {
                 transacP->retrans_time = tv_sec + COAP_RESPONSE_TIMEOUT;
                 transacP->retrans_counter = 1;
-                timeout = 0;
             }
             else
             {
@@ -430,7 +423,6 @@ void transaction_step(lwm2m_context_t * contextP,
 {
     lwm2m_transaction_t * transacP;
 
-    LOG("Entering");
     transacP = contextP->transactionList;
     while (transacP != NULL)
     {

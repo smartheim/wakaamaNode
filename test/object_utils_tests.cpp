@@ -13,9 +13,9 @@
  */
 
 #include <gtest/gtest.h>
-#include "lwm2m/connect.h"
+#include "lwm2m/c_connect.h"
+#include "lwm2m/c_objects.h"
 #include "lwm2m/objects.h"
-#include "lwm2m/objects.hpp"
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
 #include <stdint.h>
@@ -38,8 +38,11 @@ bool executed = false;
 char writeFunStrResult[100];
 int writeLenResult = 0;
 
-void executeFun(uint8_t *,
-                int) {
+void executeFun(uint8_t *,int) {
+    executed = true;
+}
+
+void executeFunCPP(Lwm2mObjectInstance*, lwm2m_context_t*) {
     executed = true;
 }
 
@@ -48,7 +51,7 @@ void writeFunStr(const char* data, int len){
     strncpy(writeFunStrResult,data,100);
 }
 
-void writeFunStrCPP(DynArray<const char*>& data){
+void writeFunStrCPP(Lwm2mObjectInstance*,DynArray<const char*>& data){
     writeLenResult = data.len;
     strncpy(writeFunStrResult,data.data,100);
 }
@@ -57,11 +60,23 @@ int8_t readFun8() {
     return -12;
 }
 
+int8_t readFun8CPP(Lwm2mObjectInstance*) {
+    return -12;
+}
+
 uint32_t readFun32() {
     return 0xFFFF;
 }
 
+uint32_t readFun32CPP(Lwm2mObjectInstance*) {
+    return 0xFFFF;
+}
+
 const char* readFunStr() {
+    return "testR";
+}
+
+const char* readFunStrCPP(Lwm2mObjectInstance*) {
     return "testR";
 }
 
@@ -100,7 +115,7 @@ void ExecutingFunction(lwm2m_context_t * lwm2mH){
 
 void Discover(lwm2m_context_t * lwm2mH){
 #define LWM2M_SERVER_ADDR "coap://127.0.0.1"
-    ASSERT_TRUE(lwm2m_add_server(123, LWM2M_SERVER_ADDR, 100, false));
+    ASSERT_TRUE(lwm2m_add_server(lwm2mH, 123, LWM2M_SERVER_ADDR, 100, false));
 
     lwm2m_server_t  server;
     server.next = 0;
@@ -268,13 +283,12 @@ void WriteOpaqueIndirect(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
 
 class ObjectAPI_C : public testing::Test {
 public:
-    lwm2m_context_t * lwm2mH;
+    lwm2m_client_context_t client_context;
     lwm2m_object_t* test_object;
 protected:
     virtual void TearDown() {
-        lwm2m_object_instance_remove(lwm2mH, test_object, 10);
-        lwm2m_client_close();
-        lwm2mH = nullptr;
+        lwm2m_object_instance_remove(CTX(client_context), test_object, 10);
+        lwm2m_client_close(&client_context);
         std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
                       [](MemoryObserver::MemAreas::value_type it){
             FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
@@ -286,50 +300,48 @@ protected:
         executed = false;
         memset(writeFunStrResult,0,sizeof(writeFunStrResult));
 
-        lwm2mH = lwm2m_client_init("testClient");
-        ASSERT_TRUE(lwm2mH) << "Failed to initialize wakaama\r\n";
+        lwm2m_client_init(&client_context, "testClient");
 
         test_object = get_test_object();
-        ASSERT_EQ(COAP_NO_ERROR, lwm2m_add_initialize_object(lwm2mH, test_object, true));
+        ASSERT_EQ(COAP_NO_ERROR, lwm2m_add_initialize_object(CTX(client_context), test_object, true));
         auto instance = test_object_create_instance(10,
                                                     readFun8,
                                                     readFun32,
                                                     readFunStr,
                                                     writeFunStr,
                                                     executeFun);
-        ASSERT_EQ(COAP_NO_ERROR, lwm2m_object_instance_add(lwm2mH, test_object, instance));
+        ASSERT_EQ(COAP_NO_ERROR, lwm2m_object_instance_add(CTX(client_context), test_object, instance));
 
-        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)lwm2mH->objectList, 1024);
+        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)CTX(client_context)->objectList, 1024);
         ASSERT_EQ(o, test_object);
 
 
-        ASSERT_TRUE(object_isInstanceNew(lwm2mH, 1024, 0));
-        ASSERT_FALSE(object_isInstanceNew(lwm2mH, 1024, 10));
+        ASSERT_TRUE(object_isInstanceNew(CTX(client_context), 1024, 0));
+        ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 1024, 10));
     }
 };
 
-TEST_F(ObjectAPI_C, Reading) { Reading(lwm2mH); }
-TEST_F(ObjectAPI_C, ExecutingNonExecutable) { ExecutingNonExecutable(lwm2mH); }
-TEST_F(ObjectAPI_C, ExecutingFunction) { ExecutingFunction(lwm2mH); }
-TEST_F(ObjectAPI_C, Discover) { Discover(lwm2mH); }
-TEST_F(ObjectAPI_C, WriteIntBoolDouble) { WriteIntBoolDouble<test_object_instance_t>(lwm2mH, test_object); }
-TEST_F(ObjectAPI_C, WriteToReadOnlyString) { WriteToReadOnlyString(lwm2mH); }
-TEST_F(ObjectAPI_C, WriteStringPrealloc) { WriteStringPrealloc<test_object_instance_t>(lwm2mH, test_object); }
-TEST_F(ObjectAPI_C, WriteTooBigOpaque) { WriteTooBigOpaque(lwm2mH, test_object); }
-TEST_F(ObjectAPI_C, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<test_object_instance_t>(lwm2mH, test_object); }
-TEST_F(ObjectAPI_C, WriteOpaqueIndirect) { WriteOpaqueIndirect<test_object_instance_t>(lwm2mH, test_object); }
+TEST_F(ObjectAPI_C, Reading) { Reading(CTX(client_context)); }
+TEST_F(ObjectAPI_C, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+TEST_F(ObjectAPI_C, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+TEST_F(ObjectAPI_C, Discover) { Discover(CTX(client_context)); }
+TEST_F(ObjectAPI_C, WriteIntBoolDouble) { WriteIntBoolDouble<test_object_instance_t>(CTX(client_context), test_object); }
+TEST_F(ObjectAPI_C, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+TEST_F(ObjectAPI_C, WriteStringPrealloc) { WriteStringPrealloc<test_object_instance_t>(CTX(client_context), test_object); }
+TEST_F(ObjectAPI_C, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), test_object); }
+TEST_F(ObjectAPI_C, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<test_object_instance_t>(CTX(client_context), test_object); }
+TEST_F(ObjectAPI_C, WriteOpaqueIndirect) { WriteOpaqueIndirect<test_object_instance_t>(CTX(client_context), test_object); }
 
 
 class ObjectAPI_CPP : public testing::Test {
 public:
-    lwm2m_context_t * lwm2mH;
+    lwm2m_client_context_t client_context;
     MyTestObjectInstance instance;
     MyTestObject object;
 protected:
     virtual void TearDown() {
-        object.removeInstance(lwm2mH, 10);
-        lwm2m_client_close();
-        lwm2mH = nullptr;
+        object.removeInstance(CTX(client_context), 10);
+        lwm2m_client_close(&client_context);
         std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
                       [](MemoryObserver::MemAreas::value_type it){
             FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
@@ -341,28 +353,27 @@ protected:
         executed = false;
         memset(writeFunStrResult,0,sizeof(writeFunStrResult));
 
-        lwm2mH = lwm2m_client_init("testClient");
-        ASSERT_TRUE(lwm2mH) << "Failed to initialize wakaama\r\n";
+        lwm2m_client_init(&client_context, "testClient");
 
         MyTestObjectSecond s;
         ASSERT_EQ(7, s.resources_len());
         ASSERT_EQ(20, object.resources_len());
 
-        instance = MyTestObjectInstance( executeFun,
-                                         readFun8,
-                                         readFun32,
-                                         readFunStr,
+        instance = MyTestObjectInstance( executeFunCPP,
+                                         readFun8CPP,
+                                         readFun32CPP,
+                                         readFunStrCPP,
                                          writeFunStrCPP,
-                                         IndirectReadWrite<const char*>(readFunStr,writeFunStrCPP));
+                                         IndirectReadWrite<const char*>(readFunStrCPP,writeFunStrCPP));
         instance.id=10;
-        object.addInstance(lwm2mH, &instance);
-        object.registerObject(lwm2mH, false);
+        object.addInstance(CTX(client_context), &instance);
+        object.registerObject(CTX(client_context), false);
 
-        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)lwm2mH->objectList, 1024);
+        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)CTX(client_context)->objectList, 1024);
         ASSERT_EQ(o, &object.object);
 
-        ASSERT_TRUE(object_isInstanceNew(lwm2mH, 1024, 0));
-        ASSERT_FALSE(object_isInstanceNew(lwm2mH, 1024, 10));
+        ASSERT_TRUE(object_isInstanceNew(CTX(client_context), 1024, 0));
+        ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 1024, 10));
     }
 };
 
@@ -370,21 +381,21 @@ TEST_F(ObjectAPI_CPP, KnownObject3311) {
     id3311::object o;
     id3311::instance i;
     i.id = 0;
-    o.addInstance(lwm2mH,&i);
-    o.registerObject(lwm2mH, false);
-    ASSERT_FALSE(object_isInstanceNew(lwm2mH, 3311, 0));
+    o.addInstance(CTX(client_context),&i);
+    o.registerObject(CTX(client_context), false);
+    ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 3311, 0));
 
 }
 
-TEST_F(ObjectAPI_CPP, Reading) { Reading(lwm2mH); }
-TEST_F(ObjectAPI_CPP, ExecutingNonExecutable) { ExecutingNonExecutable(lwm2mH); }
-TEST_F(ObjectAPI_CPP, ExecutingFunction) { ExecutingFunction(lwm2mH); }
-TEST_F(ObjectAPI_CPP, Discover) { Discover(lwm2mH); }
-TEST_F(ObjectAPI_CPP, WriteIntBoolDouble) { WriteIntBoolDouble<MyTestObjectInstance>(lwm2mH, &object.object); }
-TEST_F(ObjectAPI_CPP, WriteToReadOnlyString) { WriteToReadOnlyString(lwm2mH); }
-TEST_F(ObjectAPI_CPP, WriteStringPrealloc) { WriteStringPrealloc<MyTestObjectInstance>(lwm2mH, &object.object); }
-TEST_F(ObjectAPI_CPP, WriteTooBigOpaque) { WriteTooBigOpaque(lwm2mH, &object.object); }
-TEST_F(ObjectAPI_CPP, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<MyTestObjectInstance>(lwm2mH, &object.object); }
-TEST_F(ObjectAPI_CPP, WriteOpaqueIndirect) { WriteOpaqueIndirect<MyTestObjectInstance>(lwm2mH, &object.object); }
-TEST_F(ObjectAPI_CPP, WriteStringIndirect) { WriteStringIndirect(lwm2mH); }
-TEST_F(ObjectAPI_CPP, ReadWriteStringIndirect) { ReadWriteStringIndirect(lwm2mH); }
+TEST_F(ObjectAPI_CPP, Reading) { Reading(CTX(client_context)); }
+TEST_F(ObjectAPI_CPP, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+TEST_F(ObjectAPI_CPP, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+TEST_F(ObjectAPI_CPP, Discover) { Discover(CTX(client_context)); }
+TEST_F(ObjectAPI_CPP, WriteIntBoolDouble) { WriteIntBoolDouble<MyTestObjectInstance>(CTX(client_context), &object.object); }
+TEST_F(ObjectAPI_CPP, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+TEST_F(ObjectAPI_CPP, WriteStringPrealloc) { WriteStringPrealloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+TEST_F(ObjectAPI_CPP, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), &object.object); }
+TEST_F(ObjectAPI_CPP, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+TEST_F(ObjectAPI_CPP, WriteOpaqueIndirect) { WriteOpaqueIndirect<MyTestObjectInstance>(CTX(client_context), &object.object); }
+TEST_F(ObjectAPI_CPP, WriteStringIndirect) { WriteStringIndirect(CTX(client_context)); }
+TEST_F(ObjectAPI_CPP, ReadWriteStringIndirect) { ReadWriteStringIndirect(CTX(client_context)); }

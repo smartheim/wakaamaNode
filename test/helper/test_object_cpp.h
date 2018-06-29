@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#include "lwm2m/objects.hpp"
+#include "lwm2m/objects.h"
 
 /*
  * Implements an object for testing purpose
@@ -134,8 +134,7 @@ struct MyTestObject: public Lwm2mObject<1024, MyTestObject, MyTestObjectInstance
     Resource(19, &MyTestObjectInstance::test_inheritance, O_RES_RW) test_inheritance;
 
     MyTestObject() {
-        verifyWrite = ([](Lwm2mObjectInstance* instance, uint16_t res_id) {
-            MyTestObjectInstance* i = (MyTestObjectInstance*)instance;
+        verifyWrite = ([](MyTestObjectInstance* i, uint16_t res_id) {
             if(res_id==7 && (i->test_double > 1.0 || i->test_double < 0.0)) return false;
             return true;
         });

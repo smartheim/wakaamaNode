@@ -4,6 +4,7 @@ site_author: David Gräff
 
 repo_name: 'Openhab-Nodes/wakaamaNode'
 repo_url: 'https://github.com/Openhab-Nodes/wakaamaNode'
+site_url: 'https://Openhab-Nodes.github.io/wakaamaNode/'
 
 pages:
   - Welcome: index.md
@@ -21,9 +22,14 @@ pages:
     - Custom network stack: advanced-usage/custom-network.md
     - Over-the-air updates: advanced-usage/ota.md
     - Deep sleep: advanced-usage/deep-sleep.md
-  - Others:
-    - Limitations and known issues: others/limitations-and-known-issues.md
-    - Troubleshooting: others/troubleshooting.md
+    - Own mainloop: advanced-usage/own-mainloop.md
+    - Thread safety: advanced-usage/thread-safety.md
+  - Examples:
+    - examples.md
+  - Limitations:
+    - others/limitations-and-known-issues.md
+  - Troubleshooting:
+    - others/troubleshooting.md
 
 theme:
   name: material
@@ -38,6 +44,7 @@ extra:
   social:
     - type: cog
       link: http://openhab-nodes.github.io/wakaamaNode/
+  disqus: 'https-openhab-nodes-github-io-wakaamanode'
 
 markdown_extensions:
   - meta

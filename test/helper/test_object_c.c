@@ -51,7 +51,7 @@ OBJECT_META(test_object_instance_t, test_object_meta, 1024, test_object_write_ve
 )
 
 lwm2m_object_t *get_test_object() {
-    return test_object_meta;
+    return test_object_metaP;
 }
 
 lwm2m_list_t* test_object_create_instance(uint16_t instance_id,

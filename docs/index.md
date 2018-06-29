@@ -41,26 +41,60 @@ Building:
 * Connection API and object API compilable with a C-only compiler (OTA support requires a c++ compiler though)
 
 ## Target device requirements
-A target device needs **5kb RAM** and **10kb ROM** for the library and some user defined  objects.
+A target device needs **5kb RAM** and **10kb ROM** for the library without DTLS and some user defined objects.
 
 Most of the API can be used in a staticly allocated memory environment.
 Wakaama on the other hand uses dynamic memory allocation for events like server
 connections, message receiving, message resends. 
-The DTLS implementation that is included (mbedTLS) makes use of dynamic memory allocation.
 
 !!! info
     You may influence the memory layout by implementing ``lwm2m_malloc``, ``lwm2m_free`` and ``lwm2m_strdup`` accordingly.
 
-## Automatic synchronisation to the latest Wakaama/mbed TLS sources
-Travis CI is executed on every commit and additionally every day by a travis cron job.
-The CI script syncronizes:
+The DTLS implementation that is optionally included (mbedTLS) makes use of dynamic memory allocation.
 
-* the ``src/wakaama`` directory to the latest code found in the core directory of
+!!! info
+    You may influence the memory layout by implementing ``mbedtls_malloc`` and ``mbedtls_free`` accordingly.
+
+## Periodic synchronisation to the latest Wakaama/mbedTLS sources
+Travis CI runs every day by a travis cron job to synchronize sources listed below back into the library:
+
+* the ``src/wakaama`` directory to the latest code found in the *core* directory of
 https://github.com/eclipse/wakaama.git.
-* the ``src/network/mbedtls`` directory to the latest code found in the inc/mbedtls/ and src/ directory of
+* the ``src/network/mbedtls`` directory to the latest code found in the *inc/mbedtls/* and *src/* directory of
 https://github.com/ARMmbed/mbed-os/tree/master/features/mbedtls.
 
 This may cause tests in the master branch to fail, please use a tagged release of the library in this case.
+If the tests do not fail, it is safe to assume that the library works as expected. Current status:
+
+[![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode)
+
+## Automated tests
+
+Travis CI is executed on every commit. The following functionality is tested:
+
+* The Object API for C
+  * Reading/Writing of c-strings and opaque memory
+  * Reading/Writing of boolean, int, double.
+  * Executing of function pointers.
+  * WriteVerify method is called correctly
+  * Object discovery works
+* The Object API for C++
+  * Reading/Writing of c-strings and opaque memory
+  * Reading/Writing of boolean, int, double.
+  * Reading/Writing of all types above via indirect reading from a function, writing to a function
+  * WriteVerify method is called correctly
+  * Executable resources: Execute a function pointer
+  * Object discovery works
+* The connect API on Posix
+  * Add/Remove servers
+  * Connect to a server and on the server side: Make sure client objects are discovered
+  * Connect to a server via dtls and on the server side: Make sure client objects are discovered
+* The connect API on LWIP
+  * Building the implementation
+  - **Not tested**: A running example with LWIP. tun/tap is required on travis for this to work.
+* Examples
+  * Build all examples
+  - **Not tested**: If the linux example can connect to a public lwm2m server.
 
 ## License
 This platform code and API wrappers are provided under the MIT license.

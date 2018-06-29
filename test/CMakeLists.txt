@@ -35,8 +35,8 @@ else()
     set(GTEST_FILES "")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -pedantic -Wno-unknown-pragmas -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-folding-constant")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -pedantic")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-folding-constant")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
 
 ## Prepare for coverage measuring
 if(${COVERAGE})
@@ -46,7 +46,8 @@ endif()
 # All cpp files in this directory are considered testcase files.
 file(GLOB TESTS_FILES ${TEST_DIR}/*.cpp ${TEST_DIR}/*.c ${TEST_DIR}/*.h)
 
-file(GLOB_RECURSE HELPER_FILES_LWIP ${LWIP_DIR}/api/*.c ${LWIP_DIR}/core/*.c ${LWIP_DIR}/include/*.h ${LWIP_DIR}/netif/*.c
+file(GLOB_RECURSE HELPER_FILES_LWIP
+    ${LWIP_DIR}/api/*.c ${LWIP_DIR}/core/*.c ${LWIP_DIR}/include/*.h ${LWIP_DIR}/netif/*.c
     ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.c
     ${CMAKE_CURRENT_LIST_DIR}/with_lwip/*.h
     ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
@@ -54,8 +55,8 @@ set(HELPER_INCLUDE_DIRS_LWIP
     "${CMAKE_CURRENT_LIST_DIR}/with_lwip/include"
     "${LWIP_DIR}/include")
 
-file(GLOB_RECURSE HELPER_FILES_POSIX ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
-set(HELPER_FILES_POSIX ${HELPER_FILES_POSIX} ${CMAKE_CURRENT_LIST_DIR}/with_posix_sockets/posix_network_helper.c)
+file(GLOB_RECURSE HELPER_FILES ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
+
 
 add_subdirectory(backward)
 
@@ -100,7 +101,7 @@ endfunction(prepare_target)
 project(TestsWithLwIP CXX C)
 
 add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES}
-    ${WAKAAMA_NODE_DIR_SOURCES} ${HELPER_FILES_POSIX} ${HELPER_FILES_LWIP} ${BACKWARD_ENABLE})
+    ${WAKAAMA_NODE_DIR_SOURCES} ${HELPER_FILES_LWIP} ${BACKWARD_ENABLE})
 prepare_target(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
     -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON
@@ -113,8 +114,8 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
 project(TestsWithPosix CXX C)
 
 add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES}
-    ${WAKAAMA_NODE_DIR_SOURCES} ${HELPER_FILES_POSIX} ${HELPER_FILES_LWIP} ${BACKWARD_ENABLE})
+    ${WAKAAMA_NODE_DIR_SOURCES} ${HELPER_FILES} ${HELPER_FILES_LWIP} ${BACKWARD_ENABLE})
 prepare_target(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
     -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON
-    -DPOSIX -DLWM2M_WITHOUT_ALLOC_FREE -DLWM2M_NETWORK_LOGGING)
+    -DLWM2M_WITHOUT_ALLOC_FREE -DLWM2M_NETWORK_LOGGING)

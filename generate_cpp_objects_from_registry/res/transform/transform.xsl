@@ -110,7 +110,7 @@
 	<xsl:result-document method="text" href="{ObjectID}.h">#pragma once
 // Automatically generated header file
 
-#include "lwm2m/objects.hpp"
+#include "lwm2m/objects.h"
 namespace KnownObjects {
 namespace id<xsl:value-of select="ObjectID"/> {
 // Custom, overrideable types for Opaque and String resources

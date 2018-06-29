@@ -1,6 +1,10 @@
 #pragma once
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 
-void prv_output_buffer(uint8_t * buffer,
+inline void prv_output_buffer(uint8_t * buffer,
                               int length)
 {
     int i;

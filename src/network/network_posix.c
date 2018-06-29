@@ -18,7 +18,7 @@ typedef int make_iso_compilers_happy; // if not POSIX_NETWORK
 #ifdef POSIX_NETWORK
 
 #include "lwm2m/network.h"
-#include "lwm2m/connect.h"
+#include "lwm2m/c_connect.h"
 #include "lwm2m/debug.h"
 #include "../internal.h"
 #include <stdio.h>
@@ -27,6 +27,7 @@ typedef int make_iso_compilers_happy; // if not POSIX_NETWORK
 #include <string.h>
 
 #ifdef _WIN32
+    #include "wepoll/wepoll.h"
     #define WIN32_LEAN_AND_MEAN
     #include <Windows.h>
     #include <Winsock2.h>
@@ -35,6 +36,7 @@ typedef int make_iso_compilers_happy; // if not POSIX_NETWORK
     typedef uint16_t in_port_t;
     #define close(s) closesocket(s)
 #else
+    #include <sys/epoll.h>
     #include <unistd.h>
     #include <netinet/in.h>
     #include <arpa/inet.h>
@@ -44,11 +46,16 @@ typedef int make_iso_compilers_happy; // if not POSIX_NETWORK
     #include <netdb.h>
 #endif
 
-inline void closeSocket(network_t* network, unsigned socket_handle) {
-    close(network->socket_handle[socket_handle]);
+inline void internal_closeSocket(network_t* network, unsigned socket_handle) {
+    close(network->socket_handle[socket_handle].data.fd);
 }
 
-uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, const char *localPort) {
+void internal_network_close(network_t* network){
+    if (network->epfd)
+        close(network->epfd);
+}
+
+uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, uint16_t localPort) {
     (void)contextP;
     #ifdef _WIN32
     struct WSAData d;
@@ -76,7 +83,9 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, co
     if (localPort) {
         // Server
         network->type = NET_SERVER_PROCESS;
-        r = getaddrinfo(NULL, localPort, &hints, &res);
+        char port[7];
+        snprintf(port, 7, "%d", localPort);
+        r = getaddrinfo(NULL, port, &hints, &res);
     } else {
         // client
         network->type = NET_CLIENT_PROCESS;
@@ -90,21 +99,30 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, co
     for(p = res ; p != NULL && s == -1 ; p = p->ai_next)
         ++network->open_listen_sockets;
 
+    network->epfd = epoll_create(MAX_SOCKETS);
+
     network->open_listen_sockets = 0;
     for(p = res ; p != NULL; p = p->ai_next)
     {
-        network->socket_handle[network->open_listen_sockets] = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
-        if (network->socket_handle[network->open_listen_sockets] >= 0)
+        int handle = socket(p->ai_family, p->ai_socktype, p->ai_protocol);
+        if (handle >= 0)
         {
-            if (-1 == bind(network->socket_handle[network->open_listen_sockets], p->ai_addr, p->ai_addrlen))
+            if (-1 == bind(handle, p->ai_addr, p->ai_addrlen))
             {
-                close(network->socket_handle[network->open_listen_sockets]);
-                network->socket_handle[network->open_listen_sockets] = -1;
+                close(handle);
             } else
             {
+                struct epoll_event *ev= &network->socket_handle[network->open_listen_sockets];
+                ev->events=EPOLLIN | EPOLLPRI | EPOLLONESHOT;
+                ev->data.fd=handle;
+                errno=0;
+                epoll_ctl(network->epfd, EPOLL_CTL_ADD, ev->data.fd, ev);
+                assert (errno==0);
+
                 ++network->open_listen_sockets;
                 // Don't use more sockets than we have size in our array
-                if ((unsigned long)network->open_listen_sockets>sizeof(network->socket_handle)/sizeof(int)) break;
+                if ((unsigned long)network->open_listen_sockets > sizeof(network->socket_handle)/sizeof(int))
+                    break;
             }
         }
     }
@@ -112,6 +130,13 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, co
     freeaddrinfo(res);
 
     return (uint8_t)network->open_listen_sockets;
+}
+
+
+intptr_t lwm2m_network_native_sock(lwm2m_context_t * contextP, unsigned sock_no) {
+    network_t* network = (network_t*)contextP->userData;
+    if (!network) return -1;
+    return (intptr_t)network->socket_handle[sock_no].data.fd;
 }
 
 #ifdef LWM2M_NETWORK_LOGGING
@@ -157,19 +182,20 @@ void connection_log_io(connection_t* connection, int length, bool sending)
 
 bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutInSec) {
     network_t* network = (network_t*)contextP->userData;
-    for (unsigned c = 0; c < network->open_listen_sockets; ++c)
-    {
+    for (unsigned c = 0; c < network->open_listen_sockets; ++c) {
         uint8_t buffer[MAX_PACKET_SIZE];
         size_t numBytes = MAX_PACKET_SIZE;
         struct sockaddr_storage addr={0};
         socklen_t addrLen = sizeof(addr);
         
-        ssize_t r = recvfrom(network->socket_handle[c], buffer, numBytes,
+        ssize_t r = recvfrom(network->socket_handle[c].data.fd, buffer, numBytes,
                          MSG_PEEK|MSG_DONTWAIT, (struct sockaddr *)&addr, &addrLen);
 
         if (r < 0)
         {
-            network_log_error("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+            if (errno!=EAGAIN)
+                network_log_error("Error in recvfrom(): %d %s\r\n", errno, strerror(errno));
+            errno=0;
             continue;
         } else if (r == 0)
             continue; // no new data
@@ -179,7 +205,7 @@ bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutIn
         t.addr = addr;
         connection_t * connection = internal_connection_find(network, t);
         if (!connection) continue;
-        connection->sock = network->socket_handle[c];
+        connection->sock = &network->socket_handle[c];
         connection->addr = t;
 
         //connection_log_io(connection,r,false);
@@ -198,7 +224,7 @@ int mbedtls_net_send(void *ctx, const unsigned char *buffer, size_t length) {
     size_t offset = 0;
     while (offset != length)
     {
-        nbSent = sendto(connection->sock, buffer + offset, length - offset, MSG_DONTWAIT,
+        nbSent = sendto(connection->sock->data.fd, buffer + offset, length - offset, MSG_DONTWAIT,
                         IPADDR(connection), IPADDRSIZE(connection));
 
         connection_log_io(connection, (int)length, true);
@@ -228,9 +254,14 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
     struct sockaddr_storage addr;
     socklen_t addrLen = sizeof(addr);
 
-    ssize_t r = recvfrom(connection->sock, buf, len, MSG_DONTWAIT, (struct sockaddr *)&addr, &addrLen);
+    errno=0;
+    ssize_t r = recvfrom(connection->sock->data.fd, buf, len, MSG_DONTWAIT, (struct sockaddr *)&addr, &addrLen);
     connection_log_io(connection, (int)r, false);
-    if (r>=0) return (int)r;
+    if (r>=0) {
+        epoll_ctl(connection->network->epfd, EPOLL_CTL_MOD, connection->sock->data.fd, connection->sock);
+        assert (errno==0);
+        return (int)r;
+    }
     if (errno==EAGAIN||errno==EWOULDBLOCK){
         errno=0;
         #ifdef LWM2M_WITH_DTLS
@@ -239,7 +270,9 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
         return 0;
         #endif
     }
-    network_log_error("recvfrom failed %i", (int)r);
+    network_log_error("recvfrom failed %i", (int)errno);
+    assert (errno!=2); // The device should not be closed without any reason
+    errno=0;
     #ifdef LWM2M_WITH_DTLS
     return MBEDTLS_ERR_SSL_INTERNAL_ERROR;
     #else
@@ -247,56 +280,67 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
     #endif
 }
 
-connection_t * internal_connection_create(network_t* network,
-                                 char * host,
-                                 char * port)
-{
-    if (!network->open_listen_sockets)
-        return NULL;
+sock_t* test_and_return_working_socket_handle(network_t* network,
+                                          char * host,
+                                          uint16_t port,
+                                          struct sockaddr_storage* destip) {
 
     struct addrinfo hints;
     struct addrinfo *servinfo = NULL;
     struct addrinfo *p;
-    int s;
-    struct sockaddr_storage destip={0};
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICSERV|AI_ADDRCONFIG;
 
-    if (0 != getaddrinfo(host, port, &hints, &servinfo) || servinfo == NULL)
+    char portStr[7];
+    snprintf(portStr, 7, "%d", port);
+    if (0 != getaddrinfo(host, portStr, &hints, &servinfo) || servinfo == NULL)
         return NULL;
 
     // we test the various addresses with the sockets we know
-    s = -1;
     for(p = servinfo ; p != NULL; p = p->ai_next)
     {
         for (unsigned sock_no = 0; sock_no < network->open_listen_sockets; ++sock_no)
         {
-            s = network->socket_handle[sock_no];
-            memcpy(&destip, p->ai_addr, p->ai_addrlen);
+            int handle = network->socket_handle[sock_no].data.fd;
+            memcpy(destip, p->ai_addr, p->ai_addrlen);
             // We test if the given socket is able to connect to the ip address
-            if (-1 != connect(s, p->ai_addr, p->ai_addrlen))
+            if (-1 != connect(handle, p->ai_addr, p->ai_addrlen))
             {
                 // "Connection" possible. If you use connect on a udp socket, that
                 // socket will only receive from the given address. To make the socket
                 // listen to any address again, call connect with sa_family == AF_UNSPEC.
                 struct sockaddr any_addr;
                 any_addr.sa_family = AF_UNSPEC;
-                connect(s,&any_addr,sizeof(any_addr));
-                break;
-            } else
-                s = -1;
+                connect(handle,&any_addr,sizeof(any_addr));
+
+                freeaddrinfo(servinfo);
+                return &network->socket_handle[sock_no];
+            }
         }
     }
 
+    if (NULL != servinfo) {
+        freeaddrinfo(servinfo);
+    }
+    return NULL;
+}
+
+connection_t * internal_connection_create(network_t* network,
+                                 char * host,
+                                 uint16_t port)
+{
+    if (!network->open_listen_sockets)
+        return NULL;
+
     connection_t * connection = NULL;
-    if (s >= 0)
-    {
+    struct sockaddr_storage destip={0};
+    sock_t* s = test_and_return_working_socket_handle(network, host, port, &destip);
+    if (s != NULL) {
         connection = (connection_t *)lwm2m_malloc(sizeof(connection_t));
-        if (connection != NULL)
-        {
+        if (connection != NULL) {
             memset(connection, 0, sizeof(connection_t));
             connection->sock = s;
             connection->addr.addr = destip;
@@ -304,12 +348,26 @@ connection_t * internal_connection_create(network_t* network,
         }
     }
 
-    if (NULL != servinfo) {
-        freeaddrinfo(servinfo);
-    }
-
     return connection;
 }
+
+int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
+    network_t* network = (network_t*)contextP->userData;
+
+    struct epoll_event rev;
+    const int timeout = (int)next_event.tv_sec*1000+(int)next_event.tv_usec/1000;
+
+    errno=0;
+    int nfds = epoll_wait(network->epfd, &rev, 1, timeout);
+
+    if (nfds < 0 && errno != EINTR) {
+        fprintf(stderr, "Error in epoll_wait(): %d %s\r\n", errno, strerror(errno));
+        return -1;
+    }
+
+    return rev.data.fd;
+}
+
 
 /////// Compare IP addresses on POSIX systems
 

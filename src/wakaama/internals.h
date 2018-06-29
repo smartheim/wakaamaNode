@@ -287,6 +287,7 @@ uint8_t registration_handleRequest(lwm2m_context_t * contextP, lwm2m_uri_t * uri
 void registration_deregister(lwm2m_context_t * contextP, lwm2m_server_t * serverP);
 void registration_freeClient(lwm2m_client_t * clientP);
 uint8_t registration_start(lwm2m_context_t * contextP);
+uint8_t registration_init_connection(lwm2m_context_t * contextP);
 void registration_step(lwm2m_context_t * contextP, time_t currentTime, time_t * timeoutP);
 lwm2m_status_t registration_getStatus(lwm2m_context_t * contextP);
 

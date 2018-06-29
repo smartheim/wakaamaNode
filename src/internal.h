@@ -1,6 +1,6 @@
 #pragma once
 #include "wakaama/liblwm2m.h"
-#include "lwm2m/objects.h"
+#include "lwm2m/context.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -8,89 +8,28 @@ extern "C" {
 
 #include <string.h>
 #include <stdint.h>
+#include <sys/time.h> // We need struct timeval + gettimeofday()
 
-#define LWM2M_SECURITY_URI_ID                 0
-#define LWM2M_SECURITY_BOOTSTRAP_ID           1
-#define LWM2M_SECURITY_MODE_ID            2
-#define LWM2M_SECURITY_PUBLIC_KEY_ID          3
-#define LWM2M_SECURITY_SERVER_PUBLIC_KEY_ID   4
-#define LWM2M_SECURITY_SECRET_KEY_ID          5
-#define LWM2M_SECURITY_SMS_SECURITY_ID        6
-#define LWM2M_SECURITY_SMS_KEY_PARAM_ID       7
-#define LWM2M_SECURITY_SMS_SECRET_KEY_ID      8
-#define LWM2M_SECURITY_SMS_SERVER_NUMBER_ID   9
-#define LWM2M_SECURITY_SHORT_SERVER_ID        10
-#define LWM2M_SECURITY_HOLD_OFF_ID            11
+#ifndef timercmp
+# define timercmp(a, b, CMP) 						      \
+  (((a)->tv_sec == (b)->tv_sec) ? 					      \
+   ((a)->tv_usec CMP (b)->tv_usec) : 					      \
+   ((a)->tv_sec CMP (b)->tv_sec))
 
-/*
- *  Resources:
- *
- *          Name            | ID | Operations | Instances | Mandatory |  Type   |  Range  | Units |
- *  Server URI              |  0 |            |  Single   |    Yes    | String  |         |       |
- *  Bootstrap Server        |  1 |            |  Single   |    Yes    | Boolean |         |       |
- *  Security Mode           |  2 |            |  Single   |    Yes    | Integer |   0-3   |       |
- *  Public Key or ID        |  3 |            |  Single   |    Yes    | Opaque  |         |       |
- *  Server Public Key or ID |  4 |            |  Single   |    Yes    | Opaque  |         |       |
- *  Secret Key              |  5 |            |  Single   |    Yes    | Opaque  |         |       |
- *  SMS Security Mode       |  6 |            |  Single   |    Yes    | Integer |  0-255  |       |
- *  SMS Binding Key Param.  |  7 |            |  Single   |    Yes    | Opaque  |   6 B   |       |
- *  SMS Binding Secret Keys |  8 |            |  Single   |    Yes    | Opaque  | 32-48 B |       |
- *  Server SMS Number       |  9 |            |  Single   |    Yes    | Integer |         |       |
- *  Short Server ID         | 10 |            |  Single   |    No     | Integer | 1-65535 |       |
- *  Client Hold Off Time    | 11 |            |  Single   |    Yes    | Integer |         |   s   |
- *
- */
+# define timersub(a, b, result)						      \
+  do {									      \
+    (result)->tv_sec = (a)->tv_sec - (b)->tv_sec;			      \
+    (result)->tv_usec = (a)->tv_usec - (b)->tv_usec;			      \
+    if ((result)->tv_usec < 0) {					      \
+      --(result)->tv_sec;						      \
+      (result)->tv_usec += 1000000;					      \
+    }									      \
+  } while (0)
+#endif
 
-typedef struct _security_instance_
-{
-    struct _security_instance_ * next;        // matches lwm2m_list_t::next
-    uint16_t                     instanceId;  // matches lwm2m_list_t::id
-    char                         uri[60];
-    bool                         isBootstrap;
-    uint8_t                      securityMode;
-    #ifdef LWM2M_WITH_DTLS
-    char *                       publicIdentity;
-    uint16_t                     publicIdLen;
-    char *                       serverPublicKey;
-    uint16_t                     serverPublicKeyLen;
-    char *                       secretKey;
-    uint16_t                     secretKeyLen;
-    #endif
-    uint16_t                     shortID;
-    uint32_t                     clientHoldOffTime;
-} security_instance_t;
-
-/*
- *  Resources:
- *
- *          Name         | ID | Operations | Instances | Mandatory |  Type   |  Range  | Units |
- *  Short ID             |  0 |     R      |  Single   |    Yes    | Integer | 1-65535 |       |
- *  Lifetime             |  1 |    R/W     |  Single   |    Yes    | Integer |         |   s   |
- *  Default Min Period   |  2 |    R/W     |  Single   |    No     | Integer |         |   s   |
- *  Default Max Period   |  3 |    R/W     |  Single   |    No     | Integer |         |   s   |
- *  Disable              |  4 |     E      |  Single   |    No     |         |         |       |
- *  Disable Timeout      |  5 |    R/W     |  Single   |    No     | Integer |         |   s   |
- *  Notification Storing |  6 |    R/W     |  Single   |    Yes    | Boolean |         |       |
- *  Binding              |  7 |    R/W     |  Single   |    Yes    | String  |         |       |
- *  Registration Update  |  8 |     E      |  Single   |    Yes    |         |         |       |
- *
- */
-typedef struct _server_instance_
-{
-    struct _server_instance_ * next;   // matches lwm2m_list_t::next
-    uint16_t    instanceId;            // matches lwm2m_list_t::id
-    uint16_t    shortServerId;
-    uint32_t    lifetime;
-    uint32_t    defaultMinPeriod;
-    uint32_t    defaultMaxPeriod;
-    uint32_t    disableTimeout;
-    bool        storing;
-    OpaqueType(4) binding;
-} server_instance_t;
-
-lwm2m_object_t* init_security_object(void);
-lwm2m_object_t* init_server_object(lwm2m_context_t *contextP);
-lwm2m_object_t* init_device_object(void);
+void init_security_object(lwm2m_client_context_t* ctx);
+void init_server_object(lwm2m_client_context_t* ctx);
+void init_device_object(lwm2m_client_context_t* ctx);
 
 /**
  * If you plan to implement a read-callback method, you need to be prepared for the case where the
@@ -119,7 +58,16 @@ uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object
  * @param security_instance_id The security object instance id (same as server object instance id).
  * @return Returns a security object instance for the given instance ID or NULL.
  */
-security_instance_t* lwm2m_get_security_object(uint16_t security_instance_id);
+security_instance_t* lwm2m_get_security_object(lwm2m_context_t *contextP, uint16_t security_instance_id);
+
+/**
+ * Erases public/private keys, certificates etc from the given security instance
+ *
+ * @param securityInstance A security instance
+ */
+void internal_erase_security_params(security_instance_t * securityInstance);
+
+bool internal_in_dtls_handshake(lwm2m_context_t *contextP);
 
 #ifdef __cplusplus
 }

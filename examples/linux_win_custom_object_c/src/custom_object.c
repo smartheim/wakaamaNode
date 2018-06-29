@@ -27,10 +27,6 @@
 #include <ctype.h>
 #include <limits.h>
 
-#ifdef WIN32
-#include <windows.h>
-#endif
-
 typedef struct _test_object_instance_
 {
     /*
@@ -54,40 +50,25 @@ OBJECT_META(test_object_instance_t, test_object, 1024, test_object_write_verify_
     {2, O_RES_R,O_RES_STRING, offsetof(test_object_instance_t,name)}
 )
 
-test_object_instance_t instance;
+static test_object_instance_t instance;
 
 lwm2m_object_t *get_screen_object() {
-    return test_object;
+    return test_objectP;
 }
 
-lwm2m_list_t* get_screen_instance() {
+lwm2m_list_t* get_an_instance() {
     memset(&instance, 0, sizeof(test_object_instance_t));
     instance.shortID = 0;
     instance.state = 0;
-    instance.host = "host";
-    instance.name = "All monitors";
+    instance.host = "Example host";
+    instance.name = "First instance";
     return (lwm2m_list_t*)&instance;
 }
 
 bool test_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {
     test_object_instance_t* i = (test_object_instance_t*)instance;
     if(changed_res_id==0) {
-        #ifdef __linux__
-        if (i->state)
-            system("xset dpms force on");
-        else
-            system("xset dpms force standby");
-        #elif defined(WIN32)
-        if (i->state) {
-            // Emulate a mouse move to turn monitors on again
-            INPUT input = { INPUT_MOUSE };
-            input.mi.dwFlags = MOUSEEVENTF_MOVE;
-            SendInput(1, &input, sizeof(INPUT));
-        } else
-            SendMessage(HWND_BROADCAST, WM_SYSCOMMAND, SC_MONITORPOWER, 2);
-        #else
-            #error "System not supported"
-        #endif
+        printf("Changing resource 0 to %i\n", i->state);
     }
 
     return true;

@@ -12,13 +12,10 @@
  * all copies or substantial portions of the Software.
  */
 #pragma once
-#include "lwm2m/objects.hpp"
+#include "lwm2m/objects.h"
+#include "wakaama_config.h"
 
 #ifdef LWM2M_FIRMWARE_UPGRADES
-
-#ifndef LWM2M_APP_VERSION
-#define LWM2M_APP_VERSION "1.0"
-#endif
 
 /**
  * The firmware update / OTA support is only available for a C++ project.
@@ -128,25 +125,38 @@ class PkgVersionType : public PreallocString<30> {};
 }
 #include "lwm2mObjects/5.h"
 
-extern KnownObjects::id5::object firmwareObject;
-extern KnownObjects::id5::instance firmwareObjectInstance;
+class FirmwareUpdate : public KnownObjects::id5::instance {
+public:
+    /**
+     * Creates a firmware update object.
+     *
+     * @param app_version The current APP version
+     */
+    FirmwareUpdate(const char* app_version, lwm2m_update_protocol protocol);
 
-#ifdef POSIX
-/**
- * Check if this executable is the new updated one.
- * Waits for the old executable to finish. We expect a
- * command line parameter "oldexe=PID" with the PID of the
- * old executable. To notify the old executable about our
- * successful start up, a POSIX signal USR1 is send.
- *
- * @param argc Command line argument count
- * @param argv Command line arguments
- */
-void checkIsUpdated(int argc, char** argv);
-#endif
+    #if (defined(_WIN32) || defined(__unix__))
+    /**
+     * Check if this executable is the new updated one.
+     * If this is the new one:
+     * Waits for the old executable to finish. We expect a
+     * command line parameter "oldexe=PID" with the PID of the
+     * old executable. To notify the old executable about our
+     * successful start up, a POSIX signal USR1 is send.
+     *
+     * @param argc Command line argument count
+     * @param argv Command line arguments
+     */
+    void checkIsUpdated(int argc, char** argv);
+    std::string executableFilename;
+    #endif
 
-// Call this in your main loop to check for new updates,
-// initiate the download and restart if necessary
-void processFirmwareUpgrade();
+    /**
+     * Call this in your main loop to check for new updates,
+     * initiate the download and restart if necessary
+     */
+    void process();
+
+    KnownObjects::id5::object firmwareObject;
+};
 
 #endif

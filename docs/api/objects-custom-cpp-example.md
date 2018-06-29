@@ -13,15 +13,15 @@ For this example, we assume the following custom lwM2M object definition:
 
 Ressources:
 
-| Name | ID | Operations | Mult Inst | Mandatory |  Type   | Range | Description      |
-|------|:--:|------------|:---------:|:---------:|---------|-------|-----------------------|
-| test |  0 |    R/W     |    No     |    Yes    | Integer | 0-128 |                       |
-| exec |  1 |     E      |    No     |    Yes    |         |       |                       |
-| dec  |  2 |    R/W     |    No     |    Yes    |  Float  |       |                       |
-| sig  |  3 |    R/W     |    No     |    Yes    | Integer |       | 16-bit signed integer |
-| text |  4 |    R/W     |    No     |    Yes    | String  |       | char* c-string        |
-| opaq |  5 |     W      |    No     |    Yes    | Opaque  |32 Byte| void* data            |
-| read |  9 |     R      |    No     |    Yes    | Integer |       | Read value from method|
+| Name | ID | Operations |  Type   | Range | Description      |
+|------|:--:|------------|---------|-------|-----------------------|
+| test |  0 |    R/W     | Integer | 0-128 |                       |
+| exec |  1 |     E      |         |       |                       |
+| dec  |  2 |    R/W     |  Float  |       |                       |
+| sig  |  3 |    R/W     | Integer |       | 16-bit signed integer |
+| text |  4 |    R/W     | String  |       | char* c-string        |
+| opaq |  5 |     W      | Opaque  |32 Byte| void* data            |
+| read |  9 |     R      | Integer |       | Read value from method|
 
 If you use the C++ object definition API, you only need to provide an object description (meta object data)
 and all read/write/execute handling is done for you. 
@@ -29,7 +29,7 @@ and all read/write/execute handling is done for you.
 Create an object instance class, that serves as data holder for each individual instance.
 
 ```cpp
-using MyReadIntFunction = int (*)();
+using MyReadIntFunction = int (*)(Lwm2mObjectInstance*);
 
 struct MyObjectInstance: public Lwm2mObjectInstance {
     uint8_t  test;
@@ -44,7 +44,7 @@ struct MyObjectInstance: public Lwm2mObjectInstance {
     IndirectRead<int>    read;
     
     // Force the MyObjectInstance user to assign a read and execute funtion. We don't want to crash!
-    MyObjectInstance(MyReadIntFunction* readF, MyExecuteFunction* execF) : exec(execF) read(readF) {}
+    MyObjectInstance(MyReadIntFunction readF, MyExecuteFunction execF) : exec(execF) read(readF) {}
 };
 ```
 
@@ -53,7 +53,7 @@ You inherit from `Lwm2mObjectInstance` for the object instance data holder.
 Declare an object class that describes object 1024 to the library:
 
 ```cpp
-#include "lwm2m/objects.hpp"
+#include "lwm2m/objects.h"
 
 // Object with LwM2M ID 1024
 class MyObject: public Lwm2mObject<1024,MyObject,MyObjectInstance>
@@ -72,15 +72,14 @@ public:
     // IndirectRead, IndirectWrite, IndirectReadWrite type
     Resource(9, &MyObjectInstance::read) read;
 
-    MyObject() : test([](uint8_t val){return val<=128;});
-
-    // Allow dynamic new instances. Default is to not allow new instances
-    virtual bool allowNewInstance(uint16_t instanceID) override { return true; } 
+    // Use writeVerify to enforce restrictions on the resource values
+    MyObject() : writeVerify([](MyObjectInstance* i, uint16_t res_id) {
+        return (res_id==0) ? (return i->test<=128) : true;
+    }) {}
 };
 ```
 
 Inherit from `Lwm2mObject` and specify the object ID as template parameter for your object class.
-Notice the `#pragma pack`, which is important!
 
 Use the templated `Resource` class to describe the resource ID, reference to the member variable and supported operations in this order.
 
@@ -104,13 +103,15 @@ If you have looked carefully at the object definition, you see that _test_ is re
   test |  0 |    R/W     |    No     |    Yes    | Integer | 0-128 |
 ```
 
-This is less that the data type allows, so we have to provide an input validation method. Thankfully, the
-`Resource` classes constructor takes a validation function.
+This is less that the data type allows, so we have to provide an input validation method. Thankfully, we can
+use the `writeVerify` function.
 
-We provide it in the `Test` constructor as a lambda function, that takes an input value `val` and returns `false` if the value is greater than 128:
+A lambda function, assigned during construction, returns `false` if the value if resource 0 is greater than 128:
 
 ```cpp
-MyObject() : test([](uint8_t val){return val<=128;});
+MyObject() : writeVerify([](MyObjectInstance* i, uint16_t res_id) {
+    return (res_id==0) ? (return i->test<=128) : true;
+}) {}
 ```
 
 ## React to resource write operations
@@ -129,12 +130,14 @@ An example for adding an object `MyObject` with one instance `MyObjectInstance` 
 ```cpp
 MyObject myObj(false);
 
-int my_read_method() { return 12; }
+int my_read_method(Lwm2mObjectInstance*) { return 12; }
 MyObjectInstance myInstance(my_read_method);
 
 void setup() {
     myObj.addInstance(lwm2mContext, &myInstance);
-    myObj.registerObject(lwm2mContext);
+    // The second argument either allows or disallows the lwm2m server
+    // to create/delete object instances
+    myObj.registerObject(lwm2mContext, false);
 }
 ```
 
@@ -146,7 +149,7 @@ the register call will be a little bit more expensive, because the object need t
 ```cpp
 MyObject myObj(false);
 
-int my_read_method() { return 12; }
+int my_read_method(Lwm2mObjectInstance*) { return 12; }
 MyObjectInstance myInstance(my_read_method);
 
 void exit() {

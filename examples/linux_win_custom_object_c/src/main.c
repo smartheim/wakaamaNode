@@ -3,8 +3,8 @@
  To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
 *****/
 
-#include "lwm2m/connect.h"
-#include "lwm2m/objects.h"
+#include "lwm2m/c_connect.h"
+#include "lwm2m/c_objects.h"
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
 #include "custom_object.h"
@@ -19,46 +19,35 @@
 #include <errno.h>
 #include <signal.h>
 
-// For c++ projects with firmware support
-// #include "object_firmware.hpp"
+static volatile int g_quit = 0;
 
-static int g_quit = 0;
-
-void handle_sigint(int signum)
-{
+void handle_sigint(int signum) {
+    (void)signum;
     printf("Wait for socket timeout...\n");
     g_quit = 1;
 }
 
-int main(int argc, char *argv[])
+int main()
 {
     /*
      * We catch Ctrl-C signal for a clean exit
      */
     signal(SIGINT, handle_sigint);
-    
-    // For c++ projects with firmware support
-    //checkIsUpdated(argc, argv);
 
-    device_instance_t * device_data = lwm2m_device_data_get();
-    device_data->manufacturer = "test manufacturer";
-    device_data->model_name = "test model";
-    device_data->device_type = "sensor";
-    device_data->firmware_ver = "1.0";
-    device_data->serial_number = "140234-645235-12353";
-    lwm2m_context_t * lwm2mH = lwm2m_client_init("testClient");
-    if (lwm2mH == 0)
-    {
-        fprintf(stderr, "Failed to initialize wakaama\r\n");
-        return -1;
-    }
+    lwm2m_client_context_t context;
+
+    context.deviceInstance.manufacturer = "test manufacturer";
+    context.deviceInstance.model_name = "test model";
+    context.deviceInstance.device_type = "linux app";
+    context.deviceInstance.firmware_ver = "1.0";
+    context.deviceInstance.serial_number = "140234-645235-12353";
 
     // Create object with the C-Object API
     lwm2m_object_t* test_object = get_screen_object();
-    lwm2m_add_initialize_object(lwm2mH, test_object, false);
-    lwm2m_object_instance_add(lwm2mH, test_object, get_screen_instance());
+    lwm2m_add_initialize_object(CTX(context), test_object, false);
+    lwm2m_object_instance_add(CTX(context), test_object, get_an_instance());
 
-    uint8_t bound_sockets = lwm2m_network_init(lwm2mH, NULL, false);
+    uint8_t bound_sockets = lwm2m_client_init (&context,"testClient");
 
     if (bound_sockets == 0)
     {
@@ -68,35 +57,30 @@ int main(int argc, char *argv[])
     
     // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
     // unsend messages. The host url is either coap:// or coaps://.
-    lwm2m_add_server(123, "coap://192.168.1.18", 100, false);
+    lwm2m_add_server(CTX(context), 123, "coap://192.168.1.18", 100, false);
     
     // If you want to establish a DTLS secured connection, you need to alter the security
     // information:
-    // lwm2m_server_security_preshared(123, "publicid", "password", sizeof("password"));
+    // lwm2m_use_dtls_psk(CTX(context), 123, "publicid", "password", sizeof("password"));
 
     /*
      * We now enter a while loop that will handle the communications from the server
      */
+    struct timeval tv = {0,0};
+    fd_set readfds = {0};
     while (0 == g_quit)
     {
-        struct timeval tv = {5,0};
-        fd_set readfds = {0};
+        memset(&readfds,sizeof(fd_set),0);
         for (uint8_t c = 0; c < bound_sockets; ++c)
-            FD_SET(lwm2m_network_native_sock(lwm2mH, c), &readfds);
+            FD_SET(lwm2m_network_native_sock(CTX(context), c), &readfds);
 
-        print_state(lwm2mH);
-
-        uint8_t result = lwm2m_step(lwm2mH, &tv.tv_sec);
-        if (result == COAP_503_SERVICE_UNAVAILABLE)
-            printf("No server found so far\r\n");
-        else if (result != 0)
-            fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
+        print_state(CTX(context));
 
         /*
          * This part wait for an event on the socket until "tv" timed out (set
          * with the precedent function)
          */
-        result = select(FD_SETSIZE, &readfds, NULL, NULL, &tv);
+        int result = select(FD_SETSIZE, &readfds, NULL, NULL, &tv);
 
         if (result < 0 && errno != EINTR)
         {
@@ -105,17 +89,22 @@ int main(int argc, char *argv[])
 
         for (uint8_t c = 0; c < bound_sockets; ++c)
         {
-            if (result > 0 && FD_ISSET(lwm2m_network_native_sock(lwm2mH, c), &readfds))
+            if (result > 0 && FD_ISSET(lwm2m_network_native_sock(CTX(context), c), &readfds))
             {
-                lwm2m_network_process(lwm2mH, &tv);
+                result = lwm2m_process(CTX(context), &tv);
+                if (result == COAP_503_SERVICE_UNAVAILABLE)
+                    printf("No server found so far\r\n");
+                else if (result != 0)
+                    fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
             }
         }
+        tv.tv_sec = 5;
     }
 
     printf("finished\n");
 
-    lwm2m_remove_object(lwm2mH, test_object->objID);
-    lwm2m_client_close();
+    lwm2m_remove_object(CTX(context), test_object->objID);
+    lwm2m_client_close(&context);
 
     return 0;
 }

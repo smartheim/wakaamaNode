@@ -1,3 +1,8 @@
+#include "../src/network/network_common.h"
+#include "lwip_tap_helper.h"
+
+typedef int make_iso_compilers_happy; // if not LWIP
+
 #if defined(LWIP)
 
 #include <sys/socket.h>
@@ -14,7 +19,7 @@
 #include "lwipopts.h"
 
 #include "lwm2m/debug.h" // for lwm2m_printf
-#include "network_helper.h"
+#include "lwip_tap_helper.h"
 #include "internals.h"
 
 #include <fcntl.h>
@@ -86,14 +91,6 @@ static void tapif_input(struct netif *netif)
   }
 }
 
-void test_network_close()
-{
-    //close((intptr_t)netifs[0].state);
-    //close((intptr_t)netifs[1].state);
-    //netif_remove(&netifs[0]);
-    //netif_remove(&netifs[1]);
-}
-
 err_t tapif_init(struct netif *netif) {
     return ERR_OK;
 }
@@ -146,7 +143,15 @@ err_t tapif_real_init(int netIfNo)
     return ERR_OK;
 }
 
-bool test_network_init()
+void lwip_network_close(void)
+{
+    //close((intptr_t)netifs[0].state);
+    //close((intptr_t)netifs[1].state);
+    //netif_remove(&netifs[0]);
+    //netif_remove(&netifs[1]);
+}
+
+bool lwip_network_init(void)
 {
     // LwIP can only be initialited once
     static bool lwip_init_done = false;
@@ -189,7 +194,7 @@ bool test_network_init()
   //netif_set_default(&netifs[tapDevices]);
 }
 
-void* network_get_interface(int id)
+void* lwip_network_get_interface(int id)
 {
      struct netif* n = netif_list;
      for (int c = 1;c>=0 && n;--c)
@@ -201,9 +206,9 @@ void* network_get_interface(int id)
      return NULL;
 }
 
-uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets) {
+int lwm2m_process_blocking(lwm2m_context_t * contextP) {
     time_t max_wait_sec = 5;
-    uint8_t result = lwm2m_step(lwm2mH, &max_wait_sec);
+    int result = lwm2m_step(contextP, &max_wait_sec);
     if (result != 0 && result != COAP_503_SERVICE_UNAVAILABLE)
     {
         fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
@@ -218,7 +223,10 @@ uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets) {
     if (tv.tv_sec > max_wait_sec) tv.tv_sec = max_wait_sec;
     tv.tv_usec = (msecs % 1000) * 1000;
 
-    struct netif* netifP = &netifs[bound_sockets];
+    network_t* network = (network_t*)contextP->userData;
+    if (network == NULL || network->connection_list == NULL)
+        return COAP_505_NO_NETWORK_CONNECTION;
+    struct netif* netifP = network->connection_list->addr.net_if_out;
 
     FD_ZERO(&fdset);
     FD_SET((intptr_t)netifP->state, &fdset);
@@ -234,4 +242,8 @@ uint8_t network_step_blocking(lwm2m_context_t * lwm2mH, int bound_sockets) {
     return result;
 }
 
+#else
+bool lwip_network_init(void){return true;}
+void lwip_network_close(void){}
+void* lwip_network_get_interface(int id){(void)id; return NULL;}
 #endif

@@ -13,7 +13,7 @@
  */
 
 #include <gtest/gtest.h>
-#include "lwm2m/connect.h"
+#include "lwm2m/c_connect.h"
 #include "lwm2m/objects.h"
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
@@ -23,6 +23,7 @@
 
 extern "C" {
     #include "internals.h"
+    #include "../src/internal_objects.h"
 
     uint8_t lwm2m_get_bat_level() {
         return 12;
@@ -65,12 +66,12 @@ extern "C" {
  */
 class DeviceInfoObjectTests : public testing::Test {
 public:
-    lwm2m_context_t * lwm2mH;
+    lwm2m_client_context_t client_context;
     device_instance_t * deviceInstance;
     lwm2m_object_t* deviceObject;
  protected:
     virtual void TearDown() {
-        lwm2m_client_close();
+        lwm2m_client_close(&client_context);
         std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
                       [](MemoryObserver::MemAreas::value_type it){
             FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
@@ -80,12 +81,11 @@ public:
     virtual void SetUp() {
         memoryObserver.reset();
 
-        lwm2mH = lwm2m_client_init("testClient");
-        ASSERT_TRUE(lwm2mH) << "Failed to initialize wakaama\r\n";
+        lwm2m_client_init(&client_context, "testClient");
 
-        deviceInstance = lwm2m_device_data_get();
+        deviceInstance = &client_context.deviceInstance;
 
-        deviceObject = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)lwm2mH->objectList, 3);
+        deviceObject = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)CTX(client_context)->objectList, 3);
         ASSERT_TRUE(deviceObject);
         ASSERT_EQ(deviceObject->instanceList, (lwm2m_list_t*)deviceInstance);
 
@@ -110,7 +110,7 @@ TEST_F(DeviceInfoObjectTests, ReadAll) {
     {
         size_t buffer_len=0;
         char* buffer;
-        uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
+        uint8_t s = object_read(CTX(client_context),&uri,&format,(uint8_t**)&buffer,&buffer_len);
         ASSERT_EQ(s, CONTENT_2_05);
         fullRead.assign(buffer,buffer_len);
         lwm2m_free(buffer);
@@ -127,7 +127,7 @@ TEST_F(DeviceInfoObjectTests, ExecuteReboot) {
     uint8_t* buffer=0;
     size_t buffer_len=0;
     ASSERT_FALSE(reboot_executed);
-    uint8_t s =  object_execute(lwm2mH,&uri,buffer,buffer_len);
+    uint8_t s =  object_execute(CTX(client_context),&uri,buffer,buffer_len);
     ASSERT_EQ(COAP_205_CONTENT, s);
     ASSERT_TRUE(reboot_executed);
 }
@@ -137,7 +137,7 @@ TEST_F(DeviceInfoObjectTests, ExecuteFactoryReset) {
     uint8_t* buffer=0;
     size_t buffer_len=0;
     ASSERT_FALSE(factory_reset);
-    uint8_t s =  object_execute(lwm2mH,&uri,buffer,buffer_len);
+    uint8_t s =  object_execute(CTX(client_context),&uri,buffer,buffer_len);
     ASSERT_EQ(COAP_205_CONTENT, s);
     ASSERT_TRUE(factory_reset);
 }

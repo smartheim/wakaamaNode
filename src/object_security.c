@@ -43,7 +43,6 @@
 #include <string.h>
 #include <stdio.h>
 
-lwm2m_object_t security_object;
 static uint8_t prv_get_value(lwm2m_data_t * dataP,
                              security_instance_t * targetP)
 {
@@ -90,8 +89,10 @@ static uint8_t prv_get_value(lwm2m_data_t * dataP,
 static uint8_t prv_security_read(uint16_t instanceId,
                                  int * numDataP,
                                  lwm2m_data_t ** dataArrayP,
-                                 lwm2m_object_t * objectP)
+                                 lwm2m_object_t * objectP,
+                                 lwm2m_context_t * contextP)
 {
+    (void)contextP;
     security_instance_t * targetP;
     uint8_t result;
     int i;
@@ -149,11 +150,9 @@ void display_security_object(lwm2m_object_t * object)
 }
 #endif
 
-lwm2m_object_t * init_security_object()
+void init_security_object(lwm2m_client_context_t* ctx)
 {
-    memset(&security_object, 0, sizeof(lwm2m_object_t));
-    security_object.objID = 0;
-    security_object.readFunc = prv_security_read;
-    return &security_object;
+    ctx->securityObject.objID = 0;
+    ctx->securityObject.readFunc = prv_security_read;
 }
 

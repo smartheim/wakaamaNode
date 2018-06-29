@@ -26,7 +26,7 @@ Define your custom objects either via C or the C++ interface.
 
 ## Object definition C++ API
 
-Include `lwm2m/objects.hpp`.
+Include `lwm2m/objects.h`.
 
 ### Lwm2mObject class
 
@@ -103,9 +103,8 @@ Unregisters the object from Wakaama.
 virtual Lwm2mObjectInstance* createInstance(uint16_t instance_id);
 ```
 
-Implement this function in your object class and either return `nullptr`
-if creating instances dynamically by the server or with the given ID is not supported or
-return a working object instance with the given instance ID.
+If creating instances dynamically by the server or with the given ID is not supported return `nullptr`.
+Return a working object instance with the given instance ID otherwise.
 
 The default does nothing and returns a `nullptr`.
 
@@ -117,7 +116,7 @@ The default does nothing and returns a `nullptr`.
 virtual int deleteInstance(Lwm2mObjectInstance* instance);
 ```
 
-Implement this function in your object class to allow to delete an object instance.
+Implement this function in your object class to allow to delete an object instance by the server.
 
 ```cpp
 /**
@@ -249,31 +248,36 @@ struct MyObjectInstance: public Lwm2mObjectInstance {
 ```
 
 As you can see, you will use the templated classes `IndirectRead`, `IndirectWrite` and `IndirectReadWrite`.
-The first two expect a parameter tuple (type, variable name). The third expects the type only.
 
 The library will crash, if the function pointer is dangling / not assigned to a valid function!
 
-An example object looks like this, with a constructor setting the function pointer:
+The signature of the read and write methods will always pass the object instance as first parameter,
+see the definition of `my_read_method` and `string_write_method` in the example below.
+
+An example object looks like this, with a constructor setting the function pointers:
 
 ```
-int my_read_method() { return 12; }
-using MyReadIntFunction = int (*)();
+uint32_t my_read_method(Lwm2mObjectInstance*) { return 12; }
+
+void string_write_method(Lwm2mObjectInstance*, const char* v) {}
 
 class MyObject: public Lwm2mObject<1024,MyObject,MyObjectInstance>
 {
 public:
-    Resource(0, &MyObjectInstance::readFunctionPtr) readFunctionPtr;
+    Resource(1, &MyObjectInstance::test_read_fun_uint32) test_read_fun_uint32;
+    Resource(3, &MyObjectInstance::test_write_fun_string) test_write_fun_string;
     
-    MyObject(MyReadIntFunction fun) : readFunctionPtr(fun) {}
+    MyObject(IndirectRead<uint32_t> readfun, IndirectRead<uint32_t> writefun) :
+        test_read_fun_uint32(readfun), test_write_fun_string(writeFun) {}
 };
 
-MyObject o(my_read_method);
+MyObject o(my_read_method, string_write_method);
 ```
 
 
 ## Object definition C API
 
-Include `lwm2m/objects.h`.
+Include `lwm2m/c_objects.h`.
 
 ```cpp
 /**
@@ -345,7 +349,7 @@ typedef struct {
 } your_object_instance_t;
 ```
 
-Use OBJECT_META() for the machine readable description part:
+Use OBJECT_META() to describe your object to the library:
 
 ```cpp
 OBJECT_META(your_object_instance_t, test_object, 1024, test_object_write_verify_cb,
@@ -355,10 +359,10 @@ OBJECT_META(your_object_instance_t, test_object, 1024, test_object_write_verify_
 );
 ```
 
-Which results in a `test_object` variable, that can be handed over to `lwm2m_add_initialize_object`.
+Which results in a `test_object` object declaration as well as a pointer to it `test_objectP`, that can be handed over to `lwm2m_add_initialize_object`.
 
-OBJECT_META expects the object instance (here: `your_object_instance_t`), and the variable name for the object via
-the first and second argument.
+OBJECT_META expects the object instance (here: `your_object_instance_t`),
+and the variable name for the object via the first and second argument.
 
 The third argument is the object ID.
 

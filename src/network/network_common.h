@@ -13,7 +13,7 @@
  */
 #pragma once
 
-#include "lwm2m/connect.h"
+#include "lwm2m/c_connect.h"
 #include "wakaama_config.h"
 
 #if defined(LWIP) && defined(POSIX_NETWORK)
@@ -38,6 +38,11 @@
 
 #ifdef POSIX_NETWORK
 #include "network_posix.h"
+    #ifdef _WIN32
+        #include "wepoll/wepoll.h"
+    #else
+        #include <sys/epoll.h>
+    #endif
 #endif
 
 #ifdef LWIP
@@ -59,7 +64,7 @@ typedef struct _connection_t
     network_t* network;
     uint16_t shortServerID;  ///< The lwm2m short server id. Is always 0 on a lwm2m server.
     addr_t addr;             ///< The IP address/port of this connection
-    sock_t sock;             ///< Connection socket reference
+    sock_t* sock;             ///< Connection socket reference
     #ifdef LWM2M_WITH_DTLS
     mbedtls_ssl_context ssl; ///< Connection ssl context
     mbedtls_ssl_config conf; ///< Connection ssl configuration
@@ -78,16 +83,19 @@ typedef enum {
     NET_SERVER_PROCESS
 } network_process_type_t;
 
+#define MAX_SOCKETS 10
+
 // This structure is stored in the wakama context custom object
 // and consists of all open/bound network sockets, network interfaces,
 // and dtls common stuff like entropy and random generator.
 typedef struct _network_t_ {
-    sock_t socket_handle[10]; // Array of socket handles
+    sock_t socket_handle[MAX_SOCKETS]; // Array of socket handles
     unsigned open_listen_sockets;
     connection_t* connection_list;
     network_process_type_t type;
     #ifdef LWM2M_WITH_DTLS
     bool dtls;
+    bool inHandshake;
     mbedtls_entropy_context entropy;
     mbedtls_ctr_drbg_context ctr_drbg;
     connection_t* cached_next_timer_connection;
@@ -108,24 +116,26 @@ typedef struct _network_t_ {
     mbedtls_ssl_cookie_ctx cookies;
     #endif
     #endif
+    #ifdef POSIX_NETWORK
+    int epfd; // epoll descriptor
+    #endif
 } network_t;
-
-void internal_network_add_conn(network_t* network, connection_t* conn);
 
 // Parse uri in the form "coap[s]://[host]:[port]". host can be an IPv6 address ( "[::]" ).
 // The original c-string is modified and host and port will
 // contain a reference to the respective part of the uri c-string.
 // Return 1 on success and non-secured, 2 on success for a secured host and 0 otherwise.
-uint8_t decode_uri(char* uri, char** host, char** port);
+uint8_t decode_uri(char* uri, char** host, uint16_t *port);
 
+void internal_network_add_conn(network_t* network, connection_t* conn);
 connection_t * internal_connection_find(network_t * network, addr_t addr);
-connection_t * internal_connection_create(network_t * network, char * host, char * port);
-uint8_t internal_init_sockets(lwm2m_context_t *contextP, network_t* network, const char *localPort);
-bool ip_equal(addr_t a, addr_t b);
-void closeSocket(network_t* network, unsigned socket_handle);
-
+connection_t * internal_connection_create(network_t * network, char * host, uint16_t port);
+uint8_t internal_init_sockets(lwm2m_context_t *contextP, network_t* network, uint16_t localPort);
+void internal_closeSocket(network_t* network, unsigned socket_handle);
 void internal_network_read(lwm2m_context_t* contextP, void* dest, size_t len, connection_t* connection);
-void internal_check_timer(lwm2m_context_t* contextP, struct timeval* next_event);
+void internal_network_close(network_t* network);
+
+bool ip_equal(addr_t a, addr_t b);
 
 #ifdef LWM2M_NETWORK_LOGGING
 void connection_log_io(connection_t* conn, int length, bool sending);
@@ -143,3 +153,13 @@ void connection_log_io(connection_t* conn, int length, bool sending);
 
 int mbedtls_net_send( void *ctx, const unsigned char *buf, size_t len );
 int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len );
+
+inline network_t* network_from_context(lwm2m_context_t* contextP) { return (network_t*)contextP->userData; }
+
+/// Internal SSL methods
+int init_server_connection_ssl(connection_t* connection, network_t* network);
+bool internal_network_ssl_init(network_t* network);
+void internal_check_timer(lwm2m_context_t *contextP, struct timeval* next_event);
+connection_t * internal_configure_ssl(connection_t * connection, network_t *network, security_instance_t *secInst);
+void internal_close_connection_ssl(network_t* network, connection_t * t);
+void internal_network_close_ssl(network_t* network);

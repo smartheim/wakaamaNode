@@ -11,17 +11,20 @@ and you should not use the auto generated ones.
 ## How to use a predefined object
 
 A full example can be found in [Get started](/quickstart/getting-started.md).
-Necessary steps are usually looking like below. For example if you want to use the "Light Control" lwM2M object:
+For example if you want to use the "Light Control" lwM2M object:
 
 * Search the list below for "Light Control".
 * Find it under object id 3311.
 * Include `src/lwm2mObjects/3311.h` and use the class `object` in namespace *KnownObjects/id311*.
-* Create as many object instances as you need and add them to the object via `object.addInstance(objectInstance)`.
+* Create as many object instances as you need and add them to the object via `object.addInstance(lwm2mContext, objectInstance)`.
 * Make the object itself known to WakaamaNode with `object.register(lwm2mContext)`.
 
 
 ```cpp
 #include "lwm2mObjects/3311.h"
+#include "lwm2m/connect.h"
+
+lwm2m_client_context_t context;
 
 using namespace KnownObjects;
 
@@ -43,14 +46,14 @@ void setup() {
     };
     
     led.id = 0; // set instance id
-    lights.addInstance(lwm2mContext, &led);
-    lights.registerObject(lwm2mContext);
+    lights.addInstance(CTX(context), &led);
+    lights.registerObject(CTX(context));
 }
 
 void push_button_pressed(bool newState) {
     led.OnOff = newState;
     digitalWrite(LED_BUILTIN, led.OnOff);
-    lights.resChanged(lwm2mContext, led.id, (uint16_t)id3311::RESID::OnOff);
+    lights.resChanged(CTX(context), led.id, (uint16_t)id3311::RESID::OnOff);
 }
 ```
 

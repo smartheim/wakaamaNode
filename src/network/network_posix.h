@@ -23,4 +23,4 @@ typedef struct _addr_t_ {
     void* net_if_out;
 } addr_t;
 
-typedef int sock_t;
+typedef struct epoll_event sock_t;

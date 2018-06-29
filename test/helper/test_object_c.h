@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-#include "lwm2m/objects.h"
+#include "lwm2m/c_objects.h"
 
 lwm2m_object_t *get_test_object(void);
 lwm2m_list_t* test_object_create_instance(uint16_t instance_id,

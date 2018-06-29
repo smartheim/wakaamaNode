@@ -16,7 +16,7 @@ typedef int make_iso_compilers_happy; // if not LWIP
 #ifdef LWIP
 
 #include "lwm2m/network.h"
-#include "lwm2m/connect.h"
+#include "lwm2m/c_connect.h"
 #include "network_common.h"
 #include "../wakaama/internals.h"
 #include <stdio.h>
@@ -39,9 +39,9 @@ typedef int make_iso_compilers_happy; // if not LWIP
 
 void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
-uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, const char *localPort)
+uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, uint16_t localPort)
 {
-    if (localPort) {
+    if (!localPort) {
         // Server
         network->type = NET_SERVER_PROCESS;
     } else {
@@ -54,17 +54,18 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, co
         return 0;
     }
 
-    udp_bind((udp_pcb_t*)network->socket_handle[0], IP_ADDR_ANY, localPort==NULL ? 12873 : (uint16_t)atoi(localPort));
+    udp_bind((udp_pcb_t*)network->socket_handle[0], IP_ADDR_ANY, !localPort ? 12873 : localPort);
     udp_recv((udp_pcb_t*)network->socket_handle[0], (udp_recv_fn)udp_raw_recv, contextP);
     network->open_listen_sockets = 1;
 
     return (uint8_t)network->open_listen_sockets;
 }
 
-bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutInSec) {
+bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
     (void)contextP;
     // NOOP for lwip, because udp_recv() registers a callback for incoming packets
     // and they are processed in udp_raw_recv()
+    internal_check_timer(contextP, next_event);
     return true;
 }
 
@@ -84,7 +85,6 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
     t.addr = *addr;
     connection_t * connection = internal_connection_find(network, t);
     if (!connection) return;
-    connection->sock = pcb;
     connection->addr = t;
     connection->p = p;
     
@@ -93,17 +93,17 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
     pbuf_free(p);
 }
 
-bool lwm2m_network_client_process(lwm2m_context_t * contextP, struct timeval *timeoutInSec) {
-    (void)contextP;
-#if NO_SYS==1
-    sys_check_timeouts();
-#endif
-    internal_check_timer(contextP, timeoutInSec);
-    return true;
+inline void internal_closeSocket(network_t* network, unsigned socket_handle) {
+    udp_remove((udp_pcb_t*)network->socket_handle[socket_handle]);
 }
 
-inline void closeSocket(network_t* network, unsigned socket_handle) {
-    udp_remove((udp_pcb_t*)network->socket_handle[socket_handle]);
+void internal_network_close(network_t* network){(void)network;}
+
+
+intptr_t lwm2m_network_native_sock(lwm2m_context_t * contextP, unsigned sock_no) {
+    network_t* network = (network_t*)contextP->userData;
+    if (!network) return -1;
+    return (intptr_t)network->socket_handle[sock_no];
 }
 
 #ifdef LWM2M_NETWORK_LOGGING
@@ -152,10 +152,10 @@ int mbedtls_net_send(void *ctx, const unsigned char *buffer, size_t len) {
 
     err_t err;
     if (connection->addr.net_if_out)
-        err = udp_sendto_if(connection->sock, pb, &connection->addr.addr, connection->addr.port,
+        err = udp_sendto_if(*connection->sock, pb, &connection->addr.addr, connection->addr.port,
                             connection->addr.net_if_out);
     else
-        err = udp_sendto(connection->sock, pb, &connection->addr.addr, connection->addr.port);
+        err = udp_sendto(*connection->sock, pb, &connection->addr.addr, connection->addr.port);
 
     pbuf_free(pb); //De-allocate packet buffer
 
@@ -165,7 +165,7 @@ int mbedtls_net_send(void *ctx, const unsigned char *buffer, size_t len) {
         return MBEDTLS_ERR_SSL_INTERNAL_ERROR ;
     }
 
-    return len;
+    return (int)len;
 }
 
 int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
@@ -187,7 +187,7 @@ inline bool ip_equal(addr_t a, addr_t b) {
 
 connection_t * internal_connection_create(network_t* network,
                                  char * host,
-                                 char * port)
+                                 uint16_t port)
 {
     ip_addr_t addr;
     if (!ipaddr_aton(host, &addr))
@@ -195,21 +195,26 @@ connection_t * internal_connection_create(network_t* network,
         return 0;
     }
 
-    uint16_t portNo = (uint16_t)atoi(port);
-    if (portNo == 0)
+    if (port == 0)
         return 0;
 
     connection_t * connection = (connection_t *)lwm2m_malloc(sizeof(connection_t));
     if (connection != NULL)
     {
         memset(connection, 0, sizeof(connection_t));
-        connection->sock = (udp_pcb_t*)network->socket_handle[0];
-        connection->addr.port = portNo;
+        connection->sock = &network->socket_handle[0];
+        connection->addr.port = port;
         connection->addr.addr = addr;
         connection->next = (struct _connection_t *)network->connection_list;
     }
 
     return connection;
 }
+
+inline int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
+    (void)contextP;(void)next_event;
+    return 0;
+}
+
 
 #endif
