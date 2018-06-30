@@ -6,7 +6,7 @@
         "type": "git",
         "url": "https://github.com/Openhab-Nodes/wakaamaNode.git"
     },
-    "version": "0.9",
+    "version": "1.0",
     "authors": {
         "name": "David Gräff",
         "url": "https://openhab-nodes.github.io/wakaamaNode"
@@ -14,7 +14,7 @@
     "exclude": [
         "test", "tmp", "contrib"
     ],
-    "frameworks": "arduino",
+    "frameworks": ["arduino","native","windows_x86","linux_i686","linux_x86_64","linux_arm"],
     "platforms": "*",
     "extraScript":"extra.py",
     "build": {
