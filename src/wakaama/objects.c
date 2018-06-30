@@ -341,8 +341,6 @@ uint8_t object_delete(lwm2m_context_t * contextP,
     if (NULL == objectP) return COAP_404_NOT_FOUND;
     if (NULL == objectP->deleteFunc) return COAP_405_METHOD_NOT_ALLOWED;
 
-    LOG("Entering");
-
     if (LWM2M_URI_IS_SET_INSTANCE(uriP))
     {
         result = objectP->deleteFunc(uriP->instanceId, objectP);
@@ -462,7 +460,6 @@ bool object_isInstanceNew(lwm2m_context_t * contextP,
 {
     lwm2m_object_t * targetP;
 
-    LOG("Entering");
     targetP = (lwm2m_object_t *)LWM2M_LIST_FIND(contextP->objectList, objectId);
     if (targetP != NULL)
     {

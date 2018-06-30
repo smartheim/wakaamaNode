@@ -141,9 +141,9 @@ public:
     };
     const Sizes sizes;
 
-    static Lwm2mObjectBase* getBase(lwm2m_object_t* p) {
+    static Lwm2mObjectBase<ObjectInstance>* getBase(lwm2m_object_t* p) {
         const uintptr_t objectP = reinterpret_cast<uintptr_t>(p);
-        return reinterpret_cast<Lwm2mObjectBase*>(objectP - offset_of(&Lwm2mObjectBase::object));
+        return reinterpret_cast<Lwm2mObjectBase<ObjectInstance>*>(objectP - offset_of(&Lwm2mObjectBase<void>::object));
     }
     lwm2m_object_res_item_t* resource(uint16_t i) {
         const uint16_t res_len = resources_len();

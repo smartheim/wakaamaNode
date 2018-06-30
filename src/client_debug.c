@@ -20,6 +20,9 @@ void print_state(lwm2m_context_t * lwm2mH)
     case STATE_REGISTER_REQUIRED:
         lwm2m_printf("STATE_REGISTER_REQUIRED");
         break;
+    case STATE_REGISTER_REQUIRED2:
+        lwm2m_printf("STATE_REGISTER_REQUIRED2");
+        break;
     case STATE_REGISTERING:
         lwm2m_printf("STATE_REGISTERING");
         break;

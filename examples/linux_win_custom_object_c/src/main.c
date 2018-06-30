@@ -57,48 +57,42 @@ int main()
     
     // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
     // unsend messages. The host url is either coap:// or coaps://.
-    lwm2m_add_server(CTX(context), 123, "coap://192.168.1.18", 100, false);
+    assert(lwm2m_add_server(CTX(context), 123, "coap://leshan.eclipse.org", 100, false));
     
     // If you want to establish a DTLS secured connection, you need to alter the security
     // information:
-    // lwm2m_use_dtls_psk(CTX(context), 123, "publicid", "password", sizeof("password"));
+    #ifdef LWM2M_WITH_DTLS
+    lwm2m_use_dtls_psk(CTX(context), 123, "publicid", "password", sizeof("password"));
+    #endif
 
-    /*
-     * We now enter a while loop that will handle the communications from the server
-     */
     struct timeval tv = {0,0};
     fd_set readfds = {0};
+
+    /* We now enter a while loop that will handle the communications from the server */
     while (0 == g_quit)
     {
         memset(&readfds,sizeof(fd_set),0);
         for (uint8_t c = 0; c < bound_sockets; ++c)
             FD_SET(lwm2m_network_native_sock(CTX(context), c), &readfds);
 
-        print_state(CTX(context));
-
-        /*
-         * This part wait for an event on the socket until "tv" timed out (set
-         * with the precedent function)
-         */
+        /* This part wait for an event on the socket until "tv" timed out */
         int result = select(FD_SETSIZE, &readfds, NULL, NULL, &tv);
 
-        if (result < 0 && errno != EINTR)
-        {
+        if (result < 0 && errno != EINTR) {
             fprintf(stderr, "Error in select(): %d %s\r\n", errno, strerror(errno));
         }
 
-        for (uint8_t c = 0; c < bound_sockets; ++c)
-        {
-            if (result > 0 && FD_ISSET(lwm2m_network_native_sock(CTX(context), c), &readfds))
-            {
-                result = lwm2m_process(CTX(context), &tv);
-                if (result == COAP_503_SERVICE_UNAVAILABLE)
-                    printf("No server found so far\r\n");
-                else if (result != 0)
-                    fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
-            }
-        }
-        tv.tv_sec = 5;
+        // Sleep 20sec before doing another main loop run if no packet has been received
+        // and lwm2m_process or lwm2m_watch_and_reconnect has no earlier due time.
+        tv.tv_sec = 20;
+        result = lwm2m_process(CTX(context), &tv);
+        if (result == COAP_503_SERVICE_UNAVAILABLE)
+            printf("No server found so far\r\n");
+        else if (result != 0)
+            fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
+        else
+            print_state (CTX(context));
+        lwm2m_watch_and_reconnect(CTX(context),&tv,5);
     }
 
     printf("finished\n");
