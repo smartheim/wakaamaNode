@@ -20,6 +20,8 @@ int mbedtls_hardware_poll( void *data,
                            unsigned char *output, size_t len, size_t *olen )
 {
 	os_get_random(output, len);
-	*olen = len;
+    if(olen)
+        *olen = len;
+    return 0;
 }
 #endif

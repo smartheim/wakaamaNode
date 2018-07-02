@@ -64,6 +64,8 @@ bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval* next_even
  * @brief Closes all opened sockets and clean context->userdata.
  *
  * Is automatically called by the connect API, especially lwm2m_client_close().
+ * Always first call lwm2m_close(context) before calling this method, if you want
+ * to shut down the lwm2m part.
  *
  * @param contextP The wakaama context.
  */

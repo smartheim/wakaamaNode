@@ -27,8 +27,8 @@ public:
     void add(long mem, const std::string& stacktrace) {
         memAreas.insert(std::make_pair(mem, stacktrace));
     }
-    void remove(long mem) {
-        memAreas.erase(mem);
+    bool remove(long mem) {
+        return memAreas.erase(mem);
     }
 };
 

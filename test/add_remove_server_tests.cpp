@@ -16,7 +16,7 @@
 #include "lwm2m/c_connect.h"
 #include "lwm2m/objects.h"
 #include "lwm2m/debug.h"
-#include "wakaama_server_debug.h"
+#include "test_debug.h"
 #include "lwm2m/network.h"
 #include "../src/internal.h"
 #include "with_lwip/lwip_tap_helper.h"

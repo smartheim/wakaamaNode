@@ -11,7 +11,7 @@
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
  */
-#include "wakaama_server_debug.h"
+#include "test_debug.h"
 #include "lwm2m/c_connect.h"
 #include "../src/wakaama/internals.h"
 #include "lwm2m/debug.h"

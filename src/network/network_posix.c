@@ -256,8 +256,8 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
 
     errno=0;
     ssize_t r = recvfrom(connection->sock->data.fd, buf, len, MSG_DONTWAIT, (struct sockaddr *)&addr, &addrLen);
-    connection_log_io(connection, (int)r, false);
     if (r>=0) {
+        connection_log_io(connection, (int)r, false);
         epoll_ctl(connection->network->epfd, EPOLL_CTL_MOD, connection->sock->data.fd, connection->sock);
         assert (errno==0);
         return (int)r;

@@ -43,3 +43,5 @@ buildtest/
 generate_cpp_objects_from_registry/out
 generate_cpp_objects_from_registry/build
 generate_cpp_objects_from_registry/.gradle
+
+examples/nodemcu_with_led/src/wifi_credentials.h

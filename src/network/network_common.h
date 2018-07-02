@@ -64,7 +64,7 @@ typedef struct _connection_t
     network_t* network;
     uint16_t shortServerID;  ///< The lwm2m short server id. Is always 0 on a lwm2m server.
     addr_t addr;             ///< The IP address/port of this connection
-    sock_t* sock;             ///< Connection socket reference
+    sock_t* sock;            ///< Connection socket reference
     #ifdef LWM2M_WITH_DTLS
     mbedtls_ssl_context ssl; ///< Connection ssl context
     mbedtls_ssl_config conf; ///< Connection ssl configuration
@@ -139,7 +139,7 @@ bool ip_equal(addr_t a, addr_t b);
 
 #ifdef LWM2M_NETWORK_LOGGING
 void connection_log_io(connection_t* conn, int length, bool sending);
-#define network_log_info(...) fprintf(stdout, __VA_ARGS__)
+#define network_log_info(...) fprintf(stderr, __VA_ARGS__)
 #define network_log_error(...) fprintf(stderr, __VA_ARGS__)
 #else
 #define connection_log_io(...) {}

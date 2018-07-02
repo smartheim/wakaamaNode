@@ -320,20 +320,31 @@ void internal_network_read(lwm2m_context_t* contextP, void *dest, size_t len, co
             int ret;
             if (network->type==NET_SERVER_PROCESS &&
                     r==MBEDTLS_ERR_SSL_CLIENT_RECONNECT){
-                ret=mbedtls_ssl_handshake(&connection->ssl);
+                if( ( ret = mbedtls_ssl_handshake(&connection->ssl) ) != 0 ){
+                    network_log_error("mbedtls_ssl_handshake returned %d\r\n", ret);
+                }
                 return;
             }
-            if( ( ret = mbedtls_ssl_session_reset(&connection->ssl) ) != 0 ){
-                network_log_error("mbedtls_ssl_session_reset returned %d\r\n", ret);
-            }
-            if (r==MBEDTLS_ERR_SSL_BAD_INPUT_DATA){
-                network_log_error("MBEDTLS_ERR_SSL_BAD_INPUT_DATA!\n");
-            }else
-            if (r==MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED){
-                network_log_info("MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED!\n");
-            }else
+
+            switch(r) {
+                case MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED:
+                    network_log_info("MBEDTLS_ERR_SSL_HELLO_VERIFY_REQUIRED!\n");
+                    if( ( ret = mbedtls_ssl_session_reset(&connection->ssl) ) != 0 ){
+                        network_log_error("mbedtls_ssl_session_reset returned %d\r\n", ret);
+                    }
+                    #ifdef LWM2M_SERVER_MODE
+                    if( network->type==NET_SERVER_PROCESS &&
+                            ( ret = mbedtls_ssl_set_client_transport_id(&connection->ssl,(void*)&connection->addr,sizeof(addr_t) ) ) != 0 ){
+                        network_log_error("mbedtls_ssl_config_defaults returned %d\r\n", ret);
+                    }
+                    #endif
+                    break;
+            case MBEDTLS_ERR_SSL_BAD_INPUT_DATA:
+                assert(1==0);
+            default:
                 network_log_error("(ssl) receiving failed: %0x!\r\n", (int)-r);
-            lwm2m_close_connection (connection,network);
+                internal_close_connection_ssl(network, connection);
+            }
             return;
         }
     } else {

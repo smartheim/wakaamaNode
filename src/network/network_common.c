@@ -299,7 +299,7 @@ void lwm2m_network_close(lwm2m_context_t * contextP) {
 
     network_t* network = (network_t*)contextP->userData;
 
-    // Close connections
+    // Close all connections that are not already closed by lwm2m_close()
     if ( network->connection_list) {
         connection_t * t = network->connection_list;
         while (t) {

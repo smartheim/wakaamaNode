@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/time.h>
+#include <assert.h>
 
 #include <iomanip>
 #include <sstream>
@@ -152,7 +153,10 @@ void* lwm2m_malloc(size_t s)
 
 void lwm2m_free(void * p)
 {
-    memoryObserver.remove((long)p);
+    if (!p) return;
+    if (!memoryObserver.remove((long)p)) {
+        assert(1==0);
+    }
     free(p);
 }
 

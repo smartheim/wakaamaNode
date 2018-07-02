@@ -12,6 +12,8 @@
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
 
+#include "wifi_credentials.h"
+
 #include "lwm2m/connect.h"
 #include "lwm2m/network.h"
 #include "lwm2m/objects.h"
@@ -64,7 +66,7 @@ void setup() {
     pinMode(LED_BUILTIN, OUTPUT);
 
     // Wait for network to connect
-    WiFi.begin("network-name", "pass-to-network");
+    WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
         delay(500);
     }
