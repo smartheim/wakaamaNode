@@ -2,26 +2,48 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
     
+        
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
+    <url>
+     <loc>https://Openhab-Nodes.github.io/wakaamaNode//testing/</loc>
+     <lastmod>2018-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://Openhab-Nodes.github.io/wakaamaNode//legal_notice/</loc>
+     <lastmod>2018-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://Openhab-Nodes.github.io/wakaamaNode//privacy_policy/</loc>
+     <lastmod>2018-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
     
 
     
+        
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//quickstart/getting-started/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
+        
     
 
     
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//api/connection-api/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -31,31 +53,31 @@
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//api/about/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//api/objects-registry/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//api/objects-custom/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//api/objects-custom-cpp-example/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//api/objects-custom-c-example/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -65,37 +87,55 @@
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/custom-platform/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/custom-network/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/ota/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/deep-sleep/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/own-mainloop/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/thread-safety/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://Openhab-Nodes.github.io/wakaamaNode//advanced-usage/memory/</loc>
+     <lastmod>2018-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://Openhab-Nodes.github.io/wakaamaNode//others/limitations-and-known-issues/</loc>
+     <lastmod>2018-07-04</lastmod>
+     <changefreq>daily</changefreq>
+    </url>
+        
+    <url>
+     <loc>https://Openhab-Nodes.github.io/wakaamaNode//others/troubleshooting/</loc>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         
@@ -105,27 +145,7 @@
         
     <url>
      <loc>https://Openhab-Nodes.github.io/wakaamaNode//examples/</loc>
-     <lastmod>2018-06-30</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    
-
-    
-        
-    <url>
-     <loc>https://Openhab-Nodes.github.io/wakaamaNode//others/limitations-and-known-issues/</loc>
-     <lastmod>2018-06-30</lastmod>
-     <changefreq>daily</changefreq>
-    </url>
-        
-    
-
-    
-        
-    <url>
-     <loc>https://Openhab-Nodes.github.io/wakaamaNode//others/troubleshooting/</loc>
-     <lastmod>2018-06-30</lastmod>
+     <lastmod>2018-07-04</lastmod>
      <changefreq>daily</changefreq>
     </url>
         

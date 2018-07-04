@@ -197,21 +197,37 @@
       
         
 
-<nav class="md-tabs" data-md-component="tabs">
+  
+
+<nav class="md-tabs md-tabs--active" data-md-component="tabs">
   <div class="md-tabs__inner md-grid">
     <ul class="md-tabs__list">
       
         
-  <li class="md-tabs__item">
-    
-      <a href="../.." title="Welcome" class="md-tabs__link md-tabs__link--active">
-        Welcome
-      </a>
-    
-  </li>
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="../.." title="Home" class="md-tabs__link">
+          Home
+        </a>
+      
+    </li>
+  
 
       
         
+  
+  
+    <li class="md-tabs__item">
+      
+        <a href="./" title="Quickstart/Download" class="md-tabs__link md-tabs__link--active">
+          Quickstart/Download
+        </a>
+      
+    </li>
+  
+
       
         
   
@@ -259,32 +275,6 @@
       
         <a href="../../examples/" title="Examples" class="md-tabs__link">
           Examples
-        </a>
-      
-    </li>
-  
-
-      
-        
-  
-  
-    <li class="md-tabs__item">
-      
-        <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-tabs__link">
-          Limitations
-        </a>
-      
-    </li>
-  
-
-      
-        
-  
-  
-    <li class="md-tabs__item">
-      
-        <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-tabs__link">
-          Troubleshooting
         </a>
       
     </li>
@@ -341,16 +331,97 @@
       
 
 
+  <li class="md-nav__item md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-1" type="checkbox" id="nav-1">
+    
+    <label class="md-nav__link" for="nav-1">
+      Home
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-1">
+        Home
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
+
+
   <li class="md-nav__item">
-    <a href="../.." title="Welcome" class="md-nav__link">
-      Welcome
+    <a href="../.." title="Lightweight M2M library" class="md-nav__link">
+      Lightweight M2M library
     </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../testing/" title="Testing" class="md-nav__link">
+      Testing
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../legal_notice/" title="Legal notice" class="md-nav__link">
+      Legal notice
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../privacy_policy/" title="Privacy policy" class="md-nav__link">
+      Privacy policy
+    </a>
+  </li>
+
+        
+      </ul>
+    </nav>
   </li>
 
     
       
       
       
+
+  
+
+
+  <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+    
+      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-2" type="checkbox" id="nav-2" checked>
+    
+    <label class="md-nav__link" for="nav-2">
+      Quickstart/Download
+    </label>
+    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
+      <label class="md-nav__title" for="nav-2">
+        Quickstart/Download
+      </label>
+      <ul class="md-nav__list" data-md-scrollfix>
+        
+        
+          
+          
+          
 
   
 
@@ -381,18 +452,12 @@
     Installing WakamaNode for PlatformIO development
   </a>
   
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cmake" title="CMake" class="md-nav__link">
-    CMake
-  </a>
-  
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#use-cmake-build-system" title="Use CMake build system" class="md-nav__link">
+    Use CMake build system
+  </a>
   
 </li>
       
@@ -400,6 +465,54 @@
   <a href="#bare-minimum-sketch" title="Bare minimum sketch" class="md-nav__link">
     Bare minimum sketch
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#headers-and-long-living-objects" title="Headers and long living objects" class="md-nav__link">
+    Headers and long living objects
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#device-infomation" title="Device infomation" class="md-nav__link">
+    Device infomation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-your-lwm2m-objects" title="Configure your lwm2m objects" class="md-nav__link">
+    Configure your lwm2m objects
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-lwm2m-servers" title="Add lwm2m server(s)" class="md-nav__link">
+    Add lwm2m server(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#main-event-loop" title="Main event loop" class="md-nav__link">
+    Main event loop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-resources-and-tell-the-server" title="Change resources and tell the server" class="md-nav__link">
+    Change resources and tell the server
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -431,6 +544,11 @@
   
 </nav>
     
+  </li>
+
+        
+      </ul>
+    </nav>
   </li>
 
     
@@ -645,6 +763,42 @@
   </li>
 
         
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../advanced-usage/memory/" title="Memory" class="md-nav__link">
+      Memory
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../others/limitations-and-known-issues/" title="Limitations" class="md-nav__link">
+      Limitations
+    </a>
+  </li>
+
+        
+          
+          
+          
+
+
+  <li class="md-nav__item">
+    <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-nav__link">
+      Troubleshooting
+    </a>
+  </li>
+
+        
       </ul>
     </nav>
   </li>
@@ -686,78 +840,6 @@
   </li>
 
     
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-7" type="checkbox" id="nav-7">
-    
-    <label class="md-nav__link" for="nav-7">
-      Limitations
-    </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-7">
-        Limitations
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../others/limitations-and-known-issues/" title="Limitations and known issues" class="md-nav__link">
-      Limitations and known issues
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
-      
-      
-      
-
-
-  <li class="md-nav__item md-nav__item--nested">
-    
-      <input class="md-toggle md-nav__toggle" data-md-toggle="nav-8" type="checkbox" id="nav-8">
-    
-    <label class="md-nav__link" for="nav-8">
-      Troubleshooting
-    </label>
-    <nav class="md-nav" data-md-component="collapsible" data-md-level="1">
-      <label class="md-nav__title" for="nav-8">
-        Troubleshooting
-      </label>
-      <ul class="md-nav__list" data-md-scrollfix>
-        
-        
-          
-          
-          
-
-
-  <li class="md-nav__item">
-    <a href="../../others/troubleshooting/" title="Troubleshooting" class="md-nav__link">
-      Troubleshooting
-    </a>
-  </li>
-
-        
-      </ul>
-    </nav>
-  </li>
-
-    
   </ul>
 </nav>
                   </div>
@@ -781,18 +863,12 @@
     Installing WakamaNode for PlatformIO development
   </a>
   
-    <nav class="md-nav">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cmake" title="CMake" class="md-nav__link">
-    CMake
-  </a>
-  
 </li>
-        
-      </ul>
-    </nav>
+      
+        <li class="md-nav__item">
+  <a href="#use-cmake-build-system" title="Use CMake build system" class="md-nav__link">
+    Use CMake build system
+  </a>
   
 </li>
       
@@ -800,6 +876,54 @@
   <a href="#bare-minimum-sketch" title="Bare minimum sketch" class="md-nav__link">
     Bare minimum sketch
   </a>
+  
+    <nav class="md-nav">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#headers-and-long-living-objects" title="Headers and long living objects" class="md-nav__link">
+    Headers and long living objects
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#device-infomation" title="Device infomation" class="md-nav__link">
+    Device infomation
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configure-your-lwm2m-objects" title="Configure your lwm2m objects" class="md-nav__link">
+    Configure your lwm2m objects
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#add-lwm2m-servers" title="Add lwm2m server(s)" class="md-nav__link">
+    Add lwm2m server(s)
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#main-event-loop" title="Main event loop" class="md-nav__link">
+    Main event loop
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#change-resources-and-tell-the-server" title="Change resources and tell the server" class="md-nav__link">
+    Change resources and tell the server
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -844,10 +968,10 @@
                 
                   <h1>Getting started</h1>
                 
-                <p>This <em>Getting Started</em> guide assumes you have an ESP8266 board with an user-configurable LED, like a NodeMCU DevKit or a Linux/Windows system.</p>
-<h2 id="installing-wakamanode-for-platformio-development">Installing WakamaNode for <a href="http://platformio.org">PlatformIO</a> development<a class="headerlink" href="#installing-wakamanode-for-platformio-development" title="Permanent link">&para;</a></h2>
-<p>There is a YouTube video with instructions:</p>
-<p><a href="https://www.youtube.com/watch?v=bH3KfFfYUvg"><img src="../../assets/youtube.png" style="width:20px">  How to install WakamaNode library in Visual Studio Code for PlatformIO</a></p>
+                <p>Periodic synchronisation and checking tests with newest platformio code may cause tests in the master branch to fail, please use a tagged release of the library in this case.
+If the tests do not fail, it is safe to assume that the library works as expected. </p>
+<p>Current status: <a href="https://travis-ci.org/Openhab-Nodes/wakaamaNode"><img alt="Build Status" src="https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master" /></a></p>
+<h2 id="installing-wakamanode-for-platformio-development">Installing WakamaNode for <a href="http://platformio.org">PlatformIO</a> development</h2>
 <p>In a terminal, run <code class="codehilite">platformio lib install WakamaNode</code>.</p>
 <p>Add this in your <strong>platformio.ini</strong> for the development branch:</p>
 <div class="codehilite"><pre><span></span>lib_deps = git+https://github.com/Openhab-Nodes/wakaamaNode.git#master
@@ -860,23 +984,35 @@
 <p>Dependencies are installed automatically.</p>
 <p>Some build flags can to be provided to enable certain platform codes:</p>
 <ul>
-<li>Network stack: Compile with <em>POSIX_NETWORK</em> for posix network sockets or with <em>LWIP</em> for the lwIP stack support. Windows and Unix/Linux builds automatically pick the posix/bsd socket API if <em>LWIP</em> is not set.</li>
-<li>Platform (memory, time): Compile with <em>ESP8266</em> for ESP8266 SDK support, <em>POSIX</em> for posix/windows system functions, <em>FREERTOS</em> for freeRTOS support. Windows and Unix/Linux builds automatically pick the posix/windows platform code.</li>
+<li>Network stack: Compile with <em>POSIX_NETWORK</em> for posix network sockets or with <em>LWIP</em> for the lwIP stack support.
+  Windows and Unix/Linux builds automatically pick the posix/bsd socket API if <em>LWIP</em> is not set.</li>
+<li>Platform (memory, time): Compile with <em>ESP8266</em> for ESP8266 SDK support, <em>POSIX</em> for posix/windows system functions, <em>FREERTOS</em> for freeRTOS support.
+  Windows and Unix/Linux builds automatically pick the posix/windows platform code.</li>
 </ul>
-<h3 id="cmake">CMake<a class="headerlink" href="#cmake" title="Permanent link">&para;</a></h3>
-<p>If you target an x86 system, you may use the cmake buildsystem instead.
-Just include the <code class="codehilite"><span class="na">.cmake</span></code> file of the src directory like in the following example:</p>
-<div class="codehilite"><pre><span></span><span class="nb">include</span><span class="p">(</span><span class="o">${</span><span class="nv">CMAKE_CURRENT_LIST_DIR</span><span class="o">}</span><span class="s">/lib/wakaamaNode/src/wakaama_simple_client.cmake</span><span class="p">)</span>
+<h2 id="use-cmake-build-system">Use CMake build system</h2>
+<p>If you target an x86 system, you may use the cmake buildsystem instead.</p>
+<ul>
+<li>Download the library <a href="https://github.com/Openhab-Nodes/wakaamaNode/archive/master.zip">https://github.com/Openhab-Nodes/wakaamaNode/archive/master.zip</a></li>
+<li>Extract it to <code class="codehilite">wakaamaNode</code>.</li>
+<li>Include the <code class="codehilite">wakaamaNode/src/src.cmake</code> file like in the following example:</li>
+</ul>
+<div class="codehilite"><pre><span></span><span class="nb">project</span><span class="p">(</span><span class="s">YOUR_PROJECT</span><span class="p">)</span>
+<span class="nb">include</span><span class="p">(</span><span class="o">${</span><span class="nv">CMAKE_CURRENT_LIST_DIR</span><span class="o">}</span><span class="s">/wakaamaNode/src/src.cmake</span><span class="p">)</span>
 
-<span class="nb">add_executable</span><span class="p">(</span><span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="o">${</span><span class="nv">YOUR_FILES</span><span class="o">}</span> <span class="o">${</span><span class="nv">WAKAAMA_SIMPLE_CLIENT_SOURCES</span><span class="o">}</span><span class="p">)</span>
+<span class="nb">add_executable</span><span class="p">(</span><span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="o">${</span><span class="nv">YOUR_FILES</span><span class="o">}</span> <span class="o">${</span><span class="nv">WAKAAMA_NODE_DIR_SOURCES</span><span class="o">}</span><span class="p">)</span>
+
 <span class="c"># We need C++11 and C11 support</span>
 <span class="nb">target_compile_features</span><span class="p">(</span><span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="s">PRIVATE</span> <span class="s">cxx_range_for</span><span class="p">)</span>
 <span class="nb">set_property</span><span class="p">(</span><span class="s">TARGET</span> <span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="s">PROPERTY</span> <span class="s">C_STANDARD</span> <span class="s">11</span><span class="p">)</span>
 
-<span class="nb">target_include_directories</span><span class="p">(</span><span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="s">PRIVATE</span> <span class="s">{WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS}</span><span class="p">)</span>
+<span class="c"># Include directories</span>
+<span class="nb">target_include_directories</span><span class="p">(</span><span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="s">PRIVATE</span> <span class="s">{WAKAAMA_NODE_DIR_INCLUDE_DIRS}</span><span class="p">)</span>
+
+<span class="c"># Some definitions</span>
+<span class="nb">target_compile_definitions</span><span class="p">(</span><span class="o">${</span><span class="nv">PROJECT_NAME</span><span class="o">}</span> <span class="s">PUBLIC</span> <span class="o">${</span><span class="nv">WAKAAMA_DEFINITIONS</span><span class="o">}</span><span class="p">)</span>
 </pre></div>
 
-<h2 id="bare-minimum-sketch">Bare minimum sketch<a class="headerlink" href="#bare-minimum-sketch" title="Permanent link">&para;</a></h2>
+<h2 id="bare-minimum-sketch">Bare minimum sketch</h2>
 <p>The following example shows you some key aspects of the library. In particular:</p>
 <ul>
 <li>How to connect to a lwm2m server, if enabled with a preshared key DTLS connection. (It is assumed that you are network connected already.)</li>
@@ -885,8 +1021,9 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 <li>How to react to an object write via the <code class="codehilite">verifyWrite</code> function.</li>
 <li>How to update an object instance resource via the <code class="codehilite">lights.resChanged</code> call.</li>
 </ul>
-<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;new&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
+<h3 id="headers-and-long-living-objects">Headers and long living objects</h3>
+<p>Include required headers and define your lwm2m objects, instances and the lwm2m client context:</p>
+<div class="codehilite"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
 <span class="cp">#include</span> <span class="cpf">&lt;Arduino.h&gt;</span><span class="cp"></span>
 
 <span class="cp">#include</span> <span class="cpf">&quot;lwm2m/connect.h&quot;</span><span class="cp"></span>
@@ -903,10 +1040,11 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 <span class="c1">// If this context object goes out of scope, you will be</span>
 <span class="c1">// disconnected from all connected servers automatically.</span>
 <span class="n">LwM2MConnect</span> <span class="nf">context</span><span class="p">(</span><span class="s">&quot;testClient&quot;</span><span class="p">);</span>
+</pre></div>
 
-<span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
-    <span class="n">std</span><span class="o">::</span><span class="n">set_new_handler</span><span class="p">([](){</span><span class="n">ESP</span><span class="p">.</span><span class="n">restart</span><span class="p">();});</span> <span class="c1">// Reboot on heap memory outage</span>
-
+<h3 id="device-infomation">Device infomation</h3>
+<p>Tell the lwm2m client context about your device:</p>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">setupDeviceInfo</span><span class="p">()</span> <span class="p">{</span>
     <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">manufacturer</span> <span class="o">=</span> <span class="s">&quot;test manufacturer&quot;</span><span class="p">;</span>
     <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">model_name</span> <span class="o">=</span> <span class="s">&quot;test model&quot;</span><span class="p">;</span>
     <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">device_type</span> <span class="o">=</span> <span class="s">&quot;sensor&quot;</span><span class="p">;</span>
@@ -915,6 +1053,13 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
     <span class="c1">// if LWM2M_DEV_INFO_TIME is enabled</span>
     <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">time_offset</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
     <span class="n">context</span><span class="p">.</span><span class="n">deviceInstance</span><span class="p">.</span><span class="n">timezone</span> <span class="o">=</span> <span class="s">&quot;+05:00&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+<h3 id="configure-your-lwm2m-objects">Configure your lwm2m objects</h3>
+<p>Configure your lwm2m objects. In this case, we want a lwm2m light object (id: 3311)
+and one instance. When a write happens on the instance, set a LED on/off:</p>
+<div class="codehilite"><pre><span></span><span class="kr">inline</span> <span class="kt">void</span> <span class="nf">configureLwm2mObjects</span><span class="p">()</span> <span class="p">{</span>
 
     <span class="c1">// Overwrite the verify function and &quot;abuse&quot; it as value changed event.</span>
     <span class="n">lights</span><span class="p">.</span><span class="n">verifyWrite</span> <span class="o">=</span> <span class="p">[](</span><span class="n">id3311</span><span class="o">::</span><span class="n">instance</span><span class="o">*</span> <span class="n">i</span><span class="p">,</span> <span class="kt">uint16_t</span> <span class="n">res_id</span><span class="p">)</span> <span class="p">{</span>
@@ -933,13 +1078,21 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 
     <span class="c1">// Initialize the LED_BUILTIN pin as an output</span>
     <span class="n">pinMode</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">OUTPUT</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
 
-    <span class="c1">// Wait for network to connect</span>
+<h3 id="add-lwm2m-servers">Add lwm2m server(s)</h3>
+<p>Add lwm2m server and configure DTLS (if enabled):</p>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">setup</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">setupDeviceInfo</span><span class="p">();</span>
+    <span class="n">configureLwm2mObjects</span><span class="p">();</span>
+
+    <span class="n">connectToYourNetwork</span><span class="p">();</span>
 
     <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">context</span><span class="p">.</span><span class="n">socket_count</span><span class="p">())</span>
         <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Failed to open socket</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
 
-    <span class="c1">// Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of</span>
+    <span class="c1">// Add a lwm2m server with unique id 123, lifetime of 100s, no storing of</span>
     <span class="c1">// unsend messages. The host url is either coap:// or coaps://.</span>
     <span class="n">context</span><span class="p">.</span><span class="n">add_server</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;coap://192.168.1.18&quot;</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
 
@@ -948,15 +1101,13 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
     <span class="n">context</span><span class="p">.</span><span class="n">use_dtls_psk</span><span class="p">(</span><span class="mi">123</span><span class="p">,</span> <span class="s">&quot;publicid&quot;</span><span class="p">,</span> <span class="s">&quot;PSK&quot;</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="s">&quot;PSK&quot;</span><span class="p">));</span>
     <span class="cp">#endif</span>
 <span class="p">}</span>
+</pre></div>
 
-<span class="c1">// Toggle the led by a button press and inform the lwm2m server about the new state</span>
-<span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
-    <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
-    <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
-    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span> <span class="p">{</span>
+<h3 id="main-event-loop">Main event loop</h3>
+<p>Your main event loop need to call <code class="codehilite">context.process</code>. Also call <code class="codehilite">watch_and_reconnect</code> if you
+want to automatically reconnect on a lost connection. On Posix you can call <code class="codehilite">block_wait</code> to
+make the process sleep until udp activity or the next due time:</p>
+<div class="codehilite"><pre><span></span><span class="kt">void</span> <span class="nf">loop</span><span class="p">()</span> <span class="p">{</span>
     <span class="k">struct</span> <span class="n">timeval</span> <span class="n">time_to_next_call</span><span class="p">{</span><span class="mi">20</span><span class="p">,</span><span class="mi">0</span><span class="p">};</span>
 
     <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">context</span><span class="p">.</span><span class="n">process</span><span class="p">(</span><span class="o">&amp;</span><span class="n">time_to_next_call</span><span class="p">);</span>
@@ -977,12 +1128,27 @@ Just include the <code class="codehilite"><span class="na">.cmake</span></code> 
 <span class="p">}</span>
 </pre></div>
 
-<h2 id="configure-features-with-wakaama_configh">Configure features with wakaama_config.h<a class="headerlink" href="#configure-features-with-wakaama_configh" title="Permanent link">&para;</a></h2>
+<h3 id="change-resources-and-tell-the-server">Change resources and tell the server</h3>
+<p>Change resources on your object instances, but don't forget to call <code class="codehilite">resChanged</code>:
+<div class="codehilite"><pre><span></span><span class="c1">// Toggle the led by a button press and inform the lwm2m server about the new state</span>
+<span class="kt">void</span> <span class="nf">push_button_pressed</span><span class="p">(</span><span class="kt">bool</span> <span class="n">newState</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span> <span class="o">=</span> <span class="n">newState</span><span class="p">;</span>
+    <span class="n">digitalWrite</span><span class="p">(</span><span class="n">LED_BUILTIN</span><span class="p">,</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">OnOff</span><span class="p">);</span>
+    <span class="n">lights</span><span class="p">.</span><span class="n">resChanged</span><span class="p">(</span><span class="n">CTX</span><span class="p">(</span><span class="n">context</span><span class="p">),</span> <span class="n">ledsInstance</span><span class="p">.</span><span class="n">id</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint16_t</span><span class="p">)</span><span class="n">id3311</span><span class="o">::</span><span class="n">RESID</span><span class="o">::</span><span class="n">OnOff</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div></p>
+<h2 id="configure-features-with-wakaama_configh">Configure features with wakaama_config.h</h2>
 <p>Copy the
 <a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/examples/nodemcu_with_led_object/src/wakaama_config.h"><img src="../../assets/github.png" style="width:20px"> examples/nodemcu_with_led_object/src/wakaama_config.h</a>
 file to your project or create a <code class="codehilite">wakaama_config.h</code> file in your project source directory with the following
 content:</p>
-<div class="codehilite"><pre><span></span><span class="c1">// Enables the wifi object where you may provide information about the wifi strength, connected ssid etc.</span>
+<div class="codehilite"><pre><span></span><span class="c1">// Put the library in client mode (you basically always need this)</span>
+<span class="cp">#define LWM2M_CLIENT_MODE</span>
+
+<span class="c1">// Enable json support</span>
+<span class="cp">#define LWM2M_SUPPORT_JSON</span>
+
+<span class="c1">// Enables the wifi object where you may provide information about the wifi strength, connected ssid etc.</span>
 <span class="cp">#define LWM2M_DEV_INFO_WIFI_METRICS</span>
 
 <span class="c1">// Allows to perform a reboot of the device. Implement lwm2m_reboot() for this to work.</span>
@@ -1022,13 +1188,10 @@ content:</p>
 </pre></div>
 
 <p>Edit the file to your needs, by commenting out unwanted features.</p>
-<h2 id="demoexample">Demo/Example<a class="headerlink" href="#demoexample" title="Permanent link">&para;</a></h2>
-<p>An example for the ESP8266 and for linux/windows is located in
-<a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/examples"><img src="../../assets/github.png" style="width:20px"> src/examples</a>.</p>
-<ul>
-<li>Execute <code class="codehilite">pio run -e esp01</code> or <code class="codehilite">pio run -e nodemcu</code> to compile an example with a predefined lwm2m object (the light control object) to switch the built-in led. Use <code class="codehilite">pio run -e esp01 -t upload</code> to upload the example.</li>
-<li>Execute <code class="codehilite">pio run -e native</code> to compile a linux/windows compatible example for switching on/off the current monitor screen. The firmware provides a lwm2m object (res id 1024) with a boolean state ressource at ID 0 for switching the screen on/off. At ID 1 there a read only string ressource which states the host name and at ID 2 there is a read only "name" string ressource.</li>
-</ul>
+<h2 id="demoexample">Demo/Example</h2>
+<p>See examples in
+<a href="https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/examples"><img src="../../assets/github.png" style="width:20px"> src/examples</a>.
+The examples including a step-by-step how-to are explained in <a href="../../examples/">Examples</a>.</p>
                 
                   
                 
@@ -1061,66 +1224,22 @@ content:</p>
       
         
 <footer class="md-footer">
-  
-    <div class="md-footer-nav">
-      <nav class="md-footer-nav__inner md-grid">
-        
-          <a href="../.." title="Welcome" class="md-flex md-footer-nav__link md-footer-nav__link--prev" rel="prev">
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-back md-footer-nav__button"></i>
-            </div>
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Previous
-                </span>
-                Welcome
-              </span>
-            </div>
-          </a>
-        
-        
-          <a href="../../api/connection-api/" title="Connection API" class="md-flex md-footer-nav__link md-footer-nav__link--next" rel="next">
-            <div class="md-flex__cell md-flex__cell--stretch md-footer-nav__title">
-              <span class="md-flex__ellipsis">
-                <span class="md-footer-nav__direction">
-                  Next
-                </span>
-                Connection API
-              </span>
-            </div>
-            <div class="md-flex__cell md-flex__cell--shrink">
-              <i class="md-icon md-icon--arrow-forward md-footer-nav__button"></i>
-            </div>
-          </a>
-        
-      </nav>
-    </div>
-  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-footer-copyright">
         
-        powered by
-        <a href="http://www.mkdocs.org">MkDocs</a>
-        and
-        <a href="https://squidfunk.github.io/mkdocs-material/">
-          Material for MkDocs</a>
-      </div>
-      
+          <span class="md-footer-copyright__highlight">
+            Copyright 2017-2018 © David Gräff.
+          </span>
         
-  <div class="md-footer-social">
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-    
-      <a href="http://openhab-nodes.github.io/wakaamaNode/" class="md-footer-social__link fa fa-cog"></a>
-    
-  </div>
-
-      
+      </div>
+      <div style="float:right">
+      <a href="/legal_notice/">Legal Notice</a>|
+      <a href="/privacy_policy/">Privacy Policy</a>
+      </div>
     </div>
   </div>
-</footer>
+</footer> 
       
     </div>
     
