@@ -2,13 +2,20 @@ site_name: WakaamaNode
 site_description: The WakaamaNode (lwM2M library) documentation.
 site_author: David Gräff
 
+copyright: Copyright 2017-2018 © David Gräff
+
 repo_name: 'Openhab-Nodes/wakaamaNode'
 repo_url: 'https://github.com/Openhab-Nodes/wakaamaNode'
 site_url: 'https://Openhab-Nodes.github.io/wakaamaNode/'
 
 pages:
-  - Welcome: index.md
-  - Getting started: quickstart/getting-started.md
+  - Home:
+    - index.md
+    - testing.md
+    - legal_notice.md
+    - privacy_policy.md
+  - Quickstart/Download:
+    - quickstart/getting-started.md
   - Connection API:
     - Connection API: api/connection-api.md
   - Objects API:
@@ -24,15 +31,16 @@ pages:
     - Deep sleep: advanced-usage/deep-sleep.md
     - Own mainloop: advanced-usage/own-mainloop.md
     - Thread safety: advanced-usage/thread-safety.md
+    - Memory: advanced-usage/memory.md
+    - Limitations: others/limitations-and-known-issues.md
+    - Troubleshooting: others/troubleshooting.md
   - Examples:
     - examples.md
-  - Limitations:
-    - others/limitations-and-known-issues.md
-  - Troubleshooting:
-    - others/troubleshooting.md
+#  - Roadmap: https://github.com/Openhab-Nodes/wakaamaNode/projects
 
 theme:
   name: material
+  custom_dir: docs/theme
   palette:
     primary: red
     accent: red
@@ -41,9 +49,6 @@ theme:
     tabs: true
 
 extra:
-  social:
-    - type: cog
-      link: http://openhab-nodes.github.io/wakaamaNode/
   disqus: 'https-openhab-nodes-github-io-wakaamanode'
 
 markdown_extensions:
@@ -51,7 +56,7 @@ markdown_extensions:
   - footnotes
   - codehilite
   - admonition
-  - toc(permalink=true)
+  - toc(permalink=false)
   - pymdownx.arithmatex
   - pymdownx.betterem(smart_enable=all)
   - pymdownx.caret

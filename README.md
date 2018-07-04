@@ -1,4 +1,4 @@
-# WakaamaNode [![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode)
+# WakaamaNode [![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode) [![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
 
 This is a Lightweight M2M library meant to be used for embedded/constrained devices with a convenient C and C++ API.
 [Get Started](https://openhab-nodes.github.io/wakaamaNode/).

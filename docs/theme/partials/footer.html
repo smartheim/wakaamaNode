@@ -1,0 +1,18 @@
+{% import "partials/language.html" as lang with context %}
+<footer class="md-footer">
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        {% if config.copyright %}
+          <span class="md-footer-copyright__highlight">
+            {{ config.copyright }}.
+          </span>
+        {% endif %}
+      </div>
+      <div style="float:right">
+      <a href="/legal_notice/">Legal Notice</a>|
+      <a href="/privacy_policy/">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+</footer> 

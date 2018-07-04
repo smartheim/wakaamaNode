@@ -1,102 +1,265 @@
-<picture>
-  <source srcset="assets/logo_s.webp" type="image/webp">
-  <source srcset="assets/logo_s.png" type="image/png"> 
-  <img src="assets/logo_s.png" alt="LwM2M logo">
-</picture>
-# WakaamaNode [![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode)
+disqus:
+title: Lightweight M2M library
 
-This is a Lightweight M2M library meant to be used for embedded/constrained devices with a convenient C and C++ API.
+# WakaamaNode [![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode) [![Stability: Active](https://masterminds.github.io/stability/active.svg)](https://masterminds.github.io/stability/active.html)
 
-> Lightweight M2M is a protocol from the Open Mobile Alliance for M2M/IoT device management and communication.
-It is a convention on top of CoAP/UDP, a light and compact protocol with an efficient resource data model.
-It follows a server/client architecture with Request/Response semantics (GET, POST, PUT, DELETE), as well as observable resources.
-Optional DTLS (Datagram TLS) ensures secure communication between LWM2M Servers and LWM2M Clients.
 
-The CoAP/lwM2M data model is explained on the [Object API](https://openhab-nodes.github.io/wakaamaNode/api/about/) page.
+<style>
+.w3-left{float:left!important}
+.w3-container:after,.w3-container:before{content:"";display:table;clear:both}
+.w3-circle{border-radius:50%}
+.w3-container,.w3-panel{padding:0.01em 16px}
+.w3-card{box-shadow:0 1px 5px 0 rgba(0,0,0,0.16),0 1px 10px 0 rgba(0,0,0,0.12);max-width:400px;margin:5px;margin-bottom:15px;position:relative;}
+.w3-card > hr {margin:0;}
+.w3-card > ul {margin-right: .625em;}
+.w3-card-4,.w3-hover-shadow:hover{box-shadow:0 4px 10px 0 rgba(0,0,0,0.2),0 4px 20px 0 rgba(0,0,0,0.19)}
 
-A lot of common and not so common object and resource identifiers are standardised via the [OMA Object & Resource Registry](http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html). For example object [3311](http://www.openmobilealliance.org/tech/profiles/lwm2m/3311.xml) is for light controls, [3312](http://www.openmobilealliance.org/tech/profiles/lwm2m/3312.xml) for power sources such as smart plugs.
+@media only screen and (min-width: 60em) {
+  .md-sidebar--secondary,.md-sidebar--primary {
+    display: none;
+  }
+  .md-content {
+    margin-right: 0;
+    margin-left: 0;
+  }
+}
 
+.card tr:nth-child(even){background-color: #f2f2f2;}
+
+.card tr:hover {background-color: #ddd;}
+
+.bottom-link{border:none;display:inline-block;padding:8px 16px;vertical-align:middle;overflow:hidden;text-decoration:none;color:inherit;background-color:inherit;text-align:center;cursor:pointer;white-space:nowrap;width:100%;padding: .75rem 1.25rem;
+    background-color: rgba(0,0,0,.03);
+    border-top: 1px solid rgba(0,0,0,.125);position:absolute;bottom:0px;}
+.bottom-link:hover{box-shadow:none;color:#000!important;background-color:#ccc!important}
+
+.brands:hover {
+    text-decoration: none;
+}
+.brand-espresiff {
+    background-position: 0 -440px!important;
+    width: 108px;
+}
+.brand-arduino {
+    background-position: 0 -80px!important;
+    width: 60px;
+}
+.brands {
+    background: url(assets/brands.png) no-repeat;
+    height: 40px;
+    display: inline-block;
+    vertical-align: middle;
+}
+details.info {
+    font-size: inherit;
+}
+</style>
+
+This is a high level Lightweight M2M library with a convenient C and C++ API optimized to run on embedded/constrained devices.
+It embeds parts of [Eclipse Wakaama](https://github.com/eclipse/wakaama) for lwm2m protocol details.
+
+??? info "Lightweight M2M is a protocol from the Open Mobile Alliance for M2M/IoT device management and communication"
+    <img style="float:left;margin-right:15px;margin-bottom:15px;" src="assets/stack.png">
+    It is a convention on top of CoAP/UDP, a light and compact protocol with an efficient resource data model.
+    It follows a server/client architecture with Request/Response semantics (GET, POST, PUT, DELETE), as well as observable resources.
+    
+    Optional DTLS (Datagram TLS) ensures secure communication between LWM2M Servers and LWM2M Clients.
+    
+    The CoAP/lwM2M data model is explained on the [Object API](https://openhab-nodes.github.io/wakaamaNode/api/about/) page.
+
+<br>
+<center><img src="assets/wakaamaNode.svg"></center>
+<br>
+<div style="display: flex;flex-wrap: wrap;justify-content: space-around;">
+    <div>
+        <center><big>3 Platform integrations</big></center>
+        <center><small>posix/win32, esp8266-sdk, freertos</small></center>
+    </div>
+    <div>
+        <center><big>Supports 2 Network stacks</big></center>
+        <center><small>posix/win32, lwIP</small></center>
+    </div>
+    <div>
+        <center><big>2 Firmware update integrations</big></center>
+        <center><small>posix/Win32, ESP OTA</small></center>
+    </div>
+</div>
+<br>
+
+
+<div style="display: flex;flex-wrap: wrap;justify-content: space-around;">
+
+<div class="w3-card">
+    <header class="w3-container md-hero md-header-nav__title">
+    Connection API
+    </header>
+    
+    <p class="w3-container">
+    The connection API hides away complexity of different required lwm2m objects (security, server and device).
+    </p>
+    
+    <hr>
+    <ul>
+    <li>Connect with Dtls PSK encryption</li>
+    <li>UDP and UDP Queue mode support</li>
+    <li>Access native socket handlers</li>
+    <li>Full network lifetime control</li>
+    <li>Reconnect API</li>
+    <li>Firmware update object support <a href="/advanced-usage/ota/">👉</a></li>
+    <li>Provide device information and state</li>
+    </ul>
+
+    <br><br>
+    <a href="/api/connection-api/" class="bottom-link">C/C++ Connection/Device/Firmware API</a>
+</div>
+
+<div class="w3-card">
+    <header class="w3-container md-hero md-header-nav__title">
+    Object definition API
+    </header>
+
+    <p class="w3-container">
+    The object definition API provides elegant macros for C and a sophisticated
+    resource efficient class model for C++ to define custom lwm2m objects and resources.<br>
+    </p>
+    
+    <hr>
+    <ul>
+    <li>The same API is used to provide all lwm2m registry objects.</li>
+    <li>Store resource values in object instances or let them be handed over to functions.</li>
+    <li>Read resource values from object instances or let those be acquired from function calls.</li>
+    </ul>
+    
+    <br><br>
+    <a href="/api/objects-custom/" class="bottom-link">C/C++ Custom Object API</a>
+</div>
+
+
+<div class="w3-card">
+    <header class="w3-container md-hero md-header-nav__title">
+    OMA Object & Resource Registry
+    </header>
+
+    <p class="w3-container">
+    Standardised object and resource identifiers via the <a href="http://www.openmobilealliance.org/wp/OMNA/LwM2M/LwM2MRegistry.html">OMA Object & Resource Registry</a>.
+    </p>
+    <hr>
+    
+    <center><small>Examples</small></center>
+    <table class="card">
+
+    <tr class="card"><td>
+    <div class="w3-container" style="padding:5px;">
+    <img src="assets/lamp.png" alt="Lamp" class="w3-left" style="padding-right:15px">
+    <div style="max-height:100px;overflow: hidden;"><a href="http://www.openmobilealliance.org/tech/profiles/lwm2m/3311.xml">Object 3311</a> - Light control<br>
+    This Object is used to control a light source, such as a LED or other light. It allows a light to be turned on or off and &hellip;</div>
+    </div>
+    </td></tr>
+
+    <tr class="card"><td>
+    <div class="w3-container" style="padding:5px;">
+    <img src="assets/plug.png" alt="Plug" class="w3-left" style="padding-right:15px">
+    <div style="max-height:100px;overflow: hidden;"><a href="http://www.openmobilealliance.org/tech/profiles/lwm2m/3312.xml">Object 3312</a> - Power sources
+    <br>
+    It allows a power relay to be turned on or off and its dimmer setting to be control &hellip;</div>
+    </div>
+    </td></tr>
+    
+    <tr class="card"><td>
+    <center>&hellip;</center>
+    </td></tr>
+    
+    </table>
+    
+    <br><br>
+    <a href="/api/objects-registry/" class="bottom-link">C++ API for lwm2m registry objects</a>
+</div>
+
+<div class="w3-card">
+    <header class="w3-container md-hero md-header-nav__title">
+    Stability / Low maintenance
+    </header>
+    
+    <ul>
+    <li>
+    <b>Stable</b>: Object, Connect and internal API fully covered by extensive tests.<br>
+    Plain + dtls connection tests against the <em>embedded wakaama</em> and <em>external leshan</em> lwm2m server.
+    <a href="/testing/">👉 More info</a>
+    </li>
+
+    <li >
+    <b>Trust</b>: The library is following the SemVer versioning schema and guarantees no API breakage.
+    </li>
+
+    <li>
+    <b>Low maintenance</b>: Automatic transformation of newest lwm2m registry objects into c++ classes. Automatic external code sync scripts.<br>
+    </li>
+
+    </ul>
+</div>
+
+<div class="w3-card">
+    <header class="w3-container md-hero md-header-nav__title">
+    Embedded in mind
+    </header>
+    
+    <hr>
+    <ul>
+    <li>Platform/network abstraction<br>
+        <a href="/advanced-usage/custom-platform/">👉 Implement your own</a></li>
+    <li>Main loop based.<br>
+        <a href="/advanced-usage/own-mainloop/">👉 epoll support on Posix/Win32</a></li>
+    <li>Full memory control<br>
+        <a href="/advanced-usage/memory/">👉 Fixed memory allocation support</a><br>
+        <a href="/quickstart/getting-started/#configure-features-with-wakaama_configh">👉 Customize buffers via config file</a></li>
+    <li>Slim mono thread design.<br>
+        <a href="/advanced-usage/thread-safety/">👉 Prepared for multi-thread object instance access.</a></li>
+    </ul>
+</div>
+
+<div class="w3-card">
+    <header class="w3-container md-hero md-header-nav__title">
+    Security
+    </header>
+    
+    <p class="w3-container">
+    Automatic, periodic synchronisation to the <a href="https://github.com/ARMmbed/mbed-os/tree/master/features/mbedtls">latest mbedTLS sources</a>.
+    </p>
+    
+    <hr>
+    <ul>
+    <li>Supports PSK mode with <i>AES_128_CCM_8</i>, <i>AES_128_CBC_SHA256</i></li>
+    <li>Supports Raw Public Key Certificates mode ECDHE_ECDSA with <i>AES_128_CCM_8</i>, <i>AES_128_CBC_SHA256</i></li>
+    <li><del>Supports X.509v3 Certificates mode</del></li>
+    <li>More cipher suits can be enabled in the configuration file</li>
+    </ul>
+    
+    <br><br>
+    
+    <a href="/advanced-usage/custom-network/#dtls" class="bottom-link">Custom network &rarr; DTLS</a>
+</div>
+
+</div>
 
 ## Getting started
 
 Head over to the [Get started](quickstart/getting-started.md) page to dive right into installing and including the library in your project.
 
-## Features
-* **A connection API** (that implements lwm2m objects security, server and device) makes it simple to connect to a lwM2M server.
-* **LwM2M object definition API** for C and C++ and [ready-to-use c++ classes](api/objects-registry.md) for all objects of the OMA Object & Resource Registry.
-* The well-tested [Eclipse Wakaama](https://github.com/eclipse/wakaama) provides the underlying lwM2M protocol implementation.
-     * Always up-to-date/in-sync Wakaama code (using a Travis CI daily cron job).
-* **Secure connections** via optional DTLS and the mbedTLS library
-* **Test coverage** - All API functionallity and library<-->wakaama server communication is covered by tests.
-
-Platform/network:
-
-* 3 Platform integrations (posix/win32, esp8266-sdk, freertos)
-* 2 Network stack integrations (posix/win32, lwIP)
-* 2 Firmware update integrations (posix/Win32, arduino OTA)
-
-Building:
-
-* 2 build toolchains supported: platformio and cmake
-* Connection API and object API compilable with a C-only compiler (OTA support requires a c++ compiler though)
-
-## Target device requirements
-A target device needs **5kb RAM** and **10kb ROM** for the library without DTLS and some user defined objects.
-
-Most of the API can be used in a staticly allocated memory environment.
-Wakaama on the other hand uses dynamic memory allocation for events like server
-connections, message receiving, message resends. 
-
-!!! info
-    You may influence the memory layout by implementing ``lwm2m_malloc``, ``lwm2m_free`` and ``lwm2m_strdup`` accordingly.
-
-The DTLS implementation that is optionally included (mbedTLS) makes use of dynamic memory allocation.
-
-!!! info
-    You may influence the memory layout by implementing ``mbedtls_malloc`` and ``mbedtls_free`` accordingly.
-
-## Periodic synchronisation to the latest Wakaama/mbedTLS sources
-Travis CI runs every day by a travis cron job to synchronize sources listed below back into the library:
-
-* the ``src/wakaama`` directory to the latest code found in the *core* directory of
-https://github.com/eclipse/wakaama.git.
-* the ``src/network/mbedtls`` directory to the latest code found in the *inc/mbedtls/* and *src/* directory of
-https://github.com/ARMmbed/mbed-os/tree/master/features/mbedtls.
-
-This may cause tests in the master branch to fail, please use a tagged release of the library in this case.
-If the tests do not fail, it is safe to assume that the library works as expected. Current status:
-
-[![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode)
-
-## Automated tests
-
-Travis CI is executed on every commit. The following functionality is tested:
-
-* The Object API for C
-  * Reading/Writing of c-strings and opaque memory
-  * Reading/Writing of boolean, int, double.
-  * Executing of function pointers.
-  * WriteVerify method is called correctly
-  * Object discovery works
-* The Object API for C++
-  * Reading/Writing of c-strings and opaque memory
-  * Reading/Writing of boolean, int, double.
-  * Reading/Writing of all types above via indirect reading from a function, writing to a function
-  * WriteVerify method is called correctly
-  * Executable resources: Execute a function pointer
-  * Object discovery works
-* The connect API on Posix
-  * Add/Remove servers
-  * Connect to a server and on the server side: Make sure client objects are discovered
-  * Connect to a server via dtls and on the server side: Make sure client objects are discovered
-* The connect API on LWIP
-  * Building the implementation
-  - **Not tested**: A running example with LWIP. tun/tap is required on travis for this to work.
-* Examples
-  * Build all examples
-  - **Not tested**: If the linux example can connect to a public lwm2m server.
-
 ## License
-This platform code and API wrappers are provided under the MIT license.
+
+This library including the platform code, tests and API wrappers are provided under the MIT license.
 Wakaama is provided under the Eclipse Public License - v2.0.
 
+<center>
+<picture>
+  <source srcset="assets/logo_s.webp" type="image/webp">
+  <source srcset="assets/logo_s.png" type="image/png"> 
+  <img src="assets/logo_s.png" alt="LwM2M logo">
+</picture>
+</center>
+
+<center>
+    <a href="https://platformio.org/" style="font-size:2em;vertical-align:middle;"><img src="assets/platformio-logo.png" style="vertical-align: bottom;"> PlatformIO</a>
+    <div class="brand-espresiff brands"> </div>
+    <div class="brand-arduino brands"> </div>
+</center>

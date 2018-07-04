@@ -1,10 +1,9 @@
-This *Getting Started* guide assumes you have an ESP8266 board with an user-configurable LED, like a NodeMCU DevKit or a Linux/Windows system.
+Periodic synchronisation and checking tests with newest platformio code may cause tests in the master branch to fail, please use a tagged release of the library in this case.
+If the tests do not fail, it is safe to assume that the library works as expected. 
+
+Current status: [![Build Status](https://travis-ci.org/Openhab-Nodes/wakaamaNode.svg?branch=master)](https://travis-ci.org/Openhab-Nodes/wakaamaNode)
 
 ## Installing WakamaNode for [PlatformIO](http://platformio.org) development
-
-There is a YouTube video with instructions:
-
-[<img src="../../assets/youtube.png" style="width:20px">  How to install WakamaNode library in Visual Studio Code for PlatformIO](https://www.youtube.com/watch?v=bH3KfFfYUvg)
 
 In a terminal, run `platformio lib install WakamaNode`.
 
@@ -25,23 +24,34 @@ Dependencies are installed automatically.
 
 Some build flags can to be provided to enable certain platform codes:
 
-* Network stack: Compile with *POSIX_NETWORK* for posix network sockets or with *LWIP* for the lwIP stack support. Windows and Unix/Linux builds automatically pick the posix/bsd socket API if *LWIP* is not set.
-* Platform (memory, time): Compile with *ESP8266* for ESP8266 SDK support, *POSIX* for posix/windows system functions, *FREERTOS* for freeRTOS support. Windows and Unix/Linux builds automatically pick the posix/windows platform code.
+* Network stack: Compile with *POSIX_NETWORK* for posix network sockets or with *LWIP* for the lwIP stack support.
+  Windows and Unix/Linux builds automatically pick the posix/bsd socket API if *LWIP* is not set.
+* Platform (memory, time): Compile with *ESP8266* for ESP8266 SDK support, *POSIX* for posix/windows system functions, *FREERTOS* for freeRTOS support.
+  Windows and Unix/Linux builds automatically pick the posix/windows platform code.
 
 
-### CMake
+## Use CMake build system
 If you target an x86 system, you may use the cmake buildsystem instead.
-Just include the `.cmake` file of the src directory like in the following example:
+
+* Download the library https://github.com/Openhab-Nodes/wakaamaNode/archive/master.zip
+* Extract it to `wakaamaNode`.
+* Include the `wakaamaNode/src/src.cmake` file like in the following example:
 
 ```cmake
-include(${CMAKE_CURRENT_LIST_DIR}/lib/wakaamaNode/src/wakaama_simple_client.cmake)
+project(YOUR_PROJECT)
+include(${CMAKE_CURRENT_LIST_DIR}/wakaamaNode/src/src.cmake)
 
-add_executable(${PROJECT_NAME} ${YOUR_FILES} ${WAKAAMA_SIMPLE_CLIENT_SOURCES})
+add_executable(${PROJECT_NAME} ${YOUR_FILES} ${WAKAAMA_NODE_DIR_SOURCES})
+
 # We need C++11 and C11 support
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_range_for)
 set_property(TARGET ${PROJECT_NAME} PROPERTY C_STANDARD 11)
 
-target_include_directories(${PROJECT_NAME} PRIVATE {WAKAAMA_SIMPLE_CLIENT_INCLUDE_DIRS})
+# Include directories
+target_include_directories(${PROJECT_NAME} PRIVATE {WAKAAMA_NODE_DIR_INCLUDE_DIRS})
+
+# Some definitions
+target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS})
 ```
 
 ## Bare minimum sketch
@@ -54,8 +64,11 @@ The following example shows you some key aspects of the library. In particular:
 * How to react to an object write via the `verifyWrite` function.
 * How to update an object instance resource via the `lights.resChanged` call.
 
+### Headers and long living objects
+
+Include required headers and define your lwm2m objects, instances and the lwm2m client context:
+
 ```cpp
-#include <new>
 #include <time.h>
 #include <Arduino.h>
 
@@ -73,10 +86,14 @@ id3311::instance ledsInstance;
 // If this context object goes out of scope, you will be
 // disconnected from all connected servers automatically.
 LwM2MConnect context("testClient");
+```
 
-void setup() {
-    std::set_new_handler([](){ESP.restart();}); // Reboot on heap memory outage
+### Device infomation
 
+Tell the lwm2m client context about your device:
+
+```cpp
+inline void setupDeviceInfo() {
     context.deviceInstance.manufacturer = "test manufacturer";
     context.deviceInstance.model_name = "test model";
     context.deviceInstance.device_type = "sensor";
@@ -85,6 +102,16 @@ void setup() {
     // if LWM2M_DEV_INFO_TIME is enabled
     context.deviceInstance.time_offset = 5;
     context.deviceInstance.timezone = "+05:00";
+}
+```
+
+### Configure your lwm2m objects
+
+Configure your lwm2m objects. In this case, we want a lwm2m light object (id: 3311)
+and one instance. When a write happens on the instance, set a LED on/off:
+
+```cpp
+inline void configureLwm2mObjects() {
 
     // Overwrite the verify function and "abuse" it as value changed event.
     lights.verifyWrite = [](id3311::instance* i, uint16_t res_id) {
@@ -103,13 +130,24 @@ void setup() {
 
     // Initialize the LED_BUILTIN pin as an output
     pinMode(LED_BUILTIN, OUTPUT);
+}
+```
 
-    // Wait for network to connect
+### Add lwm2m server(s)
 
+Add lwm2m server and configure DTLS (if enabled):
+
+```cpp
+void setup() {
+    setupDeviceInfo();
+    configureLwm2mObjects();
+
+    connectToYourNetwork();
+    
     if (!context.socket_count())
         printf("Failed to open socket\n");
     
-    // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
+    // Add a lwm2m server with unique id 123, lifetime of 100s, no storing of
     // unsend messages. The host url is either coap:// or coaps://.
     context.add_server(123, "coap://192.168.1.18", 100, false);
     
@@ -118,14 +156,15 @@ void setup() {
     context.use_dtls_psk(123, "publicid", "PSK", sizeof("PSK"));
     #endif
 }
+```
 
-// Toggle the led by a button press and inform the lwm2m server about the new state
-void push_button_pressed(bool newState) {
-    ledsInstance.OnOff = newState;
-    digitalWrite(LED_BUILTIN, ledsInstance.OnOff);
-    lights.resChanged(CTX(context), ledsInstance.id, (uint16_t)id3311::RESID::OnOff);
-}
+### Main event loop
 
+Your main event loop need to call `context.process`. Also call `watch_and_reconnect` if you
+want to automatically reconnect on a lost connection. On Posix you can call `block_wait` to
+make the process sleep until udp activity or the next due time:
+
+```cpp
 void loop() {
     struct timeval time_to_next_call{20,0};
 
@@ -148,6 +187,18 @@ void loop() {
 
 ```
 
+### Change resources and tell the server
+
+Change resources on your object instances, but don't forget to call `resChanged`:
+```cpp
+// Toggle the led by a button press and inform the lwm2m server about the new state
+void push_button_pressed(bool newState) {
+    ledsInstance.OnOff = newState;
+    digitalWrite(LED_BUILTIN, ledsInstance.OnOff);
+    lights.resChanged(CTX(context), ledsInstance.id, (uint16_t)id3311::RESID::OnOff);
+}
+```
+
 ## Configure features with wakaama_config.h
 
 Copy the
@@ -156,6 +207,12 @@ file to your project or create a `wakaama_config.h` file in your project source 
 content:
 
 ```cpp
+// Put the library in client mode (you basically always need this)
+#define LWM2M_CLIENT_MODE
+
+// Enable json support
+#define LWM2M_SUPPORT_JSON
+    
 // Enables the wifi object where you may provide information about the wifi strength, connected ssid etc.
 #define LWM2M_DEV_INFO_WIFI_METRICS
 
@@ -198,9 +255,6 @@ content:
 Edit the file to your needs, by commenting out unwanted features.
 
 ## Demo/Example
-An example for the ESP8266 and for linux/windows is located in
+See examples in
 [<img src="../../assets/github.png" style="width:20px"> src/examples](https://github.com/Openhab-Nodes/wakaamaNode/blob/master/src/examples).
-
-* Execute ``pio run -e esp01`` or ``pio run -e nodemcu`` to compile an example with a predefined lwm2m object (the light control object) to switch the built-in led. Use ``pio run -e esp01 -t upload`` to upload the example.
-* Execute ``pio run -e native`` to compile a linux/windows compatible example for switching on/off the current monitor screen. The firmware provides a lwm2m object (res id 1024) with a boolean state ressource at ID 0 for switching the screen on/off. At ID 1 there a read only string ressource which states the host name and at ID 2 there is a read only "name" string ressource.
-
+The examples including a step-by-step how-to are explained in [Examples](/examples/).

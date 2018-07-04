@@ -9,8 +9,8 @@ Include `lwm2m/c_connect.h`.
 
 In your main file declare a variable of type `lwm2m_client_context_t`.
 
-!!! example "Define a client context global variable"
-    `lwm2m_client_context_t context;`
+!!! example "Define a long living client context variable"
+    `#!cpp lwm2m_client_context_t context;`
 
 This type contains the lwm2m context of type `lwm2m_context_t`, that is required for most API calls.
 Usually you do not need to access any of the member fields directly.
@@ -204,7 +204,8 @@ public:
     ~LwM2MConnect();
     
     int process(struct timeval* next_event);
-    int process_blocking();
+    
+    int block_wait(struct timeval next_event);
     
     void watch_and_reconnect(struct timeval* next_event, int reconnectTime);
 
