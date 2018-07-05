@@ -23,9 +23,9 @@ RESULT=0
 
 ./TestsWithPosix | GREP_COLOR='01;32' grep "^\[.*" || RESULT=1
 
-if [ "${USE_LWIP}" == "OFF" ]; then
-    make test || RESULT=1
-fi
+#if [ "$CMAKE_CXX_COMPILER" == "g++-6" ]; then
+#    coveralls --exclude lib --exclude tests --gcov-options '\-lp'
+#fi
 
 rm -rf ${TRAVIS_BUILD_DIR}/buildtest/*
 cd ${TRAVIS_BUILD_DIR}

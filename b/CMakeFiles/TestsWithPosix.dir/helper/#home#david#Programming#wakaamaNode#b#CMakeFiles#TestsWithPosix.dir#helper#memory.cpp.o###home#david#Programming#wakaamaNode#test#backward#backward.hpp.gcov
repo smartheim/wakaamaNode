@@ -1,0 +1,3920 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/backward/backward.hpp
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/helper/memory.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: * backward.hpp
+        -:    3: * Copyright 2013 Google Inc. All Rights Reserved.
+        -:    4: *
+        -:    5: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    6: * of this software and associated documentation files (the "Software"), to deal
+        -:    7: * in the Software without restriction, including without limitation the rights
+        -:    8: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    9: * copies of the Software, and to permit persons to whom the Software is
+        -:   10: * furnished to do so, subject to the following conditions:
+        -:   11: *
+        -:   12: * The above copyright notice and this permission notice shall be included in
+        -:   13: * all copies or substantial portions of the Software.
+        -:   14: *
+        -:   15: * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        -:   16: * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        -:   17: * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        -:   18: * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        -:   19: * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        -:   20: * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        -:   21: * SOFTWARE.
+        -:   22: */
+        -:   23:
+        -:   24:#ifndef H_6B9572DA_A64B_49E6_B234_051480991C89
+        -:   25:#define H_6B9572DA_A64B_49E6_B234_051480991C89
+        -:   26:
+        -:   27:#ifndef __cplusplus
+        -:   28:#	error "It's not going to compile without a C++ compiler..."
+        -:   29:#endif
+        -:   30:
+        -:   31:#if	  defined(BACKWARD_CXX11)
+        -:   32:#elif defined(BACKWARD_CXX98)
+        -:   33:#else
+        -:   34:#	if __cplusplus >= 201103L
+        -:   35:#		define BACKWARD_CXX11
+        -:   36:#		define BACKWARD_ATLEAST_CXX11
+        -:   37:#		define BACKWARD_ATLEAST_CXX98
+        -:   38:#	else
+        -:   39:#		define BACKWARD_CXX98
+        -:   40:#		define BACKWARD_ATLEAST_CXX98
+        -:   41:#	endif
+        -:   42:#endif
+        -:   43:
+        -:   44:// You can define one of the following (or leave it to the auto-detection):
+        -:   45://
+        -:   46:// #define BACKWARD_SYSTEM_LINUX
+        -:   47://	- specialization for linux
+        -:   48://
+        -:   49:// #define BACKWARD_SYSTEM_DARWIN
+        -:   50://	- specialization for Mac OS X 10.5 and later.
+        -:   51://
+        -:   52:// #define BACKWARD_SYSTEM_UNKNOWN
+        -:   53://	- placebo implementation, does nothing.
+        -:   54://
+        -:   55:#if   defined(BACKWARD_SYSTEM_LINUX)
+        -:   56:#elif defined(BACKWARD_SYSTEM_DARWIN)
+        -:   57:#elif defined(BACKWARD_SYSTEM_UNKNOWN)
+        -:   58:#else
+        -:   59:#	if defined(__linux) || defined(__linux__)
+        -:   60:#		define BACKWARD_SYSTEM_LINUX
+        -:   61:#	elif defined(__APPLE__)
+        -:   62:#		define BACKWARD_SYSTEM_DARWIN
+        -:   63:#	else
+        -:   64:#		define BACKWARD_SYSTEM_UNKNOWN
+        -:   65:#	endif
+        -:   66:#endif
+        -:   67:
+        -:   68:#include <algorithm>
+        -:   69:#include <cctype>
+        -:   70:#include <cstdio>
+        -:   71:#include <cstdlib>
+        -:   72:#include <cstring>
+        -:   73:#include <fstream>
+        -:   74:#include <iomanip>
+        -:   75:#include <iostream>
+        -:   76:#include <new>
+        -:   77:#include <sstream>
+        -:   78:#include <streambuf>
+        -:   79:#include <string>
+        -:   80:#include <vector>
+        -:   81:#include <limits>
+        -:   82:
+        -:   83:#if defined(BACKWARD_SYSTEM_LINUX)
+        -:   84:
+        -:   85:// On linux, backtrace can back-trace or "walk" the stack using the following
+        -:   86:// libraries:
+        -:   87://
+        -:   88:// #define BACKWARD_HAS_UNWIND 1
+        -:   89://  - unwind comes from libgcc, but I saw an equivalent inside clang itself.
+        -:   90://  - with unwind, the stacktrace is as accurate as it can possibly be, since
+        -:   91://  this is used by the C++ runtine in gcc/clang for stack unwinding on
+        -:   92://  exception.
+        -:   93://  - normally libgcc is already linked to your program by default.
+        -:   94://
+        -:   95:// #define BACKWARD_HAS_BACKTRACE == 1
+        -:   96://  - backtrace seems to be a little bit more portable than libunwind, but on
+        -:   97://  linux, it uses unwind anyway, but abstract away a tiny information that is
+        -:   98://  sadly really important in order to get perfectly accurate stack traces.
+        -:   99://  - backtrace is part of the (e)glib library.
+        -:  100://
+        -:  101:// The default is:
+        -:  102:// #define BACKWARD_HAS_UNWIND == 1
+        -:  103://
+        -:  104:// Note that only one of the define should be set to 1 at a time.
+        -:  105://
+        -:  106:#	if   BACKWARD_HAS_UNWIND == 1
+        -:  107:#	elif BACKWARD_HAS_BACKTRACE == 1
+        -:  108:#	else
+        -:  109:#		undef  BACKWARD_HAS_UNWIND
+        -:  110:#		define BACKWARD_HAS_UNWIND 1
+        -:  111:#		undef  BACKWARD_HAS_BACKTRACE
+        -:  112:#		define BACKWARD_HAS_BACKTRACE 0
+        -:  113:#	endif
+        -:  114:
+        -:  115:// On linux, backward can extract detailed information about a stack trace
+        -:  116:// using one of the following libraries:
+        -:  117://
+        -:  118:// #define BACKWARD_HAS_DW 1
+        -:  119://  - libdw gives you the most juicy details out of your stack traces:
+        -:  120://    - object filename
+        -:  121://    - function name
+        -:  122://    - source filename
+        -:  123://	  - line and column numbers
+        -:  124://	  - source code snippet (assuming the file is accessible)
+        -:  125://	  - variables name and values (if not optimized out)
+        -:  126://  - You need to link with the lib "dw":
+        -:  127://    - apt-get install libdw-dev
+        -:  128://    - g++/clang++ -ldw ...
+        -:  129://
+        -:  130:// #define BACKWARD_HAS_BFD 1
+        -:  131://  - With libbfd, you get a fair amount of details:
+        -:  132://    - object filename
+        -:  133://    - function name
+        -:  134://    - source filename
+        -:  135://	  - line numbers
+        -:  136://	  - source code snippet (assuming the file is accessible)
+        -:  137://  - You need to link with the lib "bfd":
+        -:  138://    - apt-get install binutils-dev
+        -:  139://    - g++/clang++ -lbfd ...
+        -:  140://
+        -:  141:// #define BACKWARD_HAS_DWARF 1
+        -:  142://  - libdwarf gives you the most juicy details out of your stack traces:
+        -:  143://    - object filename
+        -:  144://    - function name
+        -:  145://    - source filename
+        -:  146://    - line and column numbers
+        -:  147://    - source code snippet (assuming the file is accessible)
+        -:  148://    - variables name and values (if not optimized out)
+        -:  149://  - You need to link with the lib "dwarf":
+        -:  150://    - apt-get install libdwarf-dev
+        -:  151://    - g++/clang++ -ldwarf ...
+        -:  152://
+        -:  153:// #define BACKWARD_HAS_BACKTRACE_SYMBOL 1
+        -:  154://  - backtrace provides minimal details for a stack trace:
+        -:  155://    - object filename
+        -:  156://    - function name
+        -:  157://  - backtrace is part of the (e)glib library.
+        -:  158://
+        -:  159:// The default is:
+        -:  160:// #define BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  161://
+        -:  162:// Note that only one of the define should be set to 1 at a time.
+        -:  163://
+        -:  164:#	if   BACKWARD_HAS_DW == 1
+        -:  165:#	elif BACKWARD_HAS_BFD == 1
+        -:  166:#   elif BACKWARD_HAS_DWARF == 1
+        -:  167:#	elif BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  168:#	else
+        -:  169:#		undef  BACKWARD_HAS_DW
+        -:  170:#		define BACKWARD_HAS_DW 0
+        -:  171:#		undef  BACKWARD_HAS_BFD
+        -:  172:#		define BACKWARD_HAS_BFD 0
+        -:  173:#		undef  BACKWARD_HAS_DWARF
+        -:  174:#		define BACKWARD_HAS_DWARF 0
+        -:  175:#		undef  BACKWARD_HAS_BACKTRACE_SYMBOL
+        -:  176:#		define BACKWARD_HAS_BACKTRACE_SYMBOL 1
+        -:  177:#	endif
+        -:  178:
+        -:  179:#	include <cxxabi.h>
+        -:  180:#	include <fcntl.h>
+        -:  181:#	ifdef __ANDROID__
+        -:  182://		Old Android API levels define _Unwind_Ptr in both link.h and unwind.h
+        -:  183://		Rename the one in link.h as we are not going to be using it
+        -:  184:#		define _Unwind_Ptr _Unwind_Ptr_Custom
+        -:  185:#	include <link.h>
+        -:  186:#		undef _Unwind_Ptr
+        -:  187:#	else
+        -:  188:#	    include <link.h>
+        -:  189:#	endif
+        -:  190:#	include <sys/stat.h>
+        -:  191:#	include <syscall.h>
+        -:  192:#	include <unistd.h>
+        -:  193:#	include <signal.h>
+        -:  194:
+        -:  195:#	if BACKWARD_HAS_BFD == 1
+        -:  196://              NOTE: defining PACKAGE{,_VERSION} is required before including
+        -:  197://                    bfd.h on some platforms, see also:
+        -:  198://                    https://sourceware.org/bugzilla/show_bug.cgi?id=14243
+        -:  199:#               ifndef PACKAGE
+        -:  200:#                       define PACKAGE
+        -:  201:#               endif
+        -:  202:#               ifndef PACKAGE_VERSION
+        -:  203:#                       define PACKAGE_VERSION
+        -:  204:#               endif
+        -:  205:#		include <bfd.h>
+        -:  206:#		ifndef _GNU_SOURCE
+        -:  207:#			define _GNU_SOURCE
+        -:  208:#			include <dlfcn.h>
+        -:  209:#			undef _GNU_SOURCE
+        -:  210:#		else
+        -:  211:#			include <dlfcn.h>
+        -:  212:#		endif
+        -:  213:#	endif
+        -:  214:
+        -:  215:#	if BACKWARD_HAS_DW == 1
+        -:  216:#		include <elfutils/libdw.h>
+        -:  217:#		include <elfutils/libdwfl.h>
+        -:  218:#		include <dwarf.h>
+        -:  219:#	endif
+        -:  220:
+        -:  221:#	if BACKWARD_HAS_DWARF == 1
+        -:  222:#		include <libelf.h>
+        -:  223:#		include <dwarf.h>
+        -:  224:#		include <libdwarf.h>
+        -:  225:#		include <map>
+        -:  226:#		include <algorithm>
+        -:  227:#		ifndef _GNU_SOURCE
+        -:  228:#			define _GNU_SOURCE
+        -:  229:#			include <dlfcn.h>
+        -:  230:#			undef _GNU_SOURCE
+        -:  231:#		else
+        -:  232:#			include <dlfcn.h>
+        -:  233:#		endif
+        -:  234:#	endif
+        -:  235:
+        -:  236:#	if (BACKWARD_HAS_BACKTRACE == 1) || (BACKWARD_HAS_BACKTRACE_SYMBOL == 1)
+        -:  237:		// then we shall rely on backtrace
+        -:  238:#		include <execinfo.h>
+        -:  239:#	endif
+        -:  240:
+        -:  241:#endif // defined(BACKWARD_SYSTEM_LINUX)
+        -:  242:
+        -:  243:#if defined(BACKWARD_SYSTEM_DARWIN)
+        -:  244:// On Darwin, backtrace can back-trace or "walk" the stack using the following
+        -:  245:// libraries:
+        -:  246://
+        -:  247:// #define BACKWARD_HAS_UNWIND 1
+        -:  248://  - unwind comes from libgcc, but I saw an equivalent inside clang itself.
+        -:  249://  - with unwind, the stacktrace is as accurate as it can possibly be, since
+        -:  250://  this is used by the C++ runtine in gcc/clang for stack unwinding on
+        -:  251://  exception.
+        -:  252://  - normally libgcc is already linked to your program by default.
+        -:  253://
+        -:  254:// #define BACKWARD_HAS_BACKTRACE == 1
+        -:  255://  - backtrace is available by default, though it does not produce as much information
+        -:  256://  as another library might.
+        -:  257://
+        -:  258:// The default is:
+        -:  259:// #define BACKWARD_HAS_UNWIND == 1
+        -:  260://
+        -:  261:// Note that only one of the define should be set to 1 at a time.
+        -:  262://
+        -:  263:#	if   BACKWARD_HAS_UNWIND == 1
+        -:  264:#	elif BACKWARD_HAS_BACKTRACE == 1
+        -:  265:#	else
+        -:  266:#		undef  BACKWARD_HAS_UNWIND
+        -:  267:#		define BACKWARD_HAS_UNWIND 1
+        -:  268:#		undef  BACKWARD_HAS_BACKTRACE
+        -:  269:#		define BACKWARD_HAS_BACKTRACE 0
+        -:  270:#	endif
+        -:  271:
+        -:  272:// On Darwin, backward can extract detailed information about a stack trace
+        -:  273:// using one of the following libraries:
+        -:  274://
+        -:  275:// #define BACKWARD_HAS_BACKTRACE_SYMBOL 1
+        -:  276://  - backtrace provides minimal details for a stack trace:
+        -:  277://    - object filename
+        -:  278://    - function name
+        -:  279://
+        -:  280:// The default is:
+        -:  281:// #define BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  282://
+        -:  283:#	if BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  284:#	else
+        -:  285:#		undef  BACKWARD_HAS_BACKTRACE_SYMBOL
+        -:  286:#		define BACKWARD_HAS_BACKTRACE_SYMBOL 1
+        -:  287:#	endif
+        -:  288:
+        -:  289:#	include <cxxabi.h>
+        -:  290:#	include <fcntl.h>
+        -:  291:#	include <pthread.h>
+        -:  292:#	include <sys/stat.h>
+        -:  293:#	include <unistd.h>
+        -:  294:#	include <signal.h>
+        -:  295:
+        -:  296:#	if (BACKWARD_HAS_BACKTRACE == 1) || (BACKWARD_HAS_BACKTRACE_SYMBOL == 1)
+        -:  297:#		include <execinfo.h>
+        -:  298:#	endif
+        -:  299:#endif // defined(BACKWARD_SYSTEM_DARWIN)
+        -:  300:
+        -:  301:#if BACKWARD_HAS_UNWIND == 1
+        -:  302:
+        -:  303:#	include <unwind.h>
+        -:  304:// while gcc's unwind.h defines something like that:
+        -:  305://  extern _Unwind_Ptr _Unwind_GetIP (struct _Unwind_Context *);
+        -:  306://  extern _Unwind_Ptr _Unwind_GetIPInfo (struct _Unwind_Context *, int *);
+        -:  307://
+        -:  308:// clang's unwind.h defines something like this:
+        -:  309://  uintptr_t _Unwind_GetIP(struct _Unwind_Context* __context);
+        -:  310://
+        -:  311:// Even if the _Unwind_GetIPInfo can be linked to, it is not declared, worse we
+        -:  312:// cannot just redeclare it because clang's unwind.h doesn't define _Unwind_Ptr
+        -:  313:// anyway.
+        -:  314://
+        -:  315:// Luckily we can play on the fact that the guard macros have a different name:
+        -:  316:#ifdef __CLANG_UNWIND_H
+        -:  317:// In fact, this function still comes from libgcc (on my different linux boxes,
+        -:  318:// clang links against libgcc).
+        -:  319:#	include <inttypes.h>
+        -:  320:extern "C" uintptr_t _Unwind_GetIPInfo(_Unwind_Context*, int*);
+        -:  321:#endif
+        -:  322:
+        -:  323:#endif // BACKWARD_HAS_UNWIND == 1
+        -:  324:
+        -:  325:#ifdef BACKWARD_ATLEAST_CXX11
+        -:  326:#	include <unordered_map>
+        -:  327:#	include <utility> // for std::swap
+        -:  328:	namespace backward {
+        -:  329:	namespace details {
+        -:  330:		template <typename K, typename V>
+        -:  331:		struct hashtable {
+        -:  332:			typedef std::unordered_map<K, V> type;
+        -:  333:		};
+        -:  334:		using std::move;
+        -:  335:	} // namespace details
+        -:  336:	} // namespace backward
+        -:  337:#else // NOT BACKWARD_ATLEAST_CXX11
+        -:  338:#	define override
+        -:  339:#	include <map>
+        -:  340:	namespace backward {
+        -:  341:	namespace details {
+        -:  342:		template <typename K, typename V>
+        -:  343:		struct hashtable {
+        -:  344:			typedef std::map<K, V> type;
+        -:  345:		};
+        -:  346:		template <typename T>
+        -:  347:			const T& move(const T& v) { return v; }
+        -:  348:		template <typename T>
+        -:  349:			T& move(T& v) { return v; }
+        -:  350:	} // namespace details
+        -:  351:	} // namespace backward
+        -:  352:#endif // BACKWARD_ATLEAST_CXX11
+        -:  353:
+        -:  354:namespace backward {
+        -:  355:
+        -:  356:namespace system_tag {
+        -:  357:	struct linux_tag; // seems that I cannot call that "linux" because the name
+        -:  358:	// is already defined... so I am adding _tag everywhere.
+        -:  359:	struct darwin_tag;
+        -:  360:	struct unknown_tag;
+        -:  361:
+        -:  362:#if   defined(BACKWARD_SYSTEM_LINUX)
+        -:  363:	typedef linux_tag current_tag;
+        -:  364:#elif defined(BACKWARD_SYSTEM_DARWIN)
+        -:  365:	typedef darwin_tag current_tag;
+        -:  366:#elif defined(BACKWARD_SYSTEM_UNKNOWN)
+        -:  367:	typedef unknown_tag current_tag;
+        -:  368:#else
+        -:  369:#	error "May I please get my system defines?"
+        -:  370:#endif
+        -:  371:} // namespace system_tag
+        -:  372:
+        -:  373:
+        -:  374:namespace trace_resolver_tag {
+        -:  375:#if defined(BACKWARD_SYSTEM_LINUX)
+        -:  376:	struct libdw;
+        -:  377:	struct libbfd;
+        -:  378:	struct libdwarf;
+        -:  379:	struct backtrace_symbol;
+        -:  380:
+        -:  381:#	if   BACKWARD_HAS_DW == 1
+        -:  382:		typedef libdw current;
+        -:  383:#	elif BACKWARD_HAS_BFD == 1
+        -:  384:		typedef libbfd current;
+        -:  385:#	elif BACKWARD_HAS_DWARF == 1
+        -:  386:		typedef libdwarf current;
+        -:  387:#	elif BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  388:		typedef backtrace_symbol current;
+        -:  389:#	else
+        -:  390:#		error "You shall not pass, until you know what you want."
+        -:  391:#	endif
+        -:  392:#elif defined(BACKWARD_SYSTEM_DARWIN)
+        -:  393:	struct backtrace_symbol;
+        -:  394:
+        -:  395:#	if BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  396:		typedef backtrace_symbol current;
+        -:  397:#	else
+        -:  398:#		error "You shall not pass, until you know what you want."
+        -:  399:#	endif
+        -:  400:#endif
+        -:  401:} // namespace trace_resolver_tag
+        -:  402:
+        -:  403:
+        -:  404:namespace details {
+        -:  405:
+        -:  406:template <typename T>
+        -:  407:	struct rm_ptr { typedef T type; };
+        -:  408:
+        -:  409:template <typename T>
+        -:  410:	struct rm_ptr<T*> { typedef T type; };
+        -:  411:
+        -:  412:template <typename T>
+        -:  413:	struct rm_ptr<const T*> { typedef const T type; };
+        -:  414:
+        -:  415:template <typename R, typename T, R (*F)(T)>
+        -:  416:struct deleter {
+        -:  417:	template <typename U>
+    #####:  418:		void operator()(U& ptr) const {
+    #####:  419:			(*F)(ptr);
+    #####:  420:		}
+------------------
+_ZNK8backward7details7deleterIvPvXadL_Z4freeEEEclIPP10bfd_symbolEEvRT_:
+    #####:  418:		void operator()(U& ptr) const {
+    #####:  419:			(*F)(ptr);
+    #####:  420:		}
+------------------
+_ZNK8backward7details7deleterIiP3bfdXadL_Z9bfd_closeEEEclIS3_EEvRT_:
+    #####:  418:		void operator()(U& ptr) const {
+    #####:  419:			(*F)(ptr);
+    #####:  420:		}
+------------------
+_ZNK8backward7details7deleterIvPvXadL_Z4freeEEEclIPcEEvRT_:
+    #####:  418:		void operator()(U& ptr) const {
+    #####:  419:			(*F)(ptr);
+    #####:  420:		}
+------------------
+        -:  421:};
+        -:  422:
+        -:  423:template <typename T>
+        -:  424:struct default_delete {
+        -:  425:	void operator()(T& ptr) const {
+        -:  426:		delete ptr;
+        -:  427:	}
+        -:  428:};
+        -:  429:
+        -:  430:template <typename T, typename Deleter = deleter<void, void*, &::free> >
+        -:  431:class handle {
+        -:  432:	struct dummy;
+        -:  433:	T    _val;
+        -:  434:	bool _empty;
+        -:  435:
+        -:  436:#ifdef BACKWARD_ATLEAST_CXX11
+        -:  437:	handle(const handle&) = delete;
+        -:  438:	handle& operator=(const handle&) = delete;
+        -:  439:#endif
+        -:  440:
+        -:  441:public:
+    #####:  442:	~handle() {
+    #####:  443:		if (!_empty) {
+    #####:  444:			Deleter()(_val);
+        -:  445:		}
+    #####:  446:	}
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEED2Ev:
+    #####:  442:	~handle() {
+    #####:  443:		if (!_empty) {
+    #####:  444:			Deleter()(_val);
+        -:  445:		}
+    #####:  446:	}
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEED2Ev:
+    #####:  442:	~handle() {
+    #####:  443:		if (!_empty) {
+    #####:  444:			Deleter()(_val);
+        -:  445:		}
+    #####:  446:	}
+------------------
+_ZN8backward7details6handleIPcNS0_7deleterIvPvXadL_Z4freeEEEEED2Ev:
+    #####:  442:	~handle() {
+    #####:  443:		if (!_empty) {
+    #####:  444:			Deleter()(_val);
+        -:  445:		}
+    #####:  446:	}
+------------------
+        -:  447:
+    #####:  448:	explicit handle(): _val(), _empty(true) {}
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEEC2Ev:
+    #####:  448:	explicit handle(): _val(), _empty(true) {}
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEEC2Ev:
+    #####:  448:	explicit handle(): _val(), _empty(true) {}
+------------------
+_ZN8backward7details6handleIPcNS0_7deleterIvPvXadL_Z4freeEEEEEC2Ev:
+    #####:  448:	explicit handle(): _val(), _empty(true) {}
+------------------
+    #####:  449:	explicit handle(T val): _val(val), _empty(false) { if(!_val) _empty = true; }
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEEC2ES4_:
+    #####:  449:	explicit handle(T val): _val(val), _empty(false) { if(!_val) _empty = true; }
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEEC2ES3_:
+    #####:  449:	explicit handle(T val): _val(val), _empty(false) { if(!_val) _empty = true; }
+------------------
+_ZN8backward7details6handleIPcNS0_7deleterIvPvXadL_Z4freeEEEEEC2ES2_:
+    #####:  449:	explicit handle(T val): _val(val), _empty(false) { if(!_val) _empty = true; }
+------------------
+        -:  450:
+        -:  451:#ifdef BACKWARD_ATLEAST_CXX11
+        -:  452:	handle(handle&& from): _empty(true) {
+        -:  453:		swap(from);
+        -:  454:	}
+    #####:  455:	handle& operator=(handle&& from) {
+    #####:  456:		swap(from); return *this;
+        -:  457:	}
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEEaSEOS8_:
+    #####:  455:	handle& operator=(handle&& from) {
+    #####:  456:		swap(from); return *this;
+        -:  457:	}
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEEaSEOS6_:
+    #####:  455:	handle& operator=(handle&& from) {
+    #####:  456:		swap(from); return *this;
+        -:  457:	}
+------------------
+        -:  458:#else
+        -:  459:	explicit handle(const handle& from): _empty(true) {
+        -:  460:		// some sort of poor man's move semantic.
+        -:  461:		swap(const_cast<handle&>(from));
+        -:  462:	}
+        -:  463:	handle& operator=(const handle& from) {
+        -:  464:		// some sort of poor man's move semantic.
+        -:  465:		swap(const_cast<handle&>(from)); return *this;
+        -:  466:	}
+        -:  467:#endif
+        -:  468:
+    #####:  469:	void reset(T new_val) {
+    #####:  470:		handle tmp(new_val);
+    #####:  471:		swap(tmp);
+    #####:  472:	}
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEE5resetES4_:
+    #####:  469:	void reset(T new_val) {
+    #####:  470:		handle tmp(new_val);
+    #####:  471:		swap(tmp);
+    #####:  472:	}
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEE5resetES3_:
+    #####:  469:	void reset(T new_val) {
+    #####:  470:		handle tmp(new_val);
+    #####:  471:		swap(tmp);
+    #####:  472:	}
+------------------
+_ZN8backward7details6handleIPcNS0_7deleterIvPvXadL_Z4freeEEEEE5resetES2_:
+    #####:  469:	void reset(T new_val) {
+    #####:  470:		handle tmp(new_val);
+    #####:  471:		swap(tmp);
+    #####:  472:	}
+------------------
+    #####:  473:	operator const dummy*() const {
+    #####:  474:		if (_empty) {
+    #####:  475:			return 0;
+        -:  476:		}
+    #####:  477:		return reinterpret_cast<const dummy*>(_val);
+        -:  478:	}
+------------------
+_ZNK8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEEcvPKNS8_5dummyEEv:
+    #####:  473:	operator const dummy*() const {
+    #####:  474:		if (_empty) {
+    #####:  475:			return 0;
+        -:  476:		}
+    #####:  477:		return reinterpret_cast<const dummy*>(_val);
+        -:  478:	}
+------------------
+_ZNK8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEEcvPKNS6_5dummyEEv:
+    #####:  473:	operator const dummy*() const {
+    #####:  474:		if (_empty) {
+    #####:  475:			return 0;
+        -:  476:		}
+    #####:  477:		return reinterpret_cast<const dummy*>(_val);
+        -:  478:	}
+------------------
+    #####:  479:	T get() {
+    #####:  480:		return _val;
+        -:  481:	}
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEE3getEv:
+    #####:  479:	T get() {
+    #####:  480:		return _val;
+        -:  481:	}
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEE3getEv:
+    #####:  479:	T get() {
+    #####:  480:		return _val;
+        -:  481:	}
+------------------
+    #####:  482:	T release() {
+    #####:  483:		_empty = true;
+    #####:  484:		return _val;
+        -:  485:	}
+    #####:  486:	void swap(handle& b) {
+        -:  487:		using std::swap;
+    #####:  488:		swap(b._val, _val); // can throw, we are safe here.
+    #####:  489:		swap(b._empty, _empty); // should not throw: if you cannot swap two
+        -:  490:		// bools without throwing... It's a lost cause anyway!
+    #####:  491:	}
+------------------
+_ZN8backward7details6handleIPP10bfd_symbolNS0_7deleterIvPvXadL_Z4freeEEEEE4swapERS8_:
+    #####:  486:	void swap(handle& b) {
+        -:  487:		using std::swap;
+    #####:  488:		swap(b._val, _val); // can throw, we are safe here.
+    #####:  489:		swap(b._empty, _empty); // should not throw: if you cannot swap two
+        -:  490:		// bools without throwing... It's a lost cause anyway!
+    #####:  491:	}
+------------------
+_ZN8backward7details6handleIP3bfdNS0_7deleterIiS3_XadL_Z9bfd_closeEEEEE4swapERS6_:
+    #####:  486:	void swap(handle& b) {
+        -:  487:		using std::swap;
+    #####:  488:		swap(b._val, _val); // can throw, we are safe here.
+    #####:  489:		swap(b._empty, _empty); // should not throw: if you cannot swap two
+        -:  490:		// bools without throwing... It's a lost cause anyway!
+    #####:  491:	}
+------------------
+_ZN8backward7details6handleIPcNS0_7deleterIvPvXadL_Z4freeEEEEE4swapERS6_:
+    #####:  486:	void swap(handle& b) {
+        -:  487:		using std::swap;
+    #####:  488:		swap(b._val, _val); // can throw, we are safe here.
+    #####:  489:		swap(b._empty, _empty); // should not throw: if you cannot swap two
+        -:  490:		// bools without throwing... It's a lost cause anyway!
+    #####:  491:	}
+------------------
+        -:  492:
+        -:  493:	T operator->() { return _val; }
+        -:  494:	const T operator->() const { return _val; }
+        -:  495:
+        -:  496:	typedef typename rm_ptr<T>::type& ref_t;
+        -:  497:	typedef const typename rm_ptr<T>::type& const_ref_t;
+        -:  498:	ref_t operator*() { return *_val; }
+        -:  499:	const_ref_t operator*() const { return *_val; }
+        -:  500:	ref_t operator[](size_t idx) { return _val[idx]; }
+        -:  501:
+        -:  502:	// Watch out, we've got a badass over here
+        -:  503:	T* operator&() {
+        -:  504:		_empty = false;
+        -:  505:		return &_val;
+        -:  506:	}
+        -:  507:};
+        -:  508:
+        -:  509:// Default demangler implementation (do nothing).
+        -:  510:template <typename TAG>
+        -:  511:struct demangler_impl {
+        -:  512:	static std::string demangle(const char* funcname) {
+        -:  513:		return funcname;
+        -:  514:	}
+        -:  515:};
+        -:  516:
+        -:  517:#if defined(BACKWARD_SYSTEM_LINUX) || defined(BACKWARD_SYSTEM_DARWIN)
+        -:  518:
+        -:  519:template <>
+        -:  520:struct demangler_impl<system_tag::current_tag> {
+    #####:  521:	demangler_impl(): _demangle_buffer_length(0) {}
+        -:  522:
+    #####:  523:	std::string demangle(const char* funcname) {
+        -:  524:		using namespace details;
+    #####:  525:		char* result = abi::__cxa_demangle(funcname,
+    #####:  526:			_demangle_buffer.release(), &_demangle_buffer_length, 0);
+    #####:  527:		if(result) {
+    #####:  528:			_demangle_buffer.reset(result);
+    #####:  529:			return result;
+        -:  530:		}
+    #####:  531:		return funcname;
+        -:  532:	}
+        -:  533:
+        -:  534:private:
+        -:  535:	details::handle<char*> _demangle_buffer;
+        -:  536:	size_t                 _demangle_buffer_length;
+        -:  537:};
+        -:  538:
+        -:  539:#endif // BACKWARD_SYSTEM_LINUX || BACKWARD_SYSTEM_DARWIN
+        -:  540:
+        -:  541:struct demangler:
+        -:  542:	public demangler_impl<system_tag::current_tag> {};
+        -:  543:
+        -:  544:} // namespace details
+        -:  545:
+        -:  546:/*************** A TRACE ***************/
+        -:  547:
+        -:  548:struct Trace {
+        -:  549:	void*    addr;
+        -:  550:	size_t   idx;
+        -:  551:
+    #####:  552:	Trace():
+    #####:  553:		addr(0), idx(0) {}
+        -:  554:
+    #####:  555:	explicit Trace(void* _addr, size_t _idx):
+    #####:  556:		addr(_addr), idx(_idx) {}
+        -:  557:};
+        -:  558:
+        -:  559:struct ResolvedTrace: public Trace {
+        -:  560:
+        -:  561:	struct SourceLoc {
+        -:  562:		std::string function;
+        -:  563:		std::string filename;
+        -:  564:		unsigned    line;
+        -:  565:		unsigned    col;
+        -:  566:
+    #####:  567:		SourceLoc(): line(0), col(0) {}
+        -:  568:
+        -:  569:		bool operator==(const SourceLoc& b) const {
+        -:  570:			return function == b.function
+        -:  571:				&& filename == b.filename
+        -:  572:				&& line == b.line
+        -:  573:				&& col == b.col;
+        -:  574:		}
+        -:  575:
+        -:  576:		bool operator!=(const SourceLoc& b) const {
+        -:  577:			return !(*this == b);
+        -:  578:		}
+        -:  579:	};
+        -:  580:
+        -:  581:	// In which binary object this trace is located.
+        -:  582:	std::string                    object_filename;
+        -:  583:
+        -:  584:	// The function in the object that contain the trace. This is not the same
+        -:  585:	// as source.function which can be an function inlined in object_function.
+        -:  586:	std::string                    object_function;
+        -:  587:
+        -:  588:	// The source location of this trace. It is possible for filename to be
+        -:  589:	// empty and for line/col to be invalid (value 0) if this information
+        -:  590:	// couldn't be deduced, for example if there is no debug information in the
+        -:  591:	// binary object.
+        -:  592:	SourceLoc                      source;
+        -:  593:
+        -:  594:	// An optionals list of "inliners". All the successive sources location
+        -:  595:	// from where the source location of the trace (the attribute right above)
+        -:  596:	// is inlined. It is especially useful when you compiled with optimization.
+        -:  597:	typedef std::vector<SourceLoc> source_locs_t;
+        -:  598:	source_locs_t                  inliners;
+        -:  599:
+        -:  600:	ResolvedTrace():
+        -:  601:		Trace() {}
+    #####:  602:	ResolvedTrace(const Trace& mini_trace):
+    #####:  603:		Trace(mini_trace) {}
+        -:  604:};
+        -:  605:
+        -:  606:/*************** STACK TRACE ***************/
+        -:  607:
+        -:  608:// default implemention.
+        -:  609:template <typename TAG>
+        -:  610:class StackTraceImpl {
+        -:  611:public:
+        -:  612:	size_t size() const { return 0; }
+        -:  613:	Trace operator[](size_t) { return Trace(); }
+        -:  614:	size_t load_here(size_t=0) { return 0; }
+        -:  615:	size_t load_from(void*, size_t=0) { return 0; }
+        -:  616:	size_t thread_id() const { return 0; }
+        -:  617:	void skip_n_firsts(size_t) { }
+        -:  618:};
+        -:  619:
+        -:  620:class StackTraceImplBase {
+        -:  621:public:
+    #####:  622:	StackTraceImplBase(): _thread_id(0), _skip(0) {}
+        -:  623:
+        -:  624:	size_t thread_id() const {
+        -:  625:		return _thread_id;
+        -:  626:	}
+        -:  627:
+    #####:  628:	void skip_n_firsts(size_t n) { _skip = n; }
+        -:  629:
+        -:  630:protected:
+    #####:  631:	void load_thread_info() {
+        -:  632:#ifdef BACKWARD_SYSTEM_LINUX
+        -:  633:#ifndef __ANDROID__
+    #####:  634:		_thread_id = (size_t)syscall(SYS_gettid);
+        -:  635:#else
+        -:  636:		_thread_id = (size_t)gettid();
+        -:  637:#endif
+    #####:  638:		if (_thread_id == (size_t) getpid()) {
+        -:  639:			// If the thread is the main one, let's hide that.
+        -:  640:			// I like to keep little secret sometimes.
+    #####:  641:			_thread_id = 0;
+        -:  642:		}
+        -:  643:#elif defined(BACKWARD_SYSTEM_DARWIN)
+        -:  644:		_thread_id = reinterpret_cast<size_t>(pthread_self());
+        -:  645:		if (pthread_main_np() == 1) {
+        -:  646:			// If the thread is the main one, let's hide that.
+        -:  647:			_thread_id = 0;
+        -:  648:		}
+        -:  649:#endif
+    #####:  650:	}
+        -:  651:
+    #####:  652:	size_t skip_n_firsts() const { return _skip; }
+        -:  653:
+        -:  654:private:
+        -:  655:	size_t _thread_id;
+        -:  656:	size_t _skip;
+        -:  657:};
+        -:  658:
+        -:  659:class StackTraceImplHolder: public StackTraceImplBase {
+        -:  660:public:
+    #####:  661:	size_t size() const {
+    #####:  662:		return _stacktrace.size() ? _stacktrace.size() - skip_n_firsts() : 0;
+        -:  663:	}
+    #####:  664:	Trace operator[](size_t idx) const {
+    #####:  665:		if (idx >= size()) {
+    #####:  666:			return Trace();
+        -:  667:		}
+    #####:  668:		return Trace(_stacktrace[idx + skip_n_firsts()], idx);
+        -:  669:	}
+        -:  670:	void* const* begin() const {
+        -:  671:		if (size()) {
+        -:  672:			return &_stacktrace[skip_n_firsts()];
+        -:  673:		}
+        -:  674:		return 0;
+        -:  675:	}
+        -:  676:
+        -:  677:protected:
+        -:  678:	std::vector<void*> _stacktrace;
+        -:  679:};
+        -:  680:
+        -:  681:
+        -:  682:#if BACKWARD_HAS_UNWIND == 1
+        -:  683:
+        -:  684:namespace details {
+        -:  685:
+        -:  686:template <typename F>
+        -:  687:class Unwinder {
+        -:  688:public:
+    #####:  689:	size_t operator()(F& f, size_t depth) {
+    #####:  690:		_f = &f;
+    #####:  691:		_index = -1;
+    #####:  692:		_depth = depth;
+    #####:  693:		_Unwind_Backtrace(&this->backtrace_trampoline, this);
+    #####:  694:		return _index;
+        -:  695:	}
+        -:  696:
+        -:  697:private:
+        -:  698:	F*      _f;
+        -:  699:	ssize_t _index;
+        -:  700:	size_t  _depth;
+        -:  701:
+    #####:  702:	static _Unwind_Reason_Code backtrace_trampoline(
+        -:  703:			_Unwind_Context* ctx, void *self) {
+    #####:  704:		return ((Unwinder*)self)->backtrace(ctx);
+        -:  705:	}
+        -:  706:
+    #####:  707:	_Unwind_Reason_Code backtrace(_Unwind_Context* ctx) {
+    #####:  708:		if (_index >= 0 && static_cast<size_t>(_index) >= _depth)
+    #####:  709:			return _URC_END_OF_STACK;
+        -:  710:
+    #####:  711:		int ip_before_instruction = 0;
+    #####:  712:		uintptr_t ip = _Unwind_GetIPInfo(ctx, &ip_before_instruction);
+        -:  713:
+    #####:  714:		if (!ip_before_instruction) {
+        -:  715:			// calculating 0-1 for unsigned, looks like a possible bug to sanitiziers, so let's do it explicitly:
+    #####:  716:			if (ip==0) {
+    #####:  717:				ip = std::numeric_limits<uintptr_t>::max(); // set it to 0xffff... (as from casting 0-1)
+        -:  718:			} else {
+    #####:  719:				ip -= 1; // else just normally decrement it (no overflow/underflow will happen)
+        -:  720:			}
+        -:  721:		}
+        -:  722:
+    #####:  723:		if (_index >= 0) { // ignore first frame.
+    #####:  724:			(*_f)(_index, (void*)ip);
+        -:  725:		}
+    #####:  726:		_index += 1;
+    #####:  727:		return _URC_NO_REASON;
+        -:  728:	}
+        -:  729:};
+        -:  730:
+        -:  731:template <typename F>
+    #####:  732:size_t unwind(F f, size_t depth) {
+        -:  733:	Unwinder<F> unwinder;
+    #####:  734:	return unwinder(f, depth);
+        -:  735:}
+        -:  736:
+        -:  737:} // namespace details
+        -:  738:
+        -:  739:
+        -:  740:template <>
+        -:  741:class StackTraceImpl<system_tag::current_tag>: public StackTraceImplHolder {
+        -:  742:public:
+        -:  743:	__attribute__ ((noinline)) // TODO use some macro
+    #####:  744:	size_t load_here(size_t depth=32) {
+    #####:  745:		load_thread_info();
+    #####:  746:		if (depth == 0) {
+    #####:  747:			return 0;
+        -:  748:		}
+    #####:  749:		_stacktrace.resize(depth);
+    #####:  750:		size_t trace_cnt = details::unwind(callback(*this), depth);
+    #####:  751:		_stacktrace.resize(trace_cnt);
+    #####:  752:		skip_n_firsts(0);
+    #####:  753:		return size();
+        -:  754:	}
+        -:  755:	size_t load_from(void* addr, size_t depth=32) {
+        -:  756:		load_here(depth + 8);
+        -:  757:
+        -:  758:		for (size_t i = 0; i < _stacktrace.size(); ++i) {
+        -:  759:			if (_stacktrace[i] == addr) {
+        -:  760:				skip_n_firsts(i);
+        -:  761:				break;
+        -:  762:			}
+        -:  763:		}
+        -:  764:
+        -:  765:		_stacktrace.resize(std::min(_stacktrace.size(),
+        -:  766:					skip_n_firsts() + depth));
+        -:  767:		return size();
+        -:  768:	}
+        -:  769:
+        -:  770:private:
+        -:  771:	struct callback {
+        -:  772:		StackTraceImpl& self;
+    #####:  773:		callback(StackTraceImpl& _self): self(_self) {}
+        -:  774:
+    #####:  775:		void operator()(size_t idx, void* addr) {
+    #####:  776:			self._stacktrace[idx] = addr;
+    #####:  777:		}
+        -:  778:	};
+        -:  779:};
+        -:  780:
+        -:  781:
+        -:  782:#else // BACKWARD_HAS_UNWIND == 0
+        -:  783:
+        -:  784:template <>
+        -:  785:class StackTraceImpl<system_tag::current_tag>: public StackTraceImplHolder {
+        -:  786:public:
+        -:  787:	__attribute__ ((noinline)) // TODO use some macro
+        -:  788:	size_t load_here(size_t depth=32) {
+        -:  789:		load_thread_info();
+        -:  790:		if (depth == 0) {
+        -:  791:			return 0;
+        -:  792:		}
+        -:  793:		_stacktrace.resize(depth + 1);
+        -:  794:		size_t trace_cnt = backtrace(&_stacktrace[0], _stacktrace.size());
+        -:  795:		_stacktrace.resize(trace_cnt);
+        -:  796:		skip_n_firsts(1);
+        -:  797:		return size();
+        -:  798:	}
+        -:  799:
+        -:  800:	size_t load_from(void* addr, size_t depth=32) {
+        -:  801:		load_here(depth + 8);
+        -:  802:
+        -:  803:		for (size_t i = 0; i < _stacktrace.size(); ++i) {
+        -:  804:			if (_stacktrace[i] == addr) {
+        -:  805:				skip_n_firsts(i);
+        -:  806:				_stacktrace[i] = (void*)( (uintptr_t)_stacktrace[i] + 1);
+        -:  807:				break;
+        -:  808:			}
+        -:  809:		}
+        -:  810:
+        -:  811:		_stacktrace.resize(std::min(_stacktrace.size(),
+        -:  812:					skip_n_firsts() + depth));
+        -:  813:		return size();
+        -:  814:	}
+        -:  815:};
+        -:  816:
+        -:  817:#endif // BACKWARD_HAS_UNWIND
+        -:  818:
+        -:  819:class StackTrace:
+        -:  820:	public StackTraceImpl<system_tag::current_tag> {};
+        -:  821:
+        -:  822:/*************** TRACE RESOLVER ***************/
+        -:  823:
+        -:  824:template <typename TAG>
+        -:  825:class TraceResolverImpl;
+        -:  826:
+        -:  827:#ifdef BACKWARD_SYSTEM_UNKNOWN
+        -:  828:
+        -:  829:template <>
+        -:  830:class TraceResolverImpl<system_tag::unknown_tag> {
+        -:  831:public:
+        -:  832:	template <class ST>
+        -:  833:		void load_stacktrace(ST&) {}
+        -:  834:	ResolvedTrace resolve(ResolvedTrace t) {
+        -:  835:		return t;
+        -:  836:	}
+        -:  837:};
+        -:  838:
+        -:  839:#endif
+        -:  840:
+        -:  841:class TraceResolverImplBase {
+        -:  842:protected:
+    #####:  843:	std::string demangle(const char* funcname) {
+    #####:  844:		return _demangler.demangle(funcname);
+        -:  845:	}
+        -:  846:
+        -:  847:private:
+        -:  848:	details::demangler _demangler;
+        -:  849:};
+        -:  850:
+        -:  851:#ifdef BACKWARD_SYSTEM_LINUX
+        -:  852:
+        -:  853:template <typename STACKTRACE_TAG>
+        -:  854:class TraceResolverLinuxImpl;
+        -:  855:
+        -:  856:#if BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  857:
+        -:  858:template <>
+        -:  859:class TraceResolverLinuxImpl<trace_resolver_tag::backtrace_symbol>:
+        -:  860:	public TraceResolverImplBase {
+        -:  861:public:
+        -:  862:	template <class ST>
+        -:  863:		void load_stacktrace(ST& st) {
+        -:  864:			using namespace details;
+        -:  865:			if (st.size() == 0) {
+        -:  866:				return;
+        -:  867:			}
+        -:  868:			_symbols.reset(
+        -:  869:					backtrace_symbols(st.begin(), (int)st.size())
+        -:  870:					);
+        -:  871:		}
+        -:  872:
+        -:  873:	ResolvedTrace resolve(ResolvedTrace trace) {
+        -:  874:		char* filename = _symbols[trace.idx];
+        -:  875:		char* funcname = filename;
+        -:  876:		while (*funcname && *funcname != '(') {
+        -:  877:			funcname += 1;
+        -:  878:		}
+        -:  879:		trace.object_filename.assign(filename, funcname); // ok even if funcname is the ending \0 (then we assign entire string)
+        -:  880:
+        -:  881:		if (*funcname) { // if it's not end of string (e.g. from last frame ip==0)
+        -:  882:			funcname += 1;
+        -:  883:			char* funcname_end = funcname;
+        -:  884:			while (*funcname_end && *funcname_end != ')' && *funcname_end != '+') {
+        -:  885:				funcname_end += 1;
+        -:  886:			}
+        -:  887:			*funcname_end = '\0';
+        -:  888:			trace.object_function = this->demangle(funcname);
+        -:  889:			trace.source.function = trace.object_function; // we cannot do better.
+        -:  890:		}
+        -:  891:		return trace;
+        -:  892:	}
+        -:  893:
+        -:  894:private:
+        -:  895:	details::handle<char**> _symbols;
+        -:  896:};
+        -:  897:
+        -:  898:#endif // BACKWARD_HAS_BACKTRACE_SYMBOL == 1
+        -:  899:
+        -:  900:#if BACKWARD_HAS_BFD == 1
+        -:  901:
+        -:  902:template <>
+        -:  903:class TraceResolverLinuxImpl<trace_resolver_tag::libbfd>:
+        -:  904:	public TraceResolverImplBase {
+    #####:  905:	static std::string read_symlink(std::string const & symlink_path) {
+    #####:  906:		std::string path;
+    #####:  907:		path.resize(100);
+        -:  908:
+        -:  909:		while(true) {
+    #####:  910:			ssize_t len = ::readlink(symlink_path.c_str(), &*path.begin(), path.size());
+    #####:  911:			if(len < 0) {
+    #####:  912:				return "";
+        -:  913:			}
+    #####:  914:			if ((size_t)len == path.size()) {
+    #####:  915:				path.resize(path.size() * 2);
+        -:  916:			}
+        -:  917:			else {
+    #####:  918:				path.resize(len);
+    #####:  919:				break;
+        -:  920:			}
+    #####:  921:		}
+        -:  922:
+    #####:  923:		return path;
+        -:  924:	}
+        -:  925:public:
+    #####:  926:	TraceResolverLinuxImpl(): _bfd_loaded(false) {}
+        -:  927:
+        -:  928:	template <class ST>
+    #####:  929:		void load_stacktrace(ST&) {}
+        -:  930:
+    #####:  931:	ResolvedTrace resolve(ResolvedTrace trace) {
+        -:  932:		Dl_info symbol_info;
+        -:  933:
+        -:  934:		// trace.addr is a virtual address in memory pointing to some code.
+        -:  935:		// Let's try to find from which loaded object it comes from.
+        -:  936:		// The loaded object can be yourself btw.
+    #####:  937:		if (!dladdr(trace.addr, &symbol_info)) {
+    #####:  938:			return trace; // dat broken trace...
+        -:  939:		}
+        -:  940:
+    #####:  941:		std::string argv0;
+        -:  942:		{
+    #####:  943:			std::ifstream ifs("/proc/self/cmdline");
+    #####:  944:			std::getline(ifs, argv0, '\0');
+        -:  945:		}
+    #####:  946:		std::string tmp;
+    #####:  947:		if(symbol_info.dli_fname == argv0) {
+    #####:  948:			tmp = read_symlink("/proc/self/exe");
+    #####:  949:			symbol_info.dli_fname = tmp.c_str();
+        -:  950:		}
+        -:  951:
+        -:  952:		// Now we get in symbol_info:
+        -:  953:		// .dli_fname:
+        -:  954:		//		pathname of the shared object that contains the address.
+        -:  955:		// .dli_fbase:
+        -:  956:		//		where the object is loaded in memory.
+        -:  957:		// .dli_sname:
+        -:  958:		//		the name of the nearest symbol to trace.addr, we expect a
+        -:  959:		//		function name.
+        -:  960:		// .dli_saddr:
+        -:  961:		//		the exact address corresponding to .dli_sname.
+        -:  962:
+    #####:  963:		if (symbol_info.dli_sname) {
+    #####:  964:			trace.object_function = demangle(symbol_info.dli_sname);
+        -:  965:		}
+        -:  966:
+    #####:  967:		if (!symbol_info.dli_fname) {
+    #####:  968:			return trace;
+        -:  969:		}
+        -:  970:
+    #####:  971:		trace.object_filename = symbol_info.dli_fname;
+    #####:  972:		bfd_fileobject& fobj = load_object_with_bfd(symbol_info.dli_fname);
+    #####:  973:		if (!fobj.handle) {
+    #####:  974:			return trace; // sad, we couldn't load the object :(
+        -:  975:		}
+        -:  976:
+        -:  977:
+        -:  978:		find_sym_result* details_selected; // to be filled.
+        -:  979:
+        -:  980:		// trace.addr is the next instruction to be executed after returning
+        -:  981:		// from the nested stack frame. In C++ this usually relate to the next
+        -:  982:		// statement right after the function call that leaded to a new stack
+        -:  983:		// frame. This is not usually what you want to see when printing out a
+        -:  984:		// stacktrace...
+        -:  985:		find_sym_result details_call_site = find_symbol_details(fobj,
+    #####:  986:				trace.addr, symbol_info.dli_fbase);
+    #####:  987:		details_selected = &details_call_site;
+        -:  988:
+        -:  989:#if BACKWARD_HAS_UNWIND == 0
+        -:  990:		// ...this is why we also try to resolve the symbol that is right
+        -:  991:		// before the return address. If we are lucky enough, we will get the
+        -:  992:		// line of the function that was called. But if the code is optimized,
+        -:  993:		// we might get something absolutely not related since the compiler
+        -:  994:		// can reschedule the return address with inline functions and
+        -:  995:		// tail-call optimisation (among other things that I don't even know
+        -:  996:		// or cannot even dream about with my tiny limited brain).
+        -:  997:		find_sym_result details_adjusted_call_site = find_symbol_details(fobj,
+        -:  998:				(void*) (uintptr_t(trace.addr) - 1),
+        -:  999:				symbol_info.dli_fbase);
+        -: 1000:
+        -: 1001:		// In debug mode, we should always get the right thing(TM).
+        -: 1002:		if (details_call_site.found && details_adjusted_call_site.found) {
+        -: 1003:			// Ok, we assume that details_adjusted_call_site is a better estimation.
+        -: 1004:			details_selected = &details_adjusted_call_site;
+        -: 1005:			trace.addr = (void*) (uintptr_t(trace.addr) - 1);
+        -: 1006:		}
+        -: 1007:
+        -: 1008:		if (details_selected == &details_call_site && details_call_site.found) {
+        -: 1009:			// we have to re-resolve the symbol in order to reset some
+        -: 1010:			// internal state in BFD... so we can call backtrace_inliners
+        -: 1011:			// thereafter...
+        -: 1012:			details_call_site = find_symbol_details(fobj, trace.addr,
+        -: 1013:					symbol_info.dli_fbase);
+        -: 1014:		}
+        -: 1015:#endif // BACKWARD_HAS_UNWIND
+        -: 1016:
+    #####: 1017:		if (details_selected->found) {
+    #####: 1018:			if (details_selected->filename) {
+    #####: 1019:				trace.source.filename = details_selected->filename;
+        -: 1020:			}
+    #####: 1021:			trace.source.line = details_selected->line;
+        -: 1022:
+    #####: 1023:			if (details_selected->funcname) {
+        -: 1024:				// this time we get the name of the function where the code is
+        -: 1025:				// located, instead of the function were the address is
+        -: 1026:				// located. In short, if the code was inlined, we get the
+        -: 1027:				// function correspoding to the code. Else we already got in
+        -: 1028:				// trace.function.
+    #####: 1029:				trace.source.function = demangle(details_selected->funcname);
+        -: 1030:
+    #####: 1031:				if (!symbol_info.dli_sname) {
+        -: 1032:					// for the case dladdr failed to find the symbol name of
+        -: 1033:					// the function, we might as well try to put something
+        -: 1034:					// here.
+    #####: 1035:					trace.object_function = trace.source.function;
+        -: 1036:				}
+        -: 1037:			}
+        -: 1038:
+        -: 1039:			// Maybe the source of the trace got inlined inside the function
+        -: 1040:			// (trace.source.function). Let's see if we can get all the inlined
+        -: 1041:			// calls along the way up to the initial call site.
+    #####: 1042:			trace.inliners = backtrace_inliners(fobj, *details_selected);
+        -: 1043:
+        -: 1044:#if 0
+        -: 1045:			if (trace.inliners.size() == 0) {
+        -: 1046:				// Maybe the trace was not inlined... or maybe it was and we
+        -: 1047:				// are lacking the debug information. Let's try to make the
+        -: 1048:				// world better and see if we can get the line number of the
+        -: 1049:				// function (trace.source.function) now.
+        -: 1050:				//
+        -: 1051:				// We will get the location of where the function start (to be
+        -: 1052:				// exact: the first instruction that really start the
+        -: 1053:				// function), not where the name of the function is defined.
+        -: 1054:				// This can be quite far away from the name of the function
+        -: 1055:				// btw.
+        -: 1056:				//
+        -: 1057:				// If the source of the function is the same as the source of
+        -: 1058:				// the trace, we cannot say if the trace was really inlined or
+        -: 1059:				// not.  However, if the filename of the source is different
+        -: 1060:				// between the function and the trace... we can declare it as
+        -: 1061:				// an inliner.  This is not 100% accurate, but better than
+        -: 1062:				// nothing.
+        -: 1063:
+        -: 1064:				if (symbol_info.dli_saddr) {
+        -: 1065:					find_sym_result details = find_symbol_details(fobj,
+        -: 1066:							symbol_info.dli_saddr,
+        -: 1067:							symbol_info.dli_fbase);
+        -: 1068:
+        -: 1069:					if (details.found) {
+        -: 1070:						ResolvedTrace::SourceLoc diy_inliner;
+        -: 1071:						diy_inliner.line = details.line;
+        -: 1072:						if (details.filename) {
+        -: 1073:							diy_inliner.filename = details.filename;
+        -: 1074:						}
+        -: 1075:						if (details.funcname) {
+        -: 1076:							diy_inliner.function = demangle(details.funcname);
+        -: 1077:						} else {
+        -: 1078:							diy_inliner.function = trace.source.function;
+        -: 1079:						}
+        -: 1080:						if (diy_inliner != trace.source) {
+        -: 1081:							trace.inliners.push_back(diy_inliner);
+        -: 1082:						}
+        -: 1083:					}
+        -: 1084:				}
+        -: 1085:			}
+        -: 1086:#endif
+        -: 1087:		}
+        -: 1088:
+    #####: 1089:		return trace;
+        -: 1090:	}
+        -: 1091:
+        -: 1092:private:
+        -: 1093:	bool                _bfd_loaded;
+        -: 1094:
+        -: 1095:	typedef details::handle<bfd*,
+        -: 1096:			details::deleter<bfd_boolean, bfd*, &bfd_close>
+        -: 1097:				> bfd_handle_t;
+        -: 1098:
+        -: 1099:	typedef details::handle<asymbol**> bfd_symtab_t;
+        -: 1100:
+        -: 1101:
+        -: 1102:	struct bfd_fileobject {
+        -: 1103:		bfd_handle_t handle;
+        -: 1104:		bfd_vma      base_addr;
+        -: 1105:		bfd_symtab_t symtab;
+        -: 1106:		bfd_symtab_t dynamic_symtab;
+        -: 1107:	};
+        -: 1108:
+        -: 1109:	typedef details::hashtable<std::string, bfd_fileobject>::type
+        -: 1110:		fobj_bfd_map_t;
+        -: 1111:	fobj_bfd_map_t      _fobj_bfd_map;
+        -: 1112:
+    #####: 1113:	bfd_fileobject& load_object_with_bfd(const std::string& filename_object) {
+        -: 1114:		using namespace details;
+        -: 1115:
+    #####: 1116:		if (!_bfd_loaded) {
+        -: 1117:			using namespace details;
+    #####: 1118:			bfd_init();
+    #####: 1119:			_bfd_loaded = true;
+        -: 1120:		}
+        -: 1121:
+        -: 1122:		fobj_bfd_map_t::iterator it =
+    #####: 1123:			_fobj_bfd_map.find(filename_object);
+    #####: 1124:		if (it != _fobj_bfd_map.end()) {
+    #####: 1125:			return it->second;
+        -: 1126:		}
+        -: 1127:
+        -: 1128:		// this new object is empty for now.
+    #####: 1129:		bfd_fileobject& r = _fobj_bfd_map[filename_object];
+        -: 1130:
+        -: 1131:		// we do the work temporary in this one;
+    #####: 1132:		bfd_handle_t bfd_handle;
+        -: 1133:
+    #####: 1134:		int fd = open(filename_object.c_str(), O_RDONLY);
+    #####: 1135:		bfd_handle.reset(
+        -: 1136:				bfd_fdopenr(filename_object.c_str(), "default", fd)
+        -: 1137:				);
+    #####: 1138:		if (!bfd_handle) {
+    #####: 1139:			close(fd);
+    #####: 1140:			return r;
+        -: 1141:		}
+        -: 1142:
+    #####: 1143:		if (!bfd_check_format(bfd_handle.get(), bfd_object)) {
+    #####: 1144:			return r; // not an object? You lose.
+        -: 1145:		}
+        -: 1146:
+    #####: 1147:		if ((bfd_get_file_flags(bfd_handle.get()) & HAS_SYMS) == 0) {
+    #####: 1148:			return r; // that's what happen when you forget to compile in debug.
+        -: 1149:		}
+        -: 1150:
+        -: 1151:		ssize_t symtab_storage_size =
+    #####: 1152:			bfd_get_symtab_upper_bound(bfd_handle.get());
+        -: 1153:
+        -: 1154:		ssize_t dyn_symtab_storage_size =
+    #####: 1155:			bfd_get_dynamic_symtab_upper_bound(bfd_handle.get());
+        -: 1156:
+    #####: 1157:		if (symtab_storage_size <= 0 && dyn_symtab_storage_size <= 0) {
+    #####: 1158:			return r; // weird, is the file is corrupted?
+        -: 1159:		}
+        -: 1160:
+    #####: 1161:		bfd_symtab_t symtab, dynamic_symtab;
+    #####: 1162:		ssize_t symcount = 0, dyn_symcount = 0;
+        -: 1163:
+    #####: 1164:		if (symtab_storage_size > 0) {
+    #####: 1165:			symtab.reset(
+    #####: 1166:					(bfd_symbol**) malloc(symtab_storage_size)
+        -: 1167:					);
+    #####: 1168:			symcount = bfd_canonicalize_symtab(
+        -: 1169:					bfd_handle.get(), symtab.get()
+        -: 1170:					);
+        -: 1171:		}
+        -: 1172:
+    #####: 1173:		if (dyn_symtab_storage_size > 0) {
+    #####: 1174:			dynamic_symtab.reset(
+    #####: 1175:					(bfd_symbol**) malloc(dyn_symtab_storage_size)
+        -: 1176:					);
+    #####: 1177:			dyn_symcount = bfd_canonicalize_dynamic_symtab(
+        -: 1178:					bfd_handle.get(), dynamic_symtab.get()
+        -: 1179:					);
+        -: 1180:		}
+        -: 1181:
+        -: 1182:
+    #####: 1183:		if (symcount <= 0 && dyn_symcount <= 0) {
+    #####: 1184:			return r; // damned, that's a stripped file that you got there!
+        -: 1185:		}
+        -: 1186:
+    #####: 1187:		r.handle = move(bfd_handle);
+    #####: 1188:		r.symtab = move(symtab);
+    #####: 1189:		r.dynamic_symtab = move(dynamic_symtab);
+    #####: 1190:		return r;
+        -: 1191:	}
+        -: 1192:
+        -: 1193:	struct find_sym_result {
+        -: 1194:		bool found;
+        -: 1195:		const char* filename;
+        -: 1196:		const char* funcname;
+        -: 1197:		unsigned int line;
+        -: 1198:	};
+        -: 1199:
+        -: 1200:	struct find_sym_context {
+        -: 1201:		TraceResolverLinuxImpl* self;
+        -: 1202:		bfd_fileobject* fobj;
+        -: 1203:		void* addr;
+        -: 1204:		void* base_addr;
+        -: 1205:		find_sym_result result;
+        -: 1206:	};
+        -: 1207:
+    #####: 1208:	find_sym_result find_symbol_details(bfd_fileobject& fobj, void* addr,
+        -: 1209:			void* base_addr) {
+        -: 1210:		find_sym_context context;
+    #####: 1211:		context.self = this;
+    #####: 1212:		context.fobj = &fobj;
+    #####: 1213:		context.addr = addr;
+    #####: 1214:		context.base_addr = base_addr;
+    #####: 1215:		context.result.found = false;
+    #####: 1216:		bfd_map_over_sections(fobj.handle.get(), &find_in_section_trampoline,
+        -: 1217:				(void*)&context);
+    #####: 1218:		return context.result;
+        -: 1219:	}
+        -: 1220:
+    #####: 1221:	static void find_in_section_trampoline(bfd*, asection* section,
+        -: 1222:			void* data) {
+    #####: 1223:		find_sym_context* context = static_cast<find_sym_context*>(data);
+    #####: 1224:		context->self->find_in_section(
+    #####: 1225:				reinterpret_cast<bfd_vma>(context->addr),
+    #####: 1226:				reinterpret_cast<bfd_vma>(context->base_addr),
+    #####: 1227:				*context->fobj,
+    #####: 1228:				section, context->result
+        -: 1229:				);
+    #####: 1230:	}
+        -: 1231:
+    #####: 1232:	void find_in_section(bfd_vma addr, bfd_vma base_addr,
+        -: 1233:			bfd_fileobject& fobj, asection* section, find_sym_result& result)
+        -: 1234:	{
+    #####: 1235:		if (result.found) return;
+        -: 1236:
+    #####: 1237:		if ((bfd_get_section_flags(fobj.handle.get(), section)
+    #####: 1238:					& SEC_ALLOC) == 0)
+    #####: 1239:			return; // a debug section is never loaded automatically.
+        -: 1240:
+    #####: 1241:		bfd_vma sec_addr = bfd_get_section_vma(fobj.handle.get(), section);
+    #####: 1242:		bfd_size_type size = bfd_get_section_size(section);
+        -: 1243:
+        -: 1244:		// are we in the boundaries of the section?
+    #####: 1245:		if (addr < sec_addr || addr >= sec_addr + size) {
+    #####: 1246:			addr -= base_addr; // oups, a relocated object, lets try again...
+    #####: 1247:			if (addr < sec_addr || addr >= sec_addr + size) {
+    #####: 1248:				return;
+        -: 1249:			}
+        -: 1250:		}
+        -: 1251:
+    #####: 1252:		if (!result.found && fobj.symtab) {
+    #####: 1253:			result.found = bfd_find_nearest_line(fobj.handle.get(), section,
+        -: 1254:					fobj.symtab.get(), addr - sec_addr, &result.filename,
+        -: 1255:					&result.funcname, &result.line);
+        -: 1256:		}
+        -: 1257:
+    #####: 1258:		if (!result.found && fobj.dynamic_symtab) {
+    #####: 1259:			result.found = bfd_find_nearest_line(fobj.handle.get(), section,
+        -: 1260:					fobj.dynamic_symtab.get(), addr - sec_addr,
+        -: 1261:					&result.filename, &result.funcname, &result.line);
+        -: 1262:		}
+        -: 1263:
+        -: 1264:	}
+        -: 1265:
+    #####: 1266:	ResolvedTrace::source_locs_t backtrace_inliners(bfd_fileobject& fobj,
+        -: 1267:			find_sym_result previous_result) {
+        -: 1268:		// This function can be called ONLY after a SUCCESSFUL call to
+        -: 1269:		// find_symbol_details. The state is global to the bfd_handle.
+    #####: 1270:		ResolvedTrace::source_locs_t results;
+    #####: 1271:		while (previous_result.found) {
+        -: 1272:			find_sym_result result;
+    #####: 1273:			result.found = bfd_find_inliner_info(fobj.handle.get(),
+        -: 1274:					&result.filename, &result.funcname, &result.line);
+        -: 1275:
+    #####: 1276:			if (result.found) /* and not (
+        -: 1277:						cstrings_eq(previous_result.filename, result.filename)
+        -: 1278:						and cstrings_eq(previous_result.funcname, result.funcname)
+        -: 1279:						and result.line == previous_result.line
+        -: 1280:						)) */ {
+    #####: 1281:				ResolvedTrace::SourceLoc src_loc;
+    #####: 1282:				src_loc.line = result.line;
+    #####: 1283:				if (result.filename) {
+    #####: 1284:					src_loc.filename = result.filename;
+        -: 1285:				}
+    #####: 1286:				if (result.funcname) {
+    #####: 1287:					src_loc.function = demangle(result.funcname);
+        -: 1288:				}
+    #####: 1289:				results.push_back(src_loc);
+        -: 1290:			}
+    #####: 1291:			previous_result = result;
+        -: 1292:		}
+    #####: 1293:		return results;
+        -: 1294:	}
+        -: 1295:
+        -: 1296:	bool cstrings_eq(const char* a, const char* b) {
+        -: 1297:		if (!a || !b) {
+        -: 1298:			return false;
+        -: 1299:		}
+        -: 1300:		return strcmp(a, b) == 0;
+        -: 1301:	}
+        -: 1302:
+        -: 1303:};
+        -: 1304:#endif // BACKWARD_HAS_BFD == 1
+        -: 1305:
+        -: 1306:#if BACKWARD_HAS_DW == 1
+        -: 1307:
+        -: 1308:template <>
+        -: 1309:class TraceResolverLinuxImpl<trace_resolver_tag::libdw>:
+        -: 1310:	public TraceResolverImplBase {
+        -: 1311:public:
+        -: 1312:	TraceResolverLinuxImpl(): _dwfl_handle_initialized(false) {}
+        -: 1313:
+        -: 1314:	template <class ST>
+        -: 1315:		void load_stacktrace(ST&) {}
+        -: 1316:
+        -: 1317:	ResolvedTrace resolve(ResolvedTrace trace) {
+        -: 1318:		using namespace details;
+        -: 1319:
+        -: 1320:		Dwarf_Addr trace_addr = (Dwarf_Addr) trace.addr;
+        -: 1321:
+        -: 1322:		if (!_dwfl_handle_initialized) {
+        -: 1323:			// initialize dwfl...
+        -: 1324:			_dwfl_cb.reset(new Dwfl_Callbacks);
+        -: 1325:			_dwfl_cb->find_elf = &dwfl_linux_proc_find_elf;
+        -: 1326:			_dwfl_cb->find_debuginfo = &dwfl_standard_find_debuginfo;
+        -: 1327:			_dwfl_cb->debuginfo_path = 0;
+        -: 1328:
+        -: 1329:			_dwfl_handle.reset(dwfl_begin(_dwfl_cb.get()));
+        -: 1330:			_dwfl_handle_initialized = true;
+        -: 1331:
+        -: 1332:			if (!_dwfl_handle) {
+        -: 1333:				return trace;
+        -: 1334:			}
+        -: 1335:
+        -: 1336:			// ...from the current process.
+        -: 1337:			dwfl_report_begin(_dwfl_handle.get());
+        -: 1338:			int r = dwfl_linux_proc_report (_dwfl_handle.get(), getpid());
+        -: 1339:			dwfl_report_end(_dwfl_handle.get(), NULL, NULL);
+        -: 1340:			if (r < 0) {
+        -: 1341:				return trace;
+        -: 1342:			}
+        -: 1343:		}
+        -: 1344:
+        -: 1345:		if (!_dwfl_handle) {
+        -: 1346:			return trace;
+        -: 1347:		}
+        -: 1348:
+        -: 1349:		// find the module (binary object) that contains the trace's address.
+        -: 1350:		// This is not using any debug information, but the addresses ranges of
+        -: 1351:		// all the currently loaded binary object.
+        -: 1352:		Dwfl_Module* mod = dwfl_addrmodule(_dwfl_handle.get(), trace_addr);
+        -: 1353:		if (mod) {
+        -: 1354:			// now that we found it, lets get the name of it, this will be the
+        -: 1355:			// full path to the running binary or one of the loaded library.
+        -: 1356:			const char* module_name = dwfl_module_info (mod,
+        -: 1357:					0, 0, 0, 0, 0, 0, 0);
+        -: 1358:			if (module_name) {
+        -: 1359:				trace.object_filename = module_name;
+        -: 1360:			}
+        -: 1361:			// We also look after the name of the symbol, equal or before this
+        -: 1362:			// address. This is found by walking the symtab. We should get the
+        -: 1363:			// symbol corresponding to the function (mangled) containing the
+        -: 1364:			// address. If the code corresponding to the address was inlined,
+        -: 1365:			// this is the name of the out-most inliner function.
+        -: 1366:			const char* sym_name = dwfl_module_addrname(mod, trace_addr);
+        -: 1367:			if (sym_name) {
+        -: 1368:				trace.object_function = demangle(sym_name);
+        -: 1369:			}
+        -: 1370:		}
+        -: 1371:
+        -: 1372:		// now let's get serious, and find out the source location (file and
+        -: 1373:		// line number) of the address.
+        -: 1374:
+        -: 1375:		// This function will look in .debug_aranges for the address and map it
+        -: 1376:		// to the location of the compilation unit DIE in .debug_info and
+        -: 1377:		// return it.
+        -: 1378:		Dwarf_Addr mod_bias = 0;
+        -: 1379:		Dwarf_Die* cudie = dwfl_module_addrdie(mod, trace_addr, &mod_bias);
+        -: 1380:
+        -: 1381:#if 1
+        -: 1382:		if (!cudie) {
+        -: 1383:			// Sadly clang does not generate the section .debug_aranges, thus
+        -: 1384:			// dwfl_module_addrdie will fail early. Clang doesn't either set
+        -: 1385:			// the lowpc/highpc/range info for every compilation unit.
+        -: 1386:			//
+        -: 1387:			// So in order to save the world:
+        -: 1388:			// for every compilation unit, we will iterate over every single
+        -: 1389:			// DIEs. Normally functions should have a lowpc/highpc/range, which
+        -: 1390:			// we will use to infer the compilation unit.
+        -: 1391:
+        -: 1392:			// note that this is probably badly inefficient.
+        -: 1393:			while ((cudie = dwfl_module_nextcu(mod, cudie, &mod_bias))) {
+        -: 1394:				Dwarf_Die die_mem;
+        -: 1395:				Dwarf_Die* fundie = find_fundie_by_pc(cudie,
+        -: 1396:						trace_addr - mod_bias, &die_mem);
+        -: 1397:				if (fundie) {
+        -: 1398:					break;
+        -: 1399:				}
+        -: 1400:			}
+        -: 1401:		}
+        -: 1402:#endif
+        -: 1403:
+        -: 1404://#define BACKWARD_I_DO_NOT_RECOMMEND_TO_ENABLE_THIS_HORRIBLE_PIECE_OF_CODE
+        -: 1405:#ifdef BACKWARD_I_DO_NOT_RECOMMEND_TO_ENABLE_THIS_HORRIBLE_PIECE_OF_CODE
+        -: 1406:		if (!cudie) {
+        -: 1407:			// If it's still not enough, lets dive deeper in the shit, and try
+        -: 1408:			// to save the world again: for every compilation unit, we will
+        -: 1409:			// load the corresponding .debug_line section, and see if we can
+        -: 1410:			// find our address in it.
+        -: 1411:
+        -: 1412:			Dwarf_Addr cfi_bias;
+        -: 1413:			Dwarf_CFI* cfi_cache = dwfl_module_eh_cfi(mod, &cfi_bias);
+        -: 1414:
+        -: 1415:			Dwarf_Addr bias;
+        -: 1416:			while ((cudie = dwfl_module_nextcu(mod, cudie, &bias))) {
+        -: 1417:				if (dwarf_getsrc_die(cudie, trace_addr - bias)) {
+        -: 1418:
+        -: 1419:					// ...but if we get a match, it might be a false positive
+        -: 1420:					// because our (address - bias) might as well be valid in a
+        -: 1421:					// different compilation unit. So we throw our last card on
+        -: 1422:					// the table and lookup for the address into the .eh_frame
+        -: 1423:					// section.
+        -: 1424:
+        -: 1425:					handle<Dwarf_Frame*> frame;
+        -: 1426:					dwarf_cfi_addrframe(cfi_cache, trace_addr - cfi_bias, &frame);
+        -: 1427:					if (frame) {
+        -: 1428:						break;
+        -: 1429:					}
+        -: 1430:				}
+        -: 1431:			}
+        -: 1432:		}
+        -: 1433:#endif
+        -: 1434:
+        -: 1435:		if (!cudie) {
+        -: 1436:			return trace; // this time we lost the game :/
+        -: 1437:		}
+        -: 1438:
+        -: 1439:		// Now that we have a compilation unit DIE, this function will be able
+        -: 1440:		// to load the corresponding section in .debug_line (if not already
+        -: 1441:		// loaded) and hopefully find the source location mapped to our
+        -: 1442:		// address.
+        -: 1443:		Dwarf_Line* srcloc = dwarf_getsrc_die(cudie, trace_addr - mod_bias);
+        -: 1444:
+        -: 1445:		if (srcloc) {
+        -: 1446:			const char* srcfile = dwarf_linesrc(srcloc, 0, 0);
+        -: 1447:			if (srcfile) {
+        -: 1448:				trace.source.filename = srcfile;
+        -: 1449:			}
+        -: 1450:			int line = 0, col = 0;
+        -: 1451:			dwarf_lineno(srcloc, &line);
+        -: 1452:			dwarf_linecol(srcloc, &col);
+        -: 1453:			trace.source.line = line;
+        -: 1454:			trace.source.col = col;
+        -: 1455:		}
+        -: 1456:
+        -: 1457:		deep_first_search_by_pc(cudie, trace_addr - mod_bias,
+        -: 1458:				inliners_search_cb(trace));
+        -: 1459:		if (trace.source.function.size() == 0) {
+        -: 1460:			// fallback.
+        -: 1461:			trace.source.function = trace.object_function;
+        -: 1462:		}
+        -: 1463:
+        -: 1464:		return trace;
+        -: 1465:	}
+        -: 1466:
+        -: 1467:private:
+        -: 1468:	typedef details::handle<Dwfl*, details::deleter<void, Dwfl*, &dwfl_end> >
+        -: 1469:		dwfl_handle_t;
+        -: 1470:	details::handle<Dwfl_Callbacks*, details::default_delete<Dwfl_Callbacks*> >
+        -: 1471:		           _dwfl_cb;
+        -: 1472:	dwfl_handle_t  _dwfl_handle;
+        -: 1473:	bool           _dwfl_handle_initialized;
+        -: 1474:
+        -: 1475:	// defined here because in C++98, template function cannot take locally
+        -: 1476:	// defined types... grrr.
+        -: 1477:	struct inliners_search_cb {
+        -: 1478:		void operator()(Dwarf_Die* die) {
+        -: 1479:			switch (dwarf_tag(die)) {
+        -: 1480:				const char* name;
+        -: 1481:				case DW_TAG_subprogram:
+        -: 1482:					if ((name = dwarf_diename(die))) {
+        -: 1483:						trace.source.function = name;
+        -: 1484:					}
+        -: 1485:					break;
+        -: 1486:
+        -: 1487:				case DW_TAG_inlined_subroutine:
+        -: 1488:					ResolvedTrace::SourceLoc sloc;
+        -: 1489:					Dwarf_Attribute attr_mem;
+        -: 1490:
+        -: 1491:					if ((name = dwarf_diename(die))) {
+        -: 1492:						sloc.function = name;
+        -: 1493:					}
+        -: 1494:					if ((name = die_call_file(die))) {
+        -: 1495:						sloc.filename = name;
+        -: 1496:					}
+        -: 1497:
+        -: 1498:					Dwarf_Word line = 0, col = 0;
+        -: 1499:					dwarf_formudata(dwarf_attr(die, DW_AT_call_line,
+        -: 1500:								&attr_mem), &line);
+        -: 1501:					dwarf_formudata(dwarf_attr(die, DW_AT_call_column,
+        -: 1502:								&attr_mem), &col);
+        -: 1503:					sloc.line = (unsigned)line;
+        -: 1504:					sloc.col = (unsigned)col;
+        -: 1505:
+        -: 1506:					trace.inliners.push_back(sloc);
+        -: 1507:					break;
+        -: 1508:			};
+        -: 1509:		}
+        -: 1510:		ResolvedTrace& trace;
+        -: 1511:		inliners_search_cb(ResolvedTrace& t): trace(t) {}
+        -: 1512:	};
+        -: 1513:
+        -: 1514:
+        -: 1515:	static bool die_has_pc(Dwarf_Die* die, Dwarf_Addr pc) {
+        -: 1516:		Dwarf_Addr low, high;
+        -: 1517:
+        -: 1518:		// continuous range
+        -: 1519:		if (dwarf_hasattr(die, DW_AT_low_pc) &&
+        -: 1520:							dwarf_hasattr(die, DW_AT_high_pc)) {
+        -: 1521:			if (dwarf_lowpc(die, &low) != 0) {
+        -: 1522:				return false;
+        -: 1523:			}
+        -: 1524:			if (dwarf_highpc(die, &high) != 0) {
+        -: 1525:				Dwarf_Attribute attr_mem;
+        -: 1526:				Dwarf_Attribute* attr = dwarf_attr(die, DW_AT_high_pc, &attr_mem);
+        -: 1527:				Dwarf_Word value;
+        -: 1528:				if (dwarf_formudata(attr, &value) != 0) {
+        -: 1529:					return false;
+        -: 1530:				}
+        -: 1531:				high = low + value;
+        -: 1532:			}
+        -: 1533:			return pc >= low && pc < high;
+        -: 1534:		}
+        -: 1535:
+        -: 1536:		// non-continuous range.
+        -: 1537:		Dwarf_Addr base;
+        -: 1538:		ptrdiff_t offset = 0;
+        -: 1539:		while ((offset = dwarf_ranges(die, offset, &base, &low, &high)) > 0) {
+        -: 1540:			if (pc >= low && pc < high) {
+        -: 1541:				return true;
+        -: 1542:			}
+        -: 1543:		}
+        -: 1544:		return false;
+        -: 1545:	}
+        -: 1546:
+        -: 1547:	static Dwarf_Die* find_fundie_by_pc(Dwarf_Die* parent_die, Dwarf_Addr pc,
+        -: 1548:			Dwarf_Die* result) {
+        -: 1549:		if (dwarf_child(parent_die, result) != 0) {
+        -: 1550:			return 0;
+        -: 1551:		}
+        -: 1552:
+        -: 1553:		Dwarf_Die* die = result;
+        -: 1554:		do {
+        -: 1555:			switch (dwarf_tag(die)) {
+        -: 1556:				case DW_TAG_subprogram:
+        -: 1557:				case DW_TAG_inlined_subroutine:
+        -: 1558:					if (die_has_pc(die, pc)) {
+        -: 1559:						return result;
+        -: 1560:					}
+        -: 1561:			};
+        -: 1562:			bool declaration = false;
+        -: 1563:			Dwarf_Attribute attr_mem;
+        -: 1564:			dwarf_formflag(dwarf_attr(die, DW_AT_declaration,
+        -: 1565:						&attr_mem), &declaration);
+        -: 1566:			if (!declaration) {
+        -: 1567:				// let's be curious and look deeper in the tree,
+        -: 1568:				// function are not necessarily at the first level, but
+        -: 1569:				// might be nested inside a namespace, structure etc.
+        -: 1570:				Dwarf_Die die_mem;
+        -: 1571:				Dwarf_Die* indie = find_fundie_by_pc(die, pc, &die_mem);
+        -: 1572:				if (indie) {
+        -: 1573:					*result = die_mem;
+        -: 1574:					return result;
+        -: 1575:				}
+        -: 1576:			}
+        -: 1577:		} while (dwarf_siblingof(die, result) == 0);
+        -: 1578:		return 0;
+        -: 1579:	}
+        -: 1580:
+        -: 1581:	template <typename CB>
+        -: 1582:		static bool deep_first_search_by_pc(Dwarf_Die* parent_die,
+        -: 1583:				Dwarf_Addr pc, CB cb) {
+        -: 1584:		Dwarf_Die die_mem;
+        -: 1585:		if (dwarf_child(parent_die, &die_mem) != 0) {
+        -: 1586:			return false;
+        -: 1587:		}
+        -: 1588:
+        -: 1589:		bool branch_has_pc = false;
+        -: 1590:		Dwarf_Die* die = &die_mem;
+        -: 1591:		do {
+        -: 1592:			bool declaration = false;
+        -: 1593:			Dwarf_Attribute attr_mem;
+        -: 1594:			dwarf_formflag(dwarf_attr(die, DW_AT_declaration, &attr_mem), &declaration);
+        -: 1595:			if (!declaration) {
+        -: 1596:				// let's be curious and look deeper in the tree, function are
+        -: 1597:				// not necessarily at the first level, but might be nested
+        -: 1598:				// inside a namespace, structure, a function, an inlined
+        -: 1599:				// function etc.
+        -: 1600:				branch_has_pc = deep_first_search_by_pc(die, pc, cb);
+        -: 1601:			}
+        -: 1602:			if (!branch_has_pc) {
+        -: 1603:				branch_has_pc = die_has_pc(die, pc);
+        -: 1604:			}
+        -: 1605:			if (branch_has_pc) {
+        -: 1606:				cb(die);
+        -: 1607:			}
+        -: 1608:		} while (dwarf_siblingof(die, &die_mem) == 0);
+        -: 1609:		return branch_has_pc;
+        -: 1610:	}
+        -: 1611:
+        -: 1612:	static const char* die_call_file(Dwarf_Die *die) {
+        -: 1613:		Dwarf_Attribute attr_mem;
+        -: 1614:		Dwarf_Sword file_idx = 0;
+        -: 1615:
+        -: 1616:		dwarf_formsdata(dwarf_attr(die, DW_AT_call_file, &attr_mem),
+        -: 1617:				&file_idx);
+        -: 1618:
+        -: 1619:		if (file_idx == 0) {
+        -: 1620:			return 0;
+        -: 1621:		}
+        -: 1622:
+        -: 1623:		Dwarf_Die die_mem;
+        -: 1624:		Dwarf_Die* cudie = dwarf_diecu(die, &die_mem, 0, 0);
+        -: 1625:		if (!cudie) {
+        -: 1626:			return 0;
+        -: 1627:		}
+        -: 1628:
+        -: 1629:		Dwarf_Files* files = 0;
+        -: 1630:		size_t nfiles;
+        -: 1631:		dwarf_getsrcfiles(cudie, &files, &nfiles);
+        -: 1632:		if (!files) {
+        -: 1633:			return 0;
+        -: 1634:		}
+        -: 1635:
+        -: 1636:		return dwarf_filesrc(files, file_idx, 0, 0);
+        -: 1637:	}
+        -: 1638:
+        -: 1639:};
+        -: 1640:#endif // BACKWARD_HAS_DW == 1
+        -: 1641:
+        -: 1642:#if BACKWARD_HAS_DWARF == 1
+        -: 1643:
+        -: 1644:template <>
+        -: 1645:class TraceResolverLinuxImpl<trace_resolver_tag::libdwarf>:
+        -: 1646:	public TraceResolverImplBase {
+        -: 1647:	static std::string read_symlink(std::string const & symlink_path) {
+        -: 1648:		std::string path;
+        -: 1649:		path.resize(100);
+        -: 1650:
+        -: 1651:		while(true) {
+        -: 1652:			ssize_t len = ::readlink(symlink_path.c_str(),
+        -: 1653:									&*path.begin(), path.size());
+        -: 1654:			if(len < 0) {
+        -: 1655:				return "";
+        -: 1656:			}
+        -: 1657:			if ((size_t)len == path.size()) {
+        -: 1658:				path.resize(path.size() * 2);
+        -: 1659:			}
+        -: 1660:			else {
+        -: 1661:				path.resize(len);
+        -: 1662:				break;
+        -: 1663:			}
+        -: 1664:		}
+        -: 1665:
+        -: 1666:		return path;
+        -: 1667:	}
+        -: 1668:public:
+        -: 1669:	TraceResolverLinuxImpl(): _dwarf_loaded(false) {}
+        -: 1670:
+        -: 1671:	template <class ST>
+        -: 1672:		void load_stacktrace(ST&) {}
+        -: 1673:
+        -: 1674:	ResolvedTrace resolve(ResolvedTrace trace) {
+        -: 1675:		// trace.addr is a virtual address in memory pointing to some code.
+        -: 1676:		// Let's try to find from which loaded object it comes from.
+        -: 1677:		// The loaded object can be yourself btw.
+        -: 1678:
+        -: 1679:		Dl_info symbol_info;
+        -: 1680:		int dladdr_result = 0;
+        -: 1681:#ifndef __ANDROID__
+        -: 1682:		link_map *link_map;
+        -: 1683:		// We request the link map so we can get information about offsets
+        -: 1684:		dladdr_result = dladdr1(trace.addr, &symbol_info,
+        -: 1685:				reinterpret_cast<void**>(&link_map), RTLD_DL_LINKMAP);
+        -: 1686:#else
+        -: 1687:		// Android doesn't have dladdr1. Don't use the linker map.
+        -: 1688:		dladdr_result = dladdr(trace.addr, &symbol_info);
+        -: 1689:#endif
+        -: 1690:		if (!dladdr_result) {
+        -: 1691:			return trace; // dat broken trace...
+        -: 1692:		}
+        -: 1693:
+        -: 1694:		std::string argv0;
+        -: 1695:		{
+        -: 1696:			std::ifstream ifs("/proc/self/cmdline");
+        -: 1697:			std::getline(ifs, argv0, '\0');
+        -: 1698:		}
+        -: 1699:		std::string tmp;
+        -: 1700:		if(symbol_info.dli_fname == argv0) {
+        -: 1701:			tmp = read_symlink("/proc/self/exe");
+        -: 1702:			symbol_info.dli_fname = tmp.c_str();
+        -: 1703:		}
+        -: 1704:
+        -: 1705:		// Now we get in symbol_info:
+        -: 1706:		// .dli_fname:
+        -: 1707:		//      pathname of the shared object that contains the address.
+        -: 1708:		// .dli_fbase:
+        -: 1709:		//      where the object is loaded in memory.
+        -: 1710:		// .dli_sname:
+        -: 1711:		//      the name of the nearest symbol to trace.addr, we expect a
+        -: 1712:		//      function name.
+        -: 1713:		// .dli_saddr:
+        -: 1714:		//      the exact address corresponding to .dli_sname.
+        -: 1715:		//
+        -: 1716:		// And in link_map:
+        -: 1717:		// .l_addr:
+        -: 1718:		//      difference between the address in the ELF file and the address
+        -: 1719:		//      in memory
+        -: 1720:		// l_name:
+        -: 1721:		//      absolute pathname where the object was found
+        -: 1722:
+        -: 1723:		if (symbol_info.dli_sname) {
+        -: 1724:			trace.object_function = demangle(symbol_info.dli_sname);
+        -: 1725:		}
+        -: 1726:
+        -: 1727:		if (!symbol_info.dli_fname) {
+        -: 1728:			return trace;
+        -: 1729:		}
+        -: 1730:
+        -: 1731:		trace.object_filename = symbol_info.dli_fname;
+        -: 1732:		dwarf_fileobject& fobj = load_object_with_dwarf(symbol_info.dli_fname);
+        -: 1733:		if (!fobj.dwarf_handle) {
+        -: 1734:			return trace; // sad, we couldn't load the object :(
+        -: 1735:		}
+        -: 1736:
+        -: 1737:#ifndef __ANDROID__
+        -: 1738:		// Convert the address to a module relative one by looking at
+        -: 1739:		// the module's loading address in the link map
+        -: 1740:		Dwarf_Addr address = reinterpret_cast<uintptr_t>(trace.addr) -
+        -: 1741:				reinterpret_cast<uintptr_t>(link_map->l_addr);
+        -: 1742:#else
+        -: 1743:		Dwarf_Addr address = reinterpret_cast<uintptr_t>(trace.addr);
+        -: 1744:#endif
+        -: 1745:
+        -: 1746:		if (trace.object_function.empty()) {
+        -: 1747:			symbol_cache_t::iterator it =
+        -: 1748:					fobj.symbol_cache.lower_bound(address);
+        -: 1749:
+        -: 1750:			if (it != fobj.symbol_cache.end()) {
+        -: 1751:				if (it->first != address) {
+        -: 1752:					if (it != fobj.symbol_cache.begin()) {
+        -: 1753:						--it;
+        -: 1754:					}
+        -: 1755:				}
+        -: 1756:				trace.object_function = demangle(it->second.c_str());
+        -: 1757:			}
+        -: 1758:		}
+        -: 1759:
+        -: 1760:		// Get the Compilation Unit DIE for the address
+        -: 1761:		Dwarf_Die die = find_die(fobj, address);
+        -: 1762:
+        -: 1763:		if (!die) {
+        -: 1764:			return trace; // this time we lost the game :/
+        -: 1765:		}
+        -: 1766:
+        -: 1767:		// libdwarf doesn't give us direct access to its objects, it always
+        -: 1768:		// allocates a copy for the caller. We keep that copy alive in a cache
+        -: 1769:		// and we deallocate it later when it's no longer required.
+        -: 1770:		die_cache_entry& die_object = get_die_cache(fobj, die);
+        -: 1771:		if (die_object.isEmpty())
+        -: 1772:			return trace;  // We have no line section for this DIE
+        -: 1773:
+        -: 1774:		die_linemap_t::iterator it =
+        -: 1775:				die_object.line_section.lower_bound(address);
+        -: 1776:
+        -: 1777:		if (it != die_object.line_section.end()) {
+        -: 1778:			if (it->first != address) {
+        -: 1779:				if (it == die_object.line_section.begin()) {
+        -: 1780:					// If we are on the first item of the line section
+        -: 1781:					// but the address does not match it means that
+        -: 1782:					// the address is below the range of the DIE. Give up.
+        -: 1783:					return trace;
+        -: 1784:				} else {
+        -: 1785:					--it;
+        -: 1786:				}
+        -: 1787:			}
+        -: 1788:		} else {
+        -: 1789:			return trace; // We didn't find the address.
+        -: 1790:		}
+        -: 1791:
+        -: 1792:		// Get the Dwarf_Line that the address points to and call libdwarf
+        -: 1793:		// to get source file, line and column info.
+        -: 1794:		Dwarf_Line line = die_object.line_buffer[it->second];
+        -: 1795:		Dwarf_Error error = DW_DLE_NE;
+        -: 1796:
+        -: 1797:		char* filename;
+        -: 1798:		if (dwarf_linesrc(line, &filename, &error)
+        -: 1799:				== DW_DLV_OK) {
+        -: 1800:			trace.source.filename = std::string(filename);
+        -: 1801:			dwarf_dealloc(fobj.dwarf_handle.get(), filename, DW_DLA_STRING);
+        -: 1802:		}
+        -: 1803:
+        -: 1804:		Dwarf_Unsigned number = 0;
+        -: 1805:		if (dwarf_lineno(line, &number, &error) == DW_DLV_OK) {
+        -: 1806:			trace.source.line = number;
+        -: 1807:		} else {
+        -: 1808:			trace.source.line = 0;
+        -: 1809:		}
+        -: 1810:
+        -: 1811:		if (dwarf_lineoff_b(line, &number, &error) == DW_DLV_OK) {
+        -: 1812:			trace.source.col = number;
+        -: 1813:		} else {
+        -: 1814:			trace.source.col = 0;
+        -: 1815:		}
+        -: 1816:
+        -: 1817:		std::vector<std::string> namespace_stack;
+        -: 1818:		deep_first_search_by_pc(fobj, die, address, namespace_stack,
+        -: 1819:				inliners_search_cb(trace, fobj, die));
+        -: 1820:
+        -: 1821:		dwarf_dealloc(fobj.dwarf_handle.get(), die, DW_DLA_DIE);
+        -: 1822:
+        -: 1823:		return trace;
+        -: 1824:	}
+        -: 1825:
+        -: 1826:public:
+        -: 1827:	static int close_dwarf(Dwarf_Debug dwarf) {
+        -: 1828:		return dwarf_finish(dwarf, NULL);
+        -: 1829:	}
+        -: 1830:
+        -: 1831:private:
+        -: 1832:	bool                _dwarf_loaded;
+        -: 1833:
+        -: 1834:	typedef details::handle<int,
+        -: 1835:					details::deleter<int, int, &::close>
+        -: 1836:							> dwarf_file_t;
+        -: 1837:
+        -: 1838:	typedef details::handle<Elf*,
+        -: 1839:					details::deleter<int, Elf*, &elf_end>
+        -: 1840:							> dwarf_elf_t;
+        -: 1841:
+        -: 1842:	typedef details::handle<Dwarf_Debug,
+        -: 1843:					details::deleter<int, Dwarf_Debug, &close_dwarf>
+        -: 1844:							> dwarf_handle_t;
+        -: 1845:
+        -: 1846:	typedef std::map<Dwarf_Addr, int>		die_linemap_t;
+        -: 1847:
+        -: 1848:	typedef std::map<Dwarf_Off, Dwarf_Off>	die_specmap_t;
+        -: 1849:
+        -: 1850:	struct die_cache_entry {
+        -: 1851:		die_specmap_t			spec_section;
+        -: 1852:		die_linemap_t			line_section;
+        -: 1853:		Dwarf_Line*				line_buffer;
+        -: 1854:		Dwarf_Signed			line_count;
+        -: 1855:		Dwarf_Line_Context		line_context;
+        -: 1856:
+        -: 1857:		inline bool isEmpty() {
+        -: 1858:			return  line_buffer == NULL ||
+        -: 1859:					line_count == 0 ||
+        -: 1860:					line_context == NULL ||
+        -: 1861:					line_section.empty();
+        -: 1862:		}
+        -: 1863:
+        -: 1864:		die_cache_entry() :
+        -: 1865:			line_buffer(0), line_count(0), line_context(0) {}
+        -: 1866:
+        -: 1867:		~die_cache_entry()
+        -: 1868:		{
+        -: 1869:			if (line_context) {
+        -: 1870:				dwarf_srclines_dealloc_b(line_context);
+        -: 1871:			}
+        -: 1872:		}
+        -: 1873:	};
+        -: 1874:
+        -: 1875:	typedef std::map<Dwarf_Off, die_cache_entry> die_cache_t;
+        -: 1876:
+        -: 1877:	typedef std::map<uintptr_t, std::string>     symbol_cache_t;
+        -: 1878:
+        -: 1879:	struct dwarf_fileobject {
+        -: 1880:		dwarf_file_t		file_handle;
+        -: 1881:		dwarf_elf_t			elf_handle;
+        -: 1882:		dwarf_handle_t		dwarf_handle;
+        -: 1883:		symbol_cache_t		symbol_cache;
+        -: 1884:
+        -: 1885:		// Die cache
+        -: 1886:		die_cache_t     	die_cache;
+        -: 1887:		die_cache_entry*	current_cu;
+        -: 1888:	};
+        -: 1889:
+        -: 1890:	typedef details::hashtable<std::string, dwarf_fileobject>::type
+        -: 1891:			fobj_dwarf_map_t;
+        -: 1892:	fobj_dwarf_map_t    _fobj_dwarf_map;
+        -: 1893:
+        -: 1894:	static bool cstrings_eq(const char* a, const char* b) {
+        -: 1895:		if (!a || !b) {
+        -: 1896:			return false;
+        -: 1897:		}
+        -: 1898:		return strcmp(a, b) == 0;
+        -: 1899:	}
+        -: 1900:
+        -: 1901:	dwarf_fileobject& load_object_with_dwarf(
+        -: 1902:			const std::string filename_object) {
+        -: 1903:
+        -: 1904:		if (!_dwarf_loaded) {
+        -: 1905:			// Set the ELF library operating version
+        -: 1906:			// If that fails there's nothing we can do
+        -: 1907:			_dwarf_loaded = elf_version(EV_CURRENT) != EV_NONE;
+        -: 1908:		}
+        -: 1909:
+        -: 1910:		fobj_dwarf_map_t::iterator it =
+        -: 1911:				_fobj_dwarf_map.find(filename_object);
+        -: 1912:		if (it != _fobj_dwarf_map.end()) {
+        -: 1913:				return it->second;
+        -: 1914:		}
+        -: 1915:
+        -: 1916:		// this new object is empty for now
+        -: 1917:		dwarf_fileobject& r = _fobj_dwarf_map[filename_object];
+        -: 1918:
+        -: 1919:		dwarf_file_t file_handle;
+        -: 1920:		file_handle.reset(open(filename_object.c_str(), O_RDONLY));
+        -: 1921:		if (file_handle < 0) {
+        -: 1922:			return r;
+        -: 1923:		}
+        -: 1924:
+        -: 1925:		// Try to get an ELF handle. We need to read the ELF sections
+        -: 1926:		// because we want to see if there is a .gnu_debuglink section
+        -: 1927:		// that points to a split debug file
+        -: 1928:		dwarf_elf_t elf_handle;
+        -: 1929:		elf_handle.reset(elf_begin(file_handle.get(), ELF_C_READ, NULL));
+        -: 1930:		if (!elf_handle) {
+        -: 1931:			return r;
+        -: 1932:		}
+        -: 1933:
+        -: 1934:		const char* e_ident = elf_getident(elf_handle.get(), 0);
+        -: 1935:		if (!e_ident) {
+        -: 1936:			return r;
+        -: 1937:		}
+        -: 1938:
+        -: 1939:		// Get the number of sections
+        -: 1940:		// We use the new APIs as elf_getshnum is deprecated
+        -: 1941:		size_t shdrnum = 0;
+        -: 1942:		if (elf_getshdrnum(elf_handle.get(), &shdrnum) == -1) {
+        -: 1943:			return r;
+        -: 1944:		}
+        -: 1945:
+        -: 1946:		// Get the index to the string section
+        -: 1947:		size_t shdrstrndx = 0;
+        -: 1948:		if (elf_getshdrstrndx (elf_handle.get(), &shdrstrndx) == -1) {
+        -: 1949:			return r;
+        -: 1950:		}
+        -: 1951:
+        -: 1952:		std::string debuglink;
+        -: 1953:		// Iterate through the ELF sections to try to get a gnu_debuglink
+        -: 1954:		// note and also to cache the symbol table.
+        -: 1955:		// We go the preprocessor way to avoid having to create templated
+        -: 1956:		// classes or using gelf (which might throw a compiler error if 64 bit
+        -: 1957:		// is not supported
+        -: 1958:#define ELF_GET_DATA(ARCH)                                                   \
+        -: 1959:		Elf_Scn *elf_section = 0;                                            \
+        -: 1960:		Elf_Data *elf_data = 0;                                              \
+        -: 1961:		Elf##ARCH##_Shdr* section_header = 0;                                \
+        -: 1962:		Elf_Scn *symbol_section = 0;                                         \
+        -: 1963:		size_t symbol_count = 0;                                             \
+        -: 1964:		size_t symbol_strings = 0;                                           \
+        -: 1965:		Elf##ARCH##_Sym *symbol = 0;                                         \
+        -: 1966:		const char* section_name = 0;                                        \
+        -: 1967:		                                                                     \
+        -: 1968:		while ((elf_section = elf_nextscn(elf_handle.get(), elf_section))    \
+        -: 1969:				!= NULL) {                                                   \
+        -: 1970:			section_header = elf##ARCH##_getshdr(elf_section);               \
+        -: 1971:			if (section_header == NULL) {                                    \
+        -: 1972:				return r;                                                    \
+        -: 1973:			}                                                                \
+        -: 1974:		                                                                     \
+        -: 1975:			if ((section_name = elf_strptr(                                  \
+        -: 1976:								elf_handle.get(), shdrstrndx,                \
+        -: 1977:								section_header->sh_name)) == NULL) {         \
+        -: 1978:				return r;                                                    \
+        -: 1979:			}                                                                \
+        -: 1980:		                                                                     \
+        -: 1981:			if (cstrings_eq(section_name, ".gnu_debuglink")) {               \
+        -: 1982:				elf_data = elf_getdata(elf_section, NULL);                   \
+        -: 1983:				if (elf_data && elf_data->d_size > 0) {                      \
+        -: 1984:					debuglink = std::string(                                 \
+        -: 1985:							reinterpret_cast<const char*>(elf_data->d_buf)); \
+        -: 1986:				}                                                            \
+        -: 1987:			}                                                                \
+        -: 1988:		                                                                     \
+        -: 1989:			switch(section_header->sh_type) {                                \
+        -: 1990:				case SHT_SYMTAB:                                             \
+        -: 1991:					symbol_section = elf_section;                            \
+        -: 1992:					symbol_count   = section_header->sh_size /               \
+        -: 1993:									section_header->sh_entsize;              \
+        -: 1994:					symbol_strings = section_header->sh_link;                \
+        -: 1995:					break;                                                   \
+        -: 1996:		                                                                     \
+        -: 1997:				/* We use .dynsyms as a last resort, we prefer .symtab */    \
+        -: 1998:				case SHT_DYNSYM:                                             \
+        -: 1999:					if (!symbol_section) {                                   \
+        -: 2000:						symbol_section = elf_section;                        \
+        -: 2001:						symbol_count   = section_header->sh_size /           \
+        -: 2002:										section_header->sh_entsize;          \
+        -: 2003:						symbol_strings = section_header->sh_link;            \
+        -: 2004:					}                                                        \
+        -: 2005:					break;                                                   \
+        -: 2006:			}                                                                \
+        -: 2007:		}                                                                    \
+        -: 2008:		                                                                     \
+        -: 2009:		if (symbol_section && symbol_count && symbol_strings) {              \
+        -: 2010:			elf_data = elf_getdata(symbol_section, NULL);                    \
+        -: 2011:			symbol = reinterpret_cast<Elf##ARCH##_Sym*>(elf_data->d_buf);    \
+        -: 2012:			for (size_t i = 0; i < symbol_count; ++i) {                      \
+        -: 2013:				int type = ELF##ARCH##_ST_TYPE(symbol->st_info);             \
+        -: 2014:				if (type == STT_FUNC && symbol->st_value > 0) {              \
+        -: 2015:					r.symbol_cache[symbol->st_value] = std::string(          \
+        -: 2016:							elf_strptr(elf_handle.get(),                     \
+        -: 2017:							symbol_strings, symbol->st_name));               \
+        -: 2018:				}                                                            \
+        -: 2019:				++symbol;                                                    \
+        -: 2020:			}                                                                \
+        -: 2021:		}                                                                    \
+        -: 2022:
+        -: 2023:
+        -: 2024:		if (e_ident[EI_CLASS] == ELFCLASS32) {
+        -: 2025:			ELF_GET_DATA(32)
+        -: 2026:		} else if (e_ident[EI_CLASS] == ELFCLASS64) {
+        -: 2027:		// libelf might have been built without 64 bit support
+        -: 2028:#if __LIBELF64
+        -: 2029:			ELF_GET_DATA(64)
+        -: 2030:#endif
+        -: 2031:		}
+        -: 2032:
+        -: 2033:		if (!debuglink.empty()) {
+        -: 2034:			// We have a debuglink section! Open an elf instance on that
+        -: 2035:			// file instead. If we can't open the file, then return
+        -: 2036:			// the elf handle we had already opened.
+        -: 2037:			dwarf_file_t debuglink_file;
+        -: 2038:			debuglink_file.reset(open(debuglink.c_str(), O_RDONLY));
+        -: 2039:			if (debuglink_file.get() > 0) {
+        -: 2040:				dwarf_elf_t debuglink_elf;
+        -: 2041:				debuglink_elf.reset(
+        -: 2042:					elf_begin(debuglink_file.get(),ELF_C_READ, NULL)
+        -: 2043:				);
+        -: 2044:
+        -: 2045:				// If we have a valid elf handle, return the new elf handle
+        -: 2046:				// and file handle and discard the original ones
+        -: 2047:				if (debuglink_elf) {
+        -: 2048:					elf_handle = move(debuglink_elf);
+        -: 2049:					file_handle = move(debuglink_file);
+        -: 2050:				}
+        -: 2051:			}
+        -: 2052:		}
+        -: 2053:
+        -: 2054:		// Ok, we have a valid ELF handle, let's try to get debug symbols
+        -: 2055:		Dwarf_Debug dwarf_debug;
+        -: 2056:		Dwarf_Error error = DW_DLE_NE;
+        -: 2057:		dwarf_handle_t dwarf_handle;
+        -: 2058:
+        -: 2059:		int dwarf_result = dwarf_elf_init(elf_handle.get(),
+        -: 2060:						DW_DLC_READ, NULL, NULL, &dwarf_debug, &error);
+        -: 2061:
+        -: 2062:		// We don't do any special handling for DW_DLV_NO_ENTRY specially.
+        -: 2063:		// If we get an error, or the file doesn't have debug information
+        -: 2064:		// we just return.
+        -: 2065:		if (dwarf_result != DW_DLV_OK) {
+        -: 2066:			return r;
+        -: 2067:		}
+        -: 2068:
+        -: 2069:		dwarf_handle.reset(dwarf_debug);
+        -: 2070:
+        -: 2071:		r.file_handle = move(file_handle);
+        -: 2072:		r.elf_handle = move(elf_handle);
+        -: 2073:		r.dwarf_handle = move(dwarf_handle);
+        -: 2074:
+        -: 2075:		return r;
+        -: 2076:	}
+        -: 2077:
+        -: 2078:	die_cache_entry& get_die_cache(dwarf_fileobject& fobj, Dwarf_Die die)
+        -: 2079:	{
+        -: 2080:		Dwarf_Error error = DW_DLE_NE;
+        -: 2081:
+        -: 2082:		// Get the die offset, we use it as the cache key
+        -: 2083:		Dwarf_Off die_offset;
+        -: 2084:		if (dwarf_dieoffset(die, &die_offset, &error) != DW_DLV_OK) {
+        -: 2085:			die_offset = 0;
+        -: 2086:		}
+        -: 2087:
+        -: 2088:		die_cache_t::iterator it = fobj.die_cache.find(die_offset);
+        -: 2089:
+        -: 2090:		if (it != fobj.die_cache.end()) {
+        -: 2091:			fobj.current_cu = &it->second;
+        -: 2092:			return it->second;
+        -: 2093:		}
+        -: 2094:
+        -: 2095:		die_cache_entry& de = fobj.die_cache[die_offset];
+        -: 2096:		fobj.current_cu = &de;
+        -: 2097:
+        -: 2098:		Dwarf_Addr line_addr;
+        -: 2099:		Dwarf_Small table_count;
+        -: 2100:
+        -: 2101:		// The addresses in the line section are not fully sorted (they might
+        -: 2102:		// be sorted by block of code belonging to the same file), which makes
+        -: 2103:		// it necessary to do so before searching is possible.
+        -: 2104:		//
+        -: 2105:		// As libdwarf allocates a copy of everything, let's get the contents
+        -: 2106:		// of the line section and keep it around. We also create a map of
+        -: 2107:		// program counter to line table indices so we can search by address
+        -: 2108:		// and get the line buffer index.
+        -: 2109:		//
+        -: 2110:		// To make things more difficult, the same address can span more than
+        -: 2111:		// one line, so we need to keep the index pointing to the first line
+        -: 2112:		// by using insert instead of the map's [ operator.
+        -: 2113:
+        -: 2114:		// Get the line context for the DIE
+        -: 2115:		if (dwarf_srclines_b(die, 0, &table_count, &de.line_context, &error)
+        -: 2116:				== DW_DLV_OK) {
+        -: 2117:			// Get the source lines for this line context, to be deallocated
+        -: 2118:			// later
+        -: 2119:			if (dwarf_srclines_from_linecontext(
+        -: 2120:					de.line_context, &de.line_buffer, &de.line_count, &error)
+        -: 2121:						== DW_DLV_OK) {
+        -: 2122:
+        -: 2123:				// Add all the addresses to our map
+        -: 2124:				for (int i = 0; i < de.line_count; i++) {
+        -: 2125:					if (dwarf_lineaddr(de.line_buffer[i], &line_addr, &error)
+        -: 2126:							!= DW_DLV_OK) {
+        -: 2127:						line_addr = 0;
+        -: 2128:					}
+        -: 2129:					de.line_section.insert(
+        -: 2130:							std::pair<Dwarf_Addr, int>(line_addr, i));
+        -: 2131:				}
+        -: 2132:			}
+        -: 2133:		}
+        -: 2134:
+        -: 2135:		// For each CU, cache the function DIEs that contain the
+        -: 2136:		// DW_AT_specification attribute. When building with -g3 the function
+        -: 2137:		// DIEs are separated in declaration and specification, with the
+        -: 2138:		// declaration containing only the name and parameters and the
+        -: 2139:		// specification the low/high pc and other compiler attributes.
+        -: 2140:		//
+        -: 2141:		// We cache those specifications so we don't skip over the declarations,
+        -: 2142:		// because they have no pc, and we can do namespace resolution for
+        -: 2143:		// DWARF function names.
+        -: 2144:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2145:		Dwarf_Die current_die = 0;
+        -: 2146:		if (dwarf_child(die, &current_die, &error) == DW_DLV_OK) {
+        -: 2147:			for(;;) {
+        -: 2148:				Dwarf_Die sibling_die = 0;
+        -: 2149:
+        -: 2150:				Dwarf_Half tag_value;
+        -: 2151:				dwarf_tag(current_die, &tag_value, &error);
+        -: 2152:
+        -: 2153:				if (tag_value == DW_TAG_subprogram ||
+        -: 2154:					tag_value == DW_TAG_inlined_subroutine) {
+        -: 2155:
+        -: 2156:					Dwarf_Bool has_attr = 0;
+        -: 2157:					if (dwarf_hasattr(current_die, DW_AT_specification,
+        -: 2158:									  &has_attr, &error) == DW_DLV_OK) {
+        -: 2159:						if (has_attr) {
+        -: 2160:							Dwarf_Attribute attr_mem;
+        -: 2161:							if (dwarf_attr(current_die, DW_AT_specification,
+        -: 2162:											&attr_mem, &error) == DW_DLV_OK) {
+        -: 2163:								Dwarf_Off spec_offset = 0;
+        -: 2164:								if (dwarf_formref(attr_mem,
+        -: 2165:										&spec_offset, &error) == DW_DLV_OK) {
+        -: 2166:									Dwarf_Off spec_die_offset;
+        -: 2167:									if (dwarf_dieoffset(current_die,
+        -: 2168:											&spec_die_offset, &error)
+        -: 2169:											== DW_DLV_OK) {
+        -: 2170:										de.spec_section[spec_offset] =
+        -: 2171:												spec_die_offset;
+        -: 2172:									}
+        -: 2173:								}
+        -: 2174:							}
+        -: 2175:							dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2176:						}
+        -: 2177:					}
+        -: 2178:				}
+        -: 2179:
+        -: 2180:				int result = dwarf_siblingof(
+        -: 2181:						dwarf, current_die, &sibling_die, &error);
+        -: 2182:				if (result == DW_DLV_ERROR) {
+        -: 2183:					break;
+        -: 2184:				} else if (result == DW_DLV_NO_ENTRY) {
+        -: 2185:					break;
+        -: 2186:				}
+        -: 2187:
+        -: 2188:				if (current_die != die) {
+        -: 2189:					dwarf_dealloc(dwarf, current_die, DW_DLA_DIE);
+        -: 2190:					current_die = 0;
+        -: 2191:				}
+        -: 2192:
+        -: 2193:				current_die = sibling_die;
+        -: 2194:			}
+        -: 2195:		}
+        -: 2196:		return de;
+        -: 2197:	}
+        -: 2198:
+        -: 2199:	static Dwarf_Die get_referenced_die(
+        -: 2200:			Dwarf_Debug dwarf, Dwarf_Die die, Dwarf_Half attr, bool global) {
+        -: 2201:		Dwarf_Error error = DW_DLE_NE;
+        -: 2202:		Dwarf_Attribute attr_mem;
+        -: 2203:
+        -: 2204:		Dwarf_Die found_die = NULL;
+        -: 2205:		if (dwarf_attr(die, attr, &attr_mem, &error) == DW_DLV_OK) {
+        -: 2206:			Dwarf_Off offset;
+        -: 2207:			int result = 0;
+        -: 2208:			if (global) {
+        -: 2209:				result = dwarf_global_formref(attr_mem, &offset, &error);
+        -: 2210:			} else {
+        -: 2211:				result = dwarf_formref(attr_mem, &offset, &error);
+        -: 2212:			}
+        -: 2213:
+        -: 2214:			if (result == DW_DLV_OK) {
+        -: 2215:				if (dwarf_offdie(dwarf, offset, &found_die, &error)
+        -: 2216:						!= DW_DLV_OK) {
+        -: 2217:					found_die = NULL;
+        -: 2218:				}
+        -: 2219:			}
+        -: 2220:			dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2221:		}
+        -: 2222:		return found_die;
+        -: 2223:	}
+        -: 2224:
+        -: 2225:	static std::string get_referenced_die_name(
+        -: 2226:			Dwarf_Debug dwarf, Dwarf_Die die, Dwarf_Half attr, bool global) {
+        -: 2227:		Dwarf_Error error = DW_DLE_NE;
+        -: 2228:		std::string value;
+        -: 2229:
+        -: 2230:		Dwarf_Die found_die = get_referenced_die(dwarf, die, attr, global);
+        -: 2231:
+        -: 2232:		if (found_die) {
+        -: 2233:			char *name;
+        -: 2234:			if (dwarf_diename(found_die, &name, &error) == DW_DLV_OK) {
+        -: 2235:				if (name) {
+        -: 2236:					value = std::string(name);
+        -: 2237:				}
+        -: 2238:				dwarf_dealloc(dwarf, name, DW_DLA_STRING);
+        -: 2239:			}
+        -: 2240:			dwarf_dealloc(dwarf, found_die, DW_DLA_DIE);
+        -: 2241:		}
+        -: 2242:
+        -: 2243:		return value;
+        -: 2244:	}
+        -: 2245:
+        -: 2246:	// Returns a spec DIE linked to the passed one. The caller should
+        -: 2247:	// deallocate the DIE
+        -: 2248:	static Dwarf_Die get_spec_die(dwarf_fileobject& fobj, Dwarf_Die die) {
+        -: 2249:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2250:		Dwarf_Error error = DW_DLE_NE;
+        -: 2251:		Dwarf_Off die_offset;
+        -: 2252:		if (fobj.current_cu && dwarf_die_CU_offset(die, &die_offset, &error)
+        -: 2253:				== DW_DLV_OK) {
+        -: 2254:			die_specmap_t::iterator it =
+        -: 2255:					fobj.current_cu->spec_section.find(die_offset);
+        -: 2256:
+        -: 2257:			// If we have a DIE that completes the current one, check if
+        -: 2258:			// that one has the pc we are looking for
+        -: 2259:			if (it != fobj.current_cu->spec_section.end()) {
+        -: 2260:				Dwarf_Die spec_die = 0;
+        -: 2261:				if (dwarf_offdie(dwarf, it->second, &spec_die, &error)
+        -: 2262:						== DW_DLV_OK) {
+        -: 2263:					return spec_die;
+        -: 2264:				}
+        -: 2265:			}
+        -: 2266:		}
+        -: 2267:
+        -: 2268:		// Maybe we have an abstract origin DIE with the function information?
+        -: 2269:		return get_referenced_die(
+        -: 2270:				fobj.dwarf_handle.get(), die, DW_AT_abstract_origin, true);
+        -: 2271:
+        -: 2272:	}
+        -: 2273:
+        -: 2274:	static bool die_has_pc(dwarf_fileobject& fobj, Dwarf_Die die, Dwarf_Addr pc)
+        -: 2275:	{
+        -: 2276:		Dwarf_Addr low_pc = 0, high_pc = 0;
+        -: 2277:		Dwarf_Half high_pc_form = 0;
+        -: 2278:		Dwarf_Form_Class return_class;
+        -: 2279:		Dwarf_Error error = DW_DLE_NE;
+        -: 2280:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2281:		bool has_lowpc = false;
+        -: 2282:		bool has_highpc = false;
+        -: 2283:		bool has_ranges = false;
+        -: 2284:
+        -: 2285:		if (dwarf_lowpc(die, &low_pc, &error) == DW_DLV_OK) {
+        -: 2286:			// If we have a low_pc check if there is a high pc.
+        -: 2287:			// If we don't have a high pc this might mean we have a base
+        -: 2288:			// address for the ranges list or just an address.
+        -: 2289:			has_lowpc = true;
+        -: 2290:
+        -: 2291:			if (dwarf_highpc_b(
+        -: 2292:					die, &high_pc, &high_pc_form, &return_class, &error)
+        -: 2293:					== DW_DLV_OK) {
+        -: 2294:				// We do have a high pc. In DWARF 4+ this is an offset from the
+        -: 2295:				// low pc, but in earlier versions it's an absolute address.
+        -: 2296:
+        -: 2297:				has_highpc = true;
+        -: 2298:				// In DWARF 2/3 this would be a DW_FORM_CLASS_ADDRESS
+        -: 2299:				if (return_class == DW_FORM_CLASS_CONSTANT) {
+        -: 2300:					high_pc = low_pc + high_pc;
+        -: 2301:				}
+        -: 2302:
+        -: 2303:				// We have low and high pc, check if our address
+        -: 2304:				// is in that range
+        -: 2305:				return pc >= low_pc && pc < high_pc;
+        -: 2306:			}
+        -: 2307:		} else {
+        -: 2308:			// Reset the low_pc, in case dwarf_lowpc failing set it to some
+        -: 2309:			// undefined value.
+        -: 2310:			low_pc = 0;
+        -: 2311:		}
+        -: 2312:
+        -: 2313:		// Check if DW_AT_ranges is present and search for the PC in the
+        -: 2314:		// returned ranges list. We always add the low_pc, as it not set it will
+        -: 2315:		// be 0, in case we had a DW_AT_low_pc and DW_AT_ranges pair
+        -: 2316:		bool result = false;
+        -: 2317:
+        -: 2318:		Dwarf_Attribute attr;
+        -: 2319:		if (dwarf_attr(die, DW_AT_ranges, &attr, &error) == DW_DLV_OK) {
+        -: 2320:
+        -: 2321:			Dwarf_Off offset;
+        -: 2322:			if (dwarf_global_formref(attr, &offset, &error) == DW_DLV_OK) {
+        -: 2323:				Dwarf_Ranges *ranges;
+        -: 2324:				Dwarf_Signed ranges_count = 0;
+        -: 2325:				Dwarf_Unsigned byte_count = 0;
+        -: 2326:
+        -: 2327:				if (dwarf_get_ranges_a(dwarf, offset, die, &ranges,
+        -: 2328:						&ranges_count, &byte_count, &error) == DW_DLV_OK) {
+        -: 2329:					has_ranges = ranges_count != 0;
+        -: 2330:					for (int i = 0; i < ranges_count; i++) {
+        -: 2331:						if (pc >= ranges[i].dwr_addr1 + low_pc &&
+        -: 2332:							pc < ranges[i].dwr_addr2 + low_pc) {
+        -: 2333:							result = true;
+        -: 2334:							break;
+        -: 2335:						}
+        -: 2336:					}
+        -: 2337:					dwarf_ranges_dealloc(dwarf, ranges, ranges_count);
+        -: 2338:				}
+        -: 2339:			}
+        -: 2340:		}
+        -: 2341:
+        -: 2342:		// Last attempt. We might have a single address set as low_pc.
+        -: 2343:		if (!result && low_pc != 0 && pc == low_pc) {
+        -: 2344:			result = true;
+        -: 2345:		}
+        -: 2346:
+        -: 2347:		// If we don't have lowpc, highpc and ranges maybe this DIE is a
+        -: 2348:		// declaration that relies on a DW_AT_specification DIE that happens
+        -: 2349:		// later. Use the specification cache we filled when we loaded this CU.
+        -: 2350:		if (!result && (!has_lowpc && !has_highpc && !has_ranges)) {
+        -: 2351:			Dwarf_Die spec_die = get_spec_die(fobj, die);
+        -: 2352:			if (spec_die) {
+        -: 2353:				result = die_has_pc(fobj, spec_die, pc);
+        -: 2354:				dwarf_dealloc(dwarf, spec_die, DW_DLA_DIE);
+        -: 2355:			}
+        -: 2356:		}
+        -: 2357:
+        -: 2358:		return result;
+        -: 2359:	}
+        -: 2360:
+        -: 2361:	static void get_type(Dwarf_Debug dwarf, Dwarf_Die die, std::string& type) {
+        -: 2362:		Dwarf_Error error = DW_DLE_NE;
+        -: 2363:
+        -: 2364:		Dwarf_Die child = 0;
+        -: 2365:		if (dwarf_child(die, &child, &error) == DW_DLV_OK) {
+        -: 2366:			get_type(dwarf, child, type);
+        -: 2367:		}
+        -: 2368:
+        -: 2369:		if (child) {
+        -: 2370:			type.insert(0, "::");
+        -: 2371:			dwarf_dealloc(dwarf, child, DW_DLA_DIE);
+        -: 2372:		}
+        -: 2373:
+        -: 2374:		char *name;
+        -: 2375:		if (dwarf_diename(die, &name, &error) == DW_DLV_OK) {
+        -: 2376:			type.insert(0, std::string(name));
+        -: 2377:			dwarf_dealloc(dwarf, name, DW_DLA_STRING);
+        -: 2378:		} else {
+        -: 2379:			type.insert(0,"<unknown>");
+        -: 2380:		}
+        -: 2381:	}
+        -: 2382:
+        -: 2383:	static std::string get_type_by_signature(Dwarf_Debug dwarf, Dwarf_Die die) {
+        -: 2384:		Dwarf_Error error = DW_DLE_NE;
+        -: 2385:
+        -: 2386:		Dwarf_Sig8 signature;
+        -: 2387:		Dwarf_Bool has_attr = 0;
+        -: 2388:		if (dwarf_hasattr(die, DW_AT_signature,
+        -: 2389:						  &has_attr, &error) == DW_DLV_OK) {
+        -: 2390:			if (has_attr) {
+        -: 2391:				Dwarf_Attribute attr_mem;
+        -: 2392:				if (dwarf_attr(die, DW_AT_signature,
+        -: 2393:								&attr_mem, &error) == DW_DLV_OK) {
+        -: 2394:					if (dwarf_formsig8(attr_mem, &signature, &error)
+        -: 2395:							!= DW_DLV_OK) {
+        -: 2396:						return std::string("<no type signature>");
+        -: 2397:					}
+        -: 2398:				}
+        -: 2399:				dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2400:			}
+        -: 2401:		}
+        -: 2402:
+        -: 2403:		Dwarf_Unsigned next_cu_header;
+        -: 2404:		Dwarf_Sig8 tu_signature;
+        -: 2405:		std::string result;
+        -: 2406:		bool found = false;
+        -: 2407:
+        -: 2408:		while (dwarf_next_cu_header_d(dwarf, 0, 0, 0, 0, 0, 0, 0, &tu_signature,
+        -: 2409:				0, &next_cu_header, 0, &error) == DW_DLV_OK) {
+        -: 2410:
+        -: 2411:			if (strncmp(signature.signature, tu_signature.signature, 8) == 0) {
+        -: 2412:				Dwarf_Die type_cu_die = 0;
+        -: 2413:				if (dwarf_siblingof_b(dwarf, 0, 0, &type_cu_die, &error)
+        -: 2414:						== DW_DLV_OK) {
+        -: 2415:					Dwarf_Die child_die = 0;
+        -: 2416:					if (dwarf_child(type_cu_die, &child_die, &error)
+        -: 2417:							== DW_DLV_OK) {
+        -: 2418:						get_type(dwarf, child_die, result);
+        -: 2419:						found = !result.empty();
+        -: 2420:						dwarf_dealloc(dwarf, child_die, DW_DLA_DIE);
+        -: 2421:					}
+        -: 2422:					dwarf_dealloc(dwarf, type_cu_die, DW_DLA_DIE);
+        -: 2423:				}
+        -: 2424:			}
+        -: 2425:		}
+        -: 2426:
+        -: 2427:		if (found) {
+        -: 2428:			while (dwarf_next_cu_header_d(dwarf, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -: 2429:					&next_cu_header, 0, &error) == DW_DLV_OK) {
+        -: 2430:				// Reset the cu header state. Unfortunately, libdwarf's
+        -: 2431:				// next_cu_header API keeps its own iterator per Dwarf_Debug that
+        -: 2432:				// can't be reset. We need to keep fetching elements until the end.
+        -: 2433:			}
+        -: 2434:		} else {
+        -: 2435:			// If we couldn't resolve the type just print out the signature
+        -: 2436:			std::ostringstream string_stream;
+        -: 2437:			string_stream << "<0x" <<
+        -: 2438:					std::hex << std::setfill('0');
+        -: 2439:			for (int i = 0; i < 8; ++i) {
+        -: 2440:				string_stream << std::setw(2) << std::hex << (int)(unsigned char)(signature.signature[i]);
+        -: 2441:			}
+        -: 2442:			string_stream << ">";
+        -: 2443:			result = string_stream.str();
+        -: 2444:		}
+        -: 2445:		return result;
+        -: 2446:	}
+        -: 2447:
+        -: 2448:	struct type_context_t {
+        -: 2449:		bool is_const;
+        -: 2450:		bool is_typedef;
+        -: 2451:		bool has_type;
+        -: 2452:		bool has_name;
+        -: 2453:		std::string text;
+        -: 2454:
+        -: 2455:		type_context_t() :
+        -: 2456:			is_const(false), is_typedef(false),
+        -: 2457:			has_type(false), has_name(false) {}
+        -: 2458:	};
+        -: 2459:
+        -: 2460:	// Types are resolved from right to left: we get the variable name first
+        -: 2461:	// and then all specifiers (like const or pointer) in a chain of DW_AT_type
+        -: 2462:	// DIEs. Call this function recursively until we get a complete type
+        -: 2463:	// string.
+        -: 2464:	static void set_parameter_string(
+        -: 2465:			dwarf_fileobject& fobj, Dwarf_Die die, type_context_t &context) {
+        -: 2466:		char *name;
+        -: 2467:		Dwarf_Error error = DW_DLE_NE;
+        -: 2468:
+        -: 2469:		// typedefs contain also the base type, so we skip it and only
+        -: 2470:		// print the typedef name
+        -: 2471:		if (!context.is_typedef) {
+        -: 2472:			if (dwarf_diename(die, &name, &error) == DW_DLV_OK) {
+        -: 2473:				if (!context.text.empty()) {
+        -: 2474:					context.text.insert(0, " ");
+        -: 2475:				}
+        -: 2476:				context.text.insert(0, std::string(name));
+        -: 2477:				dwarf_dealloc(fobj.dwarf_handle.get(), name, DW_DLA_STRING);
+        -: 2478:			}
+        -: 2479:		} else {
+        -: 2480:			context.is_typedef = false;
+        -: 2481:			context.has_type = true;
+        -: 2482:			if (context.is_const) {
+        -: 2483:				context.text.insert(0, "const ");
+        -: 2484:				context.is_const = false;
+        -: 2485:			}
+        -: 2486:		}
+        -: 2487:
+        -: 2488:		bool next_type_is_const = false;
+        -: 2489:		bool is_keyword = true;
+        -: 2490:
+        -: 2491:		Dwarf_Half tag = 0;
+        -: 2492:		Dwarf_Bool has_attr = 0;
+        -: 2493:		if (dwarf_tag(die, &tag, &error) == DW_DLV_OK) {
+        -: 2494:			switch(tag) {
+        -: 2495:			case DW_TAG_structure_type:
+        -: 2496:			case DW_TAG_union_type:
+        -: 2497:			case DW_TAG_class_type:
+        -: 2498:			case DW_TAG_enumeration_type:
+        -: 2499:				context.has_type = true;
+        -: 2500:				if (dwarf_hasattr(die, DW_AT_signature,
+        -: 2501:								  &has_attr, &error) == DW_DLV_OK) {
+        -: 2502:					// If we have a signature it means the type is defined
+        -: 2503:					// in .debug_types, so we need to load the DIE pointed
+        -: 2504:					// at by the signature and resolve it
+        -: 2505:					if (has_attr) {
+        -: 2506:						std::string type =
+        -: 2507:							get_type_by_signature(fobj.dwarf_handle.get(), die);
+        -: 2508:						if (context.is_const)
+        -: 2509:							type.insert(0, "const ");
+        -: 2510:
+        -: 2511:						if (!context.text.empty())
+        -: 2512:							context.text.insert(0, " ");
+        -: 2513:						context.text.insert(0, type);
+        -: 2514:					}
+        -: 2515:
+        -: 2516:					// Treat enums like typedefs, and skip printing its
+        -: 2517:					// base type
+        -: 2518:					context.is_typedef = (tag == DW_TAG_enumeration_type);
+        -: 2519:				}
+        -: 2520:				break;
+        -: 2521:			case DW_TAG_const_type:
+        -: 2522:				next_type_is_const = true;
+        -: 2523:				break;
+        -: 2524:			case DW_TAG_pointer_type:
+        -: 2525:				context.text.insert(0, "*");
+        -: 2526:				break;
+        -: 2527:			case DW_TAG_reference_type:
+        -: 2528:				context.text.insert(0, "&");
+        -: 2529:				break;
+        -: 2530:			case DW_TAG_restrict_type:
+        -: 2531:				context.text.insert(0, "restrict ");
+        -: 2532:				break;
+        -: 2533:			case DW_TAG_rvalue_reference_type:
+        -: 2534:				context.text.insert(0, "&&");
+        -: 2535:				break;
+        -: 2536:			case DW_TAG_volatile_type:
+        -: 2537:				context.text.insert(0, "volatile ");
+        -: 2538:				break;
+        -: 2539:			case DW_TAG_typedef:
+        -: 2540:				// Propagate the const-ness to the next type
+        -: 2541:				// as typedefs are linked to its base type
+        -: 2542:				next_type_is_const = context.is_const;
+        -: 2543:				context.is_typedef = true;
+        -: 2544:				context.has_type = true;
+        -: 2545:				break;
+        -: 2546:			case DW_TAG_base_type:
+        -: 2547:				context.has_type = true;
+        -: 2548:				break;
+        -: 2549:			case DW_TAG_formal_parameter:
+        -: 2550:				context.has_name = true;
+        -: 2551:				break;
+        -: 2552:			default:
+        -: 2553:				is_keyword = false;
+        -: 2554:				break;
+        -: 2555:			}
+        -: 2556:		}
+        -: 2557:
+        -: 2558:		if (!is_keyword && context.is_const) {
+        -: 2559:			context.text.insert(0, "const ");
+        -: 2560:		}
+        -: 2561:
+        -: 2562:		context.is_const = next_type_is_const;
+        -: 2563:
+        -: 2564:		Dwarf_Die ref = get_referenced_die(fobj.dwarf_handle.get(), die, DW_AT_type, true);
+        -: 2565:		if (ref) {
+        -: 2566:			set_parameter_string(fobj, ref, context);
+        -: 2567:			dwarf_dealloc(fobj.dwarf_handle.get(), ref, DW_DLA_DIE);
+        -: 2568:		}
+        -: 2569:
+        -: 2570:		if (!context.has_type && context.has_name) {
+        -: 2571:			context.text.insert(0, "void ");
+        -: 2572:			context.has_type = true;
+        -: 2573:		}
+        -: 2574:	}
+        -: 2575:
+        -: 2576:	// Resolve the function return type and parameters
+        -: 2577:	static void set_function_parameters(std::string& function_name,
+        -: 2578:										std::vector<std::string>& ns,
+        -: 2579:										dwarf_fileobject& fobj, Dwarf_Die die) {
+        -: 2580:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2581:		Dwarf_Error error = DW_DLE_NE;
+        -: 2582:		Dwarf_Die current_die = 0;
+        -: 2583:		std::string parameters;
+        -: 2584:		bool has_spec = true;
+        -: 2585:		// Check if we have a spec DIE. If we do we use it as it contains
+        -: 2586:		// more information, like parameter names.
+        -: 2587:		Dwarf_Die spec_die = get_spec_die(fobj, die);
+        -: 2588:		if (!spec_die) {
+        -: 2589:			has_spec = false;
+        -: 2590:			spec_die = die;
+        -: 2591:		}
+        -: 2592:
+        -: 2593:		std::vector<std::string>::const_iterator it = ns.begin();
+        -: 2594:		std::string ns_name;
+        -: 2595:		for (it = ns.begin(); it < ns.end(); ++it) {
+        -: 2596:			ns_name.append(*it).append("::");
+        -: 2597:		}
+        -: 2598:
+        -: 2599:		if (!ns_name.empty()) {
+        -: 2600:			function_name.insert(0, ns_name);
+        -: 2601:		}
+        -: 2602:
+        -: 2603:		// See if we have a function return type. It can be either on the
+        -: 2604:		// current die or in its spec one (usually true for inlined functions)
+        -: 2605:		std::string return_type =
+        -: 2606:				get_referenced_die_name(dwarf, die, DW_AT_type, true);
+        -: 2607:		if (return_type.empty()) {
+        -: 2608:			return_type =
+        -: 2609:				get_referenced_die_name(dwarf, spec_die, DW_AT_type, true);
+        -: 2610:		}
+        -: 2611:		if (!return_type.empty()) {
+        -: 2612:			return_type.append(" ");
+        -: 2613:			function_name.insert(0, return_type);
+        -: 2614:		}
+        -: 2615:
+        -: 2616:		if (dwarf_child(spec_die, &current_die, &error) == DW_DLV_OK) {
+        -: 2617:			for(;;) {
+        -: 2618:				Dwarf_Die sibling_die = 0;
+        -: 2619:
+        -: 2620:				Dwarf_Half tag_value;
+        -: 2621:				dwarf_tag(current_die, &tag_value, &error);
+        -: 2622:
+        -: 2623:				if (tag_value == DW_TAG_formal_parameter) {
+        -: 2624:					// Ignore artificial (ie, compiler generated) parameters
+        -: 2625:					bool is_artificial = false;
+        -: 2626:					Dwarf_Attribute attr_mem;
+        -: 2627:					if (dwarf_attr(
+        -: 2628:							current_die, DW_AT_artificial, &attr_mem, &error)
+        -: 2629:							== DW_DLV_OK) {
+        -: 2630:						Dwarf_Bool flag = 0;
+        -: 2631:						if (dwarf_formflag(attr_mem, &flag, &error)
+        -: 2632:								== DW_DLV_OK) {
+        -: 2633:							is_artificial = flag != 0;
+        -: 2634:						}
+        -: 2635:						dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2636:					}
+        -: 2637:
+        -: 2638:					if (!is_artificial) {
+        -: 2639:						type_context_t context;
+        -: 2640:						set_parameter_string(fobj, current_die, context);
+        -: 2641:
+        -: 2642:						if (parameters.empty()) {
+        -: 2643:							parameters.append("(");
+        -: 2644:						} else {
+        -: 2645:							parameters.append(", ");
+        -: 2646:						}
+        -: 2647:						parameters.append(context.text);
+        -: 2648:					}
+        -: 2649:				}
+        -: 2650:
+        -: 2651:				int result = dwarf_siblingof(
+        -: 2652:						dwarf, current_die, &sibling_die, &error);
+        -: 2653:				if (result == DW_DLV_ERROR) {
+        -: 2654:					break;
+        -: 2655:				} else if (result == DW_DLV_NO_ENTRY) {
+        -: 2656:					break;
+        -: 2657:				}
+        -: 2658:
+        -: 2659:				if (current_die != die) {
+        -: 2660:					dwarf_dealloc(dwarf, current_die, DW_DLA_DIE);
+        -: 2661:					current_die = 0;
+        -: 2662:				}
+        -: 2663:
+        -: 2664:				current_die = sibling_die;
+        -: 2665:			}
+        -: 2666:		}
+        -: 2667:		if (parameters.empty())
+        -: 2668:			parameters = "(";
+        -: 2669:		parameters.append(")");
+        -: 2670:
+        -: 2671:		// If we got a spec DIE we need to deallocate it
+        -: 2672:		if (has_spec)
+        -: 2673:			dwarf_dealloc(dwarf, spec_die, DW_DLA_DIE);
+        -: 2674:
+        -: 2675:		function_name.append(parameters);
+        -: 2676:	}
+        -: 2677:
+        -: 2678:	// defined here because in C++98, template function cannot take locally
+        -: 2679:	// defined types... grrr.
+        -: 2680:	struct inliners_search_cb {
+        -: 2681:		void operator()(Dwarf_Die die, std::vector<std::string>& ns) {
+        -: 2682:			Dwarf_Error error = DW_DLE_NE;
+        -: 2683:			Dwarf_Half tag_value;
+        -: 2684:			Dwarf_Attribute attr_mem;
+        -: 2685:			Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2686:
+        -: 2687:			dwarf_tag(die, &tag_value, &error);
+        -: 2688:
+        -: 2689:			switch (tag_value) {
+        -: 2690:				char* name;
+        -: 2691:				case DW_TAG_subprogram:
+        -: 2692:					if (!trace.source.function.empty())
+        -: 2693:						break;
+        -: 2694:					if (dwarf_diename(die, &name, &error) == DW_DLV_OK) {
+        -: 2695:						trace.source.function = std::string(name);
+        -: 2696:						dwarf_dealloc(dwarf, name, DW_DLA_STRING);
+        -: 2697:					} else {
+        -: 2698:						// We don't have a function name in this DIE.
+        -: 2699:						// Check if there is a referenced non-defining
+        -: 2700:						// declaration.
+        -: 2701:						trace.source.function = get_referenced_die_name(
+        -: 2702:								dwarf, die, DW_AT_abstract_origin, true);
+        -: 2703:						if (trace.source.function.empty()) {
+        -: 2704:							trace.source.function = get_referenced_die_name(
+        -: 2705:									dwarf, die, DW_AT_specification, true);
+        -: 2706:						}
+        -: 2707:					}
+        -: 2708:
+        -: 2709:					// Append the function parameters, if available
+        -: 2710:					set_function_parameters(
+        -: 2711:							trace.source.function, ns, fobj, die);
+        -: 2712:
+        -: 2713:					// If the object function name is empty, it's possible that
+        -: 2714:					// there is no dynamic symbol table (maybe the executable
+        -: 2715:					// was stripped or not built with -rdynamic). See if we have
+        -: 2716:					// a DWARF linkage name to use instead. We try both
+        -: 2717:					// linkage_name and MIPS_linkage_name because the MIPS tag
+        -: 2718:					// was the unofficial one until it was adopted in DWARF4.
+        -: 2719:					// Old gcc versions generate MIPS_linkage_name
+        -: 2720:					if (trace.object_function.empty()) {
+        -: 2721:						details::demangler demangler;
+        -: 2722:
+        -: 2723:						if (dwarf_attr(die, DW_AT_linkage_name,
+        -: 2724:								&attr_mem, &error) != DW_DLV_OK) {
+        -: 2725:							if (dwarf_attr(die, DW_AT_MIPS_linkage_name,
+        -: 2726:									&attr_mem, &error) != DW_DLV_OK) {
+        -: 2727:								break;
+        -: 2728:							}
+        -: 2729:						}
+        -: 2730:
+        -: 2731:						char* linkage;
+        -: 2732:						if (dwarf_formstring(attr_mem, &linkage, &error)
+        -: 2733:								== DW_DLV_OK) {
+        -: 2734:							trace.object_function = demangler.demangle(linkage);
+        -: 2735:							dwarf_dealloc(dwarf, linkage, DW_DLA_STRING);
+        -: 2736:						}
+        -: 2737:						dwarf_dealloc(dwarf, name, DW_DLA_ATTR);
+        -: 2738:					}
+        -: 2739:					break;
+        -: 2740:
+        -: 2741:				case DW_TAG_inlined_subroutine:
+        -: 2742:					ResolvedTrace::SourceLoc sloc;
+        -: 2743:
+        -: 2744:					if (dwarf_diename(die, &name, &error) == DW_DLV_OK) {
+        -: 2745:						sloc.function = std::string(name);
+        -: 2746:						dwarf_dealloc(dwarf, name, DW_DLA_STRING);
+        -: 2747:					} else {
+        -: 2748:						// We don't have a name for this inlined DIE, it could
+        -: 2749:						// be that there is an abstract origin instead.
+        -: 2750:						// Get the DW_AT_abstract_origin value, which is a
+        -: 2751:						// reference to the source DIE and try to get its name
+        -: 2752:						sloc.function = get_referenced_die_name(
+        -: 2753:								dwarf, die, DW_AT_abstract_origin, true);
+        -: 2754:					}
+        -: 2755:
+        -: 2756:					set_function_parameters(sloc.function, ns, fobj, die);
+        -: 2757:
+        -: 2758:					std::string file = die_call_file(dwarf, die, cu_die);
+        -: 2759:					if (!file.empty())
+        -: 2760:						sloc.filename = file;
+        -: 2761:
+        -: 2762:					Dwarf_Unsigned number = 0;
+        -: 2763:					if (dwarf_attr(die, DW_AT_call_line, &attr_mem, &error)
+        -: 2764:							== DW_DLV_OK) {
+        -: 2765:						if (dwarf_formudata(attr_mem, &number, &error)
+        -: 2766:								== DW_DLV_OK) {
+        -: 2767:							sloc.line = number;
+        -: 2768:						}
+        -: 2769:						dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2770:					}
+        -: 2771:
+        -: 2772:					if (dwarf_attr(die, DW_AT_call_column, &attr_mem, &error)
+        -: 2773:							== DW_DLV_OK) {
+        -: 2774:						if (dwarf_formudata(attr_mem, &number, &error)
+        -: 2775:								== DW_DLV_OK) {
+        -: 2776:							sloc.col = number;
+        -: 2777:						}
+        -: 2778:						dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2779:					}
+        -: 2780:
+        -: 2781:					trace.inliners.push_back(sloc);
+        -: 2782:					break;
+        -: 2783:			};
+        -: 2784:		}
+        -: 2785:		ResolvedTrace& trace;
+        -: 2786:		dwarf_fileobject& fobj;
+        -: 2787:		Dwarf_Die cu_die;
+        -: 2788:		inliners_search_cb(ResolvedTrace& t, dwarf_fileobject& f, Dwarf_Die c)
+        -: 2789:			: trace(t), fobj(f), cu_die(c) {}
+        -: 2790:	};
+        -: 2791:
+        -: 2792:	static Dwarf_Die find_fundie_by_pc(dwarf_fileobject& fobj,
+        -: 2793:					Dwarf_Die parent_die, Dwarf_Addr pc, Dwarf_Die result) {
+        -: 2794:		Dwarf_Die current_die = 0;
+        -: 2795:		Dwarf_Error error = DW_DLE_NE;
+        -: 2796:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2797:
+        -: 2798:		if (dwarf_child(parent_die, &current_die, &error) != DW_DLV_OK) {
+        -: 2799:			return NULL;
+        -: 2800:		}
+        -: 2801:
+        -: 2802:		for(;;) {
+        -: 2803:			Dwarf_Die sibling_die = 0;
+        -: 2804:			Dwarf_Half tag_value;
+        -: 2805:			dwarf_tag(current_die, &tag_value, &error);
+        -: 2806:
+        -: 2807:			switch (tag_value) {
+        -: 2808:				case DW_TAG_subprogram:
+        -: 2809:				case DW_TAG_inlined_subroutine:
+        -: 2810:					if (die_has_pc(fobj, current_die, pc)) {
+        -: 2811:						return current_die;
+        -: 2812:					}
+        -: 2813:			};
+        -: 2814:			bool declaration = false;
+        -: 2815:			Dwarf_Attribute attr_mem;
+        -: 2816:			if (dwarf_attr(current_die, DW_AT_declaration, &attr_mem, &error)
+        -: 2817:					== DW_DLV_OK) {
+        -: 2818:				Dwarf_Bool flag = 0;
+        -: 2819:				if (dwarf_formflag(attr_mem, &flag, &error) == DW_DLV_OK) {
+        -: 2820:					declaration = flag != 0;
+        -: 2821:				}
+        -: 2822:				dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2823:			}
+        -: 2824:
+        -: 2825:			if (!declaration) {
+        -: 2826:				// let's be curious and look deeper in the tree, functions are
+        -: 2827:				// not necessarily at the first level, but might be nested
+        -: 2828:				// inside a namespace, structure, a function, an inlined
+        -: 2829:				// function etc.
+        -: 2830:				Dwarf_Die die_mem = 0;
+        -: 2831:				Dwarf_Die indie = find_fundie_by_pc(
+        -: 2832:						fobj, current_die, pc, die_mem);
+        -: 2833:				if (indie) {
+        -: 2834:					result = die_mem;
+        -: 2835:					return result;
+        -: 2836:				}
+        -: 2837:			}
+        -: 2838:
+        -: 2839:			int res = dwarf_siblingof(
+        -: 2840:					dwarf, current_die, &sibling_die, &error);
+        -: 2841:			if (res == DW_DLV_ERROR) {
+        -: 2842:				return NULL;
+        -: 2843:			} else if (res == DW_DLV_NO_ENTRY) {
+        -: 2844:				break;
+        -: 2845:			}
+        -: 2846:
+        -: 2847:			if (current_die != parent_die) {
+        -: 2848:				dwarf_dealloc(dwarf, current_die, DW_DLA_DIE);
+        -: 2849:				current_die = 0;
+        -: 2850:			}
+        -: 2851:
+        -: 2852:			current_die = sibling_die;
+        -: 2853:		}
+        -: 2854:		return NULL;
+        -: 2855:	}
+        -: 2856:
+        -: 2857:	template <typename CB>
+        -: 2858:		static bool deep_first_search_by_pc(dwarf_fileobject& fobj,
+        -: 2859:						Dwarf_Die parent_die, Dwarf_Addr pc,
+        -: 2860:						std::vector<std::string>& ns, CB cb) {
+        -: 2861:		Dwarf_Die current_die = 0;
+        -: 2862:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2863:		Dwarf_Error error = DW_DLE_NE;
+        -: 2864:
+        -: 2865:		if (dwarf_child(parent_die, &current_die, &error) != DW_DLV_OK) {
+        -: 2866:			return false;
+        -: 2867:		}
+        -: 2868:
+        -: 2869:		bool branch_has_pc = false;
+        -: 2870:		bool has_namespace = false;
+        -: 2871:		for(;;) {
+        -: 2872:			Dwarf_Die sibling_die = 0;
+        -: 2873:
+        -: 2874:			Dwarf_Half tag;
+        -: 2875:			if (dwarf_tag(current_die, &tag, &error) == DW_DLV_OK) {
+        -: 2876:				if (tag == DW_TAG_namespace || tag == DW_TAG_class_type) {
+        -: 2877:					char* ns_name = NULL;
+        -: 2878:					if (dwarf_diename(current_die, &ns_name, &error)
+        -: 2879:							== DW_DLV_OK) {
+        -: 2880:						if (ns_name) {
+        -: 2881:							ns.push_back(std::string(ns_name));
+        -: 2882:						} else {
+        -: 2883:							ns.push_back("<unknown>");
+        -: 2884:						}
+        -: 2885:						dwarf_dealloc(dwarf, ns_name,  DW_DLA_STRING);
+        -: 2886:					} else {
+        -: 2887:						ns.push_back("<unknown>");
+        -: 2888:					}
+        -: 2889:					has_namespace = true;
+        -: 2890:				}
+        -: 2891:			}
+        -: 2892:
+        -: 2893:			bool declaration = false;
+        -: 2894:			Dwarf_Attribute attr_mem;
+        -: 2895:			if (tag != DW_TAG_class_type &&
+        -: 2896:				dwarf_attr(current_die, DW_AT_declaration, &attr_mem, &error)
+        -: 2897:					== DW_DLV_OK) {
+        -: 2898:				Dwarf_Bool flag = 0;
+        -: 2899:				if (dwarf_formflag(attr_mem, &flag, &error) == DW_DLV_OK) {
+        -: 2900:					declaration = flag != 0;
+        -: 2901:				}
+        -: 2902:				dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2903:			}
+        -: 2904:
+        -: 2905:			if (!declaration) {
+        -: 2906:				// let's be curious and look deeper in the tree, function are
+        -: 2907:				// not necessarily at the first level, but might be nested
+        -: 2908:				// inside a namespace, structure, a function, an inlined
+        -: 2909:				// function etc.
+        -: 2910:				branch_has_pc = deep_first_search_by_pc(
+        -: 2911:												fobj, current_die, pc, ns, cb);
+        -: 2912:			}
+        -: 2913:
+        -: 2914:			if (!branch_has_pc) {
+        -: 2915:				branch_has_pc = die_has_pc(fobj, current_die, pc);
+        -: 2916:			}
+        -: 2917:
+        -: 2918:			if (branch_has_pc) {
+        -: 2919:				cb(current_die, ns);
+        -: 2920:			}
+        -: 2921:
+        -: 2922:			int result = dwarf_siblingof(
+        -: 2923:					dwarf, current_die, &sibling_die, &error);
+        -: 2924:			if (result == DW_DLV_ERROR) {
+        -: 2925:				return false;
+        -: 2926:			} else if (result == DW_DLV_NO_ENTRY) {
+        -: 2927:				break;
+        -: 2928:			}
+        -: 2929:
+        -: 2930:			if (current_die != parent_die) {
+        -: 2931:				dwarf_dealloc(dwarf, current_die, DW_DLA_DIE);
+        -: 2932:				current_die = 0;
+        -: 2933:			}
+        -: 2934:
+        -: 2935:			if (has_namespace) {
+        -: 2936:				has_namespace = false;
+        -: 2937:				ns.pop_back();
+        -: 2938:			}
+        -: 2939:			current_die = sibling_die;
+        -: 2940:		}
+        -: 2941:
+        -: 2942:		if (has_namespace) {
+        -: 2943:			ns.pop_back();
+        -: 2944:		}
+        -: 2945:		return branch_has_pc;
+        -: 2946:	}
+        -: 2947:
+        -: 2948:	static std::string die_call_file(
+        -: 2949:			Dwarf_Debug dwarf, Dwarf_Die die, Dwarf_Die cu_die) {
+        -: 2950:		Dwarf_Attribute attr_mem;
+        -: 2951:		Dwarf_Error error = DW_DLE_NE;
+        -: 2952:		Dwarf_Signed file_index;
+        -: 2953:
+        -: 2954:		std::string file;
+        -: 2955:
+        -: 2956:		if (dwarf_attr(die, DW_AT_call_file, &attr_mem, &error) == DW_DLV_OK) {
+        -: 2957:			if (dwarf_formsdata(attr_mem, &file_index, &error) != DW_DLV_OK) {
+        -: 2958:				file_index = 0;
+        -: 2959:			}
+        -: 2960:			dwarf_dealloc(dwarf, attr_mem, DW_DLA_ATTR);
+        -: 2961:
+        -: 2962:			if (file_index == 0) {
+        -: 2963:				return file;
+        -: 2964:			}
+        -: 2965:
+        -: 2966:			char **srcfiles = 0;
+        -: 2967:			Dwarf_Signed file_count = 0;
+        -: 2968:			if (dwarf_srcfiles(cu_die, &srcfiles, &file_count, &error)
+        -: 2969:					== DW_DLV_OK) {
+        -: 2970:				if (file_index <= file_count)
+        -: 2971:					file = std::string(srcfiles[file_index - 1]);
+        -: 2972:
+        -: 2973:				// Deallocate all strings!
+        -: 2974:				for (int i = 0; i < file_count; ++i) {
+        -: 2975:					dwarf_dealloc(dwarf, srcfiles[i], DW_DLA_STRING);
+        -: 2976:				}
+        -: 2977:				dwarf_dealloc(dwarf, srcfiles, DW_DLA_LIST);
+        -: 2978:			}
+        -: 2979:		}
+        -: 2980:		return file;
+        -: 2981:	}
+        -: 2982:
+        -: 2983:
+        -: 2984:	Dwarf_Die find_die(dwarf_fileobject& fobj, Dwarf_Addr addr)
+        -: 2985:	{
+        -: 2986:		// Let's get to work! First see if we have a debug_aranges section so
+        -: 2987:		// we can speed up the search
+        -: 2988:
+        -: 2989:		Dwarf_Debug dwarf = fobj.dwarf_handle.get();
+        -: 2990:		Dwarf_Error error = DW_DLE_NE;
+        -: 2991:		Dwarf_Arange *aranges;
+        -: 2992:		Dwarf_Signed arange_count;
+        -: 2993:
+        -: 2994:		Dwarf_Die returnDie;
+        -: 2995:		bool found = false;
+        -: 2996:		if (dwarf_get_aranges(
+        -: 2997:				dwarf, &aranges, &arange_count, &error) != DW_DLV_OK) {
+        -: 2998:			aranges = NULL;
+        -: 2999:		}
+        -: 3000:
+        -: 3001:		if (aranges) {
+        -: 3002:			// We have aranges. Get the one where our address is.
+        -: 3003:			Dwarf_Arange arange;
+        -: 3004:			if (dwarf_get_arange(
+        -: 3005:					aranges, arange_count, addr, &arange, &error)
+        -: 3006:						== DW_DLV_OK) {
+        -: 3007:
+        -: 3008:				// We found our address. Get the compilation-unit DIE offset
+        -: 3009:				// represented by the given address range.
+        -: 3010:				Dwarf_Off cu_die_offset;
+        -: 3011:				if (dwarf_get_cu_die_offset(arange, &cu_die_offset, &error)
+        -: 3012:						== DW_DLV_OK) {
+        -: 3013:					// Get the DIE at the offset returned by the aranges search.
+        -: 3014:					// We set is_info to 1 to specify that the offset is from
+        -: 3015:					// the .debug_info section (and not .debug_types)
+        -: 3016:					int dwarf_result = dwarf_offdie_b(
+        -: 3017:							dwarf, cu_die_offset, 1, &returnDie, &error);
+        -: 3018:
+        -: 3019:					found = dwarf_result == DW_DLV_OK;
+        -: 3020:				}
+        -: 3021:				dwarf_dealloc(dwarf, arange, DW_DLA_ARANGE);
+        -: 3022:			}
+        -: 3023:		}
+        -: 3024:
+        -: 3025:		if (found)
+        -: 3026:			return returnDie; // The caller is responsible for freeing the die
+        -: 3027:
+        -: 3028:		// The search for aranges failed. Try to find our address by scanning
+        -: 3029:		// all compilation units.
+        -: 3030:		Dwarf_Unsigned next_cu_header;
+        -: 3031:		while (dwarf_next_cu_header_d(dwarf, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        -: 3032:				&next_cu_header, 0, &error) == DW_DLV_OK) {
+        -: 3033:			if (dwarf_siblingof(dwarf, 0, &returnDie, &error) == DW_DLV_OK) {
+        -: 3034:				if (die_has_pc(fobj, returnDie, addr)) {
+        -: 3035:					found = true;
+        -: 3036:					break;
+        -: 3037:				}
+        -: 3038:				dwarf_dealloc(dwarf, returnDie, DW_DLA_DIE);
+        -: 3039:			}
+        -: 3040:		}
+        -: 3041:
+        -: 3042:		while (dwarf_next_cu_header_d(dwarf, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        -: 3043:				&next_cu_header, 0, &error) == DW_DLV_OK) {
+        -: 3044:			// Reset the cu header state. Unfortunately, libdwarf's
+        -: 3045:			// next_cu_header API keeps its own iterator per Dwarf_Debug that
+        -: 3046:			// can't be reset. We need to keep fetching elements until the end.
+        -: 3047:		}
+        -: 3048:
+        -: 3049:		if (found)
+        -: 3050:			return returnDie;
+        -: 3051:
+        -: 3052:
+        -: 3053:		// We couldn't find any compilation units with ranges or a high/low pc.
+        -: 3054:		// Try again by looking at all DIEs in all compilation units.
+        -: 3055:		Dwarf_Die cudie;
+        -: 3056:		while (dwarf_next_cu_header_d(dwarf, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        -: 3057:				&next_cu_header, 0, &error) == DW_DLV_OK) {
+        -: 3058:			if (dwarf_siblingof(dwarf, 0, &cudie, &error) == DW_DLV_OK) {
+        -: 3059:				Dwarf_Die die_mem = 0;
+        -: 3060:				Dwarf_Die resultDie = find_fundie_by_pc(
+        -: 3061:						fobj, cudie, addr, die_mem);
+        -: 3062:
+        -: 3063:				if (resultDie) {
+        -: 3064:					found = true;
+        -: 3065:					break;
+        -: 3066:				}
+        -: 3067:			}
+        -: 3068:		}
+        -: 3069:
+        -: 3070:		while (dwarf_next_cu_header_d(dwarf, 1, 0, 0, 0, 0, 0, 0, 0, 0,
+        -: 3071:				&next_cu_header, 0, &error) == DW_DLV_OK) {
+        -: 3072:			// Reset the cu header state. Unfortunately, libdwarf's
+        -: 3073:			// next_cu_header API keeps its own iterator per Dwarf_Debug that
+        -: 3074:			// can't be reset. We need to keep fetching elements until the end.
+        -: 3075:		}
+        -: 3076:
+        -: 3077:		if (found)
+        -: 3078:			return cudie;
+        -: 3079:
+        -: 3080:		// We failed.
+        -: 3081:		return NULL;
+        -: 3082:	}
+        -: 3083:};
+        -: 3084:#endif // BACKWARD_HAS_DWARF == 1
+        -: 3085:
+        -: 3086:template<>
+        -: 3087:class TraceResolverImpl<system_tag::linux_tag>:
+        -: 3088:	public TraceResolverLinuxImpl<trace_resolver_tag::current> {};
+        -: 3089:
+        -: 3090:#endif // BACKWARD_SYSTEM_LINUX
+        -: 3091:
+        -: 3092:#ifdef BACKWARD_SYSTEM_DARWIN
+        -: 3093:
+        -: 3094:template <typename STACKTRACE_TAG>
+        -: 3095:class TraceResolverDarwinImpl;
+        -: 3096:
+        -: 3097:template <>
+        -: 3098:class TraceResolverDarwinImpl<trace_resolver_tag::backtrace_symbol>:
+        -: 3099:	public TraceResolverImplBase {
+        -: 3100:public:
+        -: 3101:	template <class ST>
+        -: 3102:		void load_stacktrace(ST& st) {
+        -: 3103:			using namespace details;
+        -: 3104:			if (st.size() == 0) {
+        -: 3105:				return;
+        -: 3106:			}
+        -: 3107:			_symbols.reset(
+        -: 3108:					backtrace_symbols(st.begin(), st.size())
+        -: 3109:					);
+        -: 3110:		}
+        -: 3111:
+        -: 3112:	ResolvedTrace resolve(ResolvedTrace trace) {
+        -: 3113:		// parse:
+        -: 3114:		// <n>  <file>  <addr>  <mangled-name> + <offset>
+        -: 3115:		char* filename = _symbols[trace.idx];
+        -: 3116:
+        -: 3117:		// skip "<n>  "
+        -: 3118:		while(*filename && *filename != ' ') filename++;
+        -: 3119:		while(*filename == ' ') filename++;
+        -: 3120:
+        -: 3121:		// find start of <mangled-name> from end (<file> may contain a space)
+        -: 3122:		char* p = filename + strlen(filename) - 1;
+        -: 3123:		// skip to start of " + <offset>"
+        -: 3124:		while(p > filename && *p != ' ') p--;
+        -: 3125:		while(p > filename && *p == ' ') p--;
+        -: 3126:		while(p > filename && *p != ' ') p--;
+        -: 3127:		while(p > filename && *p == ' ') p--;
+        -: 3128:		char *funcname_end = p + 1;
+        -: 3129:
+        -: 3130:		// skip to start of "<manged-name>"
+        -: 3131:		while(p > filename && *p != ' ') p--;
+        -: 3132:		char *funcname = p + 1;
+        -: 3133:
+        -: 3134:		// skip to start of "  <addr>  "
+        -: 3135:		while(p > filename && *p == ' ') p--;
+        -: 3136:		while(p > filename && *p != ' ') p--;
+        -: 3137:		while(p > filename && *p == ' ') p--;
+        -: 3138:
+        -: 3139:		// skip "<file>", handling the case where it contains a
+        -: 3140:		char* filename_end = p + 1;
+        -: 3141:		if (p == filename) {
+        -: 3142:			// something went wrong, give up
+        -: 3143:			filename_end = filename + strlen(filename);
+        -: 3144:			funcname = filename_end;
+        -: 3145:		}
+        -: 3146:		trace.object_filename.assign(filename, filename_end); // ok even if filename_end is the ending \0 (then we assign entire string)
+        -: 3147:
+        -: 3148:		if (*funcname) { // if it's not end of string
+        -: 3149:			*funcname_end = '\0';
+        -: 3150:
+        -: 3151:			trace.object_function = this->demangle(funcname);
+        -: 3152:			trace.object_function += " ";
+        -: 3153:			trace.object_function += (funcname_end + 1);
+        -: 3154:			trace.source.function = trace.object_function; // we cannot do better.
+        -: 3155:		}
+        -: 3156:		return trace;
+        -: 3157:	}
+        -: 3158:
+        -: 3159:private:
+        -: 3160:	details::handle<char**> _symbols;
+        -: 3161:};
+        -: 3162:
+        -: 3163:template<>
+        -: 3164:class TraceResolverImpl<system_tag::darwin_tag>:
+        -: 3165:	public TraceResolverDarwinImpl<trace_resolver_tag::current> {};
+        -: 3166:
+        -: 3167:#endif // BACKWARD_SYSTEM_DARWIN
+        -: 3168:
+        -: 3169:class TraceResolver:
+        -: 3170:	public TraceResolverImpl<system_tag::current_tag> {};
+        -: 3171:
+        -: 3172:/*************** CODE SNIPPET ***************/
+        -: 3173:
+        -: 3174:class SourceFile {
+        -: 3175:public:
+        -: 3176:	typedef std::vector<std::pair<unsigned, std::string> > lines_t;
+        -: 3177:
+        -: 3178:	SourceFile() {}
+        -: 3179:	SourceFile(const std::string& path): _file(new std::ifstream(path.c_str())) {}
+        -: 3180:	bool is_open() const { return _file->is_open(); }
+        -: 3181:
+        -: 3182:	lines_t& get_lines(unsigned line_start, unsigned line_count, lines_t& lines) {
+        -: 3183:		using namespace std;
+        -: 3184:		// This function make uses of the dumbest algo ever:
+        -: 3185:		//	1) seek(0)
+        -: 3186:		//	2) read lines one by one and discard until line_start
+        -: 3187:		//	3) read line one by one until line_start + line_count
+        -: 3188:		//
+        -: 3189:		// If you are getting snippets many time from the same file, it is
+        -: 3190:		// somewhat a waste of CPU, feel free to benchmark and propose a
+        -: 3191:		// better solution ;)
+        -: 3192:
+        -: 3193:		_file->clear();
+        -: 3194:		_file->seekg(0);
+        -: 3195:		string line;
+        -: 3196:		unsigned line_idx;
+        -: 3197:
+        -: 3198:		for (line_idx = 1; line_idx < line_start; ++line_idx) {
+        -: 3199:			std::getline(*_file, line);
+        -: 3200:			if (!*_file) {
+        -: 3201:				return lines;
+        -: 3202:			}
+        -: 3203:		}
+        -: 3204:
+        -: 3205:		// think of it like a lambda in C++98 ;)
+        -: 3206:		// but look, I will reuse it two times!
+        -: 3207:		// What a good boy am I.
+        -: 3208:		struct isspace {
+        -: 3209:			bool operator()(char c) {
+        -: 3210:				return std::isspace(c);
+        -: 3211:			}
+        -: 3212:		};
+        -: 3213:
+        -: 3214:		bool started = false;
+        -: 3215:		for (; line_idx < line_start + line_count; ++line_idx) {
+        -: 3216:			getline(*_file, line);
+        -: 3217:			if (!*_file) {
+        -: 3218:				return lines;
+        -: 3219:			}
+        -: 3220:			if (!started) {
+        -: 3221:				if (std::find_if(line.begin(), line.end(),
+        -: 3222:							not_isspace()) == line.end())
+        -: 3223:					continue;
+        -: 3224:				started = true;
+        -: 3225:			}
+        -: 3226:			lines.push_back(make_pair(line_idx, line));
+        -: 3227:		}
+        -: 3228:
+        -: 3229:		lines.erase(
+        -: 3230:				std::find_if(lines.rbegin(), lines.rend(),
+        -: 3231:					not_isempty()).base(), lines.end()
+        -: 3232:				);
+        -: 3233:		return lines;
+        -: 3234:	}
+        -: 3235:
+        -: 3236:	lines_t get_lines(unsigned line_start, unsigned line_count) {
+        -: 3237:		lines_t lines;
+        -: 3238:		return get_lines(line_start, line_count, lines);
+        -: 3239:	}
+        -: 3240:
+        -: 3241:	// there is no find_if_not in C++98, lets do something crappy to
+        -: 3242:	// workaround.
+        -: 3243:	struct not_isspace {
+        -: 3244:		bool operator()(char c) {
+        -: 3245:			return !std::isspace(c);
+        -: 3246:		}
+        -: 3247:	};
+        -: 3248:	// and define this one here because C++98 is not happy with local defined
+        -: 3249:	// struct passed to template functions, fuuuu.
+        -: 3250:	struct not_isempty {
+        -: 3251:		bool operator()(const lines_t::value_type& p) {
+        -: 3252:			return !(std::find_if(p.second.begin(), p.second.end(),
+        -: 3253:						not_isspace()) == p.second.end());
+        -: 3254:		}
+        -: 3255:	};
+        -: 3256:
+        -: 3257:	void swap(SourceFile& b) {
+        -: 3258:		_file.swap(b._file);
+        -: 3259:	}
+        -: 3260:
+        -: 3261:#ifdef BACKWARD_ATLEAST_CXX11
+        -: 3262:	SourceFile(SourceFile&& from): _file(0) {
+        -: 3263:		swap(from);
+        -: 3264:	}
+        -: 3265:	SourceFile& operator=(SourceFile&& from) {
+        -: 3266:		swap(from); return *this;
+        -: 3267:	}
+        -: 3268:#else
+        -: 3269:	explicit SourceFile(const SourceFile& from) {
+        -: 3270:		// some sort of poor man's move semantic.
+        -: 3271:		swap(const_cast<SourceFile&>(from));
+        -: 3272:	}
+        -: 3273:	SourceFile& operator=(const SourceFile& from) {
+        -: 3274:		// some sort of poor man's move semantic.
+        -: 3275:		swap(const_cast<SourceFile&>(from)); return *this;
+        -: 3276:	}
+        -: 3277:#endif
+        -: 3278:
+        -: 3279:private:
+        -: 3280:	details::handle<std::ifstream*,
+        -: 3281:		details::default_delete<std::ifstream*>
+        -: 3282:			> _file;
+        -: 3283:
+        -: 3284:#ifdef BACKWARD_ATLEAST_CXX11
+        -: 3285:	SourceFile(const SourceFile&) = delete;
+        -: 3286:	SourceFile& operator=(const SourceFile&) = delete;
+        -: 3287:#endif
+        -: 3288:};
+        -: 3289:
+        -: 3290:class SnippetFactory {
+        -: 3291:public:
+        -: 3292:	typedef SourceFile::lines_t lines_t;
+        -: 3293:
+        -: 3294:	lines_t get_snippet(const std::string& filename,
+        -: 3295:			unsigned line_start, unsigned context_size) {
+        -: 3296:
+        -: 3297:		SourceFile& src_file = get_src_file(filename);
+        -: 3298:		unsigned start = line_start - context_size / 2;
+        -: 3299:		return src_file.get_lines(start, context_size);
+        -: 3300:	}
+        -: 3301:
+        -: 3302:	lines_t get_combined_snippet(
+        -: 3303:			const std::string& filename_a, unsigned line_a,
+        -: 3304:			const std::string& filename_b, unsigned line_b,
+        -: 3305:			unsigned context_size) {
+        -: 3306:		SourceFile& src_file_a = get_src_file(filename_a);
+        -: 3307:		SourceFile& src_file_b = get_src_file(filename_b);
+        -: 3308:
+        -: 3309:		lines_t lines = src_file_a.get_lines(line_a - context_size / 4,
+        -: 3310:				context_size / 2);
+        -: 3311:		src_file_b.get_lines(line_b - context_size / 4, context_size / 2,
+        -: 3312:				lines);
+        -: 3313:		return lines;
+        -: 3314:	}
+        -: 3315:
+        -: 3316:	lines_t get_coalesced_snippet(const std::string& filename,
+        -: 3317:			unsigned line_a, unsigned line_b, unsigned context_size) {
+        -: 3318:		SourceFile& src_file = get_src_file(filename);
+        -: 3319:
+        -: 3320:		using std::min; using std::max;
+        -: 3321:		unsigned a = min(line_a, line_b);
+        -: 3322:		unsigned b = max(line_a, line_b);
+        -: 3323:
+        -: 3324:		if ((b - a) < (context_size / 3)) {
+        -: 3325:			return src_file.get_lines((a + b - context_size + 1) / 2,
+        -: 3326:					context_size);
+        -: 3327:		}
+        -: 3328:
+        -: 3329:		lines_t lines = src_file.get_lines(a - context_size / 4,
+        -: 3330:				context_size / 2);
+        -: 3331:		src_file.get_lines(b - context_size / 4, context_size / 2, lines);
+        -: 3332:		return lines;
+        -: 3333:	}
+        -: 3334:
+        -: 3335:
+        -: 3336:private:
+        -: 3337:	typedef details::hashtable<std::string, SourceFile>::type src_files_t;
+        -: 3338:	src_files_t _src_files;
+        -: 3339:
+        -: 3340:	SourceFile& get_src_file(const std::string& filename) {
+        -: 3341:		src_files_t::iterator it = _src_files.find(filename);
+        -: 3342:		if (it != _src_files.end()) {
+        -: 3343:			return it->second;
+        -: 3344:		}
+        -: 3345:		SourceFile& new_src_file = _src_files[filename];
+        -: 3346:		new_src_file = SourceFile(filename);
+        -: 3347:		return new_src_file;
+        -: 3348:	}
+        -: 3349:};
+        -: 3350:
+        -: 3351:/*************** PRINTER ***************/
+        -: 3352:
+        -: 3353:namespace ColorMode {
+        -: 3354:	enum type {
+        -: 3355:		automatic,
+        -: 3356:		never,
+        -: 3357:		always
+        -: 3358:	};
+        -: 3359:}
+        -: 3360:
+        -: 3361:class cfile_streambuf: public std::streambuf {
+        -: 3362:public:
+        -: 3363:	cfile_streambuf(FILE *_sink): sink(_sink) {}
+        -: 3364:	int_type underflow() override { return traits_type::eof(); }
+        -: 3365:	int_type overflow(int_type ch) override {
+        -: 3366:		if (traits_type::not_eof(ch) && fwrite(&ch, sizeof ch, 1, sink) == 1) {
+        -: 3367:				return ch;
+        -: 3368:		}
+        -: 3369:		return traits_type::eof();
+        -: 3370:	}
+        -: 3371:
+        -: 3372:	std::streamsize xsputn(const char_type* s, std::streamsize count) override {
+        -: 3373:		return fwrite(s, sizeof *s, count, sink);
+        -: 3374:	}
+        -: 3375:
+        -: 3376:#ifdef BACKWARD_ATLEAST_CXX11
+        -: 3377:public:
+        -: 3378:	cfile_streambuf(const cfile_streambuf&) = delete;
+        -: 3379:	cfile_streambuf& operator=(const cfile_streambuf&) = delete;
+        -: 3380:#else
+        -: 3381:private:
+        -: 3382:	cfile_streambuf(const cfile_streambuf &);
+        -: 3383:	cfile_streambuf &operator= (const cfile_streambuf &);
+        -: 3384:#endif
+        -: 3385:
+        -: 3386:private:
+        -: 3387:	FILE *sink;
+        -: 3388:	std::vector<char> buffer;
+        -: 3389:};
+        -: 3390:
+        -: 3391:#ifdef BACKWARD_SYSTEM_LINUX
+        -: 3392:
+        -: 3393:namespace Color {
+        -: 3394:	enum type {
+        -: 3395:		yellow = 33,
+        -: 3396:		purple = 35,
+        -: 3397:		reset  = 39
+        -: 3398:	};
+        -: 3399:} // namespace Color
+        -: 3400:
+        -: 3401:class Colorize {
+        -: 3402:public:
+        -: 3403:	Colorize(std::ostream& os):
+        -: 3404:		_os(os), _reset(false), _enabled(false) {}
+        -: 3405:
+        -: 3406:	void activate(ColorMode::type mode) {
+        -: 3407:		_enabled = mode == ColorMode::always;
+        -: 3408:	}
+        -: 3409:
+        -: 3410:	void activate(ColorMode::type mode, FILE* fp) {
+        -: 3411:		activate(mode, fileno(fp));
+        -: 3412:	}
+        -: 3413:
+        -: 3414:	void set_color(Color::type ccode) {
+        -: 3415:		if (!_enabled) return;
+        -: 3416:
+        -: 3417:		// I assume that the terminal can handle basic colors. Seriously I
+        -: 3418:		// don't want to deal with all the termcap shit.
+        -: 3419:		_os << "\033[" << static_cast<int>(ccode) << "m";
+        -: 3420:		_reset = (ccode != Color::reset);
+        -: 3421:	}
+        -: 3422:
+        -: 3423:	~Colorize() {
+        -: 3424:		if (_reset) {
+        -: 3425:			set_color(Color::reset);
+        -: 3426:		}
+        -: 3427:	}
+        -: 3428:
+        -: 3429:private:
+        -: 3430:	void activate(ColorMode::type mode, int fd) {
+        -: 3431:		activate(mode == ColorMode::automatic && isatty(fd) ? ColorMode::always : mode);
+        -: 3432:	}
+        -: 3433:
+        -: 3434:	std::ostream& _os;
+        -: 3435:	bool          _reset;
+        -: 3436:	bool          _enabled;
+        -: 3437:};
+        -: 3438:
+        -: 3439:#else // ndef BACKWARD_SYSTEM_LINUX
+        -: 3440:
+        -: 3441:namespace Color {
+        -: 3442:	enum type {
+        -: 3443:		yellow = 0,
+        -: 3444:		purple = 0,
+        -: 3445:		reset  = 0
+        -: 3446:	};
+        -: 3447:} // namespace Color
+        -: 3448:
+        -: 3449:class Colorize {
+        -: 3450:public:
+        -: 3451:	Colorize(std::ostream&) {}
+        -: 3452:	void activate(ColorMode::type) {}
+        -: 3453:	void activate(ColorMode::type, FILE*) {}
+        -: 3454:	void set_color(Color::type) {}
+        -: 3455:};
+        -: 3456:
+        -: 3457:#endif // BACKWARD_SYSTEM_LINUX
+        -: 3458:
+        -: 3459:class Printer {
+        -: 3460:public:
+        -: 3461:
+        -: 3462:	bool snippet;
+        -: 3463:	ColorMode::type color_mode;
+        -: 3464:	bool address;
+        -: 3465:	bool object;
+        -: 3466:	int inliner_context_size;
+        -: 3467:	int trace_context_size;
+        -: 3468:
+        -: 3469:	Printer():
+        -: 3470:		snippet(true),
+        -: 3471:		color_mode(ColorMode::automatic),
+        -: 3472:		address(false),
+        -: 3473:		object(false),
+        -: 3474:		inliner_context_size(5),
+        -: 3475:		trace_context_size(7)
+        -: 3476:		{}
+        -: 3477:
+        -: 3478:	template <typename ST>
+        -: 3479:		FILE* print(ST& st, FILE* fp = stderr) {
+        -: 3480:			cfile_streambuf obuf(fp);
+        -: 3481:			std::ostream os(&obuf);
+        -: 3482:			Colorize colorize(os);
+        -: 3483:			colorize.activate(color_mode, fp);
+        -: 3484:			print_stacktrace(st, os, colorize);
+        -: 3485:			return fp;
+        -: 3486:		}
+        -: 3487:
+        -: 3488:	template <typename ST>
+        -: 3489:		std::ostream& print(ST& st, std::ostream& os) {
+        -: 3490:			Colorize colorize(os);
+        -: 3491:			colorize.activate(color_mode);
+        -: 3492:			print_stacktrace(st, os, colorize);
+        -: 3493:			return os;
+        -: 3494:		}
+        -: 3495:
+        -: 3496:	template <typename IT>
+        -: 3497:		FILE* print(IT begin, IT end, FILE* fp = stderr, size_t thread_id = 0) {
+        -: 3498:			cfile_streambuf obuf(fp);
+        -: 3499:			std::ostream os(&obuf);
+        -: 3500:			Colorize colorize(os);
+        -: 3501:			colorize.activate(color_mode, fp);
+        -: 3502:			print_stacktrace(begin, end, os, thread_id, colorize);
+        -: 3503:			return fp;
+        -: 3504:		}
+        -: 3505:
+        -: 3506:	template <typename IT>
+        -: 3507:		std::ostream& print(IT begin, IT end, std::ostream& os, size_t thread_id = 0) {
+        -: 3508:			Colorize colorize(os);
+        -: 3509:			colorize.activate(color_mode);
+        -: 3510:			print_stacktrace(begin, end, os, thread_id, colorize);
+        -: 3511:			return os;
+        -: 3512:		}
+        -: 3513:
+        -: 3514:private:
+        -: 3515:	TraceResolver  _resolver;
+        -: 3516:	SnippetFactory _snippets;
+        -: 3517:
+        -: 3518:	template <typename ST>
+        -: 3519:		void print_stacktrace(ST& st, std::ostream& os, Colorize& colorize) {
+        -: 3520:			print_header(os, st.thread_id());
+        -: 3521:			_resolver.load_stacktrace(st);
+        -: 3522:			for (size_t trace_idx = st.size(); trace_idx > 0; --trace_idx) {
+        -: 3523:				print_trace(os, _resolver.resolve(st[trace_idx-1]), colorize);
+        -: 3524:			}
+        -: 3525:		}
+        -: 3526:
+        -: 3527:	template <typename IT>
+        -: 3528:		void print_stacktrace(IT begin, IT end, std::ostream& os, size_t thread_id, Colorize& colorize) {
+        -: 3529:			print_header(os, thread_id);
+        -: 3530:			for (; begin != end; ++begin) {
+        -: 3531:				print_trace(os, *begin, colorize);
+        -: 3532:			}
+        -: 3533:		}
+        -: 3534:
+        -: 3535:	void print_header(std::ostream& os, size_t thread_id) {
+        -: 3536:		os << "Stack trace (most recent call last)";
+        -: 3537:		if (thread_id) {
+        -: 3538:			os << " in thread " << thread_id;
+        -: 3539:		}
+        -: 3540:		os << ":\n";
+        -: 3541:	}
+        -: 3542:
+        -: 3543:	void print_trace(std::ostream& os, const ResolvedTrace& trace,
+        -: 3544:			Colorize& colorize) {
+        -: 3545:		os << "#"
+        -: 3546:		   << std::left << std::setw(2) << trace.idx
+        -: 3547:		   << std::right;
+        -: 3548:		bool already_indented = true;
+        -: 3549:
+        -: 3550:		if (!trace.source.filename.size() || object) {
+        -: 3551:			os << "   Object \""
+        -: 3552:			   << trace.object_filename
+        -: 3553:			   << "\", at "
+        -: 3554:			   << trace.addr
+        -: 3555:			   << ", in "
+        -: 3556:			   << trace.object_function
+        -: 3557:			   << "\n";
+        -: 3558:			already_indented = false;
+        -: 3559:		}
+        -: 3560:
+        -: 3561:		for (size_t inliner_idx = trace.inliners.size();
+        -: 3562:				inliner_idx > 0; --inliner_idx) {
+        -: 3563:			if (!already_indented) {
+        -: 3564:				os << "   ";
+        -: 3565:			}
+        -: 3566:			const ResolvedTrace::SourceLoc& inliner_loc
+        -: 3567:				= trace.inliners[inliner_idx-1];
+        -: 3568:			print_source_loc(os, " | ", inliner_loc);
+        -: 3569:			if (snippet) {
+        -: 3570:				print_snippet(os, "    | ", inliner_loc,
+        -: 3571:						colorize, Color::purple, inliner_context_size);
+        -: 3572:			}
+        -: 3573:			already_indented = false;
+        -: 3574:		}
+        -: 3575:
+        -: 3576:		if (trace.source.filename.size()) {
+        -: 3577:			if (!already_indented) {
+        -: 3578:				os << "   ";
+        -: 3579:			}
+        -: 3580:			print_source_loc(os, "   ", trace.source, trace.addr);
+        -: 3581:			if (snippet) {
+        -: 3582:				print_snippet(os, "      ", trace.source,
+        -: 3583:						colorize, Color::yellow, trace_context_size);
+        -: 3584:			}
+        -: 3585:		}
+        -: 3586:	}
+        -: 3587:
+        -: 3588:	void print_snippet(std::ostream& os, const char* indent,
+        -: 3589:			const ResolvedTrace::SourceLoc& source_loc,
+        -: 3590:			Colorize& colorize, Color::type color_code,
+        -: 3591:			int context_size)
+        -: 3592:	{
+        -: 3593:		using namespace std;
+        -: 3594:		typedef SnippetFactory::lines_t lines_t;
+        -: 3595:
+        -: 3596:		lines_t lines = _snippets.get_snippet(source_loc.filename,
+        -: 3597:				source_loc.line, context_size);
+        -: 3598:
+        -: 3599:		for (lines_t::const_iterator it = lines.begin();
+        -: 3600:				it != lines.end(); ++it) {
+        -: 3601:			if (it-> first == source_loc.line) {
+        -: 3602:				colorize.set_color(color_code);
+        -: 3603:				os << indent << ">";
+        -: 3604:			} else {
+        -: 3605:				os << indent << " ";
+        -: 3606:			}
+        -: 3607:			os << std::setw(4) << it->first
+        -: 3608:			   << ": "
+        -: 3609:			   << it->second
+        -: 3610:			   << "\n";
+        -: 3611:			if (it-> first == source_loc.line) {
+        -: 3612:				colorize.set_color(Color::reset);
+        -: 3613:			}
+        -: 3614:		}
+        -: 3615:	}
+        -: 3616:
+        -: 3617:	void print_source_loc(std::ostream& os, const char* indent,
+        -: 3618:			const ResolvedTrace::SourceLoc& source_loc,
+        -: 3619:			void* addr=0) {
+        -: 3620:		os << indent
+        -: 3621:		   << "Source \""
+        -: 3622:		   << source_loc.filename
+        -: 3623:		   << "\", line "
+        -: 3624:		   << source_loc.line
+        -: 3625:		   << ", in "
+        -: 3626:		   << source_loc.function;
+        -: 3627:
+        -: 3628:		if (address && addr != 0) {
+        -: 3629:			os << " [" << addr << "]";
+        -: 3630:		}
+        -: 3631:		os << "\n";
+        -: 3632:	}
+        -: 3633:};
+        -: 3634:
+        -: 3635:/*************** SIGNALS HANDLING ***************/
+        -: 3636:
+        -: 3637:#if defined(BACKWARD_SYSTEM_LINUX) || defined(BACKWARD_SYSTEM_DARWIN)
+        -: 3638:
+        -: 3639:
+        -: 3640:class SignalHandling {
+        -: 3641:public:
+        -: 3642:   static std::vector<int> make_default_signals() {
+        -: 3643:       const int posix_signals[] = {
+        -: 3644:		// Signals for which the default action is "Core".
+        -: 3645:		SIGABRT,    // Abort signal from abort(3)
+        -: 3646:		SIGBUS,     // Bus error (bad memory access)
+        -: 3647:		SIGFPE,     // Floating point exception
+        -: 3648:		SIGILL,     // Illegal Instruction
+        -: 3649:		SIGIOT,     // IOT trap. A synonym for SIGABRT
+        -: 3650:		SIGQUIT,    // Quit from keyboard
+        -: 3651:		SIGSEGV,    // Invalid memory reference
+        -: 3652:		SIGSYS,     // Bad argument to routine (SVr4)
+        -: 3653:		SIGTRAP,    // Trace/breakpoint trap
+        -: 3654:		SIGXCPU,    // CPU time limit exceeded (4.2BSD)
+        -: 3655:		SIGXFSZ,    // File size limit exceeded (4.2BSD)
+        -: 3656:#if defined(BACKWARD_SYSTEM_DARWIN)
+        -: 3657:		SIGEMT,     // emulation instruction executed
+        -: 3658:#endif
+        -: 3659:	};
+        -: 3660:        return std::vector<int>(posix_signals, posix_signals + sizeof posix_signals / sizeof posix_signals[0] );
+        -: 3661:   }
+        -: 3662:
+        -: 3663:  SignalHandling(const std::vector<int>& posix_signals = make_default_signals()):
+        -: 3664:	  _loaded(false) {
+        -: 3665:		bool success = true;
+        -: 3666:
+        -: 3667:		const size_t stack_size = 1024 * 1024 * 8;
+        -: 3668:		_stack_content.reset((char*)malloc(stack_size));
+        -: 3669:		if (_stack_content) {
+        -: 3670:			stack_t ss;
+        -: 3671:			ss.ss_sp = _stack_content.get();
+        -: 3672:			ss.ss_size = stack_size;
+        -: 3673:			ss.ss_flags = 0;
+        -: 3674:			if (sigaltstack(&ss, 0) < 0) {
+        -: 3675:				success = false;
+        -: 3676:			}
+        -: 3677:		} else {
+        -: 3678:			success = false;
+        -: 3679:		}
+        -: 3680:
+        -: 3681:		for (size_t i = 0; i < posix_signals.size(); ++i) {
+        -: 3682:			struct sigaction action;
+        -: 3683:			memset(&action, 0, sizeof action);
+        -: 3684:			action.sa_flags = (SA_SIGINFO | SA_ONSTACK | SA_NODEFER |
+        -: 3685:					SA_RESETHAND);
+        -: 3686:			sigfillset(&action.sa_mask);
+        -: 3687:			sigdelset(&action.sa_mask, posix_signals[i]);
+        -: 3688:			action.sa_sigaction = &sig_handler;
+        -: 3689:
+        -: 3690:			int r = sigaction(posix_signals[i], &action, 0);
+        -: 3691:			if (r < 0) success = false;
+        -: 3692:		}
+        -: 3693:
+        -: 3694:		_loaded = success;
+        -: 3695:	}
+        -: 3696:
+        -: 3697:	bool loaded() const { return _loaded; }
+        -: 3698:
+        -: 3699:	static void handleSignal(int, siginfo_t* info, void* _ctx) {
+        -: 3700:		ucontext_t *uctx = (ucontext_t*) _ctx;
+        -: 3701:
+        -: 3702:		StackTrace st;
+        -: 3703:		void* error_addr = 0;
+        -: 3704:#ifdef REG_RIP // x86_64
+        -: 3705:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_RIP]);
+        -: 3706:#elif defined(REG_EIP) // x86_32
+        -: 3707:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.gregs[REG_EIP]);
+        -: 3708:#elif defined(__arm__)
+        -: 3709:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.arm_pc);
+        -: 3710:#elif defined(__aarch64__)
+        -: 3711:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.pc);
+        -: 3712:#elif defined(__ppc__) || defined(__powerpc) || defined(__powerpc__) || defined(__POWERPC__)
+        -: 3713:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.regs->nip);
+        -: 3714:#elif defined(__s390x__)
+        -: 3715:                error_addr = reinterpret_cast<void*>(uctx->uc_mcontext.psw.addr);
+        -: 3716:#elif defined(__APPLE__) && defined(__x86_64__)
+        -: 3717:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext->__ss.__rip);
+        -: 3718:#elif defined(__APPLE__)
+        -: 3719:		error_addr = reinterpret_cast<void*>(uctx->uc_mcontext->__ss.__eip);
+        -: 3720:#else
+        -: 3721:#	warning ":/ sorry, ain't know no nothing none not of your architecture!"
+        -: 3722:#endif
+        -: 3723:		if (error_addr) {
+        -: 3724:			st.load_from(error_addr, 32);
+        -: 3725:		} else {
+        -: 3726:			st.load_here(32);
+        -: 3727:		}
+        -: 3728:
+        -: 3729:		Printer printer;
+        -: 3730:		printer.address = true;
+        -: 3731:		printer.print(st, stderr);
+        -: 3732:
+        -: 3733:#if _XOPEN_SOURCE >= 700 || _POSIX_C_SOURCE >= 200809L
+        -: 3734:		psiginfo(info, 0);
+        -: 3735:#else
+        -: 3736:		(void)info;
+        -: 3737:#endif
+        -: 3738:	}
+        -: 3739:
+        -: 3740:private:
+        -: 3741:	details::handle<char*> _stack_content;
+        -: 3742:	bool                   _loaded;
+        -: 3743:
+        -: 3744:#ifdef __GNUC__
+        -: 3745:	__attribute__((noreturn))
+        -: 3746:#endif
+        -: 3747:	static void sig_handler(int signo, siginfo_t* info, void* _ctx) {
+        -: 3748:		handleSignal(signo, info, _ctx);
+        -: 3749:
+        -: 3750:		// try to forward the signal.
+        -: 3751:		raise(info->si_signo);
+        -: 3752:
+        -: 3753:		// terminate the process immediately.
+        -: 3754:		puts("watf? exit");
+        -: 3755:		_exit(EXIT_FAILURE);
+        -: 3756:	}
+        -: 3757:};
+        -: 3758:
+        -: 3759:#endif // BACKWARD_SYSTEM_LINUX || BACKWARD_SYSTEM_DARWIN
+        -: 3760:
+        -: 3761:#ifdef BACKWARD_SYSTEM_UNKNOWN
+        -: 3762:
+        -: 3763:class SignalHandling {
+        -: 3764:public:
+        -: 3765:	SignalHandling(const std::vector<int>& = std::vector<int>()) {}
+        -: 3766:	bool init() { return false; }
+        -: 3767:	bool loaded() { return false; }
+        -: 3768:};
+        -: 3769:
+        -: 3770:#endif // BACKWARD_SYSTEM_UNKNOWN
+        -: 3771:
+        -: 3772:} // namespace backward
+        -: 3773:
+        -: 3774:#endif /* H_GUARD */

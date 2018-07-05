@@ -1,28 +1,35 @@
 {
-    "name": "WakamaNode",
+    "name": "WakaamaNode",
     "keywords": "coap, json, lwm2m, wakaama, m2m, protocol",
     "description": "Leightweight machine to machine (lwM2M) Implementation for embedded systems.",
     "repository": {
         "type": "git",
         "url": "https://github.com/Openhab-Nodes/wakaamaNode.git"
     },
+    "homepage": "https://openhab-nodes.github.io/wakaamaNode",
+    "license": "EPL-2.0",
     "version": "1.0",
     "authors": {
         "name": "David Gräff",
         "url": "https://openhab-nodes.github.io/wakaamaNode"
     },
     "exclude": [
-        "test", "tmp", "contrib"
+        "test", "tmp", "contrib", "doc", "generate_cpp_objects_from_registry"
     ],
-    "frameworks": ["arduino","native","windows_x86","linux_i686","linux_x86_64","linux_arm"],
+    "frameworks": ["arduino","native","windows_x86","linux_i686","linux_x86_64","linux_arm", "esp8266-rtos-sdk", "esp8266-nonos-sdk"],
     "platforms": "*",
-    "extraScript":"extra.py",
     "build": {
+        "libArchive": false,
         "flags": [
-            "-Isrc",
-            "-Isrc/wakaama",
-            "-Isrc/network/mbedtls/include",
-            "-Isrc/network/mbedtls/library"
+            "-DLWM2M_CLIENT_MODE",
+            "-I src/include",
+            "-I src/wakaama",
+            "-I src/network/mbedtls/include"
         ]
-    }
+    },
+    "examples": [
+        "examples/linux_win_screen_control/",
+        "examples/linux_win_custom_object_c/",
+        "examples/nodemcu_with_led/"
+    ]
 }

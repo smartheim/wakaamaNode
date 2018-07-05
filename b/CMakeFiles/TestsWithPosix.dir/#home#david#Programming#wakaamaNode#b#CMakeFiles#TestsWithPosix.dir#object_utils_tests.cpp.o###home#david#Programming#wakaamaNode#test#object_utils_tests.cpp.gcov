@@ -1,0 +1,767 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/object_utils_tests.cpp
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/object_utils_tests.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:
+        -:   15:#include <gtest/gtest.h>
+        -:   16:#include "lwm2m/c_connect.h"
+        -:   17:#include "lwm2m/c_objects.h"
+        -:   18:#include "lwm2m/objects.h"
+        -:   19:#include "lwm2m/debug.h"
+        -:   20:#include "lwm2m/network.h"
+        -:   21:#include <stdint.h>
+        -:   22:#include "test_object_c.h"
+        -:   23:#include "test_object_cpp.h"
+        -:   24:#include "memory.h"
+        -:   25:
+        -:   26:#include "lwm2mObjects/known.h"
+        -:   27:
+        -:   28:using namespace KnownObjects;
+        -:   29:
+        -:   30:#include <memory>
+        -:   31:#include <algorithm>
+        -:   32:
+        -:   33:extern "C" {
+        -:   34:#include "internals.h"
+        -:   35:}
+        -:   36:
+        -:   37:bool executed = false;
+        -:   38:char writeFunStrResult[100];
+        -:   39:int writeLenResult = 0;
+        -:   40:
+    #####:   41:void executeFun(uint8_t *,int) {
+    #####:   42:    executed = true;
+    #####:   43:}
+        -:   44:
+    #####:   45:void executeFunCPP(Lwm2mObjectInstance*, lwm2m_context_t*) {
+    #####:   46:    executed = true;
+    #####:   47:}
+        -:   48:
+    #####:   49:void writeFunStr(const char* data, int len){
+    #####:   50:    writeLenResult = len;
+    #####:   51:    strncpy(writeFunStrResult,data,100);
+    #####:   52:}
+        -:   53:
+    #####:   54:void writeFunStrCPP(Lwm2mObjectInstance*,DynArray<const char*>& data){
+    #####:   55:    writeLenResult = data.len;
+    #####:   56:    strncpy(writeFunStrResult,data.data,100);
+    #####:   57:}
+        -:   58:
+    #####:   59:int8_t readFun8() {
+    #####:   60:    return -12;
+        -:   61:}
+        -:   62:
+    #####:   63:int8_t readFun8CPP(Lwm2mObjectInstance*) {
+    #####:   64:    return -12;
+        -:   65:}
+        -:   66:
+    #####:   67:uint32_t readFun32() {
+    #####:   68:    return 0xFFFF;
+        -:   69:}
+        -:   70:
+    #####:   71:uint32_t readFun32CPP(Lwm2mObjectInstance*) {
+    #####:   72:    return 0xFFFF;
+        -:   73:}
+        -:   74:
+    #####:   75:const char* readFunStr() {
+    #####:   76:    return "testR";
+        -:   77:}
+        -:   78:
+    #####:   79:const char* readFunStrCPP(Lwm2mObjectInstance*) {
+    #####:   80:    return "testR";
+        -:   81:}
+        -:   82:
+    #####:   83:void Reading(lwm2m_context_t * lwm2mH) {
+    #####:   84:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
+    #####:   85:    lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
+    #####:   86:    std::string fullRead;
+        -:   87:    {
+        -:   88:        size_t buffer_len;
+    #####:   89:        char* buffer=nullptr;
+    #####:   90:        uint8_t s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer,&buffer_len);
+    #####:   91:        ASSERT_EQ(s, CONTENT_2_05);
+    #####:   92:        fullRead.assign(buffer,buffer_len);
+    #####:   93:        lwm2m_free(buffer);
+        -:   94:    }
+        -:   95:
+    #####:   96:    const char expect[] = "{\"bn\":\"/1024/10/\",\"e\":[{\"n\":\"0\",\"v\":15},{\"n\":\"1\",\"v\":-15},{\"n\":\"2\",\"v\":4095},{\"n\":\"3\",\"v\":-4095},{\"n\":\"4\",\"v\":268435455},{\"n\":\"5\",\"v\":-268435455},{\"n\":\"6\",\"v\":-281474976710655},{\"n\":\"7\",\"v\":0.12},{\"n\":\"8\",\"bv\":true},{\"n\":\"9\",\"sv\":\"test\"},{\"n\":\"10\",\"sv\":\"test\"},{\"n\":\"11\",\"sv\":\"dGVzdA==\"},{\"n\":\"12\",\"sv\":\"YWIACmFi\"},{\"n\":\"14\",\"v\":-12},{\"n\":\"15\",\"v\":65535},{\"n\":\"16\",\"sv\":\"testR\"},{\"n\":\"18\",\"sv\":\"testR\"},{\"n\":\"19\",\"sv\":\"\"}]}";
+        -:   97:
+    #####:   98:    ASSERT_STREQ(expect, fullRead.c_str());
+    #####:   99:    ASSERT_EQ(sizeof(expect),fullRead.size()+1);
+        -:  100:}
+        -:  101:
+    #####:  102:void ExecutingNonExecutable(lwm2m_context_t * lwm2mH) {
+    #####:  103:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
+    #####:  104:    uint8_t s = object_execute(lwm2mH,&uri,nullptr, 0);
+    #####:  105:    ASSERT_EQ(s, COAP_405_METHOD_NOT_ALLOWED);
+        -:  106:}
+        -:  107:
+    #####:  108:void ExecutingFunction(lwm2m_context_t * lwm2mH){
+    #####:  109:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 13};
+    #####:  110:    executed = false;
+    #####:  111:    uint8_t s = object_execute(lwm2mH,&uri,nullptr, 0);
+    #####:  112:    ASSERT_EQ(s, COAP_204_CHANGED);
+    #####:  113:    ASSERT_TRUE(executed);
+        -:  114:}
+        -:  115:
+    #####:  116:void Discover(lwm2m_context_t * lwm2mH){
+        -:  117:#define LWM2M_SERVER_ADDR "coap://127.0.0.1"
+    #####:  118:    ASSERT_TRUE(lwm2m_add_server(lwm2mH, 123, LWM2M_SERVER_ADDR, 100, false));
+        -:  119:
+        -:  120:    lwm2m_server_t  server;
+    #####:  121:    server.next = 0;
+    #####:  122:    server.secObjInstID = 0;
+    #####:  123:    server.shortID = 1;
+    #####:  124:    server.registration = 1;
+    #####:  125:    server.binding = BINDING_U;
+    #####:  126:    server.sessionH = lwm2mH;
+    #####:  127:    server.status = STATE_REGISTERED;
+        -:  128:
+    #####:  129:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID, 1024, 10, 0};
+        -:  130:
+    #####:  131:    std::string fullRead;
+        -:  132:    {
+        -:  133:        size_t buffer_len;
+    #####:  134:        char* buffer=nullptr;
+    #####:  135:        uint8_t s = object_discover(lwm2mH,&uri,&server,(uint8_t**)&buffer, &buffer_len);
+    #####:  136:        ASSERT_EQ(s, CONTENT_2_05);
+    #####:  137:        fullRead.assign(buffer,buffer_len);
+    #####:  138:        lwm2m_free(buffer);
+        -:  139:    }
+        -:  140:
+    #####:  141:    const char expect[] = "</1024/10>,</1024/10/0>,</1024/10/1>,</1024/10/2>,</1024/10/3>,</1024/10/4>,</1024/10/5>,</1024/10/6>,</1024/10/7>,</1024/10/8>,</1024/10/9>,</1024/10/10>,</1024/10/11>,</1024/10/12>,</1024/10/13>,</1024/10/14>,</1024/10/15>,</1024/10/16>,</1024/10/17>,</1024/10/18>,</1024/10/19>";
+    #####:  142:    ASSERT_STREQ(expect, fullRead.c_str());
+    #####:  143:    ASSERT_EQ(sizeof(expect),fullRead.size()+1);
+        -:  144:}
+        -:  145:
+        -:  146:template<class T>
+    #####:  147:void WriteIntBoolDouble(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  148:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 0};
+    #####:  149:    const char* valueInt = "10"; size_t len = strlen(valueInt);
+    #####:  150:    T * targetP = (T *)test_object->instanceList;
+        -:  151:    uint8_t s;
+        -:  152:
+        -:  153:    // Check number writing
+        -:  154:
+    #####:  155:    for (int i = 0; i < 7; ++i)
+        -:  156:    {
+    #####:  157:        uri.resourceId = i;
+        -:  158:        lwm2m_attributes_t attrP;
+    #####:  159:        attrP.toSet = ATTR_FLAG_NUMERIC;
+    #####:  160:        ASSERT_EQ(COAP_205_CONTENT, object_checkReadable(lwm2mH,&uri,&attrP));
+    #####:  161:        s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
+    #####:  162:        ASSERT_EQ(s, CHANGED_2_04);
+        -:  163:    }
+        -:  164:
+    #####:  165:    ASSERT_EQ(targetP->test_i8, 10);
+    #####:  166:    ASSERT_EQ(targetP->test_u8, 10);
+    #####:  167:    ASSERT_EQ(targetP->test_i16, 10);
+    #####:  168:    ASSERT_EQ(targetP->test_u16, 10);
+    #####:  169:    ASSERT_EQ(targetP->test_i32, 10);
+    #####:  170:    ASSERT_EQ(targetP->test_u32, 10);
+    #####:  171:    ASSERT_EQ(targetP->test_i64, 10);
+        -:  172:
+        -:  173:    // check double writing
+        -:  174:
+    #####:  175:    uri.resourceId = 7;
+    #####:  176:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
+    #####:  177:    ASSERT_EQ(s, COAP_400_BAD_REQUEST) << "Verify method does not work";
+        -:  178:
+    #####:  179:    const char* doubleValue = "0.8"; len = strlen(doubleValue);
+    #####:  180:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)doubleValue, len);
+    #####:  181:    ASSERT_EQ(COAP_204_CHANGED, s) << "Verify method does not work";
+    #####:  182:    ASSERT_EQ(targetP->test_double, 0.8);
+        -:  183:
+        -:  184:    // check boolean writing
+        -:  185:
+    #####:  186:    targetP->test_bool = false;
+    #####:  187:    const char* boolValue = "1"; len = strlen(boolValue);
+    #####:  188:    uri.resourceId = 8;
+    #####:  189:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)boolValue, len);
+    #####:  190:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  191:    ASSERT_EQ(targetP->test_bool, true);
+        -:  192:}
+------------------
+_Z18WriteIntBoolDoubleI20MyTestObjectInstanceEvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  147:void WriteIntBoolDouble(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  148:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 0};
+    #####:  149:    const char* valueInt = "10"; size_t len = strlen(valueInt);
+    #####:  150:    T * targetP = (T *)test_object->instanceList;
+        -:  151:    uint8_t s;
+        -:  152:
+        -:  153:    // Check number writing
+        -:  154:
+    #####:  155:    for (int i = 0; i < 7; ++i)
+        -:  156:    {
+    #####:  157:        uri.resourceId = i;
+        -:  158:        lwm2m_attributes_t attrP;
+    #####:  159:        attrP.toSet = ATTR_FLAG_NUMERIC;
+    #####:  160:        ASSERT_EQ(COAP_205_CONTENT, object_checkReadable(lwm2mH,&uri,&attrP));
+    #####:  161:        s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
+    #####:  162:        ASSERT_EQ(s, CHANGED_2_04);
+        -:  163:    }
+        -:  164:
+    #####:  165:    ASSERT_EQ(targetP->test_i8, 10);
+    #####:  166:    ASSERT_EQ(targetP->test_u8, 10);
+    #####:  167:    ASSERT_EQ(targetP->test_i16, 10);
+    #####:  168:    ASSERT_EQ(targetP->test_u16, 10);
+    #####:  169:    ASSERT_EQ(targetP->test_i32, 10);
+    #####:  170:    ASSERT_EQ(targetP->test_u32, 10);
+    #####:  171:    ASSERT_EQ(targetP->test_i64, 10);
+        -:  172:
+        -:  173:    // check double writing
+        -:  174:
+    #####:  175:    uri.resourceId = 7;
+    #####:  176:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
+    #####:  177:    ASSERT_EQ(s, COAP_400_BAD_REQUEST) << "Verify method does not work";
+        -:  178:
+    #####:  179:    const char* doubleValue = "0.8"; len = strlen(doubleValue);
+    #####:  180:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)doubleValue, len);
+    #####:  181:    ASSERT_EQ(COAP_204_CHANGED, s) << "Verify method does not work";
+    #####:  182:    ASSERT_EQ(targetP->test_double, 0.8);
+        -:  183:
+        -:  184:    // check boolean writing
+        -:  185:
+    #####:  186:    targetP->test_bool = false;
+    #####:  187:    const char* boolValue = "1"; len = strlen(boolValue);
+    #####:  188:    uri.resourceId = 8;
+    #####:  189:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)boolValue, len);
+    #####:  190:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  191:    ASSERT_EQ(targetP->test_bool, true);
+        -:  192:}
+------------------
+_Z18WriteIntBoolDoubleI22_test_object_instance_EvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  147:void WriteIntBoolDouble(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  148:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 0};
+    #####:  149:    const char* valueInt = "10"; size_t len = strlen(valueInt);
+    #####:  150:    T * targetP = (T *)test_object->instanceList;
+        -:  151:    uint8_t s;
+        -:  152:
+        -:  153:    // Check number writing
+        -:  154:
+    #####:  155:    for (int i = 0; i < 7; ++i)
+        -:  156:    {
+    #####:  157:        uri.resourceId = i;
+        -:  158:        lwm2m_attributes_t attrP;
+    #####:  159:        attrP.toSet = ATTR_FLAG_NUMERIC;
+    #####:  160:        ASSERT_EQ(COAP_205_CONTENT, object_checkReadable(lwm2mH,&uri,&attrP));
+    #####:  161:        s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
+    #####:  162:        ASSERT_EQ(s, CHANGED_2_04);
+        -:  163:    }
+        -:  164:
+    #####:  165:    ASSERT_EQ(targetP->test_i8, 10);
+    #####:  166:    ASSERT_EQ(targetP->test_u8, 10);
+    #####:  167:    ASSERT_EQ(targetP->test_i16, 10);
+    #####:  168:    ASSERT_EQ(targetP->test_u16, 10);
+    #####:  169:    ASSERT_EQ(targetP->test_i32, 10);
+    #####:  170:    ASSERT_EQ(targetP->test_u32, 10);
+    #####:  171:    ASSERT_EQ(targetP->test_i64, 10);
+        -:  172:
+        -:  173:    // check double writing
+        -:  174:
+    #####:  175:    uri.resourceId = 7;
+    #####:  176:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)valueInt, len);
+    #####:  177:    ASSERT_EQ(s, COAP_400_BAD_REQUEST) << "Verify method does not work";
+        -:  178:
+    #####:  179:    const char* doubleValue = "0.8"; len = strlen(doubleValue);
+    #####:  180:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)doubleValue, len);
+    #####:  181:    ASSERT_EQ(COAP_204_CHANGED, s) << "Verify method does not work";
+    #####:  182:    ASSERT_EQ(targetP->test_double, 0.8);
+        -:  183:
+        -:  184:    // check boolean writing
+        -:  185:
+    #####:  186:    targetP->test_bool = false;
+    #####:  187:    const char* boolValue = "1"; len = strlen(boolValue);
+    #####:  188:    uri.resourceId = 8;
+    #####:  189:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)boolValue, len);
+    #####:  190:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  191:    ASSERT_EQ(targetP->test_bool, true);
+        -:  192:}
+------------------
+        -:  193:
+    #####:  194:void WriteToReadOnlyString(lwm2m_context_t * lwm2mH){
+    #####:  195:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 9};
+    #####:  196:    const char* value = "newcontent"; size_t len = strlen(value);
+        -:  197:
+    #####:  198:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  199:    ASSERT_EQ(COAP_405_METHOD_NOT_ALLOWED, s);
+        -:  200:}
+        -:  201:
+        -:  202:template<class T>
+    #####:  203:void WriteStringPrealloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  204:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 10};
+    #####:  205:    const char* value = "newcontent"; size_t len = strlen(value)+1;
+    #####:  206:    T * targetP = (T *)test_object->instanceList;
+    #####:  207:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  208:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  209:    ASSERT_STREQ(value, (char*)targetP->test_str_prealloc.data);
+        -:  210:}
+------------------
+_Z19WriteStringPreallocI20MyTestObjectInstanceEvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  203:void WriteStringPrealloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  204:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 10};
+    #####:  205:    const char* value = "newcontent"; size_t len = strlen(value)+1;
+    #####:  206:    T * targetP = (T *)test_object->instanceList;
+    #####:  207:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  208:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  209:    ASSERT_STREQ(value, (char*)targetP->test_str_prealloc.data);
+        -:  210:}
+------------------
+_Z19WriteStringPreallocI22_test_object_instance_EvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  203:void WriteStringPrealloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  204:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 10};
+    #####:  205:    const char* value = "newcontent"; size_t len = strlen(value)+1;
+    #####:  206:    T * targetP = (T *)test_object->instanceList;
+    #####:  207:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  208:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  209:    ASSERT_STREQ(value, (char*)targetP->test_str_prealloc.data);
+        -:  210:}
+------------------
+        -:  211:
+    #####:  212:void WriteStringIndirect(lwm2m_context_t * lwm2mH){
+    #####:  213:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 17};
+    #####:  214:    const char* value = "newcontent"; size_t len = strlen(value)+1;
+    #####:  215:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  216:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  217:    ASSERT_STREQ(value, writeFunStrResult);
+        -:  218:}
+        -:  219:
+    #####:  220:void ReadWriteStringIndirect(lwm2m_context_t * lwm2mH){
+    #####:  221:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 18};
+    #####:  222:    const char* value = "newcontent"; size_t len = strlen(value)+1;
+        -:  223:    uint8_t s;
+    #####:  224:    std::string fullRead;
+        -:  225:    {
+    #####:  226:        lwm2m_media_type_t format = LWM2M_CONTENT_TEXT;
+        -:  227:        size_t buffer_len;
+    #####:  228:        char* buffer=nullptr;
+    #####:  229:        s = object_read(lwm2mH,&uri,&format,(uint8_t**)&buffer, &buffer_len);
+    #####:  230:        ASSERT_EQ(COAP_205_CONTENT, s);
+    #####:  231:        fullRead.assign(buffer,buffer_len);
+    #####:  232:        lwm2m_free(buffer);
+        -:  233:    }
+    #####:  234:    ASSERT_STREQ("testR", fullRead.c_str());
+        -:  235:
+    #####:  236:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  237:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  238:    ASSERT_STREQ(value, writeFunStrResult);
+        -:  239:}
+        -:  240:
+    #####:  241:void WriteTooBigOpaque(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  242:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 11};
+    #####:  243:    const char* value = "newcontent"; size_t len = strlen(value);
+    #####:  244:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  245:    ASSERT_EQ(COAP_413_ENTITY_TOO_LARGE, s);
+        -:  246:}
+        -:  247:
+        -:  248:template<class T>
+    #####:  249:void WriteOpaquePreAlloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  250:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 12};
+    #####:  251:    const char* value = "newcontent"; size_t len = 11;
+    #####:  252:    T * targetP = (T *)test_object->instanceList;
+    #####:  253:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  254:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  255:    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    #####:  256:    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+        -:  257:
+        -:  258:    // Test derived opaque object
+    #####:  259:    uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 19};
+    #####:  260:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  261:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  262:    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    #####:  263:    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+        -:  264:}
+------------------
+_Z19WriteOpaquePreAllocI20MyTestObjectInstanceEvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  249:void WriteOpaquePreAlloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  250:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 12};
+    #####:  251:    const char* value = "newcontent"; size_t len = 11;
+    #####:  252:    T * targetP = (T *)test_object->instanceList;
+    #####:  253:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  254:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  255:    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    #####:  256:    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+        -:  257:
+        -:  258:    // Test derived opaque object
+    #####:  259:    uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 19};
+    #####:  260:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  261:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  262:    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    #####:  263:    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+        -:  264:}
+------------------
+_Z19WriteOpaquePreAllocI22_test_object_instance_EvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  249:void WriteOpaquePreAlloc(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  250:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 12};
+    #####:  251:    const char* value = "newcontent"; size_t len = 11;
+    #####:  252:    T * targetP = (T *)test_object->instanceList;
+    #####:  253:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  254:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  255:    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    #####:  256:    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+        -:  257:
+        -:  258:    // Test derived opaque object
+    #####:  259:    uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 19};
+    #####:  260:    s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  261:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  262:    ASSERT_EQ(len, targetP->test_opaque_prealloc.used_len);
+    #####:  263:    ASSERT_STREQ(value, (char*)targetP->test_opaque_prealloc.data);
+        -:  264:}
+------------------
+        -:  265:
+        -:  266:template<class T>
+    #####:  267:void WriteOpaqueIndirect(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  268:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 11};
+    #####:  269:    const char* value = "newcontent"; size_t len = strlen(value);
+    #####:  270:    T * targetP = (T *)test_object->instanceList;
+        -:  271:
+        -:  272:    // Modify memory area for the test
+        -:  273:    uint8_t buffer[10];
+    #####:  274:    targetP->test_opaque.data = buffer;
+    #####:  275:    targetP->test_opaque.reserved_len = 10;
+    #####:  276:    targetP->test_opaque.used_len = 0;
+        -:  277:
+    #####:  278:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  279:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  280:    ASSERT_EQ(len, targetP->test_opaque.used_len);
+    #####:  281:    ASSERT_TRUE(memcmp(value, (char*)targetP->test_opaque.data,len)==0);
+        -:  282:}
+------------------
+_Z19WriteOpaqueIndirectI20MyTestObjectInstanceEvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  267:void WriteOpaqueIndirect(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  268:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 11};
+    #####:  269:    const char* value = "newcontent"; size_t len = strlen(value);
+    #####:  270:    T * targetP = (T *)test_object->instanceList;
+        -:  271:
+        -:  272:    // Modify memory area for the test
+        -:  273:    uint8_t buffer[10];
+    #####:  274:    targetP->test_opaque.data = buffer;
+    #####:  275:    targetP->test_opaque.reserved_len = 10;
+    #####:  276:    targetP->test_opaque.used_len = 0;
+        -:  277:
+    #####:  278:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  279:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  280:    ASSERT_EQ(len, targetP->test_opaque.used_len);
+    #####:  281:    ASSERT_TRUE(memcmp(value, (char*)targetP->test_opaque.data,len)==0);
+        -:  282:}
+------------------
+_Z19WriteOpaqueIndirectI22_test_object_instance_EvP16_lwm2m_context_tP15_lwm2m_object_t:
+    #####:  267:void WriteOpaqueIndirect(lwm2m_context_t * lwm2mH, lwm2m_object_t* test_object){
+    #####:  268:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID, 1024, 10, 11};
+    #####:  269:    const char* value = "newcontent"; size_t len = strlen(value);
+    #####:  270:    T * targetP = (T *)test_object->instanceList;
+        -:  271:
+        -:  272:    // Modify memory area for the test
+        -:  273:    uint8_t buffer[10];
+    #####:  274:    targetP->test_opaque.data = buffer;
+    #####:  275:    targetP->test_opaque.reserved_len = 10;
+    #####:  276:    targetP->test_opaque.used_len = 0;
+        -:  277:
+    #####:  278:    uint8_t s = object_write(lwm2mH,&uri,LWM2M_CONTENT_TEXT, (uint8_t*)value, len);
+    #####:  279:    ASSERT_EQ(COAP_204_CHANGED, s);
+    #####:  280:    ASSERT_EQ(len, targetP->test_opaque.used_len);
+    #####:  281:    ASSERT_TRUE(memcmp(value, (char*)targetP->test_opaque.data,len)==0);
+        -:  282:}
+------------------
+        -:  283:
+        -:  284:class ObjectAPI_C : public testing::Test {
+        -:  285:public:
+        -:  286:    lwm2m_client_context_t client_context;
+        -:  287:    lwm2m_object_t* test_object;
+        -:  288:protected:
+    #####:  289:    virtual void TearDown() {
+    #####:  290:        lwm2m_object_instance_remove(CTX(client_context), test_object, 10);
+    #####:  291:        lwm2m_client_close(&client_context);
+        -:  292:        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+        -:  293:                      [](MemoryObserver::MemAreas::value_type it){
+        -:  294:            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+    #####:  295:        });
+    #####:  296:    }
+        -:  297:
+    #####:  298:    virtual void SetUp() {
+    #####:  299:        memoryObserver.reset();
+    #####:  300:        executed = false;
+    #####:  301:        memset(writeFunStrResult,0,sizeof(writeFunStrResult));
+        -:  302:
+    #####:  303:        lwm2m_client_init(&client_context, "testClient");
+        -:  304:
+    #####:  305:        test_object = get_test_object();
+    #####:  306:        ASSERT_EQ(COAP_NO_ERROR, lwm2m_add_initialize_object(CTX(client_context), test_object, true));
+    #####:  307:        auto instance = test_object_create_instance(10,
+        -:  308:                                                    readFun8,
+        -:  309:                                                    readFun32,
+        -:  310:                                                    readFunStr,
+        -:  311:                                                    writeFunStr,
+        -:  312:                                                    executeFun);
+    #####:  313:        ASSERT_EQ(COAP_NO_ERROR, lwm2m_object_instance_add(CTX(client_context), test_object, instance));
+        -:  314:
+    #####:  315:        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)CTX(client_context)->objectList, 1024);
+    #####:  316:        ASSERT_EQ(o, test_object);
+        -:  317:
+        -:  318:
+    #####:  319:        ASSERT_TRUE(object_isInstanceNew(CTX(client_context), 1024, 0));
+    #####:  320:        ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 1024, 10));
+        -:  321:    }
+        -:  322:};
+        -:  323:
+    #####:  324:TEST_F(ObjectAPI_C, Reading) { Reading(CTX(client_context)); }
+------------------
+_ZN24ObjectAPI_C_Reading_Test8TestBodyEv:
+    #####:  324:TEST_F(ObjectAPI_C, Reading) { Reading(CTX(client_context)); }
+------------------
+_ZN24ObjectAPI_C_Reading_TestC2Ev:
+    #####:  324:TEST_F(ObjectAPI_C, Reading) { Reading(CTX(client_context)); }
+------------------
+    #####:  325:TEST_F(ObjectAPI_C, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+------------------
+_ZN39ObjectAPI_C_ExecutingNonExecutable_Test8TestBodyEv:
+    #####:  325:TEST_F(ObjectAPI_C, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+------------------
+_ZN39ObjectAPI_C_ExecutingNonExecutable_TestC2Ev:
+    #####:  325:TEST_F(ObjectAPI_C, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+------------------
+    #####:  326:TEST_F(ObjectAPI_C, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+------------------
+_ZN34ObjectAPI_C_ExecutingFunction_Test8TestBodyEv:
+    #####:  326:TEST_F(ObjectAPI_C, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+------------------
+_ZN34ObjectAPI_C_ExecutingFunction_TestC2Ev:
+    #####:  326:TEST_F(ObjectAPI_C, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+------------------
+    #####:  327:TEST_F(ObjectAPI_C, Discover) { Discover(CTX(client_context)); }
+------------------
+_ZN25ObjectAPI_C_Discover_Test8TestBodyEv:
+    #####:  327:TEST_F(ObjectAPI_C, Discover) { Discover(CTX(client_context)); }
+------------------
+_ZN25ObjectAPI_C_Discover_TestC2Ev:
+    #####:  327:TEST_F(ObjectAPI_C, Discover) { Discover(CTX(client_context)); }
+------------------
+    #####:  328:TEST_F(ObjectAPI_C, WriteIntBoolDouble) { WriteIntBoolDouble<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN35ObjectAPI_C_WriteIntBoolDouble_Test8TestBodyEv:
+    #####:  328:TEST_F(ObjectAPI_C, WriteIntBoolDouble) { WriteIntBoolDouble<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN35ObjectAPI_C_WriteIntBoolDouble_TestC2Ev:
+    #####:  328:TEST_F(ObjectAPI_C, WriteIntBoolDouble) { WriteIntBoolDouble<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+    #####:  329:TEST_F(ObjectAPI_C, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+------------------
+_ZN38ObjectAPI_C_WriteToReadOnlyString_Test8TestBodyEv:
+    #####:  329:TEST_F(ObjectAPI_C, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+------------------
+_ZN38ObjectAPI_C_WriteToReadOnlyString_TestC2Ev:
+    #####:  329:TEST_F(ObjectAPI_C, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+------------------
+    #####:  330:TEST_F(ObjectAPI_C, WriteStringPrealloc) { WriteStringPrealloc<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN36ObjectAPI_C_WriteStringPrealloc_Test8TestBodyEv:
+    #####:  330:TEST_F(ObjectAPI_C, WriteStringPrealloc) { WriteStringPrealloc<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN36ObjectAPI_C_WriteStringPrealloc_TestC2Ev:
+    #####:  330:TEST_F(ObjectAPI_C, WriteStringPrealloc) { WriteStringPrealloc<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+    #####:  331:TEST_F(ObjectAPI_C, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), test_object); }
+------------------
+_ZN34ObjectAPI_C_WriteTooBigOpaque_Test8TestBodyEv:
+    #####:  331:TEST_F(ObjectAPI_C, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), test_object); }
+------------------
+_ZN34ObjectAPI_C_WriteTooBigOpaque_TestC2Ev:
+    #####:  331:TEST_F(ObjectAPI_C, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), test_object); }
+------------------
+    #####:  332:TEST_F(ObjectAPI_C, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN36ObjectAPI_C_WriteOpaquePreAlloc_Test8TestBodyEv:
+    #####:  332:TEST_F(ObjectAPI_C, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN36ObjectAPI_C_WriteOpaquePreAlloc_TestC2Ev:
+    #####:  332:TEST_F(ObjectAPI_C, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+    #####:  333:TEST_F(ObjectAPI_C, WriteOpaqueIndirect) { WriteOpaqueIndirect<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN36ObjectAPI_C_WriteOpaqueIndirect_Test8TestBodyEv:
+    #####:  333:TEST_F(ObjectAPI_C, WriteOpaqueIndirect) { WriteOpaqueIndirect<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+_ZN36ObjectAPI_C_WriteOpaqueIndirect_TestC2Ev:
+    #####:  333:TEST_F(ObjectAPI_C, WriteOpaqueIndirect) { WriteOpaqueIndirect<test_object_instance_t>(CTX(client_context), test_object); }
+------------------
+        -:  334:
+        -:  335:
+        -:  336:class ObjectAPI_CPP : public testing::Test {
+        -:  337:public:
+        -:  338:    lwm2m_client_context_t client_context;
+        -:  339:    MyTestObjectInstance instance;
+        -:  340:    MyTestObject object;
+        -:  341:protected:
+    #####:  342:    virtual void TearDown() {
+    #####:  343:        object.removeInstance(CTX(client_context), 10);
+    #####:  344:        lwm2m_client_close(&client_context);
+        -:  345:        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+        -:  346:                      [](MemoryObserver::MemAreas::value_type it){
+        -:  347:            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+    #####:  348:        });
+    #####:  349:    }
+        -:  350:
+    #####:  351:    virtual void SetUp() {
+    #####:  352:        memoryObserver.reset();
+    #####:  353:        executed = false;
+    #####:  354:        memset(writeFunStrResult,0,sizeof(writeFunStrResult));
+        -:  355:
+    #####:  356:        lwm2m_client_init(&client_context, "testClient");
+        -:  357:
+    #####:  358:        MyTestObjectSecond s;
+    #####:  359:        ASSERT_EQ(7, s.resources_len());
+    #####:  360:        ASSERT_EQ(20, object.resources_len());
+        -:  361:
+    #####:  362:        instance = MyTestObjectInstance( executeFunCPP,
+        -:  363:                                         readFun8CPP,
+        -:  364:                                         readFun32CPP,
+        -:  365:                                         readFunStrCPP,
+        -:  366:                                         writeFunStrCPP,
+        -:  367:                                         IndirectReadWrite<const char*>(readFunStrCPP,writeFunStrCPP));
+    #####:  368:        instance.id=10;
+    #####:  369:        object.addInstance(CTX(client_context), &instance);
+    #####:  370:        object.registerObject(CTX(client_context), false);
+        -:  371:
+    #####:  372:        lwm2m_object_t* o = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)CTX(client_context)->objectList, 1024);
+    #####:  373:        ASSERT_EQ(o, &object.object);
+        -:  374:
+    #####:  375:        ASSERT_TRUE(object_isInstanceNew(CTX(client_context), 1024, 0));
+    #####:  376:        ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 1024, 10));
+        -:  377:    }
+        -:  378:};
+        -:  379:
+    #####:  380:TEST_F(ObjectAPI_CPP, KnownObject3311) {
+    #####:  381:    id3311::object o;
+    #####:  382:    id3311::instance i;
+    #####:  383:    i.id = 0;
+    #####:  384:    o.addInstance(CTX(client_context),&i);
+    #####:  385:    o.registerObject(CTX(client_context), false);
+    #####:  386:    ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 3311, 0));
+        -:  387:
+        -:  388:}
+------------------
+_ZN34ObjectAPI_CPP_KnownObject3311_Test8TestBodyEv:
+    #####:  380:TEST_F(ObjectAPI_CPP, KnownObject3311) {
+    #####:  381:    id3311::object o;
+    #####:  382:    id3311::instance i;
+    #####:  383:    i.id = 0;
+    #####:  384:    o.addInstance(CTX(client_context),&i);
+    #####:  385:    o.registerObject(CTX(client_context), false);
+    #####:  386:    ASSERT_FALSE(object_isInstanceNew(CTX(client_context), 3311, 0));
+        -:  387:
+        -:  388:}
+------------------
+_ZN34ObjectAPI_CPP_KnownObject3311_TestC2Ev:
+    #####:  380:TEST_F(ObjectAPI_CPP, KnownObject3311) {
+------------------
+        -:  389:
+    #####:  390:TEST_F(ObjectAPI_CPP, Reading) { Reading(CTX(client_context)); }
+------------------
+_ZN26ObjectAPI_CPP_Reading_Test8TestBodyEv:
+    #####:  390:TEST_F(ObjectAPI_CPP, Reading) { Reading(CTX(client_context)); }
+------------------
+_ZN26ObjectAPI_CPP_Reading_TestC2Ev:
+    #####:  390:TEST_F(ObjectAPI_CPP, Reading) { Reading(CTX(client_context)); }
+------------------
+    #####:  391:TEST_F(ObjectAPI_CPP, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+------------------
+_ZN41ObjectAPI_CPP_ExecutingNonExecutable_Test8TestBodyEv:
+    #####:  391:TEST_F(ObjectAPI_CPP, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+------------------
+_ZN41ObjectAPI_CPP_ExecutingNonExecutable_TestC2Ev:
+    #####:  391:TEST_F(ObjectAPI_CPP, ExecutingNonExecutable) { ExecutingNonExecutable(CTX(client_context)); }
+------------------
+    #####:  392:TEST_F(ObjectAPI_CPP, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+------------------
+_ZN36ObjectAPI_CPP_ExecutingFunction_Test8TestBodyEv:
+    #####:  392:TEST_F(ObjectAPI_CPP, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+------------------
+_ZN36ObjectAPI_CPP_ExecutingFunction_TestC2Ev:
+    #####:  392:TEST_F(ObjectAPI_CPP, ExecutingFunction) { ExecutingFunction(CTX(client_context)); }
+------------------
+    #####:  393:TEST_F(ObjectAPI_CPP, Discover) { Discover(CTX(client_context)); }
+------------------
+_ZN27ObjectAPI_CPP_Discover_Test8TestBodyEv:
+    #####:  393:TEST_F(ObjectAPI_CPP, Discover) { Discover(CTX(client_context)); }
+------------------
+_ZN27ObjectAPI_CPP_Discover_TestC2Ev:
+    #####:  393:TEST_F(ObjectAPI_CPP, Discover) { Discover(CTX(client_context)); }
+------------------
+    #####:  394:TEST_F(ObjectAPI_CPP, WriteIntBoolDouble) { WriteIntBoolDouble<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN37ObjectAPI_CPP_WriteIntBoolDouble_Test8TestBodyEv:
+    #####:  394:TEST_F(ObjectAPI_CPP, WriteIntBoolDouble) { WriteIntBoolDouble<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN37ObjectAPI_CPP_WriteIntBoolDouble_TestC2Ev:
+    #####:  394:TEST_F(ObjectAPI_CPP, WriteIntBoolDouble) { WriteIntBoolDouble<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+    #####:  395:TEST_F(ObjectAPI_CPP, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+------------------
+_ZN40ObjectAPI_CPP_WriteToReadOnlyString_Test8TestBodyEv:
+    #####:  395:TEST_F(ObjectAPI_CPP, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+------------------
+_ZN40ObjectAPI_CPP_WriteToReadOnlyString_TestC2Ev:
+    #####:  395:TEST_F(ObjectAPI_CPP, WriteToReadOnlyString) { WriteToReadOnlyString(CTX(client_context)); }
+------------------
+    #####:  396:TEST_F(ObjectAPI_CPP, WriteStringPrealloc) { WriteStringPrealloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN38ObjectAPI_CPP_WriteStringPrealloc_Test8TestBodyEv:
+    #####:  396:TEST_F(ObjectAPI_CPP, WriteStringPrealloc) { WriteStringPrealloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN38ObjectAPI_CPP_WriteStringPrealloc_TestC2Ev:
+    #####:  396:TEST_F(ObjectAPI_CPP, WriteStringPrealloc) { WriteStringPrealloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+    #####:  397:TEST_F(ObjectAPI_CPP, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), &object.object); }
+------------------
+_ZN36ObjectAPI_CPP_WriteTooBigOpaque_Test8TestBodyEv:
+    #####:  397:TEST_F(ObjectAPI_CPP, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), &object.object); }
+------------------
+_ZN36ObjectAPI_CPP_WriteTooBigOpaque_TestC2Ev:
+    #####:  397:TEST_F(ObjectAPI_CPP, WriteTooBigOpaque) { WriteTooBigOpaque(CTX(client_context), &object.object); }
+------------------
+    #####:  398:TEST_F(ObjectAPI_CPP, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN38ObjectAPI_CPP_WriteOpaquePreAlloc_Test8TestBodyEv:
+    #####:  398:TEST_F(ObjectAPI_CPP, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN38ObjectAPI_CPP_WriteOpaquePreAlloc_TestC2Ev:
+    #####:  398:TEST_F(ObjectAPI_CPP, WriteOpaquePreAlloc) { WriteOpaquePreAlloc<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+    #####:  399:TEST_F(ObjectAPI_CPP, WriteOpaqueIndirect) { WriteOpaqueIndirect<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN38ObjectAPI_CPP_WriteOpaqueIndirect_Test8TestBodyEv:
+    #####:  399:TEST_F(ObjectAPI_CPP, WriteOpaqueIndirect) { WriteOpaqueIndirect<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+_ZN38ObjectAPI_CPP_WriteOpaqueIndirect_TestC2Ev:
+    #####:  399:TEST_F(ObjectAPI_CPP, WriteOpaqueIndirect) { WriteOpaqueIndirect<MyTestObjectInstance>(CTX(client_context), &object.object); }
+------------------
+    #####:  400:TEST_F(ObjectAPI_CPP, WriteStringIndirect) { WriteStringIndirect(CTX(client_context)); }
+------------------
+_ZN38ObjectAPI_CPP_WriteStringIndirect_Test8TestBodyEv:
+    #####:  400:TEST_F(ObjectAPI_CPP, WriteStringIndirect) { WriteStringIndirect(CTX(client_context)); }
+------------------
+_ZN38ObjectAPI_CPP_WriteStringIndirect_TestC2Ev:
+    #####:  400:TEST_F(ObjectAPI_CPP, WriteStringIndirect) { WriteStringIndirect(CTX(client_context)); }
+------------------
+    #####:  401:TEST_F(ObjectAPI_CPP, ReadWriteStringIndirect) { ReadWriteStringIndirect(CTX(client_context)); }
+------------------
+_ZN42ObjectAPI_CPP_ReadWriteStringIndirect_Test8TestBodyEv:
+    #####:  401:TEST_F(ObjectAPI_CPP, ReadWriteStringIndirect) { ReadWriteStringIndirect(CTX(client_context)); }
+------------------
+_ZN42ObjectAPI_CPP_ReadWriteStringIndirect_TestC2Ev:
+    #####:  401:TEST_F(ObjectAPI_CPP, ReadWriteStringIndirect) { ReadWriteStringIndirect(CTX(client_context)); }
+------------------

@@ -1,0 +1,1441 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/wakaama/json.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/wakaama/json.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: *
+        -:    3: * Copyright (c) 2015 Intel Corporation and others.
+        -:    4: * All rights reserved. This program and the accompanying materials
+        -:    5: * are made available under the terms of the Eclipse Public License v1.0
+        -:    6: * and Eclipse Distribution License v1.0 which accompany this distribution.
+        -:    7: *
+        -:    8: * The Eclipse Public License is available at
+        -:    9: *    http://www.eclipse.org/legal/epl-v10.html
+        -:   10: * The Eclipse Distribution License is available at
+        -:   11: *    http://www.eclipse.org/org/documents/edl-v10.php.
+        -:   12: *
+        -:   13: * Contributors:
+        -:   14: *    David Navarro, Intel Corporation - initial API and implementation
+        -:   15: *
+        -:   16: *******************************************************************************/
+        -:   17:
+        -:   18:
+        -:   19:#include "internals.h"
+        -:   20:#include <stdlib.h>
+        -:   21:#include <string.h>
+        -:   22:#include <stdio.h>
+        -:   23:#include <inttypes.h>
+        -:   24:
+        -:   25:
+        -:   26:#ifdef LWM2M_SUPPORT_JSON
+        -:   27:
+        -:   28:#define PRV_JSON_BUFFER_SIZE 1024
+        -:   29:
+        -:   30:#define JSON_MIN_ARRAY_LEN      21      // e":[{"n":"N","v":X}]}
+        -:   31:#define JSON_MIN_BASE_LEN        7      // n":"N",
+        -:   32:#define JSON_ITEM_MAX_SIZE      36      // with ten characters for value
+        -:   33:#define JSON_MIN_BX_LEN          5      // bt":1
+        -:   34:
+        -:   35:#define JSON_FALSE_STRING  "false"
+        -:   36:#define JSON_TRUE_STRING   "true"
+        -:   37:
+        -:   38:#define JSON_RES_ITEM_URI           "{\"n\":\""
+        -:   39:#define JSON_RES_ITEM_URI_SIZE      6
+        -:   40:#define JSON_ITEM_BOOL_TRUE         "\",\"bv\":true},"
+        -:   41:#define JSON_ITEM_BOOL_TRUE_SIZE    13
+        -:   42:#define JSON_ITEM_BOOL_FALSE        "\",\"bv\":false},"
+        -:   43:#define JSON_ITEM_BOOL_FALSE_SIZE   14
+        -:   44:#define JSON_ITEM_NUM               "\",\"v\":"
+        -:   45:#define JSON_ITEM_NUM_SIZE          6
+        -:   46:#define JSON_ITEM_NUM_END           "},"
+        -:   47:#define JSON_ITEM_NUM_END_SIZE      2
+        -:   48:#define JSON_ITEM_STRING_BEGIN      "\",\"sv\":\""
+        -:   49:#define JSON_ITEM_STRING_BEGIN_SIZE 8
+        -:   50:#define JSON_ITEM_STRING_END        "\"},"
+        -:   51:#define JSON_ITEM_STRING_END_SIZE   3
+        -:   52:
+        -:   53:#define JSON_BN_HEADER_1        "{\"bn\":\""
+        -:   54:#define JSON_BN_HEADER_1_SIZE   7
+        -:   55:#define JSON_BN_HEADER_2        "\",\"e\":["
+        -:   56:#define JSON_BN_HEADER_2_SIZE   7
+        -:   57:#define JSON_HEADER             "{\"e\":["
+        -:   58:#define JSON_HEADER_SIZE        6
+        -:   59:#define JSON_FOOTER             "]}"
+        -:   60:#define JSON_FOOTER_SIZE        2
+        -:   61:
+        -:   62:
+        -:   63:#define _GO_TO_NEXT_CHAR(I,B,L)         \
+        -:   64:    {                                   \
+        -:   65:        I++;                            \
+        -:   66:        I += prv_skipSpace(B+I, L-I);   \
+        -:   67:        if (I == L) goto error;         \
+        -:   68:    }
+        -:   69:
+        -:   70:typedef enum
+        -:   71:{
+        -:   72:    _STEP_START,
+        -:   73:    _STEP_TOKEN,
+        -:   74:    _STEP_ANY_SEPARATOR,
+        -:   75:    _STEP_SEPARATOR,
+        -:   76:    _STEP_QUOTED_VALUE,
+        -:   77:    _STEP_VALUE,
+        -:   78:    _STEP_DONE
+        -:   79:} _itemState;
+        -:   80:
+        -:   81:typedef enum
+        -:   82:{
+        -:   83:    _TYPE_UNSET,
+        -:   84:    _TYPE_FALSE,
+        -:   85:    _TYPE_TRUE,
+        -:   86:    _TYPE_FLOAT,
+        -:   87:    _TYPE_STRING
+        -:   88:} _type;
+        -:   89:
+        -:   90:typedef struct
+        -:   91:{
+        -:   92:    uint16_t    ids[4];
+        -:   93:    _type       type;
+        -:   94:    uint8_t *   value;
+        -:   95:    size_t      valueLen;
+        -:   96:} _record_t;
+        -:   97:
+    #####:   98:static int prv_isReserved(char sign)
+        -:   99:{
+    #####:  100:    if (sign == '['
+    #####:  101:     || sign == '{'
+    #####:  102:     || sign == ']'
+    #####:  103:     || sign == '}'
+    #####:  104:     || sign == ':'
+    #####:  105:     || sign == ','
+    #####:  106:     || sign == '"')
+        -:  107:    {
+    #####:  108:        return 1;
+        -:  109:    }
+        -:  110:
+    #####:  111:    return 0;
+        -:  112:}
+        -:  113:
+    #####:  114:static int prv_isWhiteSpace(uint8_t sign)
+        -:  115:{
+    #####:  116:    if (sign == 0x20
+    #####:  117:     || sign == 0x09
+    #####:  118:     || sign == 0x0A
+    #####:  119:     || sign == 0x0D)
+        -:  120:    {
+    #####:  121:        return 1;
+        -:  122:    }
+        -:  123:
+    #####:  124:    return 0;
+        -:  125:}
+        -:  126:
+    #####:  127:static size_t prv_skipSpace(uint8_t * buffer,
+        -:  128:                            size_t bufferLen)
+        -:  129:{
+        -:  130:    size_t i;
+        -:  131:
+    #####:  132:    i = 0;
+    #####:  133:    while ((i < bufferLen)
+    #####:  134:        && prv_isWhiteSpace(buffer[i]))
+        -:  135:    {
+    #####:  136:        i++;
+        -:  137:    }
+        -:  138:
+    #####:  139:    return i;
+        -:  140:}
+        -:  141:
+    #####:  142:static int prv_split(uint8_t * buffer,
+        -:  143:                     size_t bufferLen,
+        -:  144:                     int * tokenStartP,
+        -:  145:                     int * tokenLenP,
+        -:  146:                     int * valueStartP,
+        -:  147:                     int * valueLenP)
+        -:  148:{
+        -:  149:    size_t index;
+        -:  150:    _itemState step;
+        -:  151:
+    #####:  152:    index = 0;
+    #####:  153:    step = _STEP_START;
+        -:  154:
+    #####:  155:    index = prv_skipSpace(buffer + index, bufferLen - index);
+    #####:  156:    if (index == bufferLen) return -1;
+        -:  157:
+    #####:  158:    while ((index < bufferLen)
+    #####:  159:        && (buffer[index] != ','))
+        -:  160:    {
+    #####:  161:        switch (step)
+        -:  162:        {
+    #####:  163:        case _STEP_START:
+    #####:  164:            if (buffer[index] != '"') return -1;
+    #####:  165:            *tokenStartP = index+1;
+    #####:  166:            step = _STEP_TOKEN;
+    #####:  167:            break;
+        -:  168:
+    #####:  169:        case _STEP_TOKEN:
+    #####:  170:            if (buffer[index] == '"')
+        -:  171:            {
+    #####:  172:                *tokenLenP = index - *tokenStartP;
+    #####:  173:                step = _STEP_ANY_SEPARATOR;
+        -:  174:            }
+    #####:  175:            break;
+        -:  176:
+    #####:  177:        case _STEP_ANY_SEPARATOR:
+    #####:  178:            if (buffer[index] != ':') return -1;
+    #####:  179:            step = _STEP_SEPARATOR;
+    #####:  180:            break;
+        -:  181:
+    #####:  182:        case _STEP_SEPARATOR:
+    #####:  183:            if (buffer[index] == '"')
+        -:  184:            {
+    #####:  185:                *valueStartP = index;
+    #####:  186:                step = _STEP_QUOTED_VALUE;
+    #####:  187:            } else if (!prv_isReserved(buffer[index]))
+        -:  188:            {
+    #####:  189:                *valueStartP = index;
+    #####:  190:                step = _STEP_VALUE;
+        -:  191:            } else
+        -:  192:            {
+    #####:  193:                return -1;
+        -:  194:            }
+    #####:  195:            break;
+        -:  196:
+    #####:  197:        case _STEP_QUOTED_VALUE:
+    #####:  198:            if (buffer[index] == '"' && buffer[index-1] != '\\' )
+        -:  199:            {
+    #####:  200:                *valueLenP = index - *valueStartP + 1;
+    #####:  201:                step = _STEP_DONE;
+        -:  202:            }
+    #####:  203:            break;
+        -:  204:
+    #####:  205:        case _STEP_VALUE:
+    #####:  206:            if (prv_isWhiteSpace(buffer[index]))
+        -:  207:            {
+    #####:  208:                *valueLenP = index - *valueStartP;
+    #####:  209:                step = _STEP_DONE;
+        -:  210:            }
+    #####:  211:            break;
+        -:  212:
+    #####:  213:        case _STEP_DONE:
+        -:  214:        default:
+    #####:  215:            return -1;
+        -:  216:        }
+        -:  217:
+    #####:  218:        index++;
+    #####:  219:        if (step == _STEP_START
+    #####:  220:         || step == _STEP_ANY_SEPARATOR
+    #####:  221:         || step == _STEP_SEPARATOR
+    #####:  222:         || step == _STEP_DONE)
+        -:  223:        {
+    #####:  224:            index += prv_skipSpace(buffer + index, bufferLen - index);
+        -:  225:        }
+        -:  226:    }
+        -:  227:
+    #####:  228:    if (step == _STEP_VALUE)
+        -:  229:    {
+    #####:  230:        *valueLenP = index - *valueStartP;
+    #####:  231:        step = _STEP_DONE;
+        -:  232:    }
+        -:  233:
+    #####:  234:    if (step != _STEP_DONE) return -1;
+        -:  235:
+    #####:  236:    return (int)index;
+        -:  237:}
+        -:  238:
+    #####:  239:static int prv_countItems(uint8_t * buffer,
+        -:  240:                          size_t bufferLen)
+        -:  241:{
+        -:  242:    int count;
+        -:  243:    size_t index;
+        -:  244:    int in;
+        -:  245:
+    #####:  246:    count = 0;
+    #####:  247:    index = 0;
+    #####:  248:    in = 0;
+        -:  249:
+    #####:  250:    while (index < bufferLen)
+        -:  251:    {
+    #####:  252:        if (in == 0)
+        -:  253:        {
+    #####:  254:            if (buffer[index] != '{') return -1;
+    #####:  255:            in = 1;
+    #####:  256:            _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+        -:  257:        }
+        -:  258:        else
+        -:  259:        {
+    #####:  260:            if (buffer[index] == '{') return -1;
+    #####:  261:            if (buffer[index] == '}')
+        -:  262:            {
+    #####:  263:                in = 0;
+    #####:  264:                count++;
+    #####:  265:                _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  266:                if (buffer[index] == ']')
+        -:  267:                {
+    #####:  268:                    break;
+        -:  269:                }
+    #####:  270:                if (buffer[index] != ',') return -1;
+    #####:  271:                _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+        -:  272:            }
+        -:  273:            else
+        -:  274:            {
+    #####:  275:                _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+        -:  276:            }
+        -:  277:        }
+        -:  278:    }
+    #####:  279:    if (in == 1) return -1;
+        -:  280:
+    #####:  281:    return count;
+        -:  282:
+    #####:  283:error:
+    #####:  284:    return -1;
+        -:  285:}
+        -:  286:
+    #####:  287:static int prv_parseItem(uint8_t * buffer,
+        -:  288:                         size_t bufferLen,
+        -:  289:                         _record_t * recordP)
+        -:  290:{
+        -:  291:    size_t index;
+        -:  292:
+    #####:  293:    memset(recordP->ids, 0xFF, 4*sizeof(uint16_t));
+    #####:  294:    recordP->type = _TYPE_UNSET;
+    #####:  295:    recordP->value = NULL;
+    #####:  296:    recordP->valueLen = 0;
+        -:  297:
+    #####:  298:    index = 0;
+        -:  299:    do
+        -:  300:    {
+        -:  301:        int tokenStart;
+        -:  302:        int tokenLen;
+        -:  303:        int valueStart;
+        -:  304:        int valueLen;
+        -:  305:        int next;
+        -:  306:
+    #####:  307:        next = prv_split(buffer+index, bufferLen-index, &tokenStart, &tokenLen, &valueStart, &valueLen);
+    #####:  308:        if (next < 0) return -1;
+        -:  309:
+    #####:  310:        switch (tokenLen)
+        -:  311:        {
+    #####:  312:        case 1:
+        -:  313:        {
+    #####:  314:            switch (buffer[index+tokenStart])
+        -:  315:            {
+    #####:  316:            case 'n':
+        -:  317:            {
+        -:  318:                int i;
+        -:  319:                int j;
+        -:  320:
+    #####:  321:                if (recordP->ids[0] != LWM2M_MAX_ID) return -1;
+        -:  322:
+        -:  323:                // Check for " around URI
+    #####:  324:                if (valueLen < 3
+    #####:  325:                 || buffer[index+valueStart] != '"'
+    #####:  326:                 || buffer[index+valueStart+valueLen-1] != '"')
+        -:  327:                {
+    #####:  328:                    return -1;
+        -:  329:                }
+        -:  330:                // Ignore starting /
+    #####:  331:                if (buffer[index + valueStart + 1] == '/')
+        -:  332:                {
+    #####:  333:                    if (valueLen < 4)
+        -:  334:                    {
+    #####:  335:                        return -1;
+        -:  336:                    }
+    #####:  337:                    valueStart += 1;
+    #####:  338:                    valueLen -= 1;
+        -:  339:                }
+    #####:  340:                i = 0;
+    #####:  341:                j = 0;
+        -:  342:                do {
+        -:  343:                    uint32_t readId;
+        -:  344:
+    #####:  345:                    readId = 0;
+    #####:  346:                    i++;
+    #####:  347:                    while (i < valueLen-1 && buffer[index+valueStart+i] != '/')
+        -:  348:                    {
+    #####:  349:                        if (buffer[index+valueStart+i] < '0'
+    #####:  350:                         || buffer[index+valueStart+i] > '9')
+        -:  351:                        {
+    #####:  352:                            return -1;
+        -:  353:                        }
+    #####:  354:                        readId *= 10;
+    #####:  355:                        readId += buffer[index+valueStart+i] - '0';
+    #####:  356:                        if (readId > LWM2M_MAX_ID) return -1;
+    #####:  357:                        i++;
+        -:  358:                    }
+    #####:  359:                    recordP->ids[j] = readId;
+    #####:  360:                    j++;
+    #####:  361:                } while (i < valueLen-1 && j < 4 && buffer[index+valueStart+i] == '/');
+    #####:  362:                if (i < valueLen-1 ) return -1;
+        -:  363:            }
+    #####:  364:            break;
+        -:  365:
+    #####:  366:            case 'v':
+    #####:  367:                if (recordP->type != _TYPE_UNSET) return -1;
+    #####:  368:                recordP->type = _TYPE_FLOAT;
+    #####:  369:                recordP->value = buffer + index + valueStart;
+    #####:  370:                recordP->valueLen = valueLen;
+    #####:  371:                break;
+        -:  372:
+    #####:  373:            case 't':
+        -:  374:                // TODO: support time
+    #####:  375:                break;
+        -:  376:
+    #####:  377:            default:
+    #####:  378:                return -1;
+        -:  379:            }
+        -:  380:        }
+    #####:  381:        break;
+        -:  382:
+    #####:  383:        case 2:
+        -:  384:        {
+        -:  385:            // "bv", "ov", or "sv"
+    #####:  386:            if (buffer[index+tokenStart+1] != 'v') return -1;
+    #####:  387:            switch (buffer[index+tokenStart])
+        -:  388:            {
+    #####:  389:            case 'b':
+    #####:  390:                if (recordP->type != _TYPE_UNSET) return -1;
+    #####:  391:                if (0 == lwm2m_strncmp(JSON_TRUE_STRING, (char *)buffer + index + valueStart, valueLen))
+        -:  392:                {
+    #####:  393:                    recordP->type = _TYPE_TRUE;
+        -:  394:                }
+    #####:  395:                else if (0 == lwm2m_strncmp(JSON_FALSE_STRING, (char *)buffer + index + valueStart, valueLen))
+        -:  396:                {
+    #####:  397:                    recordP->type = _TYPE_FALSE;
+        -:  398:                }
+        -:  399:                else
+        -:  400:                {
+    #####:  401:                    return -1;
+        -:  402:                }
+    #####:  403:                break;
+        -:  404:
+    #####:  405:            case 'o':
+    #####:  406:                if (recordP->type != _TYPE_UNSET) return -1;
+        -:  407:                // TODO: support object link
+    #####:  408:                break;
+        -:  409:
+    #####:  410:            case 's':
+    #####:  411:                if (recordP->type != _TYPE_UNSET) return -1;
+        -:  412:                // Check for " around value
+    #####:  413:                if (valueLen < 2
+    #####:  414:                 || buffer[index+valueStart] != '"'
+    #####:  415:                 || buffer[index+valueStart+valueLen-1] != '"')
+        -:  416:                {
+    #####:  417:                    return -1;
+        -:  418:                }
+    #####:  419:                recordP->type = _TYPE_STRING;
+    #####:  420:                recordP->value = buffer + index + valueStart + 1;
+    #####:  421:                recordP->valueLen = valueLen - 2;
+    #####:  422:                break;
+        -:  423:
+    #####:  424:            default:
+    #####:  425:                return -1;
+        -:  426:            }
+        -:  427:        }
+    #####:  428:        break;
+        -:  429:
+    #####:  430:        default:
+    #####:  431:            return -1;
+        -:  432:        }
+        -:  433:
+    #####:  434:        index += next + 1;
+    #####:  435:    } while (index < bufferLen);
+        -:  436:
+    #####:  437:    return 0;
+        -:  438:}
+        -:  439:
+    #####:  440:static bool prv_convertValue(_record_t * recordP,
+        -:  441:                             lwm2m_data_t * targetP)
+        -:  442:{
+    #####:  443:    switch (recordP->type)
+        -:  444:    {
+    #####:  445:    case _TYPE_FALSE:
+    #####:  446:        lwm2m_data_encode_bool(false, targetP);
+    #####:  447:        break;
+    #####:  448:    case _TYPE_TRUE:
+    #####:  449:        lwm2m_data_encode_bool(true, targetP);
+    #####:  450:        break;
+    #####:  451:    case _TYPE_FLOAT:
+        -:  452:    {
+        -:  453:        size_t i;
+        -:  454:
+    #####:  455:        i = 0;
+    #####:  456:        while (i < recordP->valueLen
+    #####:  457:            && recordP->value[i] != '.')
+        -:  458:        {
+    #####:  459:            i++;
+        -:  460:        }
+    #####:  461:        if (i == recordP->valueLen)
+        -:  462:        {
+        -:  463:            int64_t value;
+        -:  464:
+    #####:  465:            if ( 1 != utils_textToInt(recordP->value,
+    #####:  466:                                      recordP->valueLen,
+        -:  467:                                      &value))
+        -:  468:            {
+    #####:  469:                return false;
+        -:  470:            }
+        -:  471:
+    #####:  472:            lwm2m_data_encode_int(value, targetP);
+        -:  473:        }
+        -:  474:        else
+        -:  475:        {
+        -:  476:            double value;
+        -:  477:
+    #####:  478:            if ( 1 != utils_textToFloat(recordP->value,
+    #####:  479:                                        recordP->valueLen,
+        -:  480:                                        &value))
+        -:  481:            {
+    #####:  482:                return false;
+        -:  483:            }
+        -:  484:
+    #####:  485:            lwm2m_data_encode_float(value, targetP);
+        -:  486:        }
+        -:  487:    }
+    #####:  488:    break;
+        -:  489:
+    #####:  490:    case _TYPE_STRING:
+    #####:  491:        lwm2m_data_encode_opaque(recordP->value, recordP->valueLen, targetP);
+    #####:  492:        targetP->type = LWM2M_TYPE_STRING;
+    #####:  493:        break;
+        -:  494:
+    #####:  495:    case _TYPE_UNSET:
+        -:  496:    default:
+    #####:  497:        return false;
+        -:  498:    }
+        -:  499:
+    #####:  500:    return true;
+        -:  501:}
+        -:  502:
+    #####:  503:static lwm2m_data_t * prv_findDataItem(lwm2m_data_t * listP,
+        -:  504:                                       int count,
+        -:  505:                                       uint16_t id)
+        -:  506:{
+        -:  507:    int i;
+        -:  508:
+    #####:  509:    i = 0;
+    #####:  510:    while (i < count)
+        -:  511:    {
+    #####:  512:        if (listP[i].type != LWM2M_TYPE_UNDEFINED && listP[i].id == id)
+        -:  513:        {
+    #####:  514:            return listP + i;
+        -:  515:        }
+    #####:  516:        i++;
+        -:  517:    }
+        -:  518:
+    #####:  519:    return NULL;
+        -:  520:}
+        -:  521:
+    #####:  522:static uri_depth_t prv_decreaseLevel(uri_depth_t level)
+        -:  523:{
+    #####:  524:    switch(level)
+        -:  525:    {
+    #####:  526:    case URI_DEPTH_OBJECT:
+    #####:  527:        return URI_DEPTH_OBJECT_INSTANCE;
+    #####:  528:    case URI_DEPTH_OBJECT_INSTANCE:
+    #####:  529:        return URI_DEPTH_RESOURCE;
+    #####:  530:    case URI_DEPTH_RESOURCE:
+    #####:  531:        return URI_DEPTH_RESOURCE_INSTANCE;
+    #####:  532:    case URI_DEPTH_RESOURCE_INSTANCE:
+    #####:  533:        return URI_DEPTH_RESOURCE_INSTANCE;
+    #####:  534:    default:
+    #####:  535:        return URI_DEPTH_RESOURCE;
+        -:  536:    }
+        -:  537:}
+        -:  538:
+    #####:  539:static lwm2m_data_t * prv_extendData(lwm2m_data_t * parentP)
+        -:  540:{
+        -:  541:    lwm2m_data_t * newP;
+        -:  542:
+    #####:  543:    newP = lwm2m_data_new(parentP->value.asChildren.count + 1);
+    #####:  544:    if (newP == NULL) return NULL;
+    #####:  545:    if (parentP->value.asChildren.array != NULL)
+        -:  546:    {
+    #####:  547:        memcpy(newP, parentP->value.asChildren.array, parentP->value.asChildren.count * sizeof(lwm2m_data_t));
+    #####:  548:        lwm2m_free(parentP->value.asChildren.array);     // do not use lwm2m_data_free() to keep pointed values
+        -:  549:    }
+    #####:  550:    parentP->value.asChildren.array = newP;
+    #####:  551:    parentP->value.asChildren.count += 1;
+        -:  552:
+    #####:  553:    return newP + parentP->value.asChildren.count - 1;
+        -:  554:}
+        -:  555:
+    #####:  556:static int prv_convertRecord(lwm2m_uri_t * uriP,
+        -:  557:                             _record_t * recordArray,
+        -:  558:                             int count,
+        -:  559:                             lwm2m_data_t ** dataP)
+        -:  560:{
+        -:  561:    int index;
+        -:  562:    int freeIndex;
+        -:  563:    lwm2m_data_t * rootP;
+        -:  564:    int size;
+        -:  565:    uri_depth_t rootLevel;
+        -:  566:
+    #####:  567:    if (uriP == NULL)
+        -:  568:    {
+    #####:  569:        size = count;
+    #####:  570:        *dataP = lwm2m_data_new(count);
+    #####:  571:        if (NULL == *dataP) return -1;
+    #####:  572:        rootLevel = URI_DEPTH_OBJECT;
+    #####:  573:        rootP = *dataP;
+        -:  574:    }
+        -:  575:    else
+        -:  576:    {
+        -:  577:        lwm2m_data_t * parentP;
+    #####:  578:        size = 1;
+        -:  579:
+    #####:  580:        *dataP = lwm2m_data_new(1);
+    #####:  581:        if (NULL == *dataP) return -1;
+    #####:  582:        (*dataP)->type = LWM2M_TYPE_OBJECT;
+    #####:  583:        (*dataP)->id = uriP->objectId;
+    #####:  584:        rootLevel = URI_DEPTH_OBJECT_INSTANCE;
+    #####:  585:        parentP = *dataP;
+    #####:  586:        if (LWM2M_URI_IS_SET_INSTANCE(uriP))
+        -:  587:        {
+    #####:  588:            parentP->value.asChildren.count = 1;
+    #####:  589:            parentP->value.asChildren.array = lwm2m_data_new(1);
+    #####:  590:            if (NULL == parentP->value.asChildren.array) goto error;
+    #####:  591:            parentP = parentP->value.asChildren.array;
+    #####:  592:            parentP->type = LWM2M_TYPE_OBJECT_INSTANCE;
+    #####:  593:            parentP->id = uriP->instanceId;
+    #####:  594:            rootLevel = URI_DEPTH_RESOURCE;
+    #####:  595:            if (LWM2M_URI_IS_SET_RESOURCE(uriP))
+        -:  596:            {
+    #####:  597:                parentP->value.asChildren.count = 1;
+    #####:  598:                parentP->value.asChildren.array = lwm2m_data_new(1);
+    #####:  599:                if (NULL == parentP->value.asChildren.array) goto error;
+    #####:  600:                parentP = parentP->value.asChildren.array;
+    #####:  601:                parentP->type = LWM2M_TYPE_UNDEFINED;
+    #####:  602:                parentP->id = uriP->resourceId;
+    #####:  603:                rootLevel = URI_DEPTH_RESOURCE_INSTANCE;
+        -:  604:            }
+        -:  605:        }
+    #####:  606:        parentP->value.asChildren.count = count;
+    #####:  607:        parentP->value.asChildren.array = lwm2m_data_new(count);
+    #####:  608:        if (NULL == parentP->value.asChildren.array) goto error;
+    #####:  609:        rootP = parentP->value.asChildren.array;
+        -:  610:    }
+        -:  611:
+    #####:  612:    freeIndex = 0;
+    #####:  613:    for (index = 0 ; index < count ; index++)
+        -:  614:    {
+        -:  615:        lwm2m_data_t * targetP;
+        -:  616:        int resSegmentIndex;
+        -:  617:        int i;
+        -:  618:
+        -:  619:        // check URI depth
+        -:  620:        // resSegmentIndex is set to the resource segment position
+    #####:  621:        switch(rootLevel)
+        -:  622:        {
+    #####:  623:        case URI_DEPTH_OBJECT:
+    #####:  624:            resSegmentIndex = 2;
+    #####:  625:            break;
+    #####:  626:        case URI_DEPTH_OBJECT_INSTANCE:
+    #####:  627:            resSegmentIndex = 1;
+    #####:  628:            break;
+    #####:  629:        case URI_DEPTH_RESOURCE:
+    #####:  630:            resSegmentIndex = 0;
+    #####:  631:            break;
+    #####:  632:        case URI_DEPTH_RESOURCE_INSTANCE:
+    #####:  633:            resSegmentIndex = -1;
+    #####:  634:            break;
+    #####:  635:        default:
+    #####:  636:            goto error;
+        -:  637:        }
+    #####:  638:        for (i = 0 ; i <= resSegmentIndex ; i++)
+        -:  639:        {
+    #####:  640:            if (recordArray[index].ids[i] == LWM2M_MAX_ID) goto error;
+        -:  641:        }
+    #####:  642:        if (resSegmentIndex < 2)
+        -:  643:        {
+    #####:  644:            if (recordArray[index].ids[resSegmentIndex + 2] != LWM2M_MAX_ID) goto error;
+        -:  645:        }
+        -:  646:
+    #####:  647:        targetP = prv_findDataItem(rootP, count, recordArray[index].ids[0]);
+    #####:  648:        if (targetP == NULL)
+        -:  649:        {
+    #####:  650:            targetP = rootP + freeIndex;
+    #####:  651:            freeIndex++;
+    #####:  652:            targetP->id = recordArray[index].ids[0];
+    #####:  653:            targetP->type = utils_depthToDatatype(rootLevel);
+        -:  654:        }
+    #####:  655:        if (recordArray[index].ids[1] != LWM2M_MAX_ID)
+        -:  656:        {
+        -:  657:            lwm2m_data_t * parentP;
+        -:  658:            uri_depth_t level;
+        -:  659:
+    #####:  660:            parentP = targetP;
+    #####:  661:            level = prv_decreaseLevel(rootLevel);
+    #####:  662:            for (i = 1 ; i <= resSegmentIndex ; i++)
+        -:  663:            {
+    #####:  664:                targetP = prv_findDataItem(parentP->value.asChildren.array, parentP->value.asChildren.count, recordArray[index].ids[i]);
+    #####:  665:                if (targetP == NULL)
+        -:  666:                {
+    #####:  667:                    targetP = prv_extendData(parentP);
+    #####:  668:                    if (targetP == NULL) goto error;
+    #####:  669:                    targetP->id = recordArray[index].ids[i];
+    #####:  670:                    targetP->type = utils_depthToDatatype(level);
+        -:  671:                }
+    #####:  672:                level = prv_decreaseLevel(level);
+    #####:  673:                parentP = targetP;
+        -:  674:            }
+    #####:  675:            if (recordArray[index].ids[resSegmentIndex + 1] != LWM2M_MAX_ID)
+        -:  676:            {
+    #####:  677:                targetP->type = LWM2M_TYPE_MULTIPLE_RESOURCE;
+    #####:  678:                targetP = prv_extendData(targetP);
+    #####:  679:                if (targetP == NULL) goto error;
+    #####:  680:                targetP->id = recordArray[index].ids[resSegmentIndex + 1];
+    #####:  681:                targetP->type = LWM2M_TYPE_UNDEFINED;
+        -:  682:            }
+        -:  683:        }
+        -:  684:
+    #####:  685:        if (true != prv_convertValue(recordArray + index, targetP)) goto error;
+        -:  686:    }
+        -:  687:
+    #####:  688:    return size;
+        -:  689:
+    #####:  690:error:
+    #####:  691:    lwm2m_data_free(size, *dataP);
+    #####:  692:    *dataP = NULL;
+        -:  693:
+    #####:  694:    return -1;
+        -:  695:}
+        -:  696:
+    #####:  697:static int prv_dataStrip(int size,
+        -:  698:                         lwm2m_data_t * dataP,
+        -:  699:                         lwm2m_data_t ** resultP)
+        -:  700:{
+        -:  701:    int i;
+        -:  702:    int j;
+        -:  703:    int realSize;
+        -:  704:
+    #####:  705:    realSize = 0;
+    #####:  706:    for (i = 0 ; i < size ; i++)
+        -:  707:    {
+    #####:  708:        if (dataP[i].type != LWM2M_TYPE_UNDEFINED)
+        -:  709:        {
+    #####:  710:            realSize++;
+        -:  711:        }
+        -:  712:    }
+        -:  713:
+    #####:  714:    *resultP = lwm2m_data_new(realSize);
+    #####:  715:    if (*resultP == NULL) return -1;
+        -:  716:
+    #####:  717:    j = 0;
+    #####:  718:    for (i = 0 ; i < size ; i++)
+        -:  719:    {
+    #####:  720:        if (dataP[i].type != LWM2M_TYPE_UNDEFINED)
+        -:  721:        {
+    #####:  722:            memcpy((*resultP) + j, dataP + i, sizeof(lwm2m_data_t));
+        -:  723:
+    #####:  724:            if (dataP[i].type == LWM2M_TYPE_OBJECT
+    #####:  725:             || dataP[i].type == LWM2M_TYPE_OBJECT_INSTANCE
+    #####:  726:             || dataP[i].type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+    #####:  727:            {
+        -:  728:                int childLen;
+        -:  729:
+    #####:  730:                childLen = prv_dataStrip(dataP[i].value.asChildren.count, dataP[i].value.asChildren.array, &((*resultP)[j].value.asChildren.array));
+    #####:  731:                if (childLen <= 0)
+        -:  732:                {
+        -:  733:                    // skip this one
+    #####:  734:                    j--;
+        -:  735:                }
+        -:  736:                else
+        -:  737:                {
+    #####:  738:                    (*resultP)[j].value.asChildren.count = childLen;
+        -:  739:                }
+        -:  740:            }
+        -:  741:            else
+        -:  742:            {
+    #####:  743:                dataP[i].value.asBuffer.buffer = NULL;
+        -:  744:            }
+        -:  745:
+    #####:  746:            j++;
+        -:  747:        }
+        -:  748:    }
+        -:  749:
+    #####:  750:    return realSize;
+        -:  751:}
+        -:  752:
+    #####:  753:int json_parse(lwm2m_uri_t * uriP,
+        -:  754:               uint8_t * buffer,
+        -:  755:               size_t bufferLen,
+        -:  756:               lwm2m_data_t ** dataP)
+        -:  757:{
+        -:  758:    size_t index;
+    #####:  759:    int count = 0;
+    #####:  760:    bool eFound = false;
+    #####:  761:    bool bnFound = false;
+    #####:  762:    bool btFound = false;
+        -:  763:    int bnStart;
+        -:  764:    int bnLen;
+        -:  765:    _record_t * recordArray;
+        -:  766:    lwm2m_data_t * parsedP;
+        -:  767:
+        -:  768:    LOG_ARG("bufferLen: %d, buffer: \"%s\"", bufferLen, (char *)buffer);
+        -:  769:    LOG_URI(uriP);
+    #####:  770:    *dataP = NULL;
+    #####:  771:    recordArray = NULL;
+    #####:  772:    parsedP = NULL;
+        -:  773:
+    #####:  774:    index = prv_skipSpace(buffer, bufferLen);
+    #####:  775:    if (index == bufferLen) return -1;
+        -:  776:
+    #####:  777:    if (buffer[index] != '{') return -1;
+        -:  778:    do
+        -:  779:    {
+    #####:  780:        _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  781:        if (buffer[index] != '"') goto error;
+    #####:  782:        if (index++ >= bufferLen) goto error;
+    #####:  783:        switch (buffer[index])
+        -:  784:        {
+    #####:  785:        case 'e':
+        -:  786:        {
+        -:  787:            int recordIndex;
+        -:  788:
+    #####:  789:            if (bufferLen-index < JSON_MIN_ARRAY_LEN) goto error;
+    #####:  790:            index++;
+    #####:  791:            if (buffer[index] != '"') goto error;
+    #####:  792:            if (eFound == true) goto error;
+    #####:  793:            eFound = true;
+        -:  794:
+    #####:  795:            _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  796:            if (buffer[index] != ':') goto error;
+    #####:  797:            _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  798:            if (buffer[index] != '[') goto error;
+    #####:  799:            _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  800:            count = prv_countItems(buffer + index, bufferLen - index);
+    #####:  801:            if (count <= 0) goto error;
+    #####:  802:            recordArray = (_record_t*)lwm2m_malloc(count * sizeof(_record_t));
+    #####:  803:            if (recordArray == NULL) goto error;
+        -:  804:            // at this point we are sure buffer[index] is '{' and all { and } are matching
+    #####:  805:            recordIndex = 0;
+    #####:  806:            while (recordIndex < count)
+        -:  807:            {
+        -:  808:                int itemLen;
+        -:  809:
+    #####:  810:                if (buffer[index] != '{') goto error;
+    #####:  811:                itemLen = 0;
+    #####:  812:                while (buffer[index + itemLen] != '}') itemLen++;
+    #####:  813:                if (0 != prv_parseItem(buffer + index + 1, itemLen - 1, recordArray + recordIndex))
+        -:  814:                {
+    #####:  815:                    goto error;
+        -:  816:                }
+    #####:  817:                recordIndex++;
+    #####:  818:                index += itemLen;
+    #####:  819:                _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  820:                switch (buffer[index])
+        -:  821:                {
+    #####:  822:                case ',':
+    #####:  823:                    _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  824:                    break;
+    #####:  825:                case ']':
+    #####:  826:                    if (recordIndex == count) break;
+        -:  827:                    // else this is an error
+        -:  828:                default:
+    #####:  829:                    goto error;
+        -:  830:                }
+        -:  831:            }
+    #####:  832:            if (buffer[index] != ']') goto error;
+        -:  833:        }
+    #####:  834:        break;
+        -:  835:
+    #####:  836:        case 'b':
+    #####:  837:            if (bufferLen-index < JSON_MIN_BX_LEN) goto error;
+    #####:  838:            index++;
+    #####:  839:            switch (buffer[index])
+        -:  840:            {
+    #####:  841:            case 't':
+    #####:  842:                index++;
+    #####:  843:                if (buffer[index] != '"') goto error;
+    #####:  844:                if (btFound == true) goto error;
+    #####:  845:                btFound = true;
+        -:  846:
+        -:  847:                // TODO: handle timed values
+        -:  848:                // temp: skip this token
+    #####:  849:                while(index < bufferLen && buffer[index] != ',' && buffer[index] != '}') index++;
+    #####:  850:                if (index == bufferLen) goto error;
+    #####:  851:                index--;
+        -:  852:                // end temp
+    #####:  853:                break;
+    #####:  854:            case 'n':
+        -:  855:                {
+        -:  856:                    int next;
+        -:  857:                    int tokenStart;
+        -:  858:                    int tokenLen;
+        -:  859:                    int itemLen;
+        -:  860:
+    #####:  861:                    index++;
+    #####:  862:                    if (buffer[index] != '"') goto error;
+    #####:  863:                    if (bnFound == true) goto error;
+    #####:  864:                    bnFound = true;
+    #####:  865:                    index -= 3;
+    #####:  866:                    itemLen = 0;
+    #####:  867:                    while (buffer[index + itemLen] != '}'
+    #####:  868:                        && buffer[index + itemLen] != ','
+    #####:  869:                        && index + itemLen < bufferLen)
+        -:  870:                    {
+    #####:  871:                        itemLen++;
+        -:  872:                    }
+    #####:  873:                    if (index + itemLen == bufferLen) goto error;
+    #####:  874:                    next = prv_split(buffer+index, itemLen, &tokenStart, &tokenLen, &bnStart, &bnLen);
+    #####:  875:                    if (next < 0) goto error;
+    #####:  876:                    bnStart += index;
+    #####:  877:                    index += next - 1;
+        -:  878:                }
+    #####:  879:                break;
+    #####:  880:            default:
+    #####:  881:                goto error;
+        -:  882:            }
+    #####:  883:            break;
+        -:  884:
+    #####:  885:        default:
+    #####:  886:            goto error;
+        -:  887:        }
+        -:  888:
+    #####:  889:        _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
+    #####:  890:    } while (buffer[index] == ',');
+        -:  891:
+    #####:  892:    if (buffer[index] != '}') goto error;
+        -:  893:
+    #####:  894:    if (eFound == true)
+        -:  895:    {
+        -:  896:        lwm2m_uri_t baseURI;
+        -:  897:        lwm2m_uri_t * baseUriP;
+        -:  898:        lwm2m_data_t * resultP;
+        -:  899:        int size;
+        -:  900:
+    #####:  901:        memset(&baseURI, 0, sizeof(lwm2m_uri_t));
+    #####:  902:        if (bnFound == false)
+        -:  903:        {
+    #####:  904:            baseUriP = uriP;
+        -:  905:        }
+        -:  906:        else
+        -:  907:        {
+        -:  908:            int res;
+        -:  909:
+        -:  910:            // we ignore the request URI and use the bn one.
+        -:  911:
+        -:  912:            // Check for " around URI
+    #####:  913:            if (bnLen < 3
+    #####:  914:             || buffer[bnStart] != '"'
+    #####:  915:             || buffer[bnStart+bnLen-1] != '"')
+        -:  916:            {
+    #####:  917:                goto error;
+        -:  918:            }
+    #####:  919:            bnStart += 1;
+    #####:  920:            bnLen -= 2;
+        -:  921:
+    #####:  922:            if (bnLen == 1)
+        -:  923:            {
+    #####:  924:                if (buffer[bnStart] != '/') goto error;
+    #####:  925:                baseUriP = NULL;
+        -:  926:            }
+        -:  927:            else
+        -:  928:            {
+    #####:  929:                res = lwm2m_stringToUri((char *)buffer + bnStart, bnLen, &baseURI);
+    #####:  930:                if (res < 0 || res != bnLen) goto error;
+    #####:  931:                baseUriP = &baseURI;
+        -:  932:            }
+        -:  933:        }
+        -:  934:
+    #####:  935:        count = prv_convertRecord(baseUriP, recordArray, count, &parsedP);
+    #####:  936:        lwm2m_free(recordArray);
+    #####:  937:        recordArray = NULL;
+        -:  938:
+    #####:  939:        if (count > 0 && uriP != NULL)
+        -:  940:        {
+    #####:  941:            if (parsedP->type != LWM2M_TYPE_OBJECT || parsedP->id != uriP->objectId) goto error;
+    #####:  942:            if (!LWM2M_URI_IS_SET_INSTANCE(uriP))
+        -:  943:            {
+    #####:  944:                size = parsedP->value.asChildren.count;
+    #####:  945:                resultP = parsedP->value.asChildren.array;
+        -:  946:            }
+        -:  947:            else
+        -:  948:            {
+        -:  949:                int i;
+        -:  950:
+    #####:  951:                resultP = NULL;
+        -:  952:                // be permissive and allow full object JSON when requesting for a single instance
+    #####:  953:                for (i = 0 ; i < (int)parsedP->value.asChildren.count && resultP == NULL; i++)
+        -:  954:                {
+        -:  955:                    lwm2m_data_t * targetP;
+        -:  956:
+    #####:  957:                    targetP = parsedP->value.asChildren.array + i;
+    #####:  958:                    if (targetP->id == uriP->instanceId)
+        -:  959:                    {
+    #####:  960:                        resultP = targetP->value.asChildren.array;
+    #####:  961:                        size = targetP->value.asChildren.count;
+        -:  962:                    }
+        -:  963:                }
+    #####:  964:                if (resultP == NULL) goto error;
+    #####:  965:                if (LWM2M_URI_IS_SET_RESOURCE(uriP))
+        -:  966:                {
+        -:  967:                    lwm2m_data_t * resP;
+        -:  968:
+    #####:  969:                    resP = NULL;
+    #####:  970:                    for (i = 0 ; i < size && resP == NULL; i++)
+        -:  971:                    {
+        -:  972:                        lwm2m_data_t * targetP;
+        -:  973:
+    #####:  974:                        targetP = resultP + i;
+    #####:  975:                        if (targetP->id == uriP->resourceId)
+        -:  976:                        {
+    #####:  977:                            if (targetP->type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        -:  978:                            {
+    #####:  979:                                resP = targetP->value.asChildren.array;
+    #####:  980:                                size = targetP->value.asChildren.count;
+        -:  981:                            }
+        -:  982:                            else
+        -:  983:                            {
+    #####:  984:                                size = prv_dataStrip(1, targetP, &resP);
+    #####:  985:                                if (size <= 0) goto error;
+    #####:  986:                                lwm2m_data_free(count, parsedP);
+    #####:  987:                                parsedP = NULL;
+        -:  988:                            }
+        -:  989:                        }
+        -:  990:                    }
+    #####:  991:                    if (resP == NULL) goto error;
+    #####:  992:                    resultP = resP;
+        -:  993:                }
+        -:  994:            }
+        -:  995:        }
+        -:  996:        else
+        -:  997:        {
+    #####:  998:            resultP = parsedP;
+    #####:  999:            size = count;
+        -: 1000:        }
+        -: 1001:
+    #####: 1002:        if (parsedP != NULL)
+        -: 1003:        {
+        -: 1004:            lwm2m_data_t * tempP;
+        -: 1005:
+    #####: 1006:            size = prv_dataStrip(size, resultP, &tempP);
+    #####: 1007:            if (size <= 0) goto error;
+    #####: 1008:            lwm2m_data_free(count, parsedP);
+    #####: 1009:            resultP = tempP;
+        -: 1010:        }
+    #####: 1011:        count = size;
+    #####: 1012:        *dataP = resultP;
+        -: 1013:    }
+        -: 1014:
+        -: 1015:    LOG_ARG("Parsing successful. count: %d", count);
+    #####: 1016:    return count;
+        -: 1017:
+    #####: 1018:error:
+        -: 1019:    LOG("Parsing failed");
+    #####: 1020:    if (parsedP != NULL)
+        -: 1021:    {
+    #####: 1022:        lwm2m_data_free(count, parsedP);
+    #####: 1023:        parsedP = NULL;
+        -: 1024:    }
+    #####: 1025:    if (recordArray != NULL)
+        -: 1026:    {
+    #####: 1027:        lwm2m_free(recordArray);
+        -: 1028:    }
+    #####: 1029:    return -1;
+        -: 1030:}
+        -: 1031:
+    #####: 1032:static int prv_serializeValue(lwm2m_data_t * tlvP,
+        -: 1033:                              uint8_t * buffer,
+        -: 1034:                              size_t bufferLen)
+        -: 1035:{
+        -: 1036:    int res;
+        -: 1037:    int head;
+        -: 1038:
+    #####: 1039:    switch (tlvP->type)
+        -: 1040:    {
+    #####: 1041:    case LWM2M_TYPE_STRING:
+    #####: 1042:        if (bufferLen < JSON_ITEM_STRING_BEGIN_SIZE) return -1;
+    #####: 1043:        memcpy(buffer, JSON_ITEM_STRING_BEGIN, JSON_ITEM_STRING_BEGIN_SIZE);
+    #####: 1044:        head = JSON_ITEM_STRING_BEGIN_SIZE;
+        -: 1045:
+    #####: 1046:        if (bufferLen - head < tlvP->value.asBuffer.length) return -1;
+    #####: 1047:        memcpy(buffer + head, tlvP->value.asBuffer.buffer, tlvP->value.asBuffer.length);
+    #####: 1048:        head += tlvP->value.asBuffer.length;
+        -: 1049:
+    #####: 1050:        if (bufferLen - head < JSON_ITEM_STRING_END_SIZE) return -1;
+    #####: 1051:        memcpy(buffer + head, JSON_ITEM_STRING_END, JSON_ITEM_STRING_END_SIZE);
+    #####: 1052:        head += JSON_ITEM_STRING_END_SIZE;
+        -: 1053:
+    #####: 1054:        break;
+        -: 1055:
+    #####: 1056:    case LWM2M_TYPE_INTEGER:
+        -: 1057:    {
+        -: 1058:        int64_t value;
+        -: 1059:
+    #####: 1060:        if (0 == lwm2m_data_decode_int(tlvP, &value)) return -1;
+        -: 1061:
+    #####: 1062:        if (bufferLen < JSON_ITEM_NUM_SIZE) return -1;
+    #####: 1063:        memcpy(buffer, JSON_ITEM_NUM, JSON_ITEM_NUM_SIZE);
+    #####: 1064:        head = JSON_ITEM_NUM_SIZE;
+        -: 1065:
+    #####: 1066:        res = utils_intToText(value, buffer + head, bufferLen - head);
+    #####: 1067:        if (res <= 0) return -1;
+    #####: 1068:        head += res;
+        -: 1069:
+    #####: 1070:        if (bufferLen - head < JSON_ITEM_NUM_END_SIZE) return -1;
+    #####: 1071:        memcpy(buffer + head, JSON_ITEM_NUM_END, JSON_ITEM_NUM_END_SIZE);
+    #####: 1072:        head += JSON_ITEM_NUM_END_SIZE;
+        -: 1073:    }
+    #####: 1074:    break;
+        -: 1075:
+    #####: 1076:    case LWM2M_TYPE_FLOAT:
+        -: 1077:    {
+        -: 1078:        double value;
+        -: 1079:
+    #####: 1080:        if (0 == lwm2m_data_decode_float(tlvP, &value)) return -1;
+        -: 1081:
+    #####: 1082:        if (bufferLen < JSON_ITEM_NUM_SIZE) return -1;
+    #####: 1083:        memcpy(buffer, JSON_ITEM_NUM, JSON_ITEM_NUM_SIZE);
+    #####: 1084:        head = JSON_ITEM_NUM_SIZE;
+        -: 1085:
+    #####: 1086:        res = utils_floatToText(value, buffer + head, bufferLen - head);
+    #####: 1087:        if (res <= 0) return -1;
+    #####: 1088:        head += res;
+        -: 1089:
+    #####: 1090:        if (bufferLen - head < JSON_ITEM_NUM_END_SIZE) return -1;
+    #####: 1091:        memcpy(buffer + head, JSON_ITEM_NUM_END, JSON_ITEM_NUM_END_SIZE);
+    #####: 1092:        head += JSON_ITEM_NUM_END_SIZE;
+        -: 1093:    }
+    #####: 1094:    break;
+        -: 1095:
+    #####: 1096:    case LWM2M_TYPE_BOOLEAN:
+        -: 1097:    {
+        -: 1098:        bool value;
+        -: 1099:
+    #####: 1100:        if (0 == lwm2m_data_decode_bool(tlvP, &value)) return -1;
+        -: 1101:
+    #####: 1102:        if (value == true)
+        -: 1103:        {
+    #####: 1104:            if (bufferLen < JSON_ITEM_BOOL_TRUE_SIZE) return -1;
+    #####: 1105:            memcpy(buffer, JSON_ITEM_BOOL_TRUE, JSON_ITEM_BOOL_TRUE_SIZE);
+    #####: 1106:            head = JSON_ITEM_BOOL_TRUE_SIZE;
+        -: 1107:        }
+        -: 1108:        else
+        -: 1109:        {
+    #####: 1110:            if (bufferLen < JSON_ITEM_BOOL_FALSE_SIZE) return -1;
+    #####: 1111:            memcpy(buffer, JSON_ITEM_BOOL_FALSE, JSON_ITEM_BOOL_FALSE_SIZE);
+    #####: 1112:            head = JSON_ITEM_BOOL_FALSE_SIZE;
+        -: 1113:        }
+        -: 1114:    }
+    #####: 1115:    break;
+        -: 1116:
+    #####: 1117:    case LWM2M_TYPE_OPAQUE:
+    #####: 1118:        if (bufferLen < JSON_ITEM_STRING_BEGIN_SIZE) return -1;
+    #####: 1119:        memcpy(buffer, JSON_ITEM_STRING_BEGIN, JSON_ITEM_STRING_BEGIN_SIZE);
+    #####: 1120:        head = JSON_ITEM_STRING_BEGIN_SIZE;
+        -: 1121:
+    #####: 1122:        res = utils_base64Encode(tlvP->value.asBuffer.buffer, tlvP->value.asBuffer.length, buffer+head, bufferLen - head);
+        -: 1123:        //if (res == 0) return -1;
+    #####: 1124:        head += res;
+        -: 1125:
+    #####: 1126:        if (bufferLen - head < JSON_ITEM_STRING_END_SIZE) return -1;
+    #####: 1127:        memcpy(buffer + head, JSON_ITEM_STRING_END, JSON_ITEM_STRING_END_SIZE);
+    #####: 1128:        head += JSON_ITEM_STRING_END_SIZE;
+    #####: 1129:        break;
+        -: 1130:
+    #####: 1131:    case LWM2M_TYPE_OBJECT_LINK:
+        -: 1132:        // TODO: implement
+    #####: 1133:        return -1;
+        -: 1134:
+    #####: 1135:    default:
+    #####: 1136:        return -1;
+        -: 1137:    }
+        -: 1138:
+    #####: 1139:    return head;
+        -: 1140:}
+        -: 1141:
+    #####: 1142:int prv_serializeData(lwm2m_data_t * tlvP,
+        -: 1143:                      uint8_t * parentUriStr,
+        -: 1144:                      size_t parentUriLen,
+        -: 1145:                      uint8_t * buffer,
+        -: 1146:                      size_t bufferLen)
+        -: 1147:{
+        -: 1148:    int head;
+        -: 1149:    int res;
+        -: 1150:
+    #####: 1151:    head = 0;
+        -: 1152:
+    #####: 1153:    switch (tlvP->type)
+        -: 1154:    {
+    #####: 1155:    case LWM2M_TYPE_OBJECT:
+        -: 1156:    case LWM2M_TYPE_OBJECT_INSTANCE:
+        -: 1157:    case LWM2M_TYPE_MULTIPLE_RESOURCE:
+        -: 1158:    {
+        -: 1159:        uint8_t uriStr[URI_MAX_STRING_LEN];
+        -: 1160:        size_t uriLen;
+        -: 1161:        size_t index;
+        -: 1162:
+    #####: 1163:        if (parentUriLen > 0)
+        -: 1164:        {
+    #####: 1165:            if (URI_MAX_STRING_LEN < parentUriLen) return -1;
+    #####: 1166:            memcpy(uriStr, parentUriStr, parentUriLen);
+    #####: 1167:            uriLen = parentUriLen;
+        -: 1168:        }
+        -: 1169:        else
+        -: 1170:        {
+    #####: 1171:            uriLen = 0;
+        -: 1172:        }
+    #####: 1173:        res = utils_intToText(tlvP->id, uriStr + uriLen, URI_MAX_STRING_LEN - uriLen);
+    #####: 1174:        if (res <= 0) return -1;
+    #####: 1175:        uriLen += res;
+    #####: 1176:        uriStr[uriLen] = '/';
+    #####: 1177:        uriLen++;
+        -: 1178:
+    #####: 1179:        head = 0;
+    #####: 1180:        for (index = 0 ; index < tlvP->value.asChildren.count; index++)
+        -: 1181:        {
+    #####: 1182:            res = prv_serializeData(tlvP->value.asChildren.array + index, uriStr, uriLen, buffer + head, bufferLen - head);
+    #####: 1183:            if (res < 0) return -1;
+    #####: 1184:            head += res;
+        -: 1185:        }
+        -: 1186:    }
+    #####: 1187:    break;
+        -: 1188:
+    #####: 1189:    default:
+    #####: 1190:        if (bufferLen < JSON_RES_ITEM_URI_SIZE) return -1;
+    #####: 1191:        memcpy(buffer, JSON_RES_ITEM_URI, JSON_RES_ITEM_URI_SIZE);
+    #####: 1192:        head = JSON_RES_ITEM_URI_SIZE;
+        -: 1193:
+    #####: 1194:        if (parentUriLen > 0)
+        -: 1195:        {
+    #####: 1196:            if (bufferLen - head < parentUriLen) return -1;
+    #####: 1197:            memcpy(buffer + head, parentUriStr, parentUriLen);
+    #####: 1198:            head += parentUriLen;
+        -: 1199:        }
+        -: 1200:
+    #####: 1201:        res = utils_intToText(tlvP->id, buffer + head, bufferLen - head);
+    #####: 1202:        if (res <= 0) return -1;
+    #####: 1203:        head += res;
+        -: 1204:
+    #####: 1205:        res = prv_serializeValue(tlvP, buffer + head, bufferLen - head);
+    #####: 1206:        if (res < 0) return -1;
+    #####: 1207:        head += res;
+    #####: 1208:        break;
+        -: 1209:    }
+        -: 1210:
+    #####: 1211:    return head;
+        -: 1212:}
+        -: 1213:
+    #####: 1214:static int prv_findAndCheckData(lwm2m_uri_t * uriP,
+        -: 1215:                                uri_depth_t level,
+        -: 1216:                                size_t size,
+        -: 1217:                                lwm2m_data_t * tlvP,
+        -: 1218:                                lwm2m_data_t ** targetP)
+        -: 1219:{
+        -: 1220:    size_t index;
+        -: 1221:    int result;
+        -: 1222:
+    #####: 1223:    if (size == 0) return 0;
+        -: 1224:
+    #####: 1225:    if (size > 1)
+        -: 1226:    {
+    #####: 1227:        if (tlvP[0].type == LWM2M_TYPE_OBJECT || tlvP[0].type == LWM2M_TYPE_OBJECT_INSTANCE)
+        -: 1228:        {
+    #####: 1229:            for (index = 0; index < size; index++)
+        -: 1230:            {
+    #####: 1231:                if (tlvP[index].type != tlvP[0].type)
+        -: 1232:                {
+    #####: 1233:                    *targetP = NULL;
+    #####: 1234:                    return -1;
+        -: 1235:                }
+        -: 1236:            }
+        -: 1237:        }
+        -: 1238:        else
+        -: 1239:        {
+    #####: 1240:            for (index = 0; index < size; index++)
+        -: 1241:            {
+    #####: 1242:                if (tlvP[index].type == LWM2M_TYPE_OBJECT || tlvP[index].type == LWM2M_TYPE_OBJECT_INSTANCE)
+        -: 1243:                {
+    #####: 1244:                    *targetP = NULL;
+    #####: 1245:                    return -1;
+        -: 1246:                }
+        -: 1247:            }
+        -: 1248:        }
+        -: 1249:    }
+        -: 1250:
+    #####: 1251:    *targetP = NULL;
+    #####: 1252:    result = -1;
+    #####: 1253:    switch (level)
+        -: 1254:    {
+    #####: 1255:    case URI_DEPTH_OBJECT:
+    #####: 1256:        if (tlvP[0].type == LWM2M_TYPE_OBJECT)
+        -: 1257:        {
+    #####: 1258:            *targetP = tlvP;
+    #####: 1259:            result = (int)size;
+        -: 1260:        }
+    #####: 1261:        break;
+        -: 1262:
+    #####: 1263:    case URI_DEPTH_OBJECT_INSTANCE:
+    #####: 1264:        switch (tlvP[0].type)
+        -: 1265:        {
+    #####: 1266:        case LWM2M_TYPE_OBJECT:
+    #####: 1267:            for (index = 0; index < size; index++)
+        -: 1268:            {
+    #####: 1269:                if (tlvP[index].id == uriP->objectId)
+        -: 1270:                {
+    #####: 1271:                    return prv_findAndCheckData(uriP, level, tlvP[index].value.asChildren.count, tlvP[index].value.asChildren.array, targetP);
+        -: 1272:                }
+        -: 1273:            }
+    #####: 1274:            break;
+    #####: 1275:        case LWM2M_TYPE_OBJECT_INSTANCE:
+    #####: 1276:            *targetP = tlvP;
+    #####: 1277:            result = (int)size;
+    #####: 1278:            break;
+    #####: 1279:        default:
+    #####: 1280:            break;
+        -: 1281:        }
+    #####: 1282:        break;
+        -: 1283:
+    #####: 1284:    case URI_DEPTH_RESOURCE:
+    #####: 1285:        switch (tlvP[0].type)
+        -: 1286:        {
+    #####: 1287:        case LWM2M_TYPE_OBJECT:
+    #####: 1288:            for (index = 0; index < size; index++)
+        -: 1289:            {
+    #####: 1290:                if (tlvP[index].id == uriP->objectId)
+        -: 1291:                {
+    #####: 1292:                    return prv_findAndCheckData(uriP, level, tlvP[index].value.asChildren.count, tlvP[index].value.asChildren.array, targetP);
+        -: 1293:                }
+        -: 1294:            }
+    #####: 1295:            break;
+    #####: 1296:        case LWM2M_TYPE_OBJECT_INSTANCE:
+    #####: 1297:            for (index = 0; index < size; index++)
+        -: 1298:            {
+    #####: 1299:                if (tlvP[index].id == uriP->instanceId)
+        -: 1300:                {
+    #####: 1301:                    return prv_findAndCheckData(uriP, level, tlvP[index].value.asChildren.count, tlvP[index].value.asChildren.array, targetP);
+        -: 1302:                }
+        -: 1303:            }
+    #####: 1304:            break;
+    #####: 1305:        default:
+    #####: 1306:            *targetP = tlvP;
+    #####: 1307:            result = (int)size;
+    #####: 1308:            break;
+        -: 1309:        }
+    #####: 1310:        break;
+        -: 1311:
+    #####: 1312:    case URI_DEPTH_RESOURCE_INSTANCE:
+    #####: 1313:        switch (tlvP[0].type)
+        -: 1314:        {
+    #####: 1315:        case LWM2M_TYPE_OBJECT:
+    #####: 1316:            for (index = 0; index < size; index++)
+        -: 1317:            {
+    #####: 1318:                if (tlvP[index].id == uriP->objectId)
+        -: 1319:                {
+    #####: 1320:                    return prv_findAndCheckData(uriP, level, tlvP[index].value.asChildren.count, tlvP[index].value.asChildren.array, targetP);
+        -: 1321:                }
+        -: 1322:            }
+    #####: 1323:            break;
+    #####: 1324:        case LWM2M_TYPE_OBJECT_INSTANCE:
+    #####: 1325:            for (index = 0; index < size; index++)
+        -: 1326:            {
+    #####: 1327:                if (tlvP[index].id == uriP->instanceId)
+        -: 1328:                {
+    #####: 1329:                    return prv_findAndCheckData(uriP, level, tlvP[index].value.asChildren.count, tlvP[index].value.asChildren.array, targetP);
+        -: 1330:                }
+        -: 1331:            }
+    #####: 1332:            break;
+    #####: 1333:        case LWM2M_TYPE_MULTIPLE_RESOURCE:
+    #####: 1334:            for (index = 0; index < size; index++)
+        -: 1335:            {
+    #####: 1336:                if (tlvP[index].id == uriP->resourceId)
+        -: 1337:                {
+    #####: 1338:                    return prv_findAndCheckData(uriP, level, tlvP[index].value.asChildren.count, tlvP[index].value.asChildren.array, targetP);
+        -: 1339:                }
+        -: 1340:            }
+    #####: 1341:            break;
+    #####: 1342:        default:
+    #####: 1343:            *targetP = tlvP;
+    #####: 1344:            result = (int)size;
+    #####: 1345:            break;
+        -: 1346:        }
+    #####: 1347:        break;
+        -: 1348:
+    #####: 1349:    default:
+    #####: 1350:        break;
+        -: 1351:    }
+        -: 1352:
+    #####: 1353:    return result;
+        -: 1354:}
+        -: 1355:
+    #####: 1356:int json_serialize(lwm2m_uri_t * uriP,
+        -: 1357:                   int size,
+        -: 1358:                   lwm2m_data_t * tlvP,
+        -: 1359:                   uint8_t ** bufferP)
+        -: 1360:{
+        -: 1361:    int index;
+        -: 1362:    size_t head;
+        -: 1363:    uint8_t bufferJSON[PRV_JSON_BUFFER_SIZE];
+        -: 1364:    uint8_t baseUriStr[URI_MAX_STRING_LEN];
+        -: 1365:    int baseUriLen;
+        -: 1366:    uri_depth_t rootLevel;
+        -: 1367:    int num;
+        -: 1368:    lwm2m_data_t * targetP;
+        -: 1369:
+        -: 1370:    LOG_ARG("size: %d", size);
+        -: 1371:    LOG_URI(uriP);
+    #####: 1372:    if (size != 0 && tlvP == NULL) return -1;
+        -: 1373:
+    #####: 1374:    baseUriLen = uri_toString(uriP, baseUriStr, URI_MAX_STRING_LEN, &rootLevel);
+    #####: 1375:    if (baseUriLen < 0) return -1;
+        -: 1376:
+    #####: 1377:    num = prv_findAndCheckData(uriP, rootLevel, size, tlvP, &targetP);
+    #####: 1378:    if (num < 0) return -1;
+        -: 1379:
+    #####: 1380:    while (num == 1
+    #####: 1381:        && (targetP->type == LWM2M_TYPE_OBJECT
+    #####: 1382:         || targetP->type == LWM2M_TYPE_OBJECT_INSTANCE
+    #####: 1383:         || targetP->type == LWM2M_TYPE_MULTIPLE_RESOURCE))
+        -: 1384:    {
+        -: 1385:        int res;
+        -: 1386:
+    #####: 1387:        res = utils_intToText(targetP->id, baseUriStr + baseUriLen, URI_MAX_STRING_LEN - baseUriLen);
+    #####: 1388:        if (res <= 0) return -1;
+    #####: 1389:        baseUriLen += res;
+    #####: 1390:        if (baseUriLen >= URI_MAX_STRING_LEN -1) return 0;
+    #####: 1391:        num = targetP->value.asChildren.count;
+    #####: 1392:        targetP = targetP->value.asChildren.array;
+    #####: 1393:        baseUriStr[baseUriLen] = '/';
+    #####: 1394:        baseUriLen++;
+        -: 1395:    }
+        -: 1396:
+    #####: 1397:    if (baseUriLen > 0)
+        -: 1398:    {
+    #####: 1399:        memcpy(bufferJSON, JSON_BN_HEADER_1, JSON_BN_HEADER_1_SIZE);
+    #####: 1400:        head = JSON_BN_HEADER_1_SIZE;
+    #####: 1401:        memcpy(bufferJSON + head, baseUriStr, baseUriLen);
+    #####: 1402:        head += baseUriLen;
+    #####: 1403:        memcpy(bufferJSON + head, JSON_BN_HEADER_2, JSON_BN_HEADER_2_SIZE);
+    #####: 1404:        head += JSON_BN_HEADER_2_SIZE;
+        -: 1405:    }
+        -: 1406:    else
+        -: 1407:    {
+    #####: 1408:        memcpy(bufferJSON, JSON_HEADER, JSON_HEADER_SIZE);
+    #####: 1409:        head = JSON_HEADER_SIZE;
+        -: 1410:    }
+        -: 1411:
+    #####: 1412:    for (index = 0 ; index < num && head < PRV_JSON_BUFFER_SIZE ; index++)
+        -: 1413:    {
+        -: 1414:        int res;
+        -: 1415:
+    #####: 1416:        res = prv_serializeData(targetP + index, NULL, 0, bufferJSON + head, PRV_JSON_BUFFER_SIZE - head);
+    #####: 1417:        if (res < 0) return -1;
+    #####: 1418:        head += res;
+        -: 1419:    }
+        -: 1420:
+    #####: 1421:    if (head + JSON_FOOTER_SIZE - 1 > PRV_JSON_BUFFER_SIZE) return 0;
+        -: 1422:
+    #####: 1423:    if (num > 0) head = head - 1;
+        -: 1424:
+    #####: 1425:    memcpy(bufferJSON + head, JSON_FOOTER, JSON_FOOTER_SIZE);
+    #####: 1426:    head = head + JSON_FOOTER_SIZE;
+        -: 1427:
+    #####: 1428:    *bufferP = (uint8_t *)lwm2m_malloc(head);
+    #####: 1429:    if (*bufferP == NULL) return -1;
+    #####: 1430:    memcpy(*bufferP, bufferJSON, head);
+        -: 1431:
+    #####: 1432:    return head;
+        -: 1433:}
+        -: 1434:
+        -: 1435:#endif
+        -: 1436:

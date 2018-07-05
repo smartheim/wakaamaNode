@@ -1,0 +1,158 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/wakaama/block1.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/wakaama/block1.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: *
+        -:    3: * Copyright (c) 2016 Intel Corporation and others.
+        -:    4: * All rights reserved. This program and the accompanying materials
+        -:    5: * are made available under the terms of the Eclipse Public License v1.0
+        -:    6: * and Eclipse Distribution License v1.0 which accompany this distribution.
+        -:    7: *
+        -:    8: * The Eclipse Public License is available at
+        -:    9: *    http://www.eclipse.org/legal/epl-v10.html
+        -:   10: * The Eclipse Distribution License is available at
+        -:   11: *    http://www.eclipse.org/org/documents/edl-v10.php.
+        -:   12: *
+        -:   13: * Contributors:
+        -:   14: *    Simon Bernard - initial API and implementation
+        -:   15: *
+        -:   16: *******************************************************************************/
+        -:   17:/*
+        -:   18: Copyright (c) 2016 Intel Corporation
+        -:   19:
+        -:   20: Redistribution and use in source and binary forms, with or without modification,
+        -:   21: are permitted provided that the following conditions are met:
+        -:   22:
+        -:   23:     * Redistributions of source code must retain the above copyright notice,
+        -:   24:       this list of conditions and the following disclaimer.
+        -:   25:     * Redistributions in binary form must reproduce the above copyright notice,
+        -:   26:       this list of conditions and the following disclaimer in the documentation
+        -:   27:       and/or other materials provided with the distribution.
+        -:   28:     * Neither the name of Intel Corporation nor the names of its contributors
+        -:   29:       may be used to endorse or promote products derived from this software
+        -:   30:       without specific prior written permission.
+        -:   31:
+        -:   32: THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+        -:   33: ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+        -:   34: WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+        -:   35: IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+        -:   36: INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        -:   37: BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+        -:   38: DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+        -:   39: LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+        -:   40: OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+        -:   41: THE POSSIBILITY OF SUCH DAMAGE.
+        -:   42:*/
+        -:   43:#include "internals.h"
+        -:   44:
+        -:   45:#include <stdlib.h>
+        -:   46:#include <string.h>
+        -:   47:#include <stdio.h>
+        -:   48:
+        -:   49:// the maximum payload transferred by block1 we accumulate per server
+        -:   50:#define MAX_BLOCK1_SIZE 4096
+        -:   51:
+    #####:   52:uint8_t coap_block1_handler(lwm2m_block1_data_t ** pBlock1Data,
+        -:   53:                            uint16_t mid,
+        -:   54:                            uint8_t * buffer,
+        -:   55:                            size_t length,
+        -:   56:                            uint16_t blockSize,
+        -:   57:                            uint32_t blockNum,
+        -:   58:                            bool blockMore,
+        -:   59:                            uint8_t ** outputBuffer,
+        -:   60:                            size_t * outputLength)
+        -:   61:{
+    #####:   62:    lwm2m_block1_data_t * block1Data = *pBlock1Data;;
+        -:   63:
+        -:   64:    // manage new block1 transfer
+    #####:   65:    if (blockNum == 0)
+        -:   66:    {
+        -:   67:       // we already have block1 data for this server, clear it
+    #####:   68:       if (block1Data != NULL)
+        -:   69:       {
+    #####:   70:           lwm2m_free(block1Data->block1buffer);
+        -:   71:       }
+        -:   72:       else
+        -:   73:       {
+    #####:   74:           block1Data = lwm2m_malloc(sizeof(lwm2m_block1_data_t));
+    #####:   75:           *pBlock1Data = block1Data;
+    #####:   76:           if (NULL == block1Data) return COAP_500_INTERNAL_SERVER_ERROR;
+        -:   77:       }
+        -:   78:
+    #####:   79:       block1Data->block1buffer = lwm2m_malloc(length);
+    #####:   80:       block1Data->block1bufferSize = length;
+        -:   81:
+        -:   82:       // write new block in buffer
+    #####:   83:       memcpy(block1Data->block1buffer, buffer, length);
+    #####:   84:       block1Data->lastmid = mid;
+        -:   85:    }
+        -:   86:    // manage already started block1 transfer
+        -:   87:    else
+        -:   88:    {
+    #####:   89:       if (block1Data == NULL)
+        -:   90:       {
+        -:   91:           // we never receive the first block
+        -:   92:           // TODO should we clean block1 data for this server ?
+    #####:   93:           return COAP_408_REQ_ENTITY_INCOMPLETE;
+        -:   94:       }
+        -:   95:
+        -:   96:       // If this is a retransmission, we already did that.
+    #####:   97:       if (block1Data->lastmid != mid)
+        -:   98:       {
+    #####:   99:          uint8_t * oldBuffer = block1Data->block1buffer;
+    #####:  100:          size_t oldSize = block1Data->block1bufferSize;
+        -:  101:
+    #####:  102:          if (block1Data->block1bufferSize != blockSize * blockNum)
+        -:  103:          {
+        -:  104:              // we don't receive block in right order
+        -:  105:              // TODO should we clean block1 data for this server ?
+    #####:  106:              return COAP_408_REQ_ENTITY_INCOMPLETE;
+        -:  107:          }
+        -:  108:
+        -:  109:          // is it too large?
+    #####:  110:          if (block1Data->block1bufferSize + length >= MAX_BLOCK1_SIZE) {
+    #####:  111:              return COAP_413_ENTITY_TOO_LARGE;
+        -:  112:          }
+        -:  113:          // re-alloc new buffer
+    #####:  114:          block1Data->block1bufferSize = oldSize+length;
+    #####:  115:          block1Data->block1buffer = lwm2m_malloc(block1Data->block1bufferSize);
+    #####:  116:          if (NULL == block1Data->block1buffer) return COAP_500_INTERNAL_SERVER_ERROR;
+    #####:  117:          memcpy(block1Data->block1buffer, oldBuffer, oldSize);
+    #####:  118:          lwm2m_free(oldBuffer);
+        -:  119:
+        -:  120:          // write new block in buffer
+    #####:  121:          memcpy(block1Data->block1buffer + oldSize, buffer, length);
+    #####:  122:          block1Data->lastmid = mid;
+        -:  123:       }
+        -:  124:    }
+        -:  125:
+    #####:  126:    if (blockMore)
+        -:  127:    {
+    #####:  128:        *outputLength = -1;
+    #####:  129:        return COAP_231_CONTINUE;
+        -:  130:    }
+        -:  131:    else
+        -:  132:    {
+        -:  133:        // buffer is full, set output parameter
+        -:  134:        // we don't free it to be able to send retransmission
+    #####:  135:        *outputLength = block1Data->block1bufferSize;
+    #####:  136:        *outputBuffer = block1Data->block1buffer;
+        -:  137:
+    #####:  138:        return NO_ERROR;
+        -:  139:    }
+        -:  140:}
+        -:  141:
+    #####:  142:void free_block1_buffer(lwm2m_block1_data_t * block1Data)
+        -:  143:{
+    #####:  144:    if (block1Data != NULL)
+        -:  145:    {
+        -:  146:        // free block1 buffer
+    #####:  147:        lwm2m_free(block1Data->block1buffer);
+    #####:  148:        block1Data->block1bufferSize = 0 ;
+        -:  149:
+        -:  150:        // free current element
+    #####:  151:        lwm2m_free(block1Data);
+        -:  152:    }
+    #####:  153:}

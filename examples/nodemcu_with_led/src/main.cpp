@@ -11,7 +11,6 @@
 #include <sys/time.h>
 #include <Arduino.h>
 #include <ESP8266WiFi.h>
-
 #include "wifi_credentials.h"
 
 #include "lwm2m/connect.h"
@@ -26,7 +25,7 @@ using namespace KnownObjects;
 id3311::object lights;
 id3311::instance ledsInstance;
 
-LwM2MConnect context("testClient");
+LwM2MConnect context("testClient-WakaamaNode");
 
 // Called by the device object for resource 4 (RES_M_REBOOT)
 void lwm2m_reboot() {
@@ -39,6 +38,15 @@ inline void setupDeviceInformation() {
     context.deviceInstance.device_type = "led";
     context.deviceInstance.firmware_ver = "1.0";
     context.deviceInstance.serial_number = "140234-645235-12353";
+}
+
+void dieBlinking() {
+    while (1) {
+        digitalWrite(LED_BUILTIN, true);
+        delay(100);
+        digitalWrite(LED_BUILTIN, false);
+        delay(100);
+    }
 }
 
 void setup() {
@@ -64,20 +72,28 @@ void setup() {
 
     // Initialize the LED_BUILTIN pin as an output
     pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, false);
 
     // Wait for network to connect
     WiFi.begin(WIFI_SSID, WIFI_PASS);
     while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
+        digitalWrite(LED_BUILTIN, true);
+        delay(200);
+        digitalWrite(LED_BUILTIN, false);
+        delay(200);
     }
 
+    digitalWrite(LED_BUILTIN, true);
+
     // Init lwm2m network
-    if (!context.socket_count())
+    if (!context.socket_count()) {
         printf("Failed to open socket\n");
+        dieBlinking();
+    }
     
     // Connect to the lwm2m server with unique id 123, lifetime of 100s, no storing of
     // unsend messages. The host url is either coap:// or coaps://.
-    context.add_server(123, "coap://192.168.1.18", 100, false);
+    context.add_server(123, "coap://leshan.eclipse.org", 100, false);
     
     // Enter your DTLS secured connection information
     #ifdef LWM2M_WITH_DTLS
@@ -105,12 +121,11 @@ void loop() {
     struct timeval tv = {5,0};
 
     int result = context.process(&tv);
-    if (result == COAP_503_SERVICE_UNAVAILABLE) {
-        // No server found so far
-    } else if (result != 0) {
+    if (result != 0) {
         // Unexpected error
         printf("lwm2m_step() failed: 0x%X\n", result);
         print_state(CTX(context));
     }
+    context.watch_and_reconnect(&tv, 5);
 }
 

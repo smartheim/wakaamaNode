@@ -18,7 +18,7 @@ typedef int make_iso_compilers_happy; // if not LWIP
 #include "netif/etharp.h"
 #include "lwipopts.h"
 
-#include "lwm2m/debug.h" // for lwm2m_printf
+#include "../src/network/network_common.h"
 #include "lwip_tap_helper.h"
 #include "internals.h"
 
@@ -85,6 +85,7 @@ static void tapif_input(struct netif *netif)
     return;
   }
 
+  fprintf(stderr, "read lwip %i\n", len);
   if (netif->input(p, netif) != ERR_OK) {
     LWIP_DEBUGF(NETIF_DEBUG, ("tapif_input: netif input error\n"));
     pbuf_free(p);
@@ -178,12 +179,12 @@ bool lwip_network_init(void)
       strncpy(nm_str, ip4addr_ntoa(&netmask), sizeof(nm_str));
       strncpy(gw_str, ip4addr_ntoa(&gw), sizeof(gw_str));
 
-      lwm2m_printf("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
+      network_log_info("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
 
         netif_add(&netifs[tapDevices], &ipaddr, &netmask, &gw, NULL, tapif_init, ethernet_input);
       err_t tapIfOK = tapif_real_init(tapDevices);
       if (tapIfOK != ERR_OK) {
-        lwm2m_printf("tapif_real_init failed with %i\n", tapIfOK);
+        fprintf(stderr, "tapif_real_init failed with %i\n", tapIfOK);
         lwip_init_done = false;
         return false;
       }
@@ -206,22 +207,26 @@ void* lwip_network_get_interface(int id)
      return NULL;
 }
 
-int lwm2m_process_blocking(lwm2m_context_t * contextP) {
-    time_t max_wait_sec = 5;
-    int result = lwm2m_step(contextP, &max_wait_sec);
-    if (result != 0 && result != COAP_503_SERVICE_UNAVAILABLE)
-    {
-        fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
+bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
+    network_t* network = (network_t*)contextP->userData;
+    connection_t* c = network->connection_list;
+    while (c) {
+        fprintf(stderr,"tapif for server: %i\n",network->type);
+        struct netif* netifP = c->addr.net_if_out;
+        if (netifP)
+            tapif_input(netifP);
+        c=c->next;
     }
+#if NO_SYS==1
+    sys_check_timeouts();
+#endif
+    internal_check_timer(contextP, next_event);
+    return true;
+}
 
+int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
     fd_set fdset;
     int ret;
-    struct timeval tv;
-    u32_t msecs = sys_timeouts_sleeptime();
-
-    tv.tv_sec = msecs / 1000;
-    if (tv.tv_sec > max_wait_sec) tv.tv_sec = max_wait_sec;
-    tv.tv_usec = (msecs % 1000) * 1000;
 
     network_t* network = (network_t*)contextP->userData;
     if (network == NULL || network->connection_list == NULL)
@@ -231,15 +236,8 @@ int lwm2m_process_blocking(lwm2m_context_t * contextP) {
     FD_ZERO(&fdset);
     FD_SET((intptr_t)netifP->state, &fdset);
 
-    ret = select((intptr_t)netifP->state + 1, &fdset, NULL, NULL, &tv);
-    if (ret > 0) {
-      tapif_input(netifP);
-    }
-
-#if NO_SYS==1
-    sys_check_timeouts();
-#endif
-    return result;
+    ret = select((intptr_t)netifP->state + 1, &fdset, NULL, NULL, &next_event);
+    return ret;
 }
 
 #else

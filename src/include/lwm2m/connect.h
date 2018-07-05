@@ -77,6 +77,9 @@ public:
      * Adds a new server to the lwm2m client. The client statemachine will try to connect to this
      * server with the next iteration (usually caused by calling client_process(next_event)).
      *
+     * Remove a server by calling unregister_server(shortServerID)
+     * followed by a remove_unregistered_servers().
+     *
      * @param shortServerID A unique server id
      * @param uri The server URI
      * @param lifetime A lifetime in seconds

@@ -1,0 +1,448 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/wakaama/packet.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/wakaama/packet.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: *
+        -:    3: * Copyright (c) 2013, 2014 Intel Corporation and others.
+        -:    4: * All rights reserved. This program and the accompanying materials
+        -:    5: * are made available under the terms of the Eclipse Public License v1.0
+        -:    6: * and Eclipse Distribution License v1.0 which accompany this distribution.
+        -:    7: *
+        -:    8: * The Eclipse Public License is available at
+        -:    9: *    http://www.eclipse.org/legal/epl-v10.html
+        -:   10: * The Eclipse Distribution License is available at
+        -:   11: *    http://www.eclipse.org/org/documents/edl-v10.php.
+        -:   12: *
+        -:   13: * Contributors:
+        -:   14: *    David Navarro, Intel Corporation - initial API and implementation
+        -:   15: *    domedambrosio - Please refer to git log
+        -:   16: *    Fabien Fleutot - Please refer to git log
+        -:   17: *    Fabien Fleutot - Please refer to git log
+        -:   18: *    Simon Bernard - Please refer to git log
+        -:   19: *    Toby Jaffey - Please refer to git log
+        -:   20: *    Pascal Rieux - Please refer to git log
+        -:   21: *    Bosch Software Innovations GmbH - Please refer to git log
+        -:   22: *
+        -:   23: *******************************************************************************/
+        -:   24:
+        -:   25:/*
+        -:   26: Copyright (c) 2013, 2014 Intel Corporation
+        -:   27:
+        -:   28: Redistribution and use in source and binary forms, with or without modification,
+        -:   29: are permitted provided that the following conditions are met:
+        -:   30:
+        -:   31:     * Redistributions of source code must retain the above copyright notice,
+        -:   32:       this list of conditions and the following disclaimer.
+        -:   33:     * Redistributions in binary form must reproduce the above copyright notice,
+        -:   34:       this list of conditions and the following disclaimer in the documentation
+        -:   35:       and/or other materials provided with the distribution.
+        -:   36:     * Neither the name of Intel Corporation nor the names of its contributors
+        -:   37:       may be used to endorse or promote products derived from this software
+        -:   38:       without specific prior written permission.
+        -:   39:
+        -:   40: THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+        -:   41: ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+        -:   42: WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+        -:   43: IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+        -:   44: INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        -:   45: BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+        -:   46: DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+        -:   47: LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+        -:   48: OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+        -:   49: THE POSSIBILITY OF SUCH DAMAGE.
+        -:   50:
+        -:   51: David Navarro <david.navarro@intel.com>
+        -:   52:
+        -:   53:*/
+        -:   54:
+        -:   55:/*
+        -:   56:Contains code snippets which are:
+        -:   57:
+        -:   58: * Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich
+        -:   59: * All rights reserved.
+        -:   60: *
+        -:   61: * Redistribution and use in source and binary forms, with or without
+        -:   62: * modification, are permitted provided that the following conditions
+        -:   63: * are met:
+        -:   64: * 1. Redistributions of source code must retain the above copyright
+        -:   65: *    notice, this list of conditions and the following disclaimer.
+        -:   66: * 2. Redistributions in binary form must reproduce the above copyright
+        -:   67: *    notice, this list of conditions and the following disclaimer in the
+        -:   68: *    documentation and/or other materials provided with the distribution.
+        -:   69: * 3. Neither the name of the Institute nor the names of its contributors
+        -:   70: *    may be used to endorse or promote products derived from this software
+        -:   71: *    without specific prior written permission.
+        -:   72: *
+        -:   73: * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+        -:   74: * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        -:   75: * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+        -:   76: * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+        -:   77: * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+        -:   78: * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+        -:   79: * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+        -:   80: * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+        -:   81: * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+        -:   82: * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+        -:   83: * SUCH DAMAGE.
+        -:   84:
+        -:   85:*/
+        -:   86:
+        -:   87:
+        -:   88:#include "internals.h"
+        -:   89:
+        -:   90:#include <stdlib.h>
+        -:   91:#include <string.h>
+        -:   92:
+        -:   93:#include <stdio.h>
+        -:   94:
+        -:   95:
+    #####:   96:static void handle_reset(lwm2m_context_t * contextP,
+        -:   97:                         void * fromSessionH,
+        -:   98:                         coap_packet_t * message)
+        -:   99:{
+        -:  100:#ifdef LWM2M_CLIENT_MODE
+        -:  101:    LOG("Entering");
+    #####:  102:    observe_cancel(contextP, message->mid, fromSessionH);
+        -:  103:#endif
+    #####:  104:}
+        -:  105:
+    #####:  106:static uint8_t handle_request(lwm2m_context_t * contextP,
+        -:  107:                              void * fromSessionH,
+        -:  108:                              coap_packet_t * message,
+        -:  109:                              coap_packet_t * response)
+        -:  110:{
+        -:  111:    lwm2m_uri_t * uriP;
+    #####:  112:    uint8_t result = COAP_IGNORE;
+        -:  113:
+        -:  114:    LOG("Entering");
+        -:  115:	
+        -:  116:#ifdef LWM2M_CLIENT_MODE
+    #####:  117:    uriP = uri_decode(contextP->altPath, message->uri_path);
+        -:  118:#else
+        -:  119:    uriP = uri_decode(NULL, message->uri_path);
+        -:  120:#endif
+        -:  121:
+    #####:  122:    if (uriP == NULL) return COAP_400_BAD_REQUEST;
+        -:  123:
+    #####:  124:    switch(uriP->flag & LWM2M_URI_MASK_TYPE)
+        -:  125:    {
+        -:  126:#ifdef LWM2M_CLIENT_MODE
+    #####:  127:    case LWM2M_URI_FLAG_DM:
+        -:  128:    {
+        -:  129:        lwm2m_server_t * serverP;
+        -:  130:
+    #####:  131:        serverP = utils_findServer(contextP, fromSessionH);
+    #####:  132:        if (serverP != NULL)
+        -:  133:        {
+    #####:  134:            result = dm_handleRequest(contextP, uriP, serverP, message, response);
+        -:  135:        }
+        -:  136:#ifdef LWM2M_BOOTSTRAP
+        -:  137:        else
+        -:  138:        {
+        -:  139:            serverP = utils_findBootstrapServer(contextP, fromSessionH);
+        -:  140:            if (serverP != NULL)
+        -:  141:            {
+        -:  142:                result = bootstrap_handleCommand(contextP, uriP, serverP, message, response);
+        -:  143:            }
+        -:  144:        }
+        -:  145:#endif
+        -:  146:    }
+    #####:  147:    break;
+        -:  148:
+        -:  149:#ifdef LWM2M_BOOTSTRAP
+        -:  150:    case LWM2M_URI_FLAG_DELETE_ALL:
+        -:  151:        if (COAP_DELETE != message->code)
+        -:  152:        {
+        -:  153:            result = COAP_400_BAD_REQUEST;
+        -:  154:        }
+        -:  155:        else
+        -:  156:        {
+        -:  157:            result = bootstrap_handleDeleteAll(contextP, fromSessionH);
+        -:  158:        }
+        -:  159:        break;
+        -:  160:
+        -:  161:    case LWM2M_URI_FLAG_BOOTSTRAP:
+        -:  162:        if (message->code == COAP_POST)
+        -:  163:        {
+        -:  164:            result = bootstrap_handleFinish(contextP, fromSessionH);
+        -:  165:        }
+        -:  166:        break;
+        -:  167:#endif
+        -:  168:#endif
+        -:  169:
+        -:  170:#ifdef LWM2M_SERVER_MODE
+    #####:  171:    case LWM2M_URI_FLAG_REGISTRATION:
+    #####:  172:        result = registration_handleRequest(contextP, uriP, fromSessionH, message, response);
+    #####:  173:        break;
+        -:  174:#endif
+        -:  175:#ifdef LWM2M_BOOTSTRAP_SERVER_MODE
+        -:  176:    case LWM2M_URI_FLAG_BOOTSTRAP:
+        -:  177:        result = bootstrap_handleRequest(contextP, uriP, fromSessionH, message, response);
+        -:  178:        break;
+        -:  179:#endif
+    #####:  180:    default:
+    #####:  181:        result = COAP_IGNORE;
+    #####:  182:        break;
+        -:  183:    }
+        -:  184:
+    #####:  185:    coap_set_status_code(response, result);
+        -:  186:
+    #####:  187:    if (COAP_IGNORE < result && result < COAP_400_BAD_REQUEST)
+        -:  188:    {
+    #####:  189:        result = NO_ERROR;
+        -:  190:    }
+        -:  191:
+    #####:  192:    lwm2m_free(uriP);
+    #####:  193:    return result;
+        -:  194:}
+        -:  195:
+        -:  196:/* This function is an adaptation of function coap_receive() from Erbium's er-coap-13-engine.c.
+        -:  197: * Erbium is Copyright (c) 2013, Institute for Pervasive Computing, ETH Zurich
+        -:  198: * All rights reserved.
+        -:  199: */
+    #####:  200:void lwm2m_handle_packet(lwm2m_context_t * contextP,
+        -:  201:                         uint8_t * buffer,
+        -:  202:                         int length,
+        -:  203:                         void * fromSessionH)
+        -:  204:{
+    #####:  205:    uint8_t coap_error_code = NO_ERROR;
+        -:  206:    static coap_packet_t message[1];
+        -:  207:    static coap_packet_t response[1];
+        -:  208:
+    #####:  209:    coap_error_code = coap_parse_message(message, buffer, (uint16_t)length);
+    #####:  210:    if (coap_error_code == NO_ERROR)
+        -:  211:    {
+        -:  212:        LOG_ARG("Parsed: ver %u, type %u, tkl %u, code %u.%.2u, mid %u, Content type: %d",
+        -:  213:                message->version, message->type, message->token_len, message->code >> 5, message->code & 0x1F, message->mid, message->content_type);
+    #####:  214:        if (message->code >= COAP_GET && message->code <= COAP_DELETE)
+    #####:  215:        {
+    #####:  216:            uint32_t block_num = 0;
+    #####:  217:            uint16_t block_size = REST_MAX_CHUNK_SIZE;
+    #####:  218:            uint32_t block_offset = 0;
+    #####:  219:            int64_t new_offset = 0;
+        -:  220:
+        -:  221:            /* prepare response */
+    #####:  222:            if (message->type == COAP_TYPE_CON)
+        -:  223:            {
+        -:  224:                /* Reliable CON requests are answered with an ACK. */
+    #####:  225:                coap_init_message(response, COAP_TYPE_ACK, COAP_205_CONTENT, message->mid);
+        -:  226:            }
+        -:  227:            else
+        -:  228:            {
+        -:  229:                /* Unreliable NON requests are answered with a NON as well. */
+    #####:  230:                coap_init_message(response, COAP_TYPE_NON, COAP_205_CONTENT, contextP->nextMID++);
+        -:  231:            }
+        -:  232:
+        -:  233:            /* mirror token */
+    #####:  234:            if (message->token_len)
+        -:  235:            {
+    #####:  236:                coap_set_header_token(response, message->token, message->token_len);
+        -:  237:            }
+        -:  238:
+        -:  239:            /* get offset for blockwise transfers */
+    #####:  240:            if (coap_get_header_block2(message, &block_num, NULL, &block_size, &block_offset))
+        -:  241:            {
+        -:  242:                LOG_ARG("Blockwise: block request %u (%u/%u) @ %u bytes", block_num, block_size, REST_MAX_CHUNK_SIZE, block_offset);
+    #####:  243:                block_size = MIN(block_size, REST_MAX_CHUNK_SIZE);
+    #####:  244:                new_offset = block_offset;
+        -:  245:            }
+        -:  246:
+        -:  247:            /* handle block1 option */
+    #####:  248:            if (IS_OPTION(message, COAP_OPTION_BLOCK1))
+        -:  249:            {
+        -:  250:#ifdef LWM2M_CLIENT_MODE
+        -:  251:                // get server
+        -:  252:                lwm2m_server_t * serverP;
+    #####:  253:                serverP = utils_findServer(contextP, fromSessionH);
+        -:  254:#ifdef LWM2M_BOOTSTRAP
+        -:  255:                if (serverP == NULL)
+        -:  256:                {
+        -:  257:                    serverP = utils_findBootstrapServer(contextP, fromSessionH);
+        -:  258:                }
+        -:  259:#endif
+    #####:  260:                if (serverP == NULL)
+        -:  261:                {
+    #####:  262:                    coap_error_code = COAP_500_INTERNAL_SERVER_ERROR;
+        -:  263:                }
+        -:  264:                else
+        -:  265:                {
+        -:  266:                    uint32_t block1_num;
+        -:  267:                    uint8_t  block1_more;
+        -:  268:                    uint16_t block1_size;
+    #####:  269:                    uint8_t * complete_buffer = NULL;
+        -:  270:                    size_t complete_buffer_size;
+        -:  271:
+        -:  272:                    // parse block1 header
+    #####:  273:                    coap_get_header_block1(message, &block1_num, &block1_more, &block1_size, NULL);
+        -:  274:                    LOG_ARG("Blockwise: block1 request NUM %u (SZX %u/ SZX Max%u) MORE %u", block1_num, block1_size, REST_MAX_CHUNK_SIZE, block1_more);
+        -:  275:
+        -:  276:                    // handle block 1
+    #####:  277:                    coap_error_code = coap_block1_handler(&serverP->block1Data, message->mid, message->payload, message->payload_len, block1_size, block1_num, block1_more, &complete_buffer, &complete_buffer_size);
+        -:  278:
+        -:  279:                    // if payload is complete, replace it in the coap message.
+    #####:  280:                    if (coap_error_code == NO_ERROR)
+        -:  281:                    {
+    #####:  282:                        message->payload = complete_buffer;
+    #####:  283:                        message->payload_len = complete_buffer_size;
+        -:  284:                    }
+    #####:  285:                    else if (coap_error_code == COAP_231_CONTINUE)
+        -:  286:                    {
+    #####:  287:                        block1_size = MIN(block1_size, REST_MAX_CHUNK_SIZE);
+    #####:  288:                        coap_set_header_block1(response,block1_num, block1_more,block1_size);
+        -:  289:                    }
+        -:  290:                }
+        -:  291:#else
+        -:  292:                coap_error_code = COAP_501_NOT_IMPLEMENTED;
+        -:  293:#endif
+        -:  294:            }
+    #####:  295:            if (coap_error_code == NO_ERROR)
+        -:  296:            {
+    #####:  297:                coap_error_code = handle_request(contextP, fromSessionH, message, response);
+        -:  298:            }
+    #####:  299:            if (coap_error_code==NO_ERROR)
+        -:  300:            {
+        -:  301:                /* Save original payload pointer for later freeing. Payload in response may be updated. */
+    #####:  302:                uint8_t *payload = response->payload;
+    #####:  303:                if ( IS_OPTION(message, COAP_OPTION_BLOCK2) )
+        -:  304:                {
+        -:  305:                    /* unchanged new_offset indicates that resource is unaware of blockwise transfer */
+    #####:  306:                    if (new_offset==block_offset)
+        -:  307:                    {
+        -:  308:                        LOG_ARG("Blockwise: unaware resource with payload length %u/%u", response->payload_len, block_size);
+    #####:  309:                        if (block_offset >= response->payload_len)
+        -:  310:                        {
+        -:  311:                            LOG("handle_incoming_data(): block_offset >= response->payload_len");
+        -:  312:
+    #####:  313:                            response->code = COAP_402_BAD_OPTION;
+    #####:  314:                            coap_set_payload(response, "BlockOutOfScope", 15); /* a const char str[] and sizeof(str) produces larger code size */
+        -:  315:                        }
+        -:  316:                        else
+        -:  317:                        {
+    #####:  318:                            coap_set_header_block2(response, block_num, response->payload_len - block_offset > block_size, block_size);
+    #####:  319:                            coap_set_payload(response, response->payload+block_offset, MIN(response->payload_len - block_offset, block_size));
+        -:  320:                        } /* if (valid offset) */
+        -:  321:                    }
+        -:  322:                    else
+        -:  323:                    {
+        -:  324:                        /* resource provides chunk-wise data */
+        -:  325:                        LOG_ARG("Blockwise: blockwise resource, new offset %d", (int) new_offset);
+    #####:  326:                        coap_set_header_block2(response, block_num, new_offset!=-1 || response->payload_len > block_size, block_size);
+    #####:  327:                        if (response->payload_len > block_size) coap_set_payload(response, response->payload, block_size);
+        -:  328:                    } /* if (resource aware of blockwise) */
+        -:  329:                }
+    #####:  330:                else if (new_offset!=0)
+        -:  331:                {
+        -:  332:                    LOG_ARG("Blockwise: no block option for blockwise resource, using block size %u", REST_MAX_CHUNK_SIZE);
+        -:  333:
+    #####:  334:                    coap_set_header_block2(response, 0, new_offset!=-1, REST_MAX_CHUNK_SIZE);
+    #####:  335:                    coap_set_payload(response, response->payload, MIN(response->payload_len, REST_MAX_CHUNK_SIZE));
+        -:  336:                } /* if (blockwise request) */
+        -:  337:
+    #####:  338:                coap_error_code = message_send(contextP, response, fromSessionH);
+        -:  339:
+    #####:  340:                lwm2m_free(payload);
+    #####:  341:                response->payload = NULL;
+    #####:  342:                response->payload_len = 0;
+        -:  343:            }
+    #####:  344:            else if (coap_error_code != COAP_IGNORE)
+        -:  345:            {
+    #####:  346:                if (1 == coap_set_status_code(response, coap_error_code))
+        -:  347:                {
+    #####:  348:                    coap_error_code = message_send(contextP, response, fromSessionH);
+        -:  349:                }
+        -:  350:            }
+        -:  351:        }
+        -:  352:        else
+        -:  353:        {
+        -:  354:            /* Responses */
+    #####:  355:            switch (message->type)
+        -:  356:            {
+    #####:  357:            case COAP_TYPE_NON:
+        -:  358:            case COAP_TYPE_CON:
+        -:  359:                {
+    #####:  360:                    bool done = transaction_handleResponse(contextP, fromSessionH, message, response);
+        -:  361:
+        -:  362:#ifdef LWM2M_SERVER_MODE
+    #####:  363:                    if (!done && IS_OPTION(message, COAP_OPTION_OBSERVE) &&
+    #####:  364:                        ((message->code == COAP_204_CHANGED) || (message->code == COAP_205_CONTENT)))
+        -:  365:                    {
+    #####:  366:                        done = observe_handleNotify(contextP, fromSessionH, message, response);
+        -:  367:                    }
+        -:  368:#endif
+    #####:  369:                    if (!done && message->type == COAP_TYPE_CON )
+        -:  370:                    {
+    #####:  371:                        coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
+    #####:  372:                        coap_error_code = message_send(contextP, response, fromSessionH);
+        -:  373:                    }
+        -:  374:                }
+    #####:  375:                break;
+        -:  376:
+    #####:  377:            case COAP_TYPE_RST:
+        -:  378:                /* Cancel possible subscriptions. */
+    #####:  379:                handle_reset(contextP, fromSessionH, message);
+    #####:  380:                transaction_handleResponse(contextP, fromSessionH, message, NULL);
+    #####:  381:                break;
+        -:  382:
+    #####:  383:            case COAP_TYPE_ACK:
+    #####:  384:                transaction_handleResponse(contextP, fromSessionH, message, NULL);
+    #####:  385:                break;
+        -:  386:
+    #####:  387:            default:
+    #####:  388:                break;
+        -:  389:            }
+        -:  390:        } /* Request or Response */
+    #####:  391:        coap_free_header(message);
+        -:  392:    } /* if (parsed correctly) */
+        -:  393:    else
+        -:  394:    {
+        -:  395:        LOG_ARG("Message parsing failed %u.%2u", coap_error_code >> 5, coap_error_code & 0x1F);
+        -:  396:    }
+        -:  397:
+    #####:  398:    if (coap_error_code != NO_ERROR && coap_error_code != COAP_IGNORE)
+        -:  399:    {
+        -:  400:        LOG_ARG("ERROR %u: %s", coap_error_code, coap_error_message);
+        -:  401:
+        -:  402:        /* Set to sendable error code. */
+    #####:  403:        if (coap_error_code >= 192)
+        -:  404:        {
+    #####:  405:            coap_error_code = COAP_500_INTERNAL_SERVER_ERROR;
+        -:  406:        }
+        -:  407:        /* Reuse input buffer for error message. */
+    #####:  408:        coap_init_message(message, COAP_TYPE_ACK, coap_error_code, message->mid);
+    #####:  409:        coap_set_payload(message, coap_error_message, strlen(coap_error_message));
+    #####:  410:        message_send(contextP, message, fromSessionH);
+        -:  411:    }
+    #####:  412:}
+        -:  413:
+        -:  414:
+    #####:  415:uint8_t message_send(lwm2m_context_t * contextP,
+        -:  416:                     coap_packet_t * message,
+        -:  417:                     void * sessionH)
+        -:  418:{
+    #####:  419:    uint8_t result = COAP_500_INTERNAL_SERVER_ERROR;
+        -:  420:    uint8_t * pktBuffer;
+    #####:  421:    size_t pktBufferLen = 0;
+        -:  422:    size_t allocLen;
+        -:  423:
+        -:  424:    LOG("Entering");
+    #####:  425:    allocLen = coap_serialize_get_size(message);
+        -:  426:    LOG_ARG("Size to allocate: %d", allocLen);
+    #####:  427:    if (allocLen == 0) return COAP_500_INTERNAL_SERVER_ERROR;
+        -:  428:
+    #####:  429:    pktBuffer = (uint8_t *)lwm2m_malloc(allocLen);
+    #####:  430:    if (pktBuffer != NULL)
+        -:  431:    {
+    #####:  432:        pktBufferLen = coap_serialize_message(message, pktBuffer);
+        -:  433:        LOG_ARG("coap_serialize_message() returned %d", pktBufferLen);
+    #####:  434:        if (0 != pktBufferLen)
+        -:  435:        {
+    #####:  436:            result = lwm2m_buffer_send(sessionH, pktBuffer, pktBufferLen, contextP->userData);
+        -:  437:        }
+    #####:  438:        lwm2m_free(pktBuffer);
+        -:  439:    }
+        -:  440:
+    #####:  441:    return result;
+        -:  442:}
+        -:  443:

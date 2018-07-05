@@ -1,0 +1,246 @@
+Start testing: Jul 03 18:09 CEST
+----------------------------------------------------------
+1/2 Testing: TestsWithLwIP
+1/2 Test: TestsWithLwIP
+Command: "/home/david/Programming/wakaamaNode/b/TestsWithLwIP"
+Directory: /home/david/Programming/wakaamaNode/b
+"TestsWithLwIP" start time: Jul 03 18:09 CEST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 29 tests from 5 test cases.
+[----------] Global test environment set-up.
+[----------] 1 test from AddRemoveServerTests
+[ RUN      ] AddRemoveServerTests.AddRemoveServer
+Host at 192.168.7.1 mask 255.255.255.0 gateway 192.168.7.10
+Host at 192.168.7.2 mask 255.255.255.0 gateway 192.168.7.10
+Connecting to coap://127.0.0.1:12345 on 123
+Sending 91 bytes to [127.0.0.1]:12345. Interface IP: 192.168.7.1. Is Server: 0
+Sending 12 bytes to [127.0.0.1]:12345. Interface IP: 192.168.7.1. Is Server: 0
+[       OK ] AddRemoveServerTests.AddRemoveServer (164 ms)
+[----------] 1 test from AddRemoveServerTests (164 ms total)
+
+[----------] 2 tests from ConnectServerTests
+[ RUN      ] ConnectServerTests.ConnectServer
+Connecting to coap://192.168.7.2 on 123
+read lwip 42
+Sending 101 bytes to [192.168.7.2]:5683. Interface IP: 192.168.7.1. Is Server: 0
+read lwip 110
+read lwip 110
+read lwip 110
+read lwip 214
+read lwip 214
+read lwip 110
+read lwip 214
+read lwip 214
+read lwip 214
+read lwip 214
+read lwip 214
+read lwip 214
+read lwip 78
+read lwip 62
+read lwip 82
+read lwip 82
+read lwip 102
+read lwip 82
+/home/david/Programming/wakaamaNode/test/connect_server_tests.cpp:276: Failure
+      Expected: STATE_READY
+      Which is: 6
+To be equal to: (&((client_context).context))->state
+      Which is: 5
+[  FAILED  ] ConnectServerTests.ConnectServer (3346 ms)
+[ RUN      ] ConnectServerTests.ConnectServerDtlsPSK
+[       OK ] ConnectServerTests.ConnectServerDtlsPSK (13 ms)
+[----------] 2 tests from ConnectServerTests (3359 ms total)
+
+[----------] 3 tests from DeviceInfoObjectTests
+[ RUN      ] DeviceInfoObjectTests.ReadAll
+[       OK ] DeviceInfoObjectTests.ReadAll (80 ms)
+[ RUN      ] DeviceInfoObjectTests.ExecuteReboot
+[       OK ] DeviceInfoObjectTests.ExecuteReboot (9 ms)
+[ RUN      ] DeviceInfoObjectTests.ExecuteFactoryReset
+[       OK ] DeviceInfoObjectTests.ExecuteFactoryReset (9 ms)
+[----------] 3 tests from DeviceInfoObjectTests (98 ms total)
+
+[----------] 10 tests from ObjectAPI_C
+[ RUN      ] ObjectAPI_C.Reading
+[       OK ] ObjectAPI_C.Reading (50 ms)
+[ RUN      ] ObjectAPI_C.ExecutingNonExecutable
+[       OK ] ObjectAPI_C.ExecutingNonExecutable (9 ms)
+[ RUN      ] ObjectAPI_C.ExecutingFunction
+[       OK ] ObjectAPI_C.ExecutingFunction (9 ms)
+[ RUN      ] ObjectAPI_C.Discover
+[       OK ] ObjectAPI_C.Discover (27 ms)
+[ RUN      ] ObjectAPI_C.WriteIntBoolDouble
+[       OK ] ObjectAPI_C.WriteIntBoolDouble (138 ms)
+[ RUN      ] ObjectAPI_C.WriteToReadOnlyString
+[       OK ] ObjectAPI_C.WriteToReadOnlyString (19 ms)
+[ RUN      ] ObjectAPI_C.WriteStringPrealloc
+[       OK ] ObjectAPI_C.WriteStringPrealloc (19 ms)
+[ RUN      ] ObjectAPI_C.WriteTooBigOpaque
+[       OK ] ObjectAPI_C.WriteTooBigOpaque (19 ms)
+[ RUN      ] ObjectAPI_C.WriteOpaquePreAlloc
+[       OK ] ObjectAPI_C.WriteOpaquePreAlloc (29 ms)
+[ RUN      ] ObjectAPI_C.WriteOpaqueIndirect
+[       OK ] ObjectAPI_C.WriteOpaqueIndirect (18 ms)
+[----------] 10 tests from ObjectAPI_C (337 ms total)
+
+[----------] 13 tests from ObjectAPI_CPP
+[ RUN      ] ObjectAPI_CPP.KnownObject3311
+[       OK ] ObjectAPI_CPP.KnownObject3311 (10 ms)
+[ RUN      ] ObjectAPI_CPP.Reading
+[       OK ] ObjectAPI_CPP.Reading (51 ms)
+[ RUN      ] ObjectAPI_CPP.ExecutingNonExecutable
+[       OK ] ObjectAPI_CPP.ExecutingNonExecutable (9 ms)
+[ RUN      ] ObjectAPI_CPP.ExecutingFunction
+[       OK ] ObjectAPI_CPP.ExecutingFunction (9 ms)
+[ RUN      ] ObjectAPI_CPP.Discover
+[       OK ] ObjectAPI_CPP.Discover (31 ms)
+[ RUN      ] ObjectAPI_CPP.WriteIntBoolDouble
+[       OK ] ObjectAPI_CPP.WriteIntBoolDouble (141 ms)
+[ RUN      ] ObjectAPI_CPP.WriteToReadOnlyString
+[       OK ] ObjectAPI_CPP.WriteToReadOnlyString (19 ms)
+[ RUN      ] ObjectAPI_CPP.WriteStringPrealloc
+[       OK ] ObjectAPI_CPP.WriteStringPrealloc (18 ms)
+[ RUN      ] ObjectAPI_CPP.WriteTooBigOpaque
+[       OK ] ObjectAPI_CPP.WriteTooBigOpaque (18 ms)
+[ RUN      ] ObjectAPI_CPP.WriteOpaquePreAlloc
+[       OK ] ObjectAPI_CPP.WriteOpaquePreAlloc (28 ms)
+[ RUN      ] ObjectAPI_CPP.WriteOpaqueIndirect
+[       OK ] ObjectAPI_CPP.WriteOpaqueIndirect (19 ms)
+[ RUN      ] ObjectAPI_CPP.WriteStringIndirect
+[       OK ] ObjectAPI_CPP.WriteStringIndirect (18 ms)
+[ RUN      ] ObjectAPI_CPP.ReadWriteStringIndirect
+[       OK ] ObjectAPI_CPP.ReadWriteStringIndirect (33 ms)
+[----------] 13 tests from ObjectAPI_CPP (404 ms total)
+
+[----------] Global test environment tear-down
+[==========] 29 tests from 5 test cases ran. (4362 ms total)
+[  PASSED  ] 28 tests.
+[  FAILED  ] 1 test, listed below:
+[  FAILED  ] ConnectServerTests.ConnectServer
+
+ 1 FAILED TEST
+<end of output>
+Test time =   4.37 sec
+----------------------------------------------------------
+Test Failed.
+"TestsWithLwIP" end time: Jul 03 18:09 CEST
+"TestsWithLwIP" time elapsed: 00:00:04
+----------------------------------------------------------
+
+2/2 Testing: TestsWithPosix
+2/2 Test: TestsWithPosix
+Command: "/home/david/Programming/wakaamaNode/b/TestsWithPosix"
+Directory: /home/david/Programming/wakaamaNode/b
+"TestsWithPosix" start time: Jul 03 18:09 CEST
+Output:
+----------------------------------------------------------
+Running main() from gtest_main.cc
+[==========] Running 29 tests from 5 test cases.
+[----------] Global test environment set-up.
+[----------] 1 test from AddRemoveServerTests
+[ RUN      ] AddRemoveServerTests.AddRemoveServer
+Connecting to coap://127.0.0.1:12345 on 123
+Sending 91 bytes to [127.0.0.1]:12345 (server: 0, dtls handshake: 0 )
+Sending 13 bytes to [127.0.0.1]:12345 (server: 0, dtls handshake: 0 )
+[       OK ] AddRemoveServerTests.AddRemoveServer (157 ms)
+[----------] 1 test from AddRemoveServerTests (157 ms total)
+
+[----------] 2 tests from ConnectServerTests
+[ RUN      ] ConnectServerTests.ConnectServer
+Connecting to coap://127.0.0.1 on 123
+Sending 101 bytes to [127.0.0.1]:5683 (server: 0, dtls handshake: 0 )
+Receiving 101 bytes from [127.0.0.1]:12873 (server: 1, dtls handshake: 0)
+Sending 13 bytes to [127.0.0.1]:12873 (server: 1, dtls handshake: 0 )
+Receiving 13 bytes from [127.0.0.1]:5683 (server: 0, dtls handshake: 0)
+Sending 23 bytes to [127.0.0.1]:12873 (server: 1, dtls handshake: 0 )
+Receiving 23 bytes from [127.0.0.1]:5683 (server: 0, dtls handshake: 0)
+Sending 63 bytes to [127.0.0.1]:5683 (server: 0, dtls handshake: 0 )
+Receiving 63 bytes from [127.0.0.1]:12873 (server: 1, dtls handshake: 0)
+Sending 13 bytes to [127.0.0.1]:5683 (server: 0, dtls handshake: 0 )
+Receiving 13 bytes from [127.0.0.1]:12873 (server: 1, dtls handshake: 0)
+Sending 8 bytes to [127.0.0.1]:12873 (server: 1, dtls handshake: 0 )
+Receiving 8 bytes from [127.0.0.1]:5683 (server: 0, dtls handshake: 0)
+Sending 13 bytes to [127.0.0.1]:5683 (server: 0, dtls handshake: 0 )
+Receiving 13 bytes from [127.0.0.1]:12873 (server: 1, dtls handshake: 0)
+Sending 8 bytes to [127.0.0.1]:12873 (server: 1, dtls handshake: 0 )
+Receiving 8 bytes from [127.0.0.1]:5683 (server: 0, dtls handshake: 0)
+[       OK ] ConnectServerTests.ConnectServer (3579 ms)
+[ RUN      ] ConnectServerTests.ConnectServerDtlsPSK
+[       OK ] ConnectServerTests.ConnectServerDtlsPSK (9 ms)
+[----------] 2 tests from ConnectServerTests (3588 ms total)
+
+[----------] 3 tests from DeviceInfoObjectTests
+[ RUN      ] DeviceInfoObjectTests.ReadAll
+[       OK ] DeviceInfoObjectTests.ReadAll (75 ms)
+[ RUN      ] DeviceInfoObjectTests.ExecuteReboot
+[       OK ] DeviceInfoObjectTests.ExecuteReboot (10 ms)
+[ RUN      ] DeviceInfoObjectTests.ExecuteFactoryReset
+[       OK ] DeviceInfoObjectTests.ExecuteFactoryReset (9 ms)
+[----------] 3 tests from DeviceInfoObjectTests (94 ms total)
+
+[----------] 10 tests from ObjectAPI_C
+[ RUN      ] ObjectAPI_C.Reading
+[       OK ] ObjectAPI_C.Reading (51 ms)
+[ RUN      ] ObjectAPI_C.ExecutingNonExecutable
+[       OK ] ObjectAPI_C.ExecutingNonExecutable (9 ms)
+[ RUN      ] ObjectAPI_C.ExecutingFunction
+[       OK ] ObjectAPI_C.ExecutingFunction (9 ms)
+[ RUN      ] ObjectAPI_C.Discover
+[       OK ] ObjectAPI_C.Discover (27 ms)
+[ RUN      ] ObjectAPI_C.WriteIntBoolDouble
+[       OK ] ObjectAPI_C.WriteIntBoolDouble (139 ms)
+[ RUN      ] ObjectAPI_C.WriteToReadOnlyString
+[       OK ] ObjectAPI_C.WriteToReadOnlyString (18 ms)
+[ RUN      ] ObjectAPI_C.WriteStringPrealloc
+[       OK ] ObjectAPI_C.WriteStringPrealloc (19 ms)
+[ RUN      ] ObjectAPI_C.WriteTooBigOpaque
+[       OK ] ObjectAPI_C.WriteTooBigOpaque (19 ms)
+[ RUN      ] ObjectAPI_C.WriteOpaquePreAlloc
+[       OK ] ObjectAPI_C.WriteOpaquePreAlloc (28 ms)
+[ RUN      ] ObjectAPI_C.WriteOpaqueIndirect
+[       OK ] ObjectAPI_C.WriteOpaqueIndirect (19 ms)
+[----------] 10 tests from ObjectAPI_C (338 ms total)
+
+[----------] 13 tests from ObjectAPI_CPP
+[ RUN      ] ObjectAPI_CPP.KnownObject3311
+[       OK ] ObjectAPI_CPP.KnownObject3311 (9 ms)
+[ RUN      ] ObjectAPI_CPP.Reading
+[       OK ] ObjectAPI_CPP.Reading (49 ms)
+[ RUN      ] ObjectAPI_CPP.ExecutingNonExecutable
+[       OK ] ObjectAPI_CPP.ExecutingNonExecutable (9 ms)
+[ RUN      ] ObjectAPI_CPP.ExecutingFunction
+[       OK ] ObjectAPI_CPP.ExecutingFunction (9 ms)
+[ RUN      ] ObjectAPI_CPP.Discover
+[       OK ] ObjectAPI_CPP.Discover (26 ms)
+[ RUN      ] ObjectAPI_CPP.WriteIntBoolDouble
+[       OK ] ObjectAPI_CPP.WriteIntBoolDouble (132 ms)
+[ RUN      ] ObjectAPI_CPP.WriteToReadOnlyString
+[       OK ] ObjectAPI_CPP.WriteToReadOnlyString (18 ms)
+[ RUN      ] ObjectAPI_CPP.WriteStringPrealloc
+[       OK ] ObjectAPI_CPP.WriteStringPrealloc (18 ms)
+[ RUN      ] ObjectAPI_CPP.WriteTooBigOpaque
+[       OK ] ObjectAPI_CPP.WriteTooBigOpaque (19 ms)
+[ RUN      ] ObjectAPI_CPP.WriteOpaquePreAlloc
+[       OK ] ObjectAPI_CPP.WriteOpaquePreAlloc (28 ms)
+[ RUN      ] ObjectAPI_CPP.WriteOpaqueIndirect
+[       OK ] ObjectAPI_CPP.WriteOpaqueIndirect (18 ms)
+[ RUN      ] ObjectAPI_CPP.WriteStringIndirect
+[       OK ] ObjectAPI_CPP.WriteStringIndirect (19 ms)
+[ RUN      ] ObjectAPI_CPP.ReadWriteStringIndirect
+[       OK ] ObjectAPI_CPP.ReadWriteStringIndirect (34 ms)
+[----------] 13 tests from ObjectAPI_CPP (388 ms total)
+
+[----------] Global test environment tear-down
+[==========] 29 tests from 5 test cases ran. (4565 ms total)
+[  PASSED  ] 29 tests.
+<end of output>
+Test time =   4.57 sec
+----------------------------------------------------------
+Test Passed.
+"TestsWithPosix" end time: Jul 03 18:09 CEST
+"TestsWithPosix" time elapsed: 00:00:04
+----------------------------------------------------------
+
+End testing: Jul 03 18:09 CEST

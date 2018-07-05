@@ -1,0 +1,188 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/device_info_object_tests.cpp
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/device_info_object_tests.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:
+        -:   15:#include <gtest/gtest.h>
+        -:   16:#include "lwm2m/c_connect.h"
+        -:   17:#include "lwm2m/objects.h"
+        -:   18:#include "lwm2m/debug.h"
+        -:   19:#include "lwm2m/network.h"
+        -:   20:#include <stdint.h>
+        -:   21:#include "memory.h"
+        -:   22:#include <algorithm>
+        -:   23:
+        -:   24:extern "C" {
+        -:   25:    #include "internals.h"
+        -:   26:    #include "../src/internal_objects.h"
+        -:   27:
+    #####:   28:    uint8_t lwm2m_get_bat_level() {
+    #####:   29:        return 12;
+        -:   30:    }
+        -:   31:
+    #####:   32:    uint8_t lwm2m_get_bat_status() {
+    #####:   33:        return 12;
+        -:   34:    }
+        -:   35:
+    #####:   36:    int64_t lwm2m_get_free_mem() {
+    #####:   37:        return 12;
+        -:   38:    }
+        -:   39:
+    #####:   40:    int64_t lwm2m_get_total_mem() {
+    #####:   41:        return 12;
+        -:   42:    }
+        -:   43:
+    #####:   44:    int64_t lwm2m_get_last_error() {
+    #####:   45:        return -12;
+        -:   46:    }
+        -:   47:
+        -:   48:    bool reboot_executed = false;
+    #####:   49:    void lwm2m_reboot() {
+    #####:   50:        reboot_executed = true;
+    #####:   51:    }
+        -:   52:
+        -:   53:    bool factory_reset = false;
+    #####:   54:    void lwm2m_factory_reset() {
+    #####:   55:        factory_reset = true;
+    #####:   56:    }
+        -:   57:
+        -:   58:    // Return dummy time and overwrite platform implementation (which is declared with __attribute__((weak)))
+    #####:   59:    int64_t lwm2m_gettime() {
+    #####:   60:        return 1498765432;
+        -:   61:    }
+        -:   62:}
+        -:   63:
+        -:   64:/**
+        -:   65: * Tests the device information object with all optional fields enabled
+        -:   66: */
+        -:   67:class DeviceInfoObjectTests : public testing::Test {
+        -:   68:public:
+        -:   69:    lwm2m_client_context_t client_context;
+        -:   70:    device_instance_t * deviceInstance;
+        -:   71:    lwm2m_object_t* deviceObject;
+        -:   72: protected:
+    #####:   73:    virtual void TearDown() {
+    #####:   74:        lwm2m_client_close(&client_context);
+        -:   75:        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+        -:   76:                      [](MemoryObserver::MemAreas::value_type it){
+        -:   77:            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+    #####:   78:        });
+    #####:   79:    }
+        -:   80:
+    #####:   81:    virtual void SetUp() {
+    #####:   82:        memoryObserver.reset();
+        -:   83:
+    #####:   84:        lwm2m_client_init(&client_context, "testClient");
+        -:   85:
+    #####:   86:        deviceInstance = &client_context.deviceInstance;
+        -:   87:
+    #####:   88:        deviceObject = (lwm2m_object_t*)lwm2m_list_find((lwm2m_list_t *)CTX(client_context)->objectList, 3);
+    #####:   89:        ASSERT_TRUE(deviceObject);
+    #####:   90:        ASSERT_EQ(deviceObject->instanceList, (lwm2m_list_t*)deviceInstance);
+        -:   91:
+    #####:   92:        deviceInstance->manufacturer = "manufacturer";
+    #####:   93:        deviceInstance->model_name = "model_name";
+    #####:   94:        deviceInstance->serial_number = "serial_number";
+    #####:   95:        deviceInstance->firmware_ver = "firmware_ver";
+    #####:   96:        deviceInstance->device_type = "device_type";
+    #####:   97:        deviceInstance->hardware_ver = "hardware1.0";
+    #####:   98:        deviceInstance->software_ver = "software1.0";
+    #####:   99:        memcpy(deviceInstance->time_offset.data, "+11:12", sizeof("+11:12"));
+    #####:  100:        deviceInstance->timezone = "Europe/+2";
+        -:  101:    }
+        -:  102:};
+        -:  103:
+        -:  104:// Perform a read all test
+    #####:  105:TEST_F(DeviceInfoObjectTests, ReadAll) {
+    #####:  106:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, 0};
+    #####:  107:    lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
+        -:  108:
+    #####:  109:    std::string fullRead;
+        -:  110:    {
+    #####:  111:        size_t buffer_len=0;
+        -:  112:        char* buffer;
+    #####:  113:        uint8_t s = object_read(CTX(client_context),&uri,&format,(uint8_t**)&buffer,&buffer_len);
+    #####:  114:        ASSERT_EQ(s, CONTENT_2_05);
+    #####:  115:        fullRead.assign(buffer,buffer_len);
+    #####:  116:        lwm2m_free(buffer);
+        -:  117:    }
+        -:  118:
+    #####:  119:    const char expect[] = "{\"bn\":\"/3/0/\",\"e\":[{\"n\":\"0\",\"sv\":\"manufacturer\"},{\"n\":\"1\",\"sv\":\"model_name\"},{\"n\":\"2\",\"sv\":\"serial_number\"},{\"n\":\"3\",\"sv\":\"firmware_ver\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"11\",\"v\":-12},{\"n\":\"13\",\"v\":1498765432},{\"n\":\"16\",\"sv\":\"U\"},{\"n\":\"14\",\"sv\":\"+11:12\"},{\"n\":\"15\",\"sv\":\"Europe/+2\"},{\"n\":\"17\",\"sv\":\"device_type\"},{\"n\":\"18\",\"sv\":\"hardware1.0\"},{\"n\":\"19\",\"sv\":\"software1.0\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"10\",\"v\":12},{\"n\":\"21\",\"v\":12}]}";
+        -:  120:
+    #####:  121:    ASSERT_STREQ(expect, fullRead.c_str());
+    #####:  122:    ASSERT_EQ(sizeof(expect), fullRead.size()+1);
+        -:  123:}
+------------------
+_ZN34DeviceInfoObjectTests_ReadAll_Test8TestBodyEv:
+    #####:  105:TEST_F(DeviceInfoObjectTests, ReadAll) {
+    #####:  106:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, 0};
+    #####:  107:    lwm2m_media_type_t format = LWM2M_CONTENT_JSON;
+        -:  108:
+    #####:  109:    std::string fullRead;
+        -:  110:    {
+    #####:  111:        size_t buffer_len=0;
+        -:  112:        char* buffer;
+    #####:  113:        uint8_t s = object_read(CTX(client_context),&uri,&format,(uint8_t**)&buffer,&buffer_len);
+    #####:  114:        ASSERT_EQ(s, CONTENT_2_05);
+    #####:  115:        fullRead.assign(buffer,buffer_len);
+    #####:  116:        lwm2m_free(buffer);
+        -:  117:    }
+        -:  118:
+    #####:  119:    const char expect[] = "{\"bn\":\"/3/0/\",\"e\":[{\"n\":\"0\",\"sv\":\"manufacturer\"},{\"n\":\"1\",\"sv\":\"model_name\"},{\"n\":\"2\",\"sv\":\"serial_number\"},{\"n\":\"3\",\"sv\":\"firmware_ver\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"11\",\"v\":-12},{\"n\":\"13\",\"v\":1498765432},{\"n\":\"16\",\"sv\":\"U\"},{\"n\":\"14\",\"sv\":\"+11:12\"},{\"n\":\"15\",\"sv\":\"Europe/+2\"},{\"n\":\"17\",\"sv\":\"device_type\"},{\"n\":\"18\",\"sv\":\"hardware1.0\"},{\"n\":\"19\",\"sv\":\"software1.0\"},{\"n\":\"9\",\"v\":12},{\"n\":\"20\",\"v\":12},{\"n\":\"10\",\"v\":12},{\"n\":\"21\",\"v\":12}]}";
+        -:  120:
+    #####:  121:    ASSERT_STREQ(expect, fullRead.c_str());
+    #####:  122:    ASSERT_EQ(sizeof(expect), fullRead.size()+1);
+        -:  123:}
+------------------
+_ZN34DeviceInfoObjectTests_ReadAll_TestC2Ev:
+    #####:  105:TEST_F(DeviceInfoObjectTests, ReadAll) {
+------------------
+        -:  124:
+    #####:  125:TEST_F(DeviceInfoObjectTests, ExecuteReboot) {
+    #####:  126:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, RES_M_REBOOT};
+    #####:  127:    uint8_t* buffer=0;
+    #####:  128:    size_t buffer_len=0;
+    #####:  129:    ASSERT_FALSE(reboot_executed);
+    #####:  130:    uint8_t s =  object_execute(CTX(client_context),&uri,buffer,buffer_len);
+    #####:  131:    ASSERT_EQ(COAP_205_CONTENT, s);
+    #####:  132:    ASSERT_TRUE(reboot_executed);
+        -:  133:}
+------------------
+_ZN40DeviceInfoObjectTests_ExecuteReboot_Test8TestBodyEv:
+    #####:  125:TEST_F(DeviceInfoObjectTests, ExecuteReboot) {
+    #####:  126:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, RES_M_REBOOT};
+    #####:  127:    uint8_t* buffer=0;
+    #####:  128:    size_t buffer_len=0;
+    #####:  129:    ASSERT_FALSE(reboot_executed);
+    #####:  130:    uint8_t s =  object_execute(CTX(client_context),&uri,buffer,buffer_len);
+    #####:  131:    ASSERT_EQ(COAP_205_CONTENT, s);
+    #####:  132:    ASSERT_TRUE(reboot_executed);
+        -:  133:}
+------------------
+_ZN40DeviceInfoObjectTests_ExecuteReboot_TestC2Ev:
+    #####:  125:TEST_F(DeviceInfoObjectTests, ExecuteReboot) {
+------------------
+        -:  134:
+    #####:  135:TEST_F(DeviceInfoObjectTests, ExecuteFactoryReset) {
+    #####:  136:    lwm2m_uri_t uri = {LWM2M_URI_FLAG_OBJECT_ID, 3, 0, RES_O_FACTORY_RESET};
+    #####:  137:    uint8_t* buffer=0;
+    #####:  138:    size_t buffer_len=0;
+    #####:  139:    ASSERT_FALSE(factory_reset);
+    #####:  140:    uint8_t s =  object_execute(CTX(client_context),&uri,buffer,buffer_len);
+    #####:  141:    ASSERT_EQ(COAP_205_CONTENT, s);
+    #####:  142:    ASSERT_TRUE(factory_reset);
+        -:  143:}

@@ -1,0 +1,318 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/connect_server_tests.cpp
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/connect_server_tests.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:
+        -:   15:#include <gtest/gtest.h>
+        -:   16:#include "lwm2m/c_connect.h"
+        -:   17:#include "lwm2m/server.h"
+        -:   18:#include "lwm2m/objects.h"
+        -:   19:#include "lwm2m/debug.h"
+        -:   20:#include "test_debug.h"
+        -:   21:#include "server.h"
+        -:   22:#include "lwm2m/network.h"
+        -:   23:#include "../src/internal.h"
+        -:   24:#include "../src/network/network_common.h"
+        -:   25:#include "with_lwip/lwip_tap_helper.h"
+        -:   26:#include "memory.h"
+        -:   27:
+        -:   28:#include "lwm2mObjects/3311.h"
+        -:   29:
+        -:   30:#ifdef TAP_SERVER_ADDR
+        -:   31:#define LWM2M_SERVER_ADDR "coap://" TAP_SERVER_ADDR
+        -:   32:#define LWM2M_SERVER_ADDR_SEC "coaps://" TAP_SERVER_ADDR
+        -:   33:#else
+        -:   34:#define LWM2M_SERVER_ADDR "coap://127.0.0.1"
+        -:   35:#define LWM2M_SERVER_ADDR_SEC "coaps://127.0.0.1"
+        -:   36:#endif
+        -:   37:
+        -:   38:#include <stdint.h>
+        -:   39:#include <stdio.h>
+        -:   40:
+        -:   41:#include <thread>
+        -:   42:#include <mutex>
+        -:   43:#include <memory>
+        -:   44:#include <functional>
+        -:   45:#include <algorithm>
+        -:   46:
+        -:   47:extern "C" {
+        -:   48:#include "internals.h"
+        -:   49:
+        -:   50:#ifdef TAP_SERVER_ADDR //lwip
+        -:   51:void* internal_assign_network_interface(network_t* network) {
+        -:   52:    // use the first lwip network interface for the client
+        -:   53:    if (network->type == NET_CLIENT_PROCESS)
+        -:   54:        return lwip_network_get_interface(0);
+        -:   55:    else
+        -:   56:        return lwip_network_get_interface(1);
+        -:   57:}
+        -:   58:#endif
+        -:   59:
+        -:   60:}
+        -:   61:
+        -:   62:
+        -:   63:
+        -:   64:class ConnectServerTests : public testing::Test {
+        -:   65:public:
+        -:   66:    lwm2m_client_context_t client_context{};
+        -:   67:    lwm2m_object_t * securityObj = nullptr;
+        -:   68:    lwm2m_object_t * serverObj = nullptr;
+        -:   69:    std::string dm_received_json;
+        -:   70:    std::unique_ptr<Lwm2mServer> server;
+        -:   71:
+        -:   72:    // Client name and connected client name
+        -:   73:    const char* client_name = "testClient";
+        -:   74:    int client_bound_sockets;
+        -:   75: protected:
+    #####:   76:    virtual void TearDown() {
+    #####:   77:        if (server)
+    #####:   78:            server->release ();
+    #####:   79:        ASSERT_TRUE(client_context.context.userData);
+    #####:   80:        lwm2m_client_close(&client_context);
+        -:   81:
+    #####:   82:        lwip_network_close();
+        -:   83:
+        -:   84:        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+        -:   85:                      [](MemoryObserver::MemAreas::value_type it){
+        -:   86:            FAIL() << it.second.c_str ();
+    #####:   87:        });
+        -:   88:    }
+        -:   89:
+    #####:   90:    virtual void SetUp() {
+    #####:   91:        memoryObserver.reset();
+    #####:   92:        dm_received_json.clear ();
+        -:   93:
+    #####:   94:        client_bound_sockets =lwm2m_client_init(&client_context, client_name);
+    #####:   95:        ASSERT_GE(client_bound_sockets, 1);
+    #####:   96:        ASSERT_TRUE(client_context.context.userData);
+        -:   97:
+    #####:   98:        securityObj = &client_context.securityObject;
+    #####:   99:        ASSERT_EQ(securityObj->objID, 0);
+    #####:  100:        ASSERT_TRUE(securityObj);
+    #####:  101:        serverObj   = securityObj->next;
+    #####:  102:        ASSERT_TRUE(serverObj);
+    #####:  103:        ASSERT_EQ(serverObj->objID, 1);
+        -:  104:
+    #####:  105:        lwm2m_object_meta_information_t* metaP = (lwm2m_object_meta_information_t*)serverObj;
+        -:  106:
+    #####:  107:        for(unsigned i=0;i<metaP->ressources_len;++i)  {
+    #####:  108:            ASSERT_TRUE(metaP->ressources[i].struct_member_offset) << "Resource " << metaP->ressources[i].ressource_id;
+        -:  109:        }
+        -:  110:
+        -:  111:        // Necessary for lwip to initialize the memory module
+    #####:  112:        ASSERT_TRUE(lwip_network_init());
+        -:  113:    }
+        -:  114:
+        -:  115:    void runTest(bool useDtls);
+        -:  116:    void testServerResRequest(std::mutex& mutex);
+        -:  117:    void testDeregister(std::mutex& mutex);
+        -:  118:    void testUpdateRegister(std::mutex& mutex);
+        -:  119:    int testHandshake(std::mutex& mutex, bool useDtls);
+        -:  120:};
+        -:  121:
+    #####:  122:void ConnectServerTests::testServerResRequest(std::mutex& mutex) {
+        -:  123:    // Check server for detected objects/instances
+    #####:  124:    lwm2m_uri_t testURI{LWM2M_URI_FLAG_OBJECT_ID|LWM2M_URI_FLAG_INSTANCE_ID|LWM2M_URI_FLAG_RESOURCE_ID,
+        -:  125:                3311,0,(uint16_t)KnownObjects::id3311::RESID::OnOff};
+    #####:  126:    lwm2m_dm_read (server->server_context,server->server_context->clientList->internalID,&testURI,
+        -:  127:                   [](uint16_t clientID, lwm2m_uri_t * uriP, int status, lwm2m_media_type_t format,
+        -:  128:                   uint8_t * data, int dataLength, void * userData){
+        -:  129:        (void)clientID;
+        -:  130:        (void)status;
+        -:  131:        (void)format;
+        -:  132:        if (uriP->instanceId == 0 && uriP->resourceId == KnownObjects::id3311::RESID::OnOff) {
+        -:  133:            ((ConnectServerTests*) userData)->dm_received_json = std::string((char*)data, (size_t)dataLength);
+        -:  134:        }
+        -:  135:    },this);
+        -:  136:
+    #####:  137:    int steps=0;
+    #####:  138:    while (steps++ < 15) {
+    #####:  139:        struct timeval next_event = {0,500*1000};
+        -:  140:        {
+    #####:  141:            std::lock_guard<std::mutex> guard(mutex);
+    #####:  142:            lwm2m_process (CTX(client_context),&next_event);
+        -:  143:        }
+    #####:  144:        lwm2m_block_wait(CTX(client_context),next_event);
+    #####:  145:        if (!dm_received_json.empty ()) break;
+        -:  146:    }
+        -:  147:
+    #####:  148:    ASSERT_STREQ ("{\"bn\":\"/3311/0/5850/\",\"e\":[{\"n\":\"5850\",\"bv\":true}]}", dm_received_json.c_str ());
+        -:  149:}
+        -:  150:
+    #####:  151:void ConnectServerTests::testDeregister(std::mutex& mutex) {
+    #####:  152:    security_instance_t* instances = reinterpret_cast<security_instance_t*>(securityObj->instanceList);
+    #####:  153:    ASSERT_TRUE(lwm2m_unregister_server(CTX(client_context), instances->instanceId));
+        -:  154:
+        -:  155:    // One network_step_blocking is necessary to send/receive the unregister request
+        -:  156:    // All further steps make sure, the result does not change.
+    #####:  157:    int steps = 0;
+    #####:  158:    while (steps++ < 10) {
+        -:  159:        int result;
+    #####:  160:        struct timeval next_event = {0,500*1000};
+        -:  161:        {
+    #####:  162:            std::lock_guard<std::mutex> guard(mutex);
+    #####:  163:            result = lwm2m_process (CTX(client_context),&next_event);
+        -:  164:        }
+    #####:  165:        lwm2m_block_wait(CTX(client_context),next_event);
+    #####:  166:        if (result == COAP_503_SERVICE_UNAVAILABLE) {
+    #####:  167:            if (CTX(client_context)->state == STATE_BOOTSTRAP_REQUIRED)
+    #####:  168:                break;
+        -:  169:        } else {
+    #####:  170:            prv_print_error(result);
+    #####:  171:            print_state(CTX(client_context));
+    #####:  172:            ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
+        -:  173:        }
+        -:  174:    }
+        -:  175:
+    #####:  176:    lwm2m_remove_unregistered_servers(CTX(client_context));
+    #####:  177:    steps = 0;
+        -:  178:    int result;
+    #####:  179:    struct timeval next_event = {0,500*1000};
+        -:  180:    {
+    #####:  181:        std::lock_guard<std::mutex> guard(mutex);
+    #####:  182:        result = lwm2m_process (CTX(client_context),&next_event);
+        -:  183:    }
+        -:  184:
+    #####:  185:    ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
+    #####:  186:    ASSERT_EQ(STATE_BOOTSTRAP_REQUIRED, CTX(client_context)->state);
+        -:  187:}
+        -:  188:
+        -:  189:
+    #####:  190:void ConnectServerTests::testUpdateRegister(std::mutex& mutex) {
+    #####:  191:    security_instance_t* instances = reinterpret_cast<security_instance_t*>(securityObj->instanceList);
+    #####:  192:    ASSERT_EQ(STATE_REGISTERED, client_context.context.serverList->status);
+    #####:  193:    ASSERT_EQ (COAP_NO_ERROR, lwm2m_update_registration (CTX(client_context), instances->shortID, false));
+    #####:  194:    ASSERT_EQ(STATE_REG_UPDATE_NEEDED, client_context.context.serverList->status);
+        -:  195:
+        -:  196:    // One network_step_blocking is necessary to send/receive the update request
+        -:  197:    // All further steps make sure, the result does not change.
+    #####:  198:    int steps = 0;
+        -:  199:    while (1) {
+        -:  200:        int result;
+    #####:  201:        struct timeval next_event = {0,500*1000};
+        -:  202:        {
+    #####:  203:            std::lock_guard<std::mutex> guard(mutex);
+    #####:  204:            result = lwm2m_process (CTX(client_context),&next_event);
+        -:  205:        }
+    #####:  206:        lwm2m_block_wait(CTX(client_context),next_event);
+    #####:  207:        if (result != COAP_NO_ERROR) {
+    #####:  208:            prv_print_error(result);
+    #####:  209:            print_state(CTX(client_context));
+    #####:  210:            FAIL() << "Unexpected state";
+        -:  211:            break;
+    #####:  212:        } else if (++steps>3) {
+    #####:  213:            break;
+        -:  214:        }
+    #####:  215:    }
+        -:  216:
+    #####:  217:    ASSERT_EQ(STATE_REGISTERED, client_context.context.serverList->status);
+    #####:  218:    ASSERT_EQ(STATE_READY, CTX(client_context)->state);
+        -:  219:}
+        -:  220:
+    #####:  221:int ConnectServerTests::testHandshake(std::mutex& mutex, bool useDtls) {
+        -:  222:    // Client and server threads are doing network_step_blocking() in sequence for easier
+        -:  223:    // step debugging if necessary
+    #####:  224:    int steps = 0;
+    #####:  225:    int result=COAP_NO_ERROR;
+    #####:  226:    while (steps++ < 20) {
+    #####:  227:        struct timeval next_event = {0,500*1000};
+        -:  228:        {
+    #####:  229:            std::lock_guard<std::mutex> guard(mutex);
+    #####:  230:            result = lwm2m_process (CTX(client_context),&next_event);
+        -:  231:        }
+    #####:  232:        lwm2m_block_wait(CTX(client_context),next_event);
+    #####:  233:        if (result == COAP_NO_ERROR) {
+    #####:  234:            if (useDtls) {
+    #####:  235:                network_t* network = static_cast<network_t*>(CTX(client_context)->userData);
+        -:  236:                // Not in handshake and state is READY -> exit the loop
+    #####:  237:                if (!network->inHandshake && CTX(client_context)->state == STATE_READY)
+    #####:  238:                        break;
+    #####:  239:            } else if (CTX(client_context)->state == STATE_READY)
+    #####:  240:                    break;
+        -:  241:        } else {
+    #####:  242:            prv_print_error(result);
+    #####:  243:            print_state(CTX(client_context));
+        -:  244:        }
+        -:  245:    }
+    #####:  246:    return result;
+        -:  247:}
+        -:  248:
+    #####:  249:void ConnectServerTests::runTest(bool useDtls) {
+    #####:  250:    std::mutex mutex;
+        -:  251:
+    #####:  252:    server = std::unique_ptr<Lwm2mServer>(new Lwm2mServer(&mutex));
+    #####:  253:    server->init (useDtls);
+        -:  254:
+        -:  255:    // Client: Add a test object with some resources
+    #####:  256:    KnownObjects::id3311::object testO;
+    #####:  257:    KnownObjects::id3311::instance testI;
+    #####:  258:    testO.addInstance (CTX(client_context), &testI);
+    #####:  259:    testO.registerObject(CTX(client_context), false);
+    #####:  260:    testI.OnOff = true;
+        -:  261:
+        -:  262:    //// client: add server and register ////
+    #####:  263:    ASSERT_TRUE(lwm2m_add_server(CTX(client_context), 123,
+        -:  264:                                 useDtls ? LWM2M_SERVER_ADDR_SEC : LWM2M_SERVER_ADDR, 100, false));
+        -:  265:
+        -:  266:    //// client: set dtls psk ////
+    #####:  267:    if (useDtls) {
+    #####:  268:        lwm2m_use_dtls_psk(CTX(client_context), 123,Lwm2mServer::PUBLICID,Lwm2mServer::PSK,
+        -:  269:                           Lwm2mServer::PSK_LEN);
+        -:  270:    }
+        -:  271:
+    #####:  272:    int result = testHandshake(mutex, useDtls);
+        -:  273:
+        -:  274:    // If everything went well, we have passed the DTLS handshake and coap/lwm2m handshake
+    #####:  275:    ASSERT_EQ(COAP_NO_ERROR, result);
+    #####:  276:    ASSERT_EQ(STATE_READY, CTX(client_context)->state);
+    #####:  277:    ASSERT_STREQ(server->getConnectClientName ().c_str (), client_name);
+        -:  278:
+    #####:  279:    testServerResRequest(mutex);
+    #####:  280:    testUpdateRegister (mutex);
+    #####:  281:    testDeregister(mutex);
+        -:  282:
+    #####:  283:    server->release ();
+    #####:  284:    ASSERT_FALSE(server->getConnectClientName().size());
+        -:  285:}
+        -:  286:
+    #####:  287:TEST_F(ConnectServerTests, ConnectServer) {
+    #####:  288:    runTest(false);
+    #####:  289:}
+------------------
+_ZN37ConnectServerTests_ConnectServer_Test8TestBodyEv:
+    #####:  287:TEST_F(ConnectServerTests, ConnectServer) {
+    #####:  288:    runTest(false);
+    #####:  289:}
+------------------
+_ZN37ConnectServerTests_ConnectServer_TestC2Ev:
+    #####:  287:TEST_F(ConnectServerTests, ConnectServer) {
+------------------
+        -:  290:
+        -:  291:#if defined(LWM2M_WITH_DTLS) && defined(LWM2M_SERVER_MODE)
+    #####:  292:TEST_F(ConnectServerTests, ConnectServerDtlsPSK) {
+        -:  293:    //runTest(true);
+    #####:  294:}
+------------------
+_ZN44ConnectServerTests_ConnectServerDtlsPSK_Test8TestBodyEv:
+    #####:  292:TEST_F(ConnectServerTests, ConnectServerDtlsPSK) {
+        -:  293:    //runTest(true);
+    #####:  294:}
+------------------
+_ZN44ConnectServerTests_ConnectServerDtlsPSK_TestC2Ev:
+    #####:  292:TEST_F(ConnectServerTests, ConnectServerDtlsPSK) {
+------------------
+        -:  295:#endif

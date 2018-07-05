@@ -1,0 +1,252 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/with_lwip/lwip_tap_helper.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/with_lwip/lwip_tap_helper.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:#include "../src/network/network_common.h"
+        -:    2:#include "lwip_tap_helper.h"
+        -:    3:
+        -:    4:typedef int make_iso_compilers_happy; // if not LWIP
+        -:    5:
+        -:    6:#if defined(LWIP)
+        -:    7:
+        -:    8:#include <sys/socket.h>
+        -:    9:
+        -:   10:#include "lwip/init.h"
+        -:   11:#include "lwip/debug.h"
+        -:   12:#include "lwip/mem.h"
+        -:   13:#include "lwip/memp.h"
+        -:   14:#include "lwip/sys.h"
+        -:   15:#include "lwip/timeouts.h"
+        -:   16:#include "lwip/ethip6.h"
+        -:   17:#include "lwip/netif.h"
+        -:   18:#include "netif/etharp.h"
+        -:   19:#include "lwipopts.h"
+        -:   20:
+        -:   21:#include "../src/network/network_common.h"
+        -:   22:#include "lwip_tap_helper.h"
+        -:   23:#include "internals.h"
+        -:   24:
+        -:   25:#include <fcntl.h>
+        -:   26:#include <unistd.h>
+        -:   27:#include <sys/ioctl.h>
+        -:   28:#include <linux/if.h>
+        -:   29:#include <linux/if_tun.h>
+        -:   30:
+        -:   31:#define DEVTAP "/dev/net/tun"
+        -:   32:
+        -:   33:/* (manual) host IP configuration */
+        -:   34:static ip4_addr_t ipaddr, netmask, gw;
+        -:   35:
+        -:   36:/* nonstatic debug cmd option, exported in lwipopts.h */
+        -:   37:unsigned char debug_flags;
+        -:   38:
+        -:   39:struct netif netifs[2];
+        -:   40:const char* tapNames[2] = {TAP_CLIENT_DEVIDE, TAP_SERVER_DEVICE};
+        -:   41:const char* tapIP[2] = {TAP_CLIENT_ADDR, TAP_SERVER_ADDR};
+        -:   42:
+        -:   43:err_t low_level_output(struct netif *netif, struct pbuf *p)
+        -:   44:{
+        -:   45:  char buf[1514];
+        -:   46:  ssize_t written;
+        -:   47:
+        -:   48:  /* initiate transfer(); */
+        -:   49:  pbuf_copy_partial(p, buf, p->tot_len, 0);
+        -:   50:
+        -:   51:  /* signal that packet should be sent(); */
+        -:   52:  written = write((intptr_t)netif->state, buf, p->tot_len);
+        -:   53:  if (written == -1) {
+        -:   54:    perror("tapif: write");
+        -:   55:  }
+        -:   56:  return ERR_OK;
+        -:   57:}
+        -:   58:
+        -:   59:static void tapif_input(struct netif *netif)
+        -:   60:{
+        -:   61:    struct pbuf *p;
+        -:   62:    u16_t len;
+        -:   63:    char buf[1514];
+        -:   64:
+        -:   65:    /* Obtain the size of the packet and put it into the "len"
+        -:   66:       variable. */
+        -:   67:    len = read((intptr_t)netif->state, buf, sizeof(buf));
+        -:   68:    if (len == (u16_t)-1) {
+        -:   69:      perror("read returned -1");
+        -:   70:      exit(1);
+        -:   71:    }
+        -:   72:
+        -:   73:    /* We allocate a pbuf chain of pbufs from the pool. */
+        -:   74:    p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
+        -:   75:    if (p != NULL) {
+        -:   76:      pbuf_take(p, buf, len);
+        -:   77:      /* acknowledge that packet has been read(); */
+        -:   78:    } else {
+        -:   79:      /* drop packet(); */
+        -:   80:      LWIP_DEBUGF(NETIF_DEBUG, ("tapif_input: could not allocate pbuf\n"));
+        -:   81:    }
+        -:   82:
+        -:   83:  if (p == NULL) {
+        -:   84:    LWIP_DEBUGF(TAPIF_DEBUG, ("tapif_input: low_level_input returned NULL\n"));
+        -:   85:    return;
+        -:   86:  }
+        -:   87:
+        -:   88:  fprintf(stderr, "read lwip %i\n", len);
+        -:   89:  if (netif->input(p, netif) != ERR_OK) {
+        -:   90:    LWIP_DEBUGF(NETIF_DEBUG, ("tapif_input: netif input error\n"));
+        -:   91:    pbuf_free(p);
+        -:   92:  }
+        -:   93:}
+        -:   94:
+        -:   95:err_t tapif_init(struct netif *netif) {
+        -:   96:    return ERR_OK;
+        -:   97:}
+        -:   98:
+        -:   99:err_t tapif_real_init(int netIfNo)
+        -:  100:{
+        -:  101:    struct netif *netif = &netifs[netIfNo];
+        -:  102:
+        -:  103:    netif->state = (void*)(intptr_t)netIfNo;
+        -:  104:    netif->name[0] = 't';
+        -:  105:    netif->name[1] = netIfNo+'0';
+        -:  106:    netif->output = etharp_output;
+        -:  107:    netif->output_ip6 = ethip6_output;
+        -:  108:    netif->linkoutput = low_level_output;
+        -:  109:    netif->mtu = 1500;
+        -:  110:
+        -:  111:    /* Obtain MAC address from network interface. */
+        -:  112:
+        -:  113:    /* (We just fake an address...) */
+        -:  114:    netif->hwaddr[0] = 0x02;
+        -:  115:    netif->hwaddr[1] = 0x12;
+        -:  116:    netif->hwaddr[2] = 0x34;
+        -:  117:    netif->hwaddr[3] = 0x56;
+        -:  118:    netif->hwaddr[4] = 0x78;
+        -:  119:    netif->hwaddr[5] = 0xab + netIfNo;
+        -:  120:    netif->hwaddr_len = 6;
+        -:  121:
+        -:  122:    /* device capabilities */
+        -:  123:    netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_IGMP;
+        -:  124:
+        -:  125:    netif->state = (void*)(intptr_t)open(DEVTAP, O_RDWR);
+        -:  126:    LWIP_DEBUGF(TAPIF_DEBUG, ("tapif_init: fd %c%c\n", netif->name[0], netif->name[1]));
+        -:  127:    if ((intptr_t)netif->state == -1) {
+        -:  128:      perror("tapif_init: try running \"modprobe tun\" or rebuilding your kernel with CONFIG_TUN; cannot open "DEVTAP);
+        -:  129:      exit(1);
+        -:  130:    }
+        -:  131:
+        -:  132:    struct ifreq ifr;
+        -:  133:    memset(&ifr, 0, sizeof(ifr));
+        -:  134:
+        -:  135:    strncpy(ifr.ifr_name, tapNames[netIfNo], sizeof(ifr.ifr_name));
+        -:  136:
+        -:  137:    ifr.ifr_flags = IFF_TAP|IFF_NO_PI;
+        -:  138:    if (ioctl((intptr_t)netif->state, TUNSETIFF, (void *) &ifr) < 0) {
+        -:  139:        perror("tapif_init: "DEVTAP" ioctl TUNSETIFF");
+        -:  140:        return ERR_ABRT;
+        -:  141:    }
+        -:  142:
+        -:  143:    netif_set_link_up(netif);
+        -:  144:    return ERR_OK;
+        -:  145:}
+        -:  146:
+        -:  147:void lwip_network_close(void)
+        -:  148:{
+        -:  149:    //close((intptr_t)netifs[0].state);
+        -:  150:    //close((intptr_t)netifs[1].state);
+        -:  151:    //netif_remove(&netifs[0]);
+        -:  152:    //netif_remove(&netifs[1]);
+        -:  153:}
+        -:  154:
+        -:  155:bool lwip_network_init(void)
+        -:  156:{
+        -:  157:    // LwIP can only be initialited once
+        -:  158:    static bool lwip_init_done = false;
+        -:  159:    if (lwip_init_done) {
+        -:  160:        sys_restart_timeouts();
+        -:  161:        return true;
+        -:  162:    }
+        -:  163:    lwip_init_done = true;
+        -:  164:
+        -:  165:  /* use debug flags defined by debug.h */
+        -:  166:  debug_flags = LWIP_DBG_OFF;
+        -:  167:  debug_flags |= (LWIP_DBG_ON|LWIP_DBG_TRACE|LWIP_DBG_STATE|LWIP_DBG_FRESH|LWIP_DBG_HALT);
+        -:  168:
+        -:  169:  lwip_init();
+        -:  170:
+        -:  171:  for (int tapDevices = 0; tapDevices < 2; ++tapDevices)
+        -:  172:  {
+        -:  173:      IP4_ADDR(&gw, 192,168,7,10);
+        -:  174:      ipaddr.addr = ipaddr_addr(tapIP[tapDevices]);
+        -:  175:      IP4_ADDR(&netmask, 255,255,255,0);
+        -:  176:
+        -:  177:      char ip_str[16] = {0}, nm_str[16] = {0}, gw_str[16] = {0};
+        -:  178:      strncpy(ip_str, ip4addr_ntoa(&ipaddr), sizeof(ip_str));
+        -:  179:      strncpy(nm_str, ip4addr_ntoa(&netmask), sizeof(nm_str));
+        -:  180:      strncpy(gw_str, ip4addr_ntoa(&gw), sizeof(gw_str));
+        -:  181:
+        -:  182:      network_log_info("Host at %s mask %s gateway %s\n", ip_str, nm_str, gw_str);
+        -:  183:
+        -:  184:        netif_add(&netifs[tapDevices], &ipaddr, &netmask, &gw, NULL, tapif_init, ethernet_input);
+        -:  185:      err_t tapIfOK = tapif_real_init(tapDevices);
+        -:  186:      if (tapIfOK != ERR_OK) {
+        -:  187:        fprintf(stderr, "tapif_real_init failed with %i\n", tapIfOK);
+        -:  188:        lwip_init_done = false;
+        -:  189:        return false;
+        -:  190:      }
+        -:  191:      netif_set_up(&netifs[tapDevices]);
+        -:  192:      netif_create_ip6_linklocal_address(&netifs[tapDevices], 1);
+        -:  193:  }
+        -:  194:  return true;
+        -:  195:  //netif_set_default(&netifs[tapDevices]);
+        -:  196:}
+        -:  197:
+        -:  198:void* lwip_network_get_interface(int id)
+        -:  199:{
+        -:  200:     struct netif* n = netif_list;
+        -:  201:     for (int c = 1;c>=0 && n;--c)
+        -:  202:     {
+        -:  203:         if (c==id)
+        -:  204:             return n;
+        -:  205:         n = n->next;
+        -:  206:     }
+        -:  207:     return NULL;
+        -:  208:}
+        -:  209:
+        -:  210:bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
+        -:  211:    network_t* network = (network_t*)contextP->userData;
+        -:  212:    connection_t* c = network->connection_list;
+        -:  213:    while (c) {
+        -:  214:        struct netif* netifP = c->addr.net_if_out;
+        -:  215:        if (netifP)
+        -:  216:            tapif_input(netifP);
+        -:  217:        c=c->next;
+        -:  218:    }
+        -:  219:    internal_check_timer(contextP, next_event);
+        -:  220:    return true;
+        -:  221:}
+        -:  222:
+        -:  223:int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
+        -:  224:    fd_set fdset;
+        -:  225:    int ret;
+        -:  226:
+        -:  227:    network_t* network = (network_t*)contextP->userData;
+        -:  228:    if (network == NULL || network->connection_list == NULL)
+        -:  229:        return COAP_505_NO_NETWORK_CONNECTION;
+        -:  230:    struct netif* netifP = network->connection_list->addr.net_if_out;
+        -:  231:
+        -:  232:    FD_ZERO(&fdset);
+        -:  233:    FD_SET((intptr_t)netifP->state, &fdset);
+        -:  234:
+        -:  235:    ret = select((intptr_t)netifP->state + 1, &fdset, NULL, NULL, &next_event);
+        -:  236:
+        -:  237:#if NO_SYS==1
+        -:  238:    sys_check_timeouts();
+        -:  239:#endif
+        -:  240:    return ret;
+        -:  241:}
+        -:  242:
+        -:  243:#else
+    #####:  244:bool lwip_network_init(void){return true;}
+    #####:  245:void lwip_network_close(void){}
+    #####:  246:void* lwip_network_get_interface(int id){(void)id; return NULL;}
+        -:  247:#endif

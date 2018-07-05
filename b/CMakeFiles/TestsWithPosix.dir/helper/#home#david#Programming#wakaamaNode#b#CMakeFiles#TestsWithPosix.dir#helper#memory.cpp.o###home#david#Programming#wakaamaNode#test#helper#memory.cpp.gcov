@@ -1,0 +1,203 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/helper/memory.cpp
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/helper/memory.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:#include "memory.h"
+        -:   15:#include <string.h>
+        -:   16:#include <stdlib.h>
+        -:   17:#include <stdio.h>
+        -:   18:#include <stdarg.h>
+        -:   19:#include <sys/time.h>
+        -:   20:#include <assert.h>
+        -:   21:
+        -:   22:#include <iomanip>
+        -:   23:#include <sstream>
+        -:   24:
+        -:   25:#ifdef WITH_LIB_BACKTRACE
+        -:   26:#include <execinfo.h> // gnu backtrace
+        -:   27:#endif
+        -:   28:
+        -:   29:#ifdef WITH_LIB_UNWIND
+        -:   30:#include <libunwind.h>
+        -:   31:#include <cxxabi.h>
+        -:   32:#endif
+        -:   33:
+        -:   34:MemoryObserver memoryObserver;
+        -:   35:
+        -:   36:template< typename T >
+    #####:   37:std::string hexify(T i)
+        -:   38:{
+    #####:   39:    std::stringbuf buf;
+    #####:   40:    std::ostream os(&buf);
+        -:   41:
+        -:   42:
+    #####:   43:    os << "0x" << std::setfill('0') << std::setw(sizeof(T) * 2)
+    #####:   44:       << std::hex << i;
+        -:   45:
+    #####:   46:    return buf.str().c_str();
+        -:   47:}
+        -:   48:
+    #####:   49:bool contains(const std::string& src, const char* expr) {
+    #####:   50:    return src.find(expr)!=std::string::npos;
+        -:   51:}
+        -:   52:
+        -:   53:template <class ... Types>
+    #####:   54:bool contains(const std::string& src, const char* expr, Types* ... more) {
+    #####:   55:    return contains(src, expr) || contains(src, more...);
+        -:   56:}
+------------------
+_Z8containsIJKcEEbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPS0_DpPT_:
+    #####:   54:bool contains(const std::string& src, const char* expr, Types* ... more) {
+    #####:   55:    return contains(src, expr) || contains(src, more...);
+        -:   56:}
+------------------
+_Z8containsIJKcS0_EEbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPS0_DpPT_:
+    #####:   54:bool contains(const std::string& src, const char* expr, Types* ... more) {
+    #####:   55:    return contains(src, expr) || contains(src, more...);
+        -:   56:}
+------------------
+_Z8containsIJKcS0_S0_EEbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPS0_DpPT_:
+    #####:   54:bool contains(const std::string& src, const char* expr, Types* ... more) {
+    #####:   55:    return contains(src, expr) || contains(src, more...);
+        -:   56:}
+------------------
+_Z8containsIJKcS0_S0_S0_EEbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPS0_DpPT_:
+    #####:   54:bool contains(const std::string& src, const char* expr, Types* ... more) {
+    #####:   55:    return contains(src, expr) || contains(src, more...);
+        -:   56:}
+------------------
+_Z8containsIJKcS0_S0_S0_S0_EEbRKNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEPS0_DpPT_:
+    #####:   54:bool contains(const std::string& src, const char* expr, Types* ... more) {
+    #####:   55:    return contains(src, expr) || contains(src, more...);
+        -:   56:}
+------------------
+        -:   57:
+        -:   58:#ifdef WITH_LIB_UNWIND
+        -:   59:
+        -:   60:
+        -:   61:std::string print_trace (void)
+        -:   62:{
+        -:   63:    unw_cursor_t cursor;
+        -:   64:    unw_context_t context;
+        -:   65:
+        -:   66:    // Initialize cursor to current frame for local unwinding.
+        -:   67:    unw_getcontext(&context);
+        -:   68:    unw_init_local(&cursor, &context);
+        -:   69:
+        -:   70:    std::string a;
+        -:   71:    // Unwind frames one by one, going up the frame stack.
+        -:   72:    while (unw_step(&cursor) > 0) {
+        -:   73:        unw_word_t offset, pc;
+        -:   74:        unw_get_reg(&cursor, UNW_REG_IP, &pc);
+        -:   75:        if (pc == 0) {
+        -:   76:          break;
+        -:   77:        }
+        -:   78:        //a += hexify(pc) + " ";
+        -:   79:
+        -:   80:        char sym[256];
+        -:   81:        if (unw_get_proc_name(&cursor, sym, sizeof(sym), &offset) == 0) {
+        -:   82:            char* nameptr = sym;
+        -:   83:            int status;
+        -:   84:            char* demangled = abi::__cxa_demangle(sym, nullptr, nullptr, &status);
+        -:   85:            if (status == 0) nameptr = demangled;
+        -:   86:            std::string l(nameptr);
+        -:   87:            if (l.empty()||l=="lwm2m_malloc"||l=="main"||l=="clone"||l=="_start"||l=="start_thread"||
+        -:   88:                    contains(l,"testing::", "TestBody", "std::thread", "std::error_code", "_start_main", "_invoke")) continue;
+        -:   89:            a += "\t" + l + " (" + hexify(offset)+") \n";
+        -:   90:        } else {
+        -:   91:            a += "no symbol for this frame\n";
+        -:   92:        }
+        -:   93:    }
+        -:   94:
+        -:   95:    return a;
+        -:   96:}
+        -:   97:
+        -:   98:#elif defined(WITH_LIB_BACKTRACE)
+        -:   99:std::string print_trace (void)
+        -:  100:{
+        -:  101:    void *array[10];
+        -:  102:    size_t size;
+        -:  103:    char **strings;
+        -:  104:    size_t i;
+        -:  105:
+        -:  106:    size = backtrace (array, 10);
+        -:  107:    strings = backtrace_symbols (array, size);
+        -:  108:
+        -:  109:    std::string a;
+        -:  110:    for (i = 1; i < size; i++){
+        -:  111:        std::string l(strings[i]);
+        -:  112:        if (l.find("libgtest")!=std::string::npos) continue;
+        -:  113:        a+= l;
+        -:  114:        a+="\n";
+        -:  115:    }
+        -:  116:
+        -:  117:    free (strings);
+        -:  118:
+        -:  119:    return a;
+        -:  120:}
+        -:  121:#else
+        -:  122:#include "backward.hpp"
+    #####:  123:std::string print_trace (void) {
+    #####:  124:    std::string s;
+        -:  125:    using namespace backward;
+    #####:  126:    StackTrace st; st.load_here(32);
+    #####:  127:    TraceResolver tr; tr.load_stacktrace(st);
+    #####:  128:    for (size_t i = 3; i < st.size(); ++i) {
+    #####:  129:        ResolvedTrace trace = tr.resolve(st[i]);
+    #####:  130:        std::string l(trace.object_function);
+    #####:  131:        if (l.empty()||l=="main"||l=="clone"||l=="_start"||l=="lwm2m_malloc"||l=="start_thread"||
+    #####:  132:                contains(l,"testing::", "TestBody", "std::thread", "std::error_code", "_start_main", "_invoke")) continue;
+    #####:  133:        s += "\t#" + std::to_string(i)
+    #####:  134:            + " " +trace.source.filename+"#L" + std::to_string(trace.source.line)
+    #####:  135:            + " " + trace.object_function
+    #####:  136:            + " [" + hexify(trace.addr) + "]\n";
+        -:  137:    }
+    #####:  138:    return s;
+        -:  139:}
+        -:  140:#endif
+        -:  141:
+        -:  142:
+        -:  143:#ifdef __cplusplus
+        -:  144:extern "C" {
+        -:  145:#endif
+        -:  146:
+    #####:  147:void* lwm2m_malloc(size_t s)
+        -:  148:{
+    #####:  149:    void* mem = malloc(s);
+    #####:  150:    memoryObserver.add((long)mem, print_trace());
+    #####:  151:    return mem;
+        -:  152:}
+        -:  153:
+    #####:  154:void lwm2m_free(void * p)
+        -:  155:{
+    #####:  156:    if (!p) return;
+    #####:  157:    if (!memoryObserver.remove((long)p)) {
+    #####:  158:        assert(1==0);
+        -:  159:    }
+    #####:  160:    free(p);
+        -:  161:}
+        -:  162:
+    #####:  163:char* lwm2m_strdup(const char * str)
+        -:  164:{
+    #####:  165:    char* mem = strdup(str);
+    #####:  166:    memoryObserver.add((long)mem, print_trace());
+    #####:  167:    return mem;
+        -:  168:}
+        -:  169:
+        -:  170:#ifdef __cplusplus
+        -:  171:}
+        -:  172:#endif

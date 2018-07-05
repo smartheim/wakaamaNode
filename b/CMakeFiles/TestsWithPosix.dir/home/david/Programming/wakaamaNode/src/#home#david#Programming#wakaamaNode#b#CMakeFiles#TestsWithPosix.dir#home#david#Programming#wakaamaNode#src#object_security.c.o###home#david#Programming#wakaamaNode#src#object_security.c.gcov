@@ -1,0 +1,163 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/object_security.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/object_security.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:
+        -:   15:/*
+        -:   16: * Here we implement a basic LWM2M Security Object which supports
+        -:   17: * security transports if LWM2M_WITH_DTLS is enabled.
+        -:   18: */
+        -:   19:
+        -:   20:/*
+        -:   21: *  Resources:
+        -:   22: *
+        -:   23: *          Name            | ID | Operations | Instances | Mandatory |  Type   |  Range  | Units |
+        -:   24: *  Server URI              |  0 |            |  Single   |    Yes    | String  |         |       |
+        -:   25: *  Bootstrap Server        |  1 |            |  Single   |    Yes    | Boolean |         |       |
+        -:   26: *  Security Mode           |  2 |            |  Single   |    Yes    | Integer |   0-3   |       |
+        -:   27: *  Public Key or ID        |  3 |            |  Single   |    Yes    | Opaque  |         |       |
+        -:   28: *  Server Public Key or ID |  4 |            |  Single   |    Yes    | Opaque  |         |       |
+        -:   29: *  Secret Key              |  5 |            |  Single   |    Yes    | Opaque  |         |       |
+        -:   30: *  SMS Security Mode       |  6 |            |  Single   |    Yes    | Integer |  0-255  |       |
+        -:   31: *  SMS Binding Key Param.  |  7 |            |  Single   |    Yes    | Opaque  |   6 B   |       |
+        -:   32: *  SMS Binding Secret Keys |  8 |            |  Single   |    Yes    | Opaque  | 32-48 B |       |
+        -:   33: *  Server SMS Number       |  9 |            |  Single   |    Yes    | Integer |         |       |
+        -:   34: *  Short Server ID         | 10 |            |  Single   |    No     | Integer | 1-65535 |       |
+        -:   35: *  Client Hold Off Time    | 11 |            |  Single   |    Yes    | Integer |         |   s   |
+        -:   36: *
+        -:   37: */
+        -:   38:
+        -:   39:#include "wakaama/liblwm2m.h"
+        -:   40:#include "internal.h"
+        -:   41:
+        -:   42:#include <stdlib.h>
+        -:   43:#include <string.h>
+        -:   44:#include <stdio.h>
+        -:   45:
+    #####:   46:static uint8_t prv_get_value(lwm2m_data_t * dataP,
+        -:   47:                             security_instance_t * targetP)
+        -:   48:{
+    #####:   49:    switch (dataP->id)
+        -:   50:    {
+    #####:   51:    case LWM2M_SECURITY_URI_ID:
+    #####:   52:        lwm2m_data_encode_string(targetP->uri, dataP);
+    #####:   53:        return COAP_205_CONTENT;
+        -:   54:
+    #####:   55:    case LWM2M_SECURITY_BOOTSTRAP_ID:
+    #####:   56:        lwm2m_data_encode_bool(targetP->isBootstrap, dataP);
+    #####:   57:        return COAP_205_CONTENT;
+        -:   58:
+    #####:   59:    case LWM2M_SECURITY_SECURITY_ID:
+    #####:   60:        lwm2m_data_encode_int(targetP->securityMode, dataP);
+    #####:   61:        return COAP_205_CONTENT;
+        -:   62:
+        -:   63:#ifdef LWM2M_WITH_DTLS
+    #####:   64:    case LWM2M_SECURITY_PUBLIC_KEY_ID:
+    #####:   65:        lwm2m_data_encode_opaque((uint8_t*)targetP->publicIdentity, (size_t)targetP->publicIdLen, dataP);
+    #####:   66:        return COAP_205_CONTENT;
+        -:   67:
+    #####:   68:    case LWM2M_SECURITY_SERVER_PUBLIC_KEY_ID:
+    #####:   69:        lwm2m_data_encode_opaque((uint8_t*)targetP->serverPublicKey, (size_t)targetP->serverPublicKeyLen, dataP);
+    #####:   70:        return COAP_205_CONTENT;
+        -:   71:
+    #####:   72:    case LWM2M_SECURITY_SECRET_KEY_ID:
+    #####:   73:        lwm2m_data_encode_opaque((uint8_t*)targetP->secretKey, (size_t)targetP->secretKeyLen, dataP);
+    #####:   74:        return COAP_205_CONTENT;
+        -:   75:#endif
+    #####:   76:    case LWM2M_SECURITY_SHORT_SERVER_ID:
+    #####:   77:        lwm2m_data_encode_int(targetP->shortID, dataP);
+    #####:   78:        return COAP_205_CONTENT;
+        -:   79:
+    #####:   80:    case LWM2M_SECURITY_HOLD_OFF_ID:
+    #####:   81:        lwm2m_data_encode_int(targetP->clientHoldOffTime, dataP);
+    #####:   82:        return COAP_205_CONTENT;
+        -:   83:
+    #####:   84:    default:
+    #####:   85:        return COAP_404_NOT_FOUND;
+        -:   86:    }
+        -:   87:}
+        -:   88:
+    #####:   89:static uint8_t prv_security_read(uint16_t instanceId,
+        -:   90:                                 int * numDataP,
+        -:   91:                                 lwm2m_data_t ** dataArrayP,
+        -:   92:                                 lwm2m_object_t * objectP,
+        -:   93:                                 lwm2m_context_t * contextP)
+        -:   94:{
+        -:   95:    (void)contextP;
+        -:   96:    security_instance_t * targetP;
+        -:   97:    uint8_t result;
+        -:   98:    int i;
+        -:   99:
+    #####:  100:    targetP = (security_instance_t *)lwm2m_list_find(objectP->instanceList, instanceId);
+    #####:  101:    if (NULL == targetP) return COAP_404_NOT_FOUND;
+        -:  102:
+        -:  103:    // is the server asking for the full instance ?
+    #####:  104:    if (*numDataP == 0)
+        -:  105:    {
+    #####:  106:        uint16_t resList[] = {LWM2M_SECURITY_URI_ID,
+        -:  107:                              LWM2M_SECURITY_BOOTSTRAP_ID,
+        -:  108:                              LWM2M_SECURITY_SECURITY_ID,
+        -:  109:                              #ifdef LWM2M_WITH_DTLS
+        -:  110:                              LWM2M_SECURITY_PUBLIC_KEY_ID,
+        -:  111:                              LWM2M_SECURITY_SERVER_PUBLIC_KEY_ID,
+        -:  112:                              LWM2M_SECURITY_SECRET_KEY_ID,
+        -:  113:                              #endif
+        -:  114:                              LWM2M_SECURITY_SHORT_SERVER_ID,
+        -:  115:                              LWM2M_SECURITY_HOLD_OFF_ID};
+    #####:  116:        int nbRes = sizeof(resList)/sizeof(uint16_t);
+        -:  117:
+    #####:  118:        *dataArrayP = lwm2m_data_new(nbRes);
+    #####:  119:        if (*dataArrayP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
+    #####:  120:        *numDataP = nbRes;
+    #####:  121:        for (i = 0 ; i < nbRes ; i++)
+        -:  122:        {
+    #####:  123:            (*dataArrayP)[i].id = resList[i];
+        -:  124:        }
+        -:  125:    }
+        -:  126:
+    #####:  127:    i = 0;
+        -:  128:    do
+        -:  129:    {
+    #####:  130:        result = prv_get_value((*dataArrayP) + i, targetP);
+    #####:  131:        i++;
+    #####:  132:    } while (i < *numDataP && result == COAP_205_CONTENT);
+        -:  133:
+    #####:  134:    return result;
+        -:  135:}
+        -:  136:
+        -:  137:#ifdef LWM2M_WITH_LOGS
+        -:  138:void display_security_object(lwm2m_object_t * object)
+        -:  139:{
+        -:  140:    fprintf(stdout, "  /%u: Security object, instances:\r\n", object->objID);
+        -:  141:    security_instance_t * instance = (security_instance_t *)object->instanceList;
+        -:  142:    while (instance != NULL)
+        -:  143:    {
+        -:  144:        fprintf(stdout, "    /%u/%u: instanceId: %u, uri: %s, isBootstrap: %s, shortId: %u, clientHoldOffTime: %u\r\n",
+        -:  145:                object->objID, instance->instanceId,
+        -:  146:                instance->instanceId, instance->uri, instance->isBootstrap ? "true" : "false",
+        -:  147:                instance->shortID, instance->clientHoldOffTime);
+        -:  148:        instance = (security_instance_t *)instance->next;
+        -:  149:    }
+        -:  150:}
+        -:  151:#endif
+        -:  152:
+    #####:  153:void init_security_object(lwm2m_client_context_t* ctx)
+        -:  154:{
+    #####:  155:    ctx->securityObject.objID = 0;
+    #####:  156:    ctx->securityObject.readFunc = prv_security_read;
+    #####:  157:}
+        -:  158:

@@ -34,14 +34,14 @@ typedef int make_iso_compilers_happy; // if not LWIP
 #include "lwip/dns.h"
 
 // it is either timers.h or since Jul 19, 2016 timeouts.h
-//#include "lwip/timeouts.h"
-#include "lwip/timers.h"
+#include "lwip/timeouts.h"
+//#include "lwip/timers.h"
 
 void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 
 uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, uint16_t localPort)
 {
-    if (!localPort) {
+    if (localPort) {
         // Server
         network->type = NET_SERVER_PROCESS;
     } else {
@@ -61,7 +61,7 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, ui
     return (uint8_t)network->open_listen_sockets;
 }
 
-bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
+bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
     (void)contextP;
     // NOOP for lwip, because udp_recv() registers a callback for incoming packets
     // and they are processed in udp_raw_recv()
@@ -110,7 +110,9 @@ intptr_t lwm2m_network_native_sock(lwm2m_context_t * contextP, unsigned sock_no)
 void connection_log_io(connection_t* connP, int length, bool sending) {
     (void)sending;
     #if LWIP_IPV4 && LWIP_IPV6
+    static char destIP[40];
     const char* a = ipaddr_ntoa(&connP->addr.addr);
+    strcpy(destIP, a);
     const char* b;
     if (connP->addr.net_if_out)
     {
@@ -139,7 +141,7 @@ void connection_log_io(connection_t* connP, int length, bool sending) {
     const char* b = "N/A";
     #endif
 
-    network_log_error("Sending %d bytes to [%s]:%u. Interface IP: %s. Is Server: %d\r\n", length, a,
+    network_log_error("Sending %d bytes to [%s]:%u. Interface IP: %s. Is Server: %d\r\n", length, destIP,
         connP->addr.port, b, connP->network->type==NET_SERVER_PROCESS);
 }
 #endif
@@ -163,7 +165,8 @@ int mbedtls_net_send(void *ctx, const unsigned char *buffer, size_t len) {
     {
         network_log_error("failed sending %lu bytes\r\n", len);
         return MBEDTLS_ERR_SSL_INTERNAL_ERROR ;
-    }
+    } else
+        connection_log_io(connection, (int)len, false);
 
     return (int)len;
 }
@@ -171,18 +174,23 @@ int mbedtls_net_send(void *ctx, const unsigned char *buffer, size_t len) {
 int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
     connection_t * connection = (connection_t*)ctx;
     if (!connection->p || connection->p->tot_len) {
-        network_log_error("recvfrom failed %i", connection->sock);
+        network_log_error("recvfrom failed %i", (int)connection->sock);
         return MBEDTLS_ERR_SSL_CONN_EOF;
     }
     
     len = len > connection->p->tot_len ? connection->p->tot_len : len;
     memcpy(buf, connection->p->payload, len);
+    connection_log_io(connection, (int)len, false);
     
     return (int)len;
 }
 
 inline bool ip_equal(addr_t a, addr_t b) {
     return ip_addr_cmp(&a.addr, &b.addr);
+}
+
+void* __attribute__((weak)) internal_assign_network_interface(network_t* network) {
+    (void)network; return NULL;
 }
 
 connection_t * internal_connection_create(network_t* network,
@@ -205,16 +213,11 @@ connection_t * internal_connection_create(network_t* network,
         connection->sock = &network->socket_handle[0];
         connection->addr.port = port;
         connection->addr.addr = addr;
+        connection->addr.net_if_out = internal_assign_network_interface(network);
         connection->next = (struct _connection_t *)network->connection_list;
     }
 
     return connection;
 }
-
-inline int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
-    (void)contextP;(void)next_event;
-    return 0;
-}
-
 
 #endif

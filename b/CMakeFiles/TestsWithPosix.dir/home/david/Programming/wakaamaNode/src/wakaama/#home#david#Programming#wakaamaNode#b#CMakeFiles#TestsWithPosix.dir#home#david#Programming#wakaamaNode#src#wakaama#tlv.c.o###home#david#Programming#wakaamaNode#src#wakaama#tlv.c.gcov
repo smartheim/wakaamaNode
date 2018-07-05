@@ -1,0 +1,585 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/wakaama/tlv.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/wakaama/tlv.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: *
+        -:    3: * Copyright (c) 2013, 2014 Intel Corporation and others.
+        -:    4: * All rights reserved. This program and the accompanying materials
+        -:    5: * are made available under the terms of the Eclipse Public License v1.0
+        -:    6: * and Eclipse Distribution License v1.0 which accompany this distribution.
+        -:    7: *
+        -:    8: * The Eclipse Public License is available at
+        -:    9: *    http://www.eclipse.org/legal/epl-v10.html
+        -:   10: * The Eclipse Distribution License is available at
+        -:   11: *    http://www.eclipse.org/org/documents/edl-v10.php.
+        -:   12: *
+        -:   13: * Contributors:
+        -:   14: *    David Navarro, Intel Corporation - initial API and implementation
+        -:   15: *    Fabien Fleutot - Please refer to git log
+        -:   16: *    Bosch Software Innovations GmbH - Please refer to git log
+        -:   17: *    
+        -:   18: *******************************************************************************/
+        -:   19:
+        -:   20:#include "internals.h"
+        -:   21:#include <stdlib.h>
+        -:   22:#include <string.h>
+        -:   23:#include <stdio.h>
+        -:   24:#include <inttypes.h>
+        -:   25:#include <float.h>
+        -:   26:
+        -:   27:#ifndef LWM2M_BIG_ENDIAN
+        -:   28:#ifndef LWM2M_LITTLE_ENDIAN
+        -:   29:#error Please define LWM2M_BIG_ENDIAN or LWM2M_LITTLE_ENDIAN
+        -:   30:#endif
+        -:   31:#endif
+        -:   32:
+        -:   33:#define _PRV_TLV_TYPE_MASK 0xC0
+        -:   34:#define _PRV_TLV_HEADER_MAX_LENGTH 6
+        -:   35:
+        -:   36:#define _PRV_TLV_TYPE_UNKNOWN           (uint8_t)0xFF
+        -:   37:#define _PRV_TLV_TYPE_OBJECT            (uint8_t)0x10
+        -:   38:#define _PRV_TLV_TYPE_OBJECT_INSTANCE   (uint8_t)0x00
+        -:   39:#define _PRV_TLV_TYPE_RESOURCE          (uint8_t)0xC0
+        -:   40:#define _PRV_TLV_TYPE_MULTIPLE_RESOURCE (uint8_t)0x80
+        -:   41:#define _PRV_TLV_TYPE_RESOURCE_INSTANCE (uint8_t)0x40
+        -:   42:
+    #####:   43:static size_t prv_encodeFloat(double data,
+        -:   44:                              uint8_t * data_buffer)
+        -:   45:{
+    #####:   46:    size_t length = 0;
+        -:   47:
+    #####:   48:    if ((data < 0.0 - (double)FLT_MAX) || (data >(double)FLT_MAX))
+        -:   49:    {
+    #####:   50:        length = 8;
+    #####:   51:        utils_copyValue(data_buffer, &data, 8);
+        -:   52:    }
+        -:   53:    else
+        -:   54:    {
+        -:   55:        float value;
+        -:   56:
+    #####:   57:        length = 4;
+    #####:   58:        value = (float)data;
+    #####:   59:        utils_copyValue(data_buffer, &value, 4);
+        -:   60:    }
+        -:   61:
+    #####:   62:    return length;
+        -:   63:}
+        -:   64:
+    #####:   65:static size_t prv_encodeInt(int64_t data,
+        -:   66:                            uint8_t * data_buffer)
+        -:   67:{
+    #####:   68:    size_t length = 0;
+        -:   69:
+    #####:   70:    if (data >= INT8_MIN && data <= INT8_MAX)
+        -:   71:    {
+    #####:   72:        length = 1;
+    #####:   73:        data_buffer[0] = data;
+        -:   74:    }
+    #####:   75:    else if (data >= INT16_MIN && data <= INT16_MAX)
+    #####:   76:    {
+        -:   77:        int16_t value;
+        -:   78:
+    #####:   79:        value = data;
+    #####:   80:        length = 2;
+    #####:   81:        data_buffer[0] = (value >> 8) & 0xFF;
+    #####:   82:        data_buffer[1] = value & 0xFF;
+        -:   83:    }
+    #####:   84:    else if (data >= INT32_MIN && data <= INT32_MAX)
+    #####:   85:    {
+        -:   86:        int32_t value;
+        -:   87:
+    #####:   88:        value = data;
+    #####:   89:        length = 4;
+    #####:   90:        utils_copyValue(data_buffer, &value, length);
+        -:   91:    }
+        -:   92:    else if (data >= INT64_MIN && data <= INT64_MAX)
+        -:   93:    {
+    #####:   94:        length = 8;
+    #####:   95:        utils_copyValue(data_buffer, &data, length);
+        -:   96:    }
+        -:   97:
+    #####:   98:    return length;
+        -:   99:}
+        -:  100:
+    #####:  101:static uint8_t prv_getHeaderType(lwm2m_data_type_t type)
+        -:  102:{
+    #####:  103:    switch (type)
+        -:  104:    {
+    #####:  105:    case LWM2M_TYPE_OBJECT:
+    #####:  106:        return _PRV_TLV_TYPE_OBJECT;
+        -:  107:
+    #####:  108:    case LWM2M_TYPE_OBJECT_INSTANCE:
+    #####:  109:        return _PRV_TLV_TYPE_OBJECT_INSTANCE;
+        -:  110:
+    #####:  111:    case LWM2M_TYPE_MULTIPLE_RESOURCE:
+    #####:  112:        return _PRV_TLV_TYPE_MULTIPLE_RESOURCE;
+        -:  113:
+        -:  114:
+    #####:  115:    case LWM2M_TYPE_STRING:
+        -:  116:    case LWM2M_TYPE_INTEGER:
+        -:  117:    case LWM2M_TYPE_FLOAT:
+        -:  118:    case LWM2M_TYPE_BOOLEAN:
+        -:  119:    case LWM2M_TYPE_OPAQUE:
+        -:  120:    case LWM2M_TYPE_OBJECT_LINK:
+    #####:  121:        return _PRV_TLV_TYPE_RESOURCE;
+        -:  122:
+    #####:  123:    case LWM2M_TYPE_UNDEFINED:
+        -:  124:    default:
+    #####:  125:        return _PRV_TLV_TYPE_UNKNOWN;
+        -:  126:    }
+        -:  127:}
+        -:  128:
+    #####:  129:static lwm2m_data_type_t prv_getDataType(uint8_t type)
+        -:  130:{
+    #####:  131:    switch (type)
+        -:  132:    {
+    #####:  133:    case _PRV_TLV_TYPE_OBJECT:
+    #####:  134:        return LWM2M_TYPE_OBJECT;
+        -:  135:
+    #####:  136:    case _PRV_TLV_TYPE_OBJECT_INSTANCE:
+    #####:  137:        return LWM2M_TYPE_OBJECT_INSTANCE;
+        -:  138:
+    #####:  139:    case _PRV_TLV_TYPE_MULTIPLE_RESOURCE:
+    #####:  140:        return LWM2M_TYPE_MULTIPLE_RESOURCE;
+        -:  141:
+    #####:  142:    case _PRV_TLV_TYPE_RESOURCE:
+        -:  143:    case _PRV_TLV_TYPE_RESOURCE_INSTANCE:
+    #####:  144:        return LWM2M_TYPE_OPAQUE;
+        -:  145:
+    #####:  146:    default:
+    #####:  147:        return LWM2M_TYPE_UNDEFINED;
+        -:  148:    }
+        -:  149:}
+        -:  150:
+    #####:  151:static int prv_getHeaderLength(uint16_t id,
+        -:  152:                               size_t dataLen)
+        -:  153:{
+        -:  154:    int length;
+        -:  155:
+    #####:  156:    length = 2;
+        -:  157:
+    #####:  158:    if (id > 0xFF)
+        -:  159:    {
+    #####:  160:        length += 1;
+        -:  161:    }
+        -:  162:
+    #####:  163:    if (dataLen > 0xFFFF)
+        -:  164:    {
+    #####:  165:        length += 3;
+        -:  166:    }
+    #####:  167:    else if (dataLen > 0xFF)
+        -:  168:    {
+    #####:  169:        length += 2;
+        -:  170:    }
+    #####:  171:    else if (dataLen > 7)
+        -:  172:    {
+    #####:  173:        length += 1;
+        -:  174:    }
+        -:  175:
+    #####:  176:    return length;
+        -:  177:}
+        -:  178:
+    #####:  179:static int prv_createHeader(uint8_t * header,
+        -:  180:                            bool isInstance,
+        -:  181:                            lwm2m_data_type_t type,
+        -:  182:                            uint16_t id,
+        -:  183:                            size_t data_len)
+        -:  184:{
+        -:  185:    int header_len;
+        -:  186:    int offset;
+        -:  187:    uint8_t hdrType;
+        -:  188:
+    #####:  189:    header_len = prv_getHeaderLength(id, data_len);
+    #####:  190:    if (isInstance == true)
+        -:  191:    {
+    #####:  192:        hdrType = _PRV_TLV_TYPE_RESOURCE_INSTANCE;
+        -:  193:    }
+        -:  194:    else
+        -:  195:    {
+    #####:  196:        hdrType = prv_getHeaderType(type);
+        -:  197:    }
+        -:  198:
+    #####:  199:    header[0] = 0;
+    #####:  200:    header[0] |= hdrType&_PRV_TLV_TYPE_MASK;
+        -:  201:
+    #####:  202:    if (id > 0xFF)
+        -:  203:    {
+    #####:  204:        header[0] |= 0x20;
+    #####:  205:        header[1] = (id >> 8) & 0XFF;
+    #####:  206:        header[2] = id & 0XFF;
+    #####:  207:        offset = 3;
+        -:  208:    }
+        -:  209:    else
+        -:  210:    {
+    #####:  211:        header[1] = id;
+    #####:  212:        offset = 2;
+        -:  213:    }
+    #####:  214:    if (data_len <= 7)
+        -:  215:    {
+    #####:  216:        header[0] += data_len;
+        -:  217:    }
+    #####:  218:    else if (data_len <= 0xFF)
+        -:  219:    {
+    #####:  220:        header[0] |= 0x08;
+    #####:  221:        header[offset] = data_len;
+        -:  222:    }
+    #####:  223:    else if (data_len <= 0xFFFF)
+        -:  224:    {
+    #####:  225:        header[0] |= 0x10;
+    #####:  226:        header[offset] = (data_len >> 8) & 0XFF;
+    #####:  227:        header[offset + 1] = data_len & 0XFF;
+        -:  228:    }
+    #####:  229:    else if (data_len <= 0xFFFFFF)
+        -:  230:    {
+    #####:  231:        header[0] |= 0x18;
+    #####:  232:        header[offset] = (data_len >> 16) & 0XFF;
+    #####:  233:        header[offset + 1] = (data_len >> 8) & 0XFF;
+    #####:  234:        header[offset + 2] = data_len & 0XFF;
+        -:  235:    }
+        -:  236:
+    #####:  237:    return header_len;
+        -:  238:}
+        -:  239:
+    #####:  240:int lwm2m_decode_TLV(const uint8_t * buffer,
+        -:  241:                    size_t buffer_len,
+        -:  242:                    lwm2m_data_type_t * oType,
+        -:  243:                    uint16_t * oID,
+        -:  244:                    size_t * oDataIndex,
+        -:  245:                    size_t * oDataLen)
+        -:  246:{
+        -:  247:
+        -:  248:    LOG_ARG("buffer_len: %d", buffer_len);
+        -:  249:        ;
+    #####:  250:    if (buffer_len < 2) return 0;
+        -:  251:
+    #####:  252:    *oDataIndex = 2;
+        -:  253:
+    #####:  254:    *oType = prv_getDataType(buffer[0]&_PRV_TLV_TYPE_MASK);
+        -:  255:
+    #####:  256:    if ((buffer[0]&0x20) == 0x20)
+        -:  257:    {
+        -:  258:        // id is 16 bits long
+    #####:  259:        if (buffer_len < 3) return 0;
+    #####:  260:        *oDataIndex += 1;
+    #####:  261:        *oID = (buffer[1]<<8) + buffer[2];
+        -:  262:    }
+        -:  263:    else
+        -:  264:    {
+        -:  265:        // id is 8 bits long
+    #####:  266:        *oID = buffer[1];
+        -:  267:    }
+        -:  268:
+    #####:  269:    switch (buffer[0]&0x18)
+        -:  270:    {
+    #####:  271:    case 0x00:
+        -:  272:        // no length field
+    #####:  273:        *oDataLen = buffer[0]&0x07;
+    #####:  274:        break;
+    #####:  275:    case 0x08:
+        -:  276:        // length field is 8 bits long
+    #####:  277:        if (buffer_len < *oDataIndex + 1) return 0;
+    #####:  278:        *oDataLen = buffer[*oDataIndex];
+    #####:  279:        *oDataIndex += 1;
+    #####:  280:        break;
+    #####:  281:    case 0x10:
+        -:  282:        // length field is 16 bits long
+    #####:  283:        if (buffer_len < *oDataIndex + 2) return 0;
+    #####:  284:        *oDataLen = (buffer[*oDataIndex]<<8) + buffer[*oDataIndex+1];
+    #####:  285:        *oDataIndex += 2;
+    #####:  286:        break;
+    #####:  287:    case 0x18:
+        -:  288:        // length field is 24 bits long
+    #####:  289:        if (buffer_len < *oDataIndex + 3) return 0;
+    #####:  290:        *oDataLen = (buffer[*oDataIndex]<<16) + (buffer[*oDataIndex+1]<<8) + buffer[*oDataIndex+2];
+    #####:  291:        *oDataIndex += 3;
+    #####:  292:        break;
+    #####:  293:    default:
+        -:  294:        // can't happen
+    #####:  295:        return 0;
+        -:  296:    }
+        -:  297:
+    #####:  298:    if (*oDataIndex + *oDataLen > buffer_len) return 0;
+        -:  299:
+    #####:  300:    return *oDataIndex + *oDataLen;
+        -:  301:}
+        -:  302:
+        -:  303:
+    #####:  304:int tlv_parse(uint8_t * buffer,
+        -:  305:              size_t bufferLen,
+        -:  306:              lwm2m_data_t ** dataP)
+        -:  307:{
+        -:  308:    lwm2m_data_type_t type;
+        -:  309:    uint16_t id;
+        -:  310:    size_t dataIndex;
+        -:  311:    size_t dataLen;
+    #####:  312:    int index = 0;
+        -:  313:    int result;
+    #####:  314:    int size = 0;
+        -:  315:
+        -:  316:    LOG_ARG("bufferLen: %d", bufferLen);
+        -:  317:
+    #####:  318:    *dataP = NULL;
+        -:  319:
+    #####:  320:    while (0 != (result = lwm2m_decode_TLV((uint8_t*)buffer + index, bufferLen - index, &type, &id, &dataIndex, &dataLen)))
+        -:  321:    {
+        -:  322:        lwm2m_data_t * newTlvP;
+        -:  323:
+    #####:  324:        newTlvP = lwm2m_data_new(size + 1);
+    #####:  325:        if (size >= 1)
+        -:  326:        {
+    #####:  327:            if (newTlvP == NULL)
+        -:  328:            {
+    #####:  329:                lwm2m_data_free(size, *dataP);
+    #####:  330:                return 0;
+        -:  331:            }
+        -:  332:            else
+        -:  333:            {
+    #####:  334:                memcpy(newTlvP, *dataP, size * sizeof(lwm2m_data_t));
+    #####:  335:                lwm2m_free(*dataP);
+        -:  336:            }
+        -:  337:        }
+    #####:  338:        *dataP = newTlvP;
+        -:  339:
+    #####:  340:        (*dataP)[size].type = type;
+    #####:  341:        (*dataP)[size].id = id;
+    #####:  342:        if (type == LWM2M_TYPE_OBJECT_INSTANCE || type == LWM2M_TYPE_MULTIPLE_RESOURCE)
+        -:  343:        {
+    #####:  344:            (*dataP)[size].value.asChildren.count = tlv_parse(buffer + index + dataIndex,
+        -:  345:                                                          dataLen,
+    #####:  346:                                                          &((*dataP)[size].value.asChildren.array));
+    #####:  347:            if ((*dataP)[size].value.asChildren.count == 0)
+        -:  348:            {
+    #####:  349:                lwm2m_data_free(size + 1, *dataP);
+    #####:  350:                return 0;
+        -:  351:            }
+        -:  352:        }
+        -:  353:        else
+        -:  354:        {
+    #####:  355:            lwm2m_data_encode_opaque(buffer + index + dataIndex, dataLen, (*dataP) + size);
+        -:  356:        }
+    #####:  357:        size++;
+    #####:  358:        index += result;
+        -:  359:    }
+        -:  360:
+    #####:  361:    return size;
+        -:  362:}
+        -:  363:
+        -:  364:
+    #####:  365:static int prv_getLength(int size,
+        -:  366:                         lwm2m_data_t * dataP)
+        -:  367:{
+        -:  368:    int length;
+        -:  369:    int i;
+        -:  370:
+    #####:  371:    length = 0;
+        -:  372:
+    #####:  373:    for (i = 0 ; i < size && length != -1 ; i++)
+        -:  374:    {
+    #####:  375:        switch (dataP[i].type)
+        -:  376:        {
+    #####:  377:        case LWM2M_TYPE_OBJECT_INSTANCE:
+        -:  378:        case LWM2M_TYPE_MULTIPLE_RESOURCE:
+        -:  379:            {
+        -:  380:                int subLength;
+        -:  381:
+    #####:  382:                subLength = prv_getLength(dataP[i].value.asChildren.count, dataP[i].value.asChildren.array);
+    #####:  383:                if (subLength == -1)
+        -:  384:                {
+    #####:  385:                    length = -1;
+        -:  386:                }
+        -:  387:                else
+        -:  388:                {
+    #####:  389:                    length += prv_getHeaderLength(dataP[i].id, subLength) + subLength;
+        -:  390:                }
+        -:  391:            }
+    #####:  392:            break;
+        -:  393:
+    #####:  394:        case LWM2M_TYPE_STRING:
+        -:  395:        case LWM2M_TYPE_OPAQUE:
+    #####:  396:            length += prv_getHeaderLength(dataP[i].id, dataP[i].value.asBuffer.length) + dataP[i].value.asBuffer.length;
+    #####:  397:            break;
+        -:  398:
+    #####:  399:        case LWM2M_TYPE_INTEGER:
+        -:  400:            {
+        -:  401:                size_t data_len;
+        -:  402:                uint8_t unused_buffer[_PRV_64BIT_BUFFER_SIZE];
+        -:  403:
+    #####:  404:                data_len = prv_encodeInt(dataP[i].value.asInteger, unused_buffer);
+    #####:  405:                length += prv_getHeaderLength(dataP[i].id, data_len) + data_len;
+        -:  406:            }
+    #####:  407:            break;
+        -:  408:
+    #####:  409:        case LWM2M_TYPE_FLOAT:
+        -:  410:            {
+        -:  411:                size_t data_len;
+        -:  412:
+    #####:  413:                if ((dataP[i].value.asFloat < 0.0 - (double)FLT_MAX)
+    #####:  414:                    || (dataP[i].value.asFloat >(double)FLT_MAX))
+        -:  415:                {
+    #####:  416:                    data_len = 8;
+        -:  417:                }
+        -:  418:                else
+        -:  419:                {
+    #####:  420:                    data_len = 4;
+        -:  421:                }
+        -:  422:
+    #####:  423:                length += prv_getHeaderLength(dataP[i].id, data_len) + data_len;
+        -:  424:            }
+    #####:  425:            break;
+        -:  426:
+    #####:  427:        case LWM2M_TYPE_BOOLEAN:
+        -:  428:            // Booleans are always encoded on one byte
+    #####:  429:            length += prv_getHeaderLength(dataP[i].id, 1) + 1;
+    #####:  430:            break;
+        -:  431:
+    #####:  432:        case LWM2M_TYPE_OBJECT_LINK:
+        -:  433:            // Object Link are always encoded on four bytes
+    #####:  434:            length += prv_getHeaderLength(dataP[i].id, 4) + 4;
+    #####:  435:            break;
+        -:  436:
+    #####:  437:        default:
+    #####:  438:            length = -1;
+    #####:  439:            break;
+        -:  440:        }
+        -:  441:    }
+        -:  442:
+    #####:  443:    return length;
+        -:  444:}
+        -:  445:
+        -:  446:
+    #####:  447:int tlv_serialize(bool isResourceInstance, 
+        -:  448:                  int size,
+        -:  449:                  lwm2m_data_t * dataP,
+        -:  450:                  uint8_t ** bufferP)
+        -:  451:{
+        -:  452:    int length;
+        -:  453:    int index;
+        -:  454:    int i;
+        -:  455:
+        -:  456:    LOG_ARG("isResourceInstance: %s, size: %d", isResourceInstance?"true":"false", size);
+        -:  457:
+    #####:  458:    *bufferP = NULL;
+    #####:  459:    length = prv_getLength(size, dataP);
+    #####:  460:    if (length <= 0) return length;
+        -:  461:
+    #####:  462:    *bufferP = (uint8_t *)lwm2m_malloc(length);
+    #####:  463:    if (*bufferP == NULL) return 0;
+        -:  464:
+    #####:  465:    index = 0;
+    #####:  466:    for (i = 0 ; i < size && length != 0 ; i++)
+        -:  467:    {
+        -:  468:        int headerLen;
+        -:  469:        bool isInstance;
+        -:  470:
+    #####:  471:        isInstance = isResourceInstance;
+    #####:  472:        switch (dataP[i].type)
+        -:  473:        {
+    #####:  474:        case LWM2M_TYPE_MULTIPLE_RESOURCE:
+    #####:  475:            isInstance = true;
+        -:  476:            // fall through
+    #####:  477:        case LWM2M_TYPE_OBJECT_INSTANCE:
+        -:  478:            {
+        -:  479:                uint8_t * tmpBuffer;
+        -:  480:                int res;
+        -:  481:
+    #####:  482:                res = tlv_serialize(isInstance, dataP[i].value.asChildren.count, dataP[i].value.asChildren.array, &tmpBuffer);
+    #####:  483:                if (res < 0)
+        -:  484:                {
+    #####:  485:                    length = -1;
+        -:  486:                }
+        -:  487:                else
+        -:  488:                {
+        -:  489:                    size_t tmpLength;
+        -:  490:
+    #####:  491:                    tmpLength = (size_t)res;
+    #####:  492:                    headerLen = prv_createHeader(*bufferP + index, false, dataP[i].type, dataP[i].id, tmpLength);
+    #####:  493:                    index += headerLen;
+    #####:  494:                    if (tmpLength > 0)
+        -:  495:                    {
+    #####:  496:                        memcpy(*bufferP + index, tmpBuffer, tmpLength);
+    #####:  497:                        index += tmpLength;
+    #####:  498:                        lwm2m_free(tmpBuffer);
+        -:  499:                    }
+        -:  500:                }
+        -:  501:            }
+    #####:  502:            break;
+        -:  503:
+    #####:  504:        case LWM2M_TYPE_OBJECT_LINK:
+        -:  505:            {
+        -:  506:                int k;
+        -:  507:                uint8_t buf[4];
+    #####:  508:                uint32_t v = dataP[i].value.asObjLink.objectId;
+    #####:  509:                v <<= 16;
+    #####:  510:                v |= dataP[i].value.asObjLink.objectInstanceId;
+    #####:  511:                for (k = 3; k >= 0; --k) {
+    #####:  512:                    buf[k] = (uint8_t)(v & 0xFF);
+    #####:  513:                    v >>= 8;
+        -:  514:                }
+        -:  515:                // keep encoding as buffer
+    #####:  516:                headerLen = prv_createHeader(*bufferP + index, isInstance, dataP[i].type, dataP[i].id, 4);
+    #####:  517:                index += headerLen;
+    #####:  518:                memcpy(*bufferP + index, buf, 4);
+    #####:  519:                index += 4;
+        -:  520:            }
+    #####:  521:            break;
+        -:  522:
+    #####:  523:        case LWM2M_TYPE_STRING:
+        -:  524:        case LWM2M_TYPE_OPAQUE:
+    #####:  525:            headerLen = prv_createHeader(*bufferP + index, isInstance, dataP[i].type, dataP[i].id, dataP[i].value.asBuffer.length);
+    #####:  526:            index += headerLen;
+    #####:  527:            memcpy(*bufferP + index, dataP[i].value.asBuffer.buffer, dataP[i].value.asBuffer.length);
+    #####:  528:            index += dataP[i].value.asBuffer.length;
+    #####:  529:            break;
+        -:  530:
+    #####:  531:        case LWM2M_TYPE_INTEGER:
+        -:  532:            {
+        -:  533:                size_t data_len;
+        -:  534:                uint8_t data_buffer[_PRV_64BIT_BUFFER_SIZE];
+        -:  535:
+    #####:  536:                data_len = prv_encodeInt(dataP[i].value.asInteger, data_buffer);
+    #####:  537:                headerLen = prv_createHeader(*bufferP + index, isInstance, dataP[i].type, dataP[i].id, data_len);
+    #####:  538:                index += headerLen;
+    #####:  539:                memcpy(*bufferP + index, data_buffer, data_len);
+    #####:  540:                index += data_len;
+        -:  541:            }
+    #####:  542:            break;
+        -:  543:
+    #####:  544:        case LWM2M_TYPE_FLOAT:
+        -:  545:            {
+        -:  546:                size_t data_len;
+        -:  547:                uint8_t data_buffer[_PRV_64BIT_BUFFER_SIZE];
+        -:  548:
+    #####:  549:                data_len = prv_encodeFloat(dataP[i].value.asFloat, data_buffer);
+    #####:  550:                headerLen = prv_createHeader(*bufferP + index, isInstance, dataP[i].type, dataP[i].id, data_len);
+    #####:  551:                index += headerLen;
+    #####:  552:                memcpy(*bufferP + index, data_buffer, data_len);
+    #####:  553:                index += data_len;
+        -:  554:            }
+    #####:  555:            break;
+        -:  556:
+    #####:  557:        case LWM2M_TYPE_BOOLEAN:
+    #####:  558:            headerLen = prv_createHeader(*bufferP + index, isInstance, dataP[i].type, dataP[i].id, 1);
+    #####:  559:            index += headerLen;
+    #####:  560:            (*bufferP)[index] = dataP[i].value.asBoolean ? 1 : 0;
+    #####:  561:            index += 1;
+    #####:  562:            break;
+        -:  563:
+    #####:  564:        default:
+    #####:  565:            length = -1;
+    #####:  566:            break;
+        -:  567:        }
+        -:  568:    }
+        -:  569:
+    #####:  570:    if (length < 0)
+        -:  571:    {
+    #####:  572:        lwm2m_free(*bufferP);
+    #####:  573:        *bufferP = NULL;
+        -:  574:    }
+        -:  575:
+        -:  576:    LOG_ARG("returning %u", length);
+        -:  577:
+    #####:  578:    return length;
+        -:  579:}
+        -:  580:

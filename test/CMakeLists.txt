@@ -4,11 +4,10 @@
 ##
 ## Each c++ source file in this directory is a testsuite. 
 ##
-## if USE_LWIP is diabled (-DUSE_LWIP=OFF):
-## Compile for posix with posix sockets
-##
-## if USE_LWIP is enabled (-DUSE_LWIP=ON):
-## Compile with lwip network (internally it uses linux tapif or windows pcapif)
+## Two projects are beeing defined:
+## - TestsWithPosix
+## - TestsWithLwIP
+##   (Compile with lwip network (internally it uses linux tapif or windows pcapif))
 
 cmake_minimum_required(VERSION 3.1)
 
@@ -35,13 +34,8 @@ else()
     set(GTEST_FILES "")
 endif()
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-folding-constant")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-unknown-pragmas")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-
-## Prepare for coverage measuring
-if(${COVERAGE})
-    set(CMAKE_CXX_FLAGS "-g -O0 -fprofile-arcs -ftest-coverage")
-endif()
 
 # All cpp files in this directory are considered testcase files.
 file(GLOB TESTS_FILES ${TEST_DIR}/*.cpp ${TEST_DIR}/*.c ${TEST_DIR}/*.h)
@@ -60,11 +54,11 @@ file(GLOB_RECURSE HELPER_FILES ${CMAKE_CURRENT_LIST_DIR}/helper/*.*)
 
 add_subdirectory(backward)
 
-if (NOT DEFINED TAP_SERVER_ADDR)
-    set(TAP_SERVER_ADDR "192.168.7.2")
-endif()
 if (NOT DEFINED TAP_CLIENT_ADDR)
     set(TAP_CLIENT_ADDR "192.168.7.1")
+endif()
+if (NOT DEFINED TAP_SERVER_ADDR)
+    set(TAP_SERVER_ADDR "192.168.7.2")
 endif()
 if (NOT DEFINED TAP_CLIENT_DEVICE)
     set(TAP_CLIENT_DEVICE "tap0")
@@ -105,7 +99,7 @@ add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES}
 prepare_target(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
     -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON
-    -DLWIP -DPOSIX -DLWM2M_WITHOUT_ALLOC_FREE
+    -DLWIP -DPOSIX -DLWM2M_WITHOUT_ALLOC_FREE -DLWM2M_NETWORK_LOGGING
     -DTAP_CLIENT_DEVIDE="${TAP_CLIENT_DEVICE}" -DTAP_CLIENT_ADDR="${TAP_CLIENT_ADDR}"
     -DTAP_SERVER_DEVICE="${TAP_SERVER_DEVICE}" -DTAP_SERVER_ADDR="${TAP_SERVER_ADDR}")
 
@@ -119,3 +113,15 @@ prepare_target(${PROJECT_NAME})
 target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
     -DLWM2M_CLIENT_MODE -DLWM2M_SERVER_MODE  -DLWM2M_SUPPORT_JSON
     -DLWM2M_WITHOUT_ALLOC_FREE -DLWM2M_NETWORK_LOGGING)
+
+# Coverage in debug mode
+set(CMAKE_CXX_OUTPUT_EXTENSION_REPLACE 1)
+if (NOT WIN32)
+    # enable coverage test for gcc
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:-O0 --coverage> $<$<CONFIG:RelWithDebugInfo>:-O0 --coverage>
+        -Wno-gnu-zero-variadic-macro-arguments -Wno-gnu-folding-constant)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:--coverage> $<$<CONFIG:RelWithDebugInfo>:--coverage>)
+    message(STATUS "Compiling with coverage")
+endif()

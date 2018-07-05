@@ -37,7 +37,6 @@ extern "C" {
 
 class AddRemoveServerTests : public testing::Test {
 public:
-    lwm2m_context_t * server_context=nullptr;
     lwm2m_client_context_t client_context{};
     int client_bound_sockets;
     int client_updated;
@@ -49,12 +48,6 @@ public:
  protected:
     virtual void TearDown() {
         lwm2m_client_close(&client_context);
-
-        if (server_context)
-        {
-            lwm2m_close(server_context);
-            server_context = nullptr;
-        }
 
         lwip_network_close();
 
@@ -68,19 +61,16 @@ public:
         memoryObserver.reset();
         // Necessary for lwip to initialize the memory module
         ASSERT_TRUE(lwip_network_init());
-
-        ASSERT_GE(lwm2m_client_init(&client_context,client_name), 1);
-
-        ASSERT_EQ(client_context.securityObject.objID, 0);
-        ASSERT_EQ(client_context.serverObject.obj.objID, 1);
-        ASSERT_EQ(client_context.deviceObject.obj.objID, 3);
-
-        server_context = nullptr;
     }
 };
 
+TEST_F(AddRemoveServerTests, AddRemoveServer) {
+    ASSERT_GE(lwm2m_client_init(&client_context, client_name), 1);
 
-TEST_F(AddRemoveServerTests, AddServer) {
+    ASSERT_EQ(client_context.securityObject.objID, 0);
+    ASSERT_EQ(client_context.serverObject.obj.objID, 1);
+    ASSERT_EQ(client_context.deviceObject.obj.objID, 3);
+
     ASSERT_TRUE(lwm2m_add_server(CTX(client_context), 123, LWM2M_SERVER_ADDR, 100, false));
 
     ASSERT_EQ(CTX(client_context)->state, STATE_INITIAL);
@@ -106,26 +96,10 @@ TEST_F(AddRemoveServerTests, AddServer) {
     lwm2m_server_t * serverListEntry;
     serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(CTX(client_context)->serverList, secInstance->instanceId);
     ASSERT_TRUE(serverListEntry);
-}
-
-TEST_F(AddRemoveServerTests, RemoveServer) {
-    time_t timeout;
-
-    ASSERT_TRUE(lwm2m_add_server(CTX(client_context), 123, LWM2M_SERVER_ADDR, 100, false));
-
-    security_instance_t* secInstance = (security_instance_t*)client_context.securityObject.instanceList;
-
-    // Add server to serverlist
-    int result = lwm2m_step(CTX(client_context), &timeout);
-    ASSERT_EQ(COAP_NO_ERROR, result);
-
-    lwm2m_server_t * serverListEntry;
-    serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(CTX(client_context)->serverList, secInstance->instanceId);
-    ASSERT_TRUE(serverListEntry);
+    serverListEntry->location = (char*)lwm2m_malloc (1);
 
     // Now assume registering worked
     serverListEntry->status = STATE_REGISTERED;
-    serverListEntry->location = (char*)lwm2m_malloc(1);
 
     // Unregister now
     ASSERT_TRUE(lwm2m_unregister_server(CTX(client_context), secInstance->instanceId));

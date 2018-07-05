@@ -1,0 +1,402 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/contrib/lwip/src/core/ipv4/icmp.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/contrib/lwip/src/core/ipv4/icmp.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/**
+        -:    2: * @file
+        -:    3: * ICMP - Internet Control Message Protocol
+        -:    4: *
+        -:    5: */
+        -:    6:
+        -:    7:/*
+        -:    8: * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
+        -:    9: * All rights reserved.
+        -:   10: *
+        -:   11: * Redistribution and use in source and binary forms, with or without modification,
+        -:   12: * are permitted provided that the following conditions are met:
+        -:   13: *
+        -:   14: * 1. Redistributions of source code must retain the above copyright notice,
+        -:   15: *    this list of conditions and the following disclaimer.
+        -:   16: * 2. Redistributions in binary form must reproduce the above copyright notice,
+        -:   17: *    this list of conditions and the following disclaimer in the documentation
+        -:   18: *    and/or other materials provided with the distribution.
+        -:   19: * 3. The name of the author may not be used to endorse or promote products
+        -:   20: *    derived from this software without specific prior written permission.
+        -:   21: *
+        -:   22: * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        -:   23: * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        -:   24: * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+        -:   25: * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+        -:   26: * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+        -:   27: * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+        -:   28: * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+        -:   29: * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+        -:   30: * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+        -:   31: * OF SUCH DAMAGE.
+        -:   32: *
+        -:   33: * This file is part of the lwIP TCP/IP stack.
+        -:   34: *
+        -:   35: * Author: Adam Dunkels <adam@sics.se>
+        -:   36: *
+        -:   37: */
+        -:   38:
+        -:   39:/* Some ICMP messages should be passed to the transport protocols. This
+        -:   40:   is not implemented. */
+        -:   41:
+        -:   42:#include "lwip/opt.h"
+        -:   43:
+        -:   44:#if LWIP_IPV4 && LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+        -:   45:
+        -:   46:#include "lwip/icmp.h"
+        -:   47:#include "lwip/inet_chksum.h"
+        -:   48:#include "lwip/ip.h"
+        -:   49:#include "lwip/def.h"
+        -:   50:#include "lwip/stats.h"
+        -:   51:
+        -:   52:#include <string.h>
+        -:   53:
+        -:   54:#ifdef LWIP_HOOK_FILENAME
+        -:   55:#include LWIP_HOOK_FILENAME
+        -:   56:#endif
+        -:   57:
+        -:   58:/** Small optimization: set to 0 if incoming PBUF_POOL pbuf always can be
+        -:   59: * used to modify and send a response packet (and to 1 if this is not the case,
+        -:   60: * e.g. when link header is stripped of when receiving) */
+        -:   61:#ifndef LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
+        -:   62:#define LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN 1
+        -:   63:#endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN */
+        -:   64:
+        -:   65:/* The amount of data from the original packet to return in a dest-unreachable */
+        -:   66:#define ICMP_DEST_UNREACH_DATASIZE 8
+        -:   67:
+        -:   68:static void icmp_send_response(struct pbuf *p, u8_t type, u8_t code);
+        -:   69:
+        -:   70:/**
+        -:   71: * Processes ICMP input packets, called from ip_input().
+        -:   72: *
+        -:   73: * Currently only processes icmp echo requests and sends
+        -:   74: * out the echo response.
+        -:   75: *
+        -:   76: * @param p the icmp echo request packet, p->payload pointing to the icmp header
+        -:   77: * @param inp the netif on which this packet was received
+        -:   78: */
+        -:   79:void
+    #####:   80:icmp_input(struct pbuf *p, struct netif *inp)
+        -:   81:{
+        -:   82:  u8_t type;
+        -:   83:#ifdef LWIP_DEBUG
+        -:   84:  u8_t code;
+        -:   85:#endif /* LWIP_DEBUG */
+        -:   86:  struct icmp_echo_hdr *iecho;
+        -:   87:  const struct ip_hdr *iphdr_in;
+        -:   88:  u16_t hlen;
+        -:   89:  const ip4_addr_t* src;
+        -:   90:
+        -:   91:  ICMP_STATS_INC(icmp.recv);
+        -:   92:  MIB2_STATS_INC(mib2.icmpinmsgs);
+        -:   93:
+    #####:   94:  iphdr_in = ip4_current_header();
+    #####:   95:  hlen = IPH_HL(iphdr_in) * 4;
+    #####:   96:  if (hlen < IP_HLEN) {
+        -:   97:    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short IP header (%"S16_F" bytes) received\n", hlen));
+    #####:   98:    goto lenerr;
+        -:   99:  }
+    #####:  100:  if (p->len < sizeof(u16_t)*2) {
+        -:  101:    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
+    #####:  102:    goto lenerr;
+        -:  103:  }
+        -:  104:
+    #####:  105:  type = *((u8_t *)p->payload);
+        -:  106:#ifdef LWIP_DEBUG
+        -:  107:  code = *(((u8_t *)p->payload)+1);
+        -:  108:#endif /* LWIP_DEBUG */
+    #####:  109:  switch (type) {
+    #####:  110:  case ICMP_ER:
+        -:  111:    /* This is OK, echo reply might have been parsed by a raw PCB
+        -:  112:       (as obviously, an echo request has been sent, too). */
+        -:  113:    MIB2_STATS_INC(mib2.icmpinechoreps);
+    #####:  114:    break;
+    #####:  115:  case ICMP_ECHO:
+        -:  116:    MIB2_STATS_INC(mib2.icmpinechos);
+    #####:  117:    src = ip4_current_dest_addr();
+        -:  118:    /* multicast destination address? */
+    #####:  119:    if (ip4_addr_ismulticast(ip4_current_dest_addr())) {
+        -:  120:#if LWIP_MULTICAST_PING
+        -:  121:      /* For multicast, use address of receiving interface as source address */
+        -:  122:      src = netif_ip4_addr(inp);
+        -:  123:#else /* LWIP_MULTICAST_PING */
+        -:  124:      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast pings\n"));
+    #####:  125:      goto icmperr;
+        -:  126:#endif /* LWIP_MULTICAST_PING */
+        -:  127:    }
+        -:  128:    /* broadcast destination address? */
+    #####:  129:    if (ip4_addr_isbroadcast(ip4_current_dest_addr(), ip_current_netif())) {
+        -:  130:#if LWIP_BROADCAST_PING
+        -:  131:      /* For broadcast, use address of receiving interface as source address */
+        -:  132:      src = netif_ip4_addr(inp);
+        -:  133:#else /* LWIP_BROADCAST_PING */
+        -:  134:      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to broadcast pings\n"));
+    #####:  135:      goto icmperr;
+        -:  136:#endif /* LWIP_BROADCAST_PING */
+        -:  137:    }
+        -:  138:    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
+    #####:  139:    if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
+        -:  140:      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
+    #####:  141:      goto lenerr;
+        -:  142:    }
+        -:  143:#if CHECKSUM_CHECK_ICMP
+        -:  144:    IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_ICMP) {
+    #####:  145:      if (inet_chksum_pbuf(p) != 0) {
+        -:  146:        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
+    #####:  147:        pbuf_free(p);
+        -:  148:        ICMP_STATS_INC(icmp.chkerr);
+        -:  149:        MIB2_STATS_INC(mib2.icmpinerrors);
+    #####:  150:        return;
+        -:  151:      }
+        -:  152:    }
+        -:  153:#endif
+        -:  154:#if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
+    #####:  155:    if (pbuf_header(p, (s16_t)(hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
+        -:  156:      /* p is not big enough to contain link headers
+        -:  157:       * allocate a new one and copy p into it
+        -:  158:       */
+        -:  159:      struct pbuf *r;
+        -:  160:      /* allocate new packet buffer with space for link headers */
+    #####:  161:      r = pbuf_alloc(PBUF_LINK, p->tot_len + hlen, PBUF_RAM);
+    #####:  162:      if (r == NULL) {
+        -:  163:        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: allocating new pbuf failed\n"));
+    #####:  164:        goto icmperr;
+        -:  165:      }
+    #####:  166:      if (r->len < hlen + sizeof(struct icmp_echo_hdr)) {
+        -:  167:        LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("first pbuf cannot hold the ICMP header"));
+    #####:  168:        pbuf_free(r);
+    #####:  169:        goto icmperr;
+        -:  170:      }
+        -:  171:      /* copy the ip header */
+    #####:  172:      MEMCPY(r->payload, iphdr_in, hlen);
+        -:  173:      /* switch r->payload back to icmp header (cannot fail) */
+    #####:  174:      if (pbuf_header(r, (s16_t)-hlen)) {
+    #####:  175:        LWIP_ASSERT("icmp_input: moving r->payload to icmp header failed\n", 0);
+        -:  176:        pbuf_free(r);
+        -:  177:        goto icmperr;
+        -:  178:      }
+        -:  179:      /* copy the rest of the packet without ip header */
+    #####:  180:      if (pbuf_copy(r, p) != ERR_OK) {
+        -:  181:        LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("icmp_input: copying to new pbuf failed"));
+    #####:  182:        pbuf_free(r);
+    #####:  183:        goto icmperr;
+        -:  184:      }
+        -:  185:      /* free the original p */
+    #####:  186:      pbuf_free(p);
+        -:  187:      /* we now have an identical copy of p that has room for link headers */
+    #####:  188:      p = r;
+        -:  189:    } else {
+        -:  190:      /* restore p->payload to point to icmp header (cannot fail) */
+    #####:  191:      if (pbuf_header(p, -(s16_t)(hlen + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
+    #####:  192:        LWIP_ASSERT("icmp_input: restoring original p->payload failed\n", 0);
+        -:  193:        goto icmperr;
+        -:  194:      }
+        -:  195:    }
+        -:  196:#endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN */
+        -:  197:    /* At this point, all checks are OK. */
+        -:  198:    /* We generate an answer by switching the dest and src ip addresses,
+        -:  199:     * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
+    #####:  200:    iecho = (struct icmp_echo_hdr *)p->payload;
+    #####:  201:    if (pbuf_header(p, (s16_t)hlen)) {
+        -:  202:      LWIP_DEBUGF(ICMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("Can't move over header in packet"));
+        -:  203:    } else {
+        -:  204:      err_t ret;
+    #####:  205:      struct ip_hdr *iphdr = (struct ip_hdr*)p->payload;
+    #####:  206:      ip4_addr_copy(iphdr->src, *src);
+    #####:  207:      ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
+    #####:  208:      ICMPH_TYPE_SET(iecho, ICMP_ER);
+        -:  209:#if CHECKSUM_GEN_ICMP
+        -:  210:      IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP) {
+        -:  211:        /* adjust the checksum */
+    #####:  212:        if (iecho->chksum > PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
+    #####:  213:          iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
+        -:  214:        } else {
+    #####:  215:          iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
+        -:  216:        }
+        -:  217:      }
+        -:  218:#if LWIP_CHECKSUM_CTRL_PER_NETIF
+        -:  219:      else {
+        -:  220:        iecho->chksum = 0;
+        -:  221:      }
+        -:  222:#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
+        -:  223:#else /* CHECKSUM_GEN_ICMP */
+        -:  224:      iecho->chksum = 0;
+        -:  225:#endif /* CHECKSUM_GEN_ICMP */
+        -:  226:
+        -:  227:      /* Set the correct TTL and recalculate the header checksum. */
+    #####:  228:      IPH_TTL_SET(iphdr, ICMP_TTL);
+    #####:  229:      IPH_CHKSUM_SET(iphdr, 0);
+        -:  230:#if CHECKSUM_GEN_IP
+        -:  231:      IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_IP) {
+    #####:  232:        IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, hlen));
+        -:  233:      }
+        -:  234:#endif /* CHECKSUM_GEN_IP */
+        -:  235:
+        -:  236:      ICMP_STATS_INC(icmp.xmit);
+        -:  237:      /* increase number of messages attempted to send */
+        -:  238:      MIB2_STATS_INC(mib2.icmpoutmsgs);
+        -:  239:      /* increase number of echo replies attempted to send */
+        -:  240:      MIB2_STATS_INC(mib2.icmpoutechoreps);
+        -:  241:
+        -:  242:      /* send an ICMP packet */
+    #####:  243:      ret = ip4_output_if(p, src, LWIP_IP_HDRINCL,
+        -:  244:                   ICMP_TTL, 0, IP_PROTO_ICMP, inp);
+        -:  245:      if (ret != ERR_OK) {
+        -:  246:        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ip_output_if returned an error: %s\n", lwip_strerr(ret)));
+        -:  247:      }
+        -:  248:    }
+    #####:  249:    break;
+    #####:  250:  default:
+        -:  251:    if (type == ICMP_DUR) {
+        -:  252:      MIB2_STATS_INC(mib2.icmpindestunreachs);
+        -:  253:    } else if (type == ICMP_TE) {
+        -:  254:      MIB2_STATS_INC(mib2.icmpintimeexcds);
+        -:  255:    } else if (type == ICMP_PP) {
+        -:  256:      MIB2_STATS_INC(mib2.icmpinparmprobs);
+        -:  257:    } else if (type == ICMP_SQ) {
+        -:  258:      MIB2_STATS_INC(mib2.icmpinsrcquenchs);
+        -:  259:    } else if (type == ICMP_RD) {
+        -:  260:      MIB2_STATS_INC(mib2.icmpinredirects);
+        -:  261:    } else if (type == ICMP_TS) {
+        -:  262:      MIB2_STATS_INC(mib2.icmpintimestamps);
+        -:  263:    } else if (type == ICMP_TSR) {
+        -:  264:      MIB2_STATS_INC(mib2.icmpintimestampreps);
+        -:  265:    } else if (type == ICMP_AM) {
+        -:  266:      MIB2_STATS_INC(mib2.icmpinaddrmasks);
+        -:  267:    } else if (type == ICMP_AMR) {
+        -:  268:      MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
+        -:  269:    }
+        -:  270:    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n",
+        -:  271:                (s16_t)type, (s16_t)code));
+        -:  272:    ICMP_STATS_INC(icmp.proterr);
+        -:  273:    ICMP_STATS_INC(icmp.drop);
+        -:  274:  }
+    #####:  275:  pbuf_free(p);
+    #####:  276:  return;
+    #####:  277:lenerr:
+    #####:  278:  pbuf_free(p);
+        -:  279:  ICMP_STATS_INC(icmp.lenerr);
+        -:  280:  MIB2_STATS_INC(mib2.icmpinerrors);
+    #####:  281:  return;
+        -:  282:#if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
+    #####:  283:icmperr:
+    #####:  284:  pbuf_free(p);
+        -:  285:  ICMP_STATS_INC(icmp.err);
+        -:  286:  MIB2_STATS_INC(mib2.icmpinerrors);
+    #####:  287:  return;
+        -:  288:#endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
+        -:  289:}
+        -:  290:
+        -:  291:/**
+        -:  292: * Send an icmp 'destination unreachable' packet, called from ip_input() if
+        -:  293: * the transport layer protocol is unknown and from udp_input() if the local
+        -:  294: * port is not bound.
+        -:  295: *
+        -:  296: * @param p the input packet for which the 'unreachable' should be sent,
+        -:  297: *          p->payload pointing to the IP header
+        -:  298: * @param t type of the 'unreachable' packet
+        -:  299: */
+        -:  300:void
+    #####:  301:icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
+        -:  302:{
+        -:  303:  MIB2_STATS_INC(mib2.icmpoutdestunreachs);
+    #####:  304:  icmp_send_response(p, ICMP_DUR, t);
+    #####:  305:}
+        -:  306:
+        -:  307:#if IP_FORWARD || IP_REASSEMBLY
+        -:  308:/**
+        -:  309: * Send a 'time exceeded' packet, called from ip_forward() if TTL is 0.
+        -:  310: *
+        -:  311: * @param p the input packet for which the 'time exceeded' should be sent,
+        -:  312: *          p->payload pointing to the IP header
+        -:  313: * @param t type of the 'time exceeded' packet
+        -:  314: */
+        -:  315:void
+        -:  316:icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
+        -:  317:{
+        -:  318:  MIB2_STATS_INC(mib2.icmpouttimeexcds);
+        -:  319:  icmp_send_response(p, ICMP_TE, t);
+        -:  320:}
+        -:  321:
+        -:  322:#endif /* IP_FORWARD || IP_REASSEMBLY */
+        -:  323:
+        -:  324:/**
+        -:  325: * Send an icmp packet in response to an incoming packet.
+        -:  326: *
+        -:  327: * @param p the input packet for which the 'unreachable' should be sent,
+        -:  328: *          p->payload pointing to the IP header
+        -:  329: * @param type Type of the ICMP header
+        -:  330: * @param code Code of the ICMP header
+        -:  331: */
+        -:  332:static void
+    #####:  333:icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
+        -:  334:{
+        -:  335:  struct pbuf *q;
+        -:  336:  struct ip_hdr *iphdr;
+        -:  337:  /* we can use the echo header here */
+        -:  338:  struct icmp_echo_hdr *icmphdr;
+        -:  339:  ip4_addr_t iphdr_src;
+        -:  340:  struct netif *netif;
+        -:  341:
+        -:  342:  /* increase number of messages attempted to send */
+        -:  343:  MIB2_STATS_INC(mib2.icmpoutmsgs);
+        -:  344:
+        -:  345:  /* ICMP header + IP header + 8 bytes of data */
+    #####:  346:  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
+        -:  347:                 PBUF_RAM);
+    #####:  348:  if (q == NULL) {
+        -:  349:    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMP packet.\n"));
+        -:  350:    MIB2_STATS_INC(mib2.icmpouterrors);
+    #####:  351:    return;
+        -:  352:  }
+    #####:  353:  LWIP_ASSERT("check that first pbuf can hold icmp message",
+        -:  354:             (q->len >= (sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
+        -:  355:
+    #####:  356:  iphdr = (struct ip_hdr *)p->payload;
+        -:  357:  LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
+        -:  358:  ip4_addr_debug_print_val(ICMP_DEBUG, iphdr->src);
+        -:  359:  LWIP_DEBUGF(ICMP_DEBUG, (" to "));
+        -:  360:  ip4_addr_debug_print_val(ICMP_DEBUG, iphdr->dest);
+        -:  361:  LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
+        -:  362:
+    #####:  363:  icmphdr = (struct icmp_echo_hdr *)q->payload;
+    #####:  364:  icmphdr->type = type;
+    #####:  365:  icmphdr->code = code;
+    #####:  366:  icmphdr->id = 0;
+    #####:  367:  icmphdr->seqno = 0;
+        -:  368:
+        -:  369:  /* copy fields from original packet */
+    #####:  370:  SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_echo_hdr), (u8_t *)p->payload,
+        -:  371:          IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
+        -:  372:
+    #####:  373:  ip4_addr_copy(iphdr_src, iphdr->src);
+        -:  374:#ifdef LWIP_HOOK_IP4_ROUTE_SRC
+        -:  375:  {
+        -:  376:    ip4_addr_t iphdr_dst;
+        -:  377:    ip4_addr_copy(iphdr_dst, iphdr->dest);
+        -:  378:    netif = ip4_route_src(&iphdr_src, &iphdr_dst);
+        -:  379:  }
+        -:  380:#else
+    #####:  381:  netif = ip4_route(&iphdr_src);
+        -:  382:#endif
+    #####:  383:  if (netif != NULL) {
+        -:  384:    /* calculate checksum */
+    #####:  385:    icmphdr->chksum = 0;
+        -:  386:#if CHECKSUM_GEN_ICMP
+        -:  387:    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP) {
+    #####:  388:      icmphdr->chksum = inet_chksum(icmphdr, q->len);
+        -:  389:    }
+        -:  390:#endif
+        -:  391:    ICMP_STATS_INC(icmp.xmit);
+    #####:  392:    ip4_output_if(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP, netif);
+        -:  393:  }
+    #####:  394:  pbuf_free(q);
+        -:  395:}
+        -:  396:
+        -:  397:#endif /* LWIP_IPV4 && LWIP_ICMP */

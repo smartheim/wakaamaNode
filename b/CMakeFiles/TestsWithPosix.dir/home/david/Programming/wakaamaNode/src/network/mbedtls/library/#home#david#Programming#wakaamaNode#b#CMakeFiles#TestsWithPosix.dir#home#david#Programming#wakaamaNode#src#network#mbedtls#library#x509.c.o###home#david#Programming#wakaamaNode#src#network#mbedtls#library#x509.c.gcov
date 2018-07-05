@@ -1,0 +1,1109 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/network/mbedtls/library/x509.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/network/mbedtls/library/x509.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: *  X.509 common functions for parsing and verification
+        -:    3: *
+        -:    4: *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+        -:    5: *  SPDX-License-Identifier: Apache-2.0
+        -:    6: *
+        -:    7: *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+        -:    8: *  not use this file except in compliance with the License.
+        -:    9: *  You may obtain a copy of the License at
+        -:   10: *
+        -:   11: *  http://www.apache.org/licenses/LICENSE-2.0
+        -:   12: *
+        -:   13: *  Unless required by applicable law or agreed to in writing, software
+        -:   14: *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+        -:   15: *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   16: *  See the License for the specific language governing permissions and
+        -:   17: *  limitations under the License.
+        -:   18: *
+        -:   19: *  This file is part of mbed TLS (https://tls.mbed.org)
+        -:   20: */
+        -:   21:/*
+        -:   22: *  The ITU-T X.509 standard defines a certificate format for PKI.
+        -:   23: *
+        -:   24: *  http://www.ietf.org/rfc/rfc5280.txt (Certificates and CRLs)
+        -:   25: *  http://www.ietf.org/rfc/rfc3279.txt (Alg IDs for CRLs)
+        -:   26: *  http://www.ietf.org/rfc/rfc2986.txt (CSRs, aka PKCS#10)
+        -:   27: *
+        -:   28: *  http://www.itu.int/ITU-T/studygroups/com17/languages/X.680-0207.pdf
+        -:   29: *  http://www.itu.int/ITU-T/studygroups/com17/languages/X.690-0207.pdf
+        -:   30: */
+        -:   31:
+        -:   32:#if !defined(MBEDTLS_CONFIG_FILE)
+        -:   33:#include "mbedtls/config.h"
+        -:   34:#else
+        -:   35:#include MBEDTLS_CONFIG_FILE
+        -:   36:#endif
+        -:   37:
+        -:   38:#if defined(MBEDTLS_X509_USE_C)
+        -:   39:
+        -:   40:#include "mbedtls/x509.h"
+        -:   41:#include "mbedtls/asn1.h"
+        -:   42:#include "mbedtls/oid.h"
+        -:   43:
+        -:   44:#include <stdio.h>
+        -:   45:#include <string.h>
+        -:   46:
+        -:   47:#if defined(MBEDTLS_PEM_PARSE_C)
+        -:   48:#include "mbedtls/pem.h"
+        -:   49:#endif
+        -:   50:
+        -:   51:#if defined(MBEDTLS_PLATFORM_C)
+        -:   52:#include "mbedtls/platform.h"
+        -:   53:#else
+        -:   54:#include <stdio.h>
+        -:   55:#include <stdlib.h>
+        -:   56:#define mbedtls_free      free
+        -:   57:#define mbedtls_calloc    calloc
+        -:   58:#define mbedtls_printf    printf
+        -:   59:#define mbedtls_snprintf  snprintf
+        -:   60:#endif
+        -:   61:
+        -:   62:
+        -:   63:#if defined(MBEDTLS_HAVE_TIME)
+        -:   64:#include "mbedtls/platform_time.h"
+        -:   65:#endif
+        -:   66:
+        -:   67:#if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+        -:   68:#include <windows.h>
+        -:   69:#else
+        -:   70:#include <time.h>
+        -:   71:#endif
+        -:   72:
+        -:   73:#if defined(MBEDTLS_FS_IO)
+        -:   74:#include <stdio.h>
+        -:   75:#if !defined(_WIN32)
+        -:   76:#include <sys/types.h>
+        -:   77:#include <sys/stat.h>
+        -:   78:#include <dirent.h>
+        -:   79:#endif
+        -:   80:#endif
+        -:   81:
+        -:   82:#define CHECK(code) if( ( ret = code ) != 0 ){ return( ret ); }
+        -:   83:#define CHECK_RANGE(min, max, val) if( val < min || val > max ){ return( ret ); }
+        -:   84:
+        -:   85:/*
+        -:   86: *  CertificateSerialNumber  ::=  INTEGER
+        -:   87: */
+    #####:   88:int mbedtls_x509_get_serial( unsigned char **p, const unsigned char *end,
+        -:   89:                     mbedtls_x509_buf *serial )
+        -:   90:{
+        -:   91:    int ret;
+        -:   92:
+    #####:   93:    if( ( end - *p ) < 1 )
+    #####:   94:        return( MBEDTLS_ERR_X509_INVALID_SERIAL +
+        -:   95:                MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:   96:
+    #####:   97:    if( **p != ( MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_PRIMITIVE | 2 ) &&
+    #####:   98:        **p !=   MBEDTLS_ASN1_INTEGER )
+    #####:   99:        return( MBEDTLS_ERR_X509_INVALID_SERIAL +
+        -:  100:                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        -:  101:
+    #####:  102:    serial->tag = *(*p)++;
+        -:  103:
+    #####:  104:    if( ( ret = mbedtls_asn1_get_len( p, end, &serial->len ) ) != 0 )
+    #####:  105:        return( MBEDTLS_ERR_X509_INVALID_SERIAL + ret );
+        -:  106:
+    #####:  107:    serial->p = *p;
+    #####:  108:    *p += serial->len;
+        -:  109:
+    #####:  110:    return( 0 );
+        -:  111:}
+        -:  112:
+        -:  113:/* Get an algorithm identifier without parameters (eg for signatures)
+        -:  114: *
+        -:  115: *  AlgorithmIdentifier  ::=  SEQUENCE  {
+        -:  116: *       algorithm               OBJECT IDENTIFIER,
+        -:  117: *       parameters              ANY DEFINED BY algorithm OPTIONAL  }
+        -:  118: */
+    #####:  119:int mbedtls_x509_get_alg_null( unsigned char **p, const unsigned char *end,
+        -:  120:                       mbedtls_x509_buf *alg )
+        -:  121:{
+        -:  122:    int ret;
+        -:  123:
+    #####:  124:    if( ( ret = mbedtls_asn1_get_alg_null( p, end, alg ) ) != 0 )
+    #####:  125:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  126:
+    #####:  127:    return( 0 );
+        -:  128:}
+        -:  129:
+        -:  130:/*
+        -:  131: * Parse an algorithm identifier with (optional) paramaters
+        -:  132: */
+    #####:  133:int mbedtls_x509_get_alg( unsigned char **p, const unsigned char *end,
+        -:  134:                  mbedtls_x509_buf *alg, mbedtls_x509_buf *params )
+        -:  135:{
+        -:  136:    int ret;
+        -:  137:
+    #####:  138:    if( ( ret = mbedtls_asn1_get_alg( p, end, alg, params ) ) != 0 )
+    #####:  139:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  140:
+    #####:  141:    return( 0 );
+        -:  142:}
+        -:  143:
+        -:  144:#if defined(MBEDTLS_X509_RSASSA_PSS_SUPPORT)
+        -:  145:/*
+        -:  146: * HashAlgorithm ::= AlgorithmIdentifier
+        -:  147: *
+        -:  148: * AlgorithmIdentifier  ::=  SEQUENCE  {
+        -:  149: *      algorithm               OBJECT IDENTIFIER,
+        -:  150: *      parameters              ANY DEFINED BY algorithm OPTIONAL  }
+        -:  151: *
+        -:  152: * For HashAlgorithm, parameters MUST be NULL or absent.
+        -:  153: */
+        -:  154:static int x509_get_hash_alg( const mbedtls_x509_buf *alg, mbedtls_md_type_t *md_alg )
+        -:  155:{
+        -:  156:    int ret;
+        -:  157:    unsigned char *p;
+        -:  158:    const unsigned char *end;
+        -:  159:    mbedtls_x509_buf md_oid;
+        -:  160:    size_t len;
+        -:  161:
+        -:  162:    /* Make sure we got a SEQUENCE and setup bounds */
+        -:  163:    if( alg->tag != ( MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) )
+        -:  164:        return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  165:                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        -:  166:
+        -:  167:    p = (unsigned char *) alg->p;
+        -:  168:    end = p + alg->len;
+        -:  169:
+        -:  170:    if( p >= end )
+        -:  171:        return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  172:                MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  173:
+        -:  174:    /* Parse md_oid */
+        -:  175:    md_oid.tag = *p;
+        -:  176:
+        -:  177:    if( ( ret = mbedtls_asn1_get_tag( &p, end, &md_oid.len, MBEDTLS_ASN1_OID ) ) != 0 )
+        -:  178:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  179:
+        -:  180:    md_oid.p = p;
+        -:  181:    p += md_oid.len;
+        -:  182:
+        -:  183:    /* Get md_alg from md_oid */
+        -:  184:    if( ( ret = mbedtls_oid_get_md_alg( &md_oid, md_alg ) ) != 0 )
+        -:  185:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  186:
+        -:  187:    /* Make sure params is absent of NULL */
+        -:  188:    if( p == end )
+        -:  189:        return( 0 );
+        -:  190:
+        -:  191:    if( ( ret = mbedtls_asn1_get_tag( &p, end, &len, MBEDTLS_ASN1_NULL ) ) != 0 || len != 0 )
+        -:  192:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  193:
+        -:  194:    if( p != end )
+        -:  195:        return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  196:                MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  197:
+        -:  198:    return( 0 );
+        -:  199:}
+        -:  200:
+        -:  201:/*
+        -:  202: *    RSASSA-PSS-params  ::=  SEQUENCE  {
+        -:  203: *       hashAlgorithm     [0] HashAlgorithm DEFAULT sha1Identifier,
+        -:  204: *       maskGenAlgorithm  [1] MaskGenAlgorithm DEFAULT mgf1SHA1Identifier,
+        -:  205: *       saltLength        [2] INTEGER DEFAULT 20,
+        -:  206: *       trailerField      [3] INTEGER DEFAULT 1  }
+        -:  207: *    -- Note that the tags in this Sequence are explicit.
+        -:  208: *
+        -:  209: * RFC 4055 (which defines use of RSASSA-PSS in PKIX) states that the value
+        -:  210: * of trailerField MUST be 1, and PKCS#1 v2.2 doesn't even define any other
+        -:  211: * option. Enfore this at parsing time.
+        -:  212: */
+        -:  213:int mbedtls_x509_get_rsassa_pss_params( const mbedtls_x509_buf *params,
+        -:  214:                                mbedtls_md_type_t *md_alg, mbedtls_md_type_t *mgf_md,
+        -:  215:                                int *salt_len )
+        -:  216:{
+        -:  217:    int ret;
+        -:  218:    unsigned char *p;
+        -:  219:    const unsigned char *end, *end2;
+        -:  220:    size_t len;
+        -:  221:    mbedtls_x509_buf alg_id, alg_params;
+        -:  222:
+        -:  223:    /* First set everything to defaults */
+        -:  224:    *md_alg = MBEDTLS_MD_SHA1;
+        -:  225:    *mgf_md = MBEDTLS_MD_SHA1;
+        -:  226:    *salt_len = 20;
+        -:  227:
+        -:  228:    /* Make sure params is a SEQUENCE and setup bounds */
+        -:  229:    if( params->tag != ( MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) )
+        -:  230:        return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  231:                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        -:  232:
+        -:  233:    p = (unsigned char *) params->p;
+        -:  234:    end = p + params->len;
+        -:  235:
+        -:  236:    if( p == end )
+        -:  237:        return( 0 );
+        -:  238:
+        -:  239:    /*
+        -:  240:     * HashAlgorithm
+        -:  241:     */
+        -:  242:    if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
+        -:  243:                    MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 0 ) ) == 0 )
+        -:  244:    {
+        -:  245:        end2 = p + len;
+        -:  246:
+        -:  247:        /* HashAlgorithm ::= AlgorithmIdentifier (without parameters) */
+        -:  248:        if( ( ret = mbedtls_x509_get_alg_null( &p, end2, &alg_id ) ) != 0 )
+        -:  249:            return( ret );
+        -:  250:
+        -:  251:        if( ( ret = mbedtls_oid_get_md_alg( &alg_id, md_alg ) ) != 0 )
+        -:  252:            return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  253:
+        -:  254:        if( p != end2 )
+        -:  255:            return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  256:                    MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  257:    }
+        -:  258:    else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
+        -:  259:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  260:
+        -:  261:    if( p == end )
+        -:  262:        return( 0 );
+        -:  263:
+        -:  264:    /*
+        -:  265:     * MaskGenAlgorithm
+        -:  266:     */
+        -:  267:    if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
+        -:  268:                    MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 1 ) ) == 0 )
+        -:  269:    {
+        -:  270:        end2 = p + len;
+        -:  271:
+        -:  272:        /* MaskGenAlgorithm ::= AlgorithmIdentifier (params = HashAlgorithm) */
+        -:  273:        if( ( ret = mbedtls_x509_get_alg( &p, end2, &alg_id, &alg_params ) ) != 0 )
+        -:  274:            return( ret );
+        -:  275:
+        -:  276:        /* Only MFG1 is recognised for now */
+        -:  277:        if( MBEDTLS_OID_CMP( MBEDTLS_OID_MGF1, &alg_id ) != 0 )
+        -:  278:            return( MBEDTLS_ERR_X509_FEATURE_UNAVAILABLE +
+        -:  279:                    MBEDTLS_ERR_OID_NOT_FOUND );
+        -:  280:
+        -:  281:        /* Parse HashAlgorithm */
+        -:  282:        if( ( ret = x509_get_hash_alg( &alg_params, mgf_md ) ) != 0 )
+        -:  283:            return( ret );
+        -:  284:
+        -:  285:        if( p != end2 )
+        -:  286:            return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  287:                    MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  288:    }
+        -:  289:    else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
+        -:  290:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  291:
+        -:  292:    if( p == end )
+        -:  293:        return( 0 );
+        -:  294:
+        -:  295:    /*
+        -:  296:     * salt_len
+        -:  297:     */
+        -:  298:    if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
+        -:  299:                    MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 2 ) ) == 0 )
+        -:  300:    {
+        -:  301:        end2 = p + len;
+        -:  302:
+        -:  303:        if( ( ret = mbedtls_asn1_get_int( &p, end2, salt_len ) ) != 0 )
+        -:  304:            return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  305:
+        -:  306:        if( p != end2 )
+        -:  307:            return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  308:                    MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  309:    }
+        -:  310:    else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
+        -:  311:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  312:
+        -:  313:    if( p == end )
+        -:  314:        return( 0 );
+        -:  315:
+        -:  316:    /*
+        -:  317:     * trailer_field (if present, must be 1)
+        -:  318:     */
+        -:  319:    if( ( ret = mbedtls_asn1_get_tag( &p, end, &len,
+        -:  320:                    MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | 3 ) ) == 0 )
+        -:  321:    {
+        -:  322:        int trailer_field;
+        -:  323:
+        -:  324:        end2 = p + len;
+        -:  325:
+        -:  326:        if( ( ret = mbedtls_asn1_get_int( &p, end2, &trailer_field ) ) != 0 )
+        -:  327:            return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  328:
+        -:  329:        if( p != end2 )
+        -:  330:            return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  331:                    MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  332:
+        -:  333:        if( trailer_field != 1 )
+        -:  334:            return( MBEDTLS_ERR_X509_INVALID_ALG );
+        -:  335:    }
+        -:  336:    else if( ret != MBEDTLS_ERR_ASN1_UNEXPECTED_TAG )
+        -:  337:        return( MBEDTLS_ERR_X509_INVALID_ALG + ret );
+        -:  338:
+        -:  339:    if( p != end )
+        -:  340:        return( MBEDTLS_ERR_X509_INVALID_ALG +
+        -:  341:                MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  342:
+        -:  343:    return( 0 );
+        -:  344:}
+        -:  345:#endif /* MBEDTLS_X509_RSASSA_PSS_SUPPORT */
+        -:  346:
+        -:  347:/*
+        -:  348: *  AttributeTypeAndValue ::= SEQUENCE {
+        -:  349: *    type     AttributeType,
+        -:  350: *    value    AttributeValue }
+        -:  351: *
+        -:  352: *  AttributeType ::= OBJECT IDENTIFIER
+        -:  353: *
+        -:  354: *  AttributeValue ::= ANY DEFINED BY AttributeType
+        -:  355: */
+    #####:  356:static int x509_get_attr_type_value( unsigned char **p,
+        -:  357:                                     const unsigned char *end,
+        -:  358:                                     mbedtls_x509_name *cur )
+        -:  359:{
+        -:  360:    int ret;
+        -:  361:    size_t len;
+        -:  362:    mbedtls_x509_buf *oid;
+        -:  363:    mbedtls_x509_buf *val;
+        -:  364:
+    #####:  365:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len,
+        -:  366:            MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
+    #####:  367:        return( MBEDTLS_ERR_X509_INVALID_NAME + ret );
+        -:  368:
+    #####:  369:    if( ( end - *p ) < 1 )
+    #####:  370:        return( MBEDTLS_ERR_X509_INVALID_NAME +
+        -:  371:                MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  372:
+    #####:  373:    oid = &cur->oid;
+    #####:  374:    oid->tag = **p;
+        -:  375:
+    #####:  376:    if( ( ret = mbedtls_asn1_get_tag( p, end, &oid->len, MBEDTLS_ASN1_OID ) ) != 0 )
+    #####:  377:        return( MBEDTLS_ERR_X509_INVALID_NAME + ret );
+        -:  378:
+    #####:  379:    oid->p = *p;
+    #####:  380:    *p += oid->len;
+        -:  381:
+    #####:  382:    if( ( end - *p ) < 1 )
+    #####:  383:        return( MBEDTLS_ERR_X509_INVALID_NAME +
+        -:  384:                MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  385:
+    #####:  386:    if( **p != MBEDTLS_ASN1_BMP_STRING && **p != MBEDTLS_ASN1_UTF8_STRING      &&
+    #####:  387:        **p != MBEDTLS_ASN1_T61_STRING && **p != MBEDTLS_ASN1_PRINTABLE_STRING &&
+    #####:  388:        **p != MBEDTLS_ASN1_IA5_STRING && **p != MBEDTLS_ASN1_UNIVERSAL_STRING &&
+    #####:  389:        **p != MBEDTLS_ASN1_BIT_STRING )
+    #####:  390:        return( MBEDTLS_ERR_X509_INVALID_NAME +
+        -:  391:                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        -:  392:
+    #####:  393:    val = &cur->val;
+    #####:  394:    val->tag = *(*p)++;
+        -:  395:
+    #####:  396:    if( ( ret = mbedtls_asn1_get_len( p, end, &val->len ) ) != 0 )
+    #####:  397:        return( MBEDTLS_ERR_X509_INVALID_NAME + ret );
+        -:  398:
+    #####:  399:    val->p = *p;
+    #####:  400:    *p += val->len;
+        -:  401:
+    #####:  402:    cur->next = NULL;
+        -:  403:
+    #####:  404:    return( 0 );
+        -:  405:}
+        -:  406:
+        -:  407:/*
+        -:  408: *  Name ::= CHOICE { -- only one possibility for now --
+        -:  409: *       rdnSequence  RDNSequence }
+        -:  410: *
+        -:  411: *  RDNSequence ::= SEQUENCE OF RelativeDistinguishedName
+        -:  412: *
+        -:  413: *  RelativeDistinguishedName ::=
+        -:  414: *    SET OF AttributeTypeAndValue
+        -:  415: *
+        -:  416: *  AttributeTypeAndValue ::= SEQUENCE {
+        -:  417: *    type     AttributeType,
+        -:  418: *    value    AttributeValue }
+        -:  419: *
+        -:  420: *  AttributeType ::= OBJECT IDENTIFIER
+        -:  421: *
+        -:  422: *  AttributeValue ::= ANY DEFINED BY AttributeType
+        -:  423: *
+        -:  424: * The data structure is optimized for the common case where each RDN has only
+        -:  425: * one element, which is represented as a list of AttributeTypeAndValue.
+        -:  426: * For the general case we still use a flat list, but we mark elements of the
+        -:  427: * same set so that they are "merged" together in the functions that consume
+        -:  428: * this list, eg mbedtls_x509_dn_gets().
+        -:  429: */
+    #####:  430:int mbedtls_x509_get_name( unsigned char **p, const unsigned char *end,
+        -:  431:                   mbedtls_x509_name *cur )
+        -:  432:{
+        -:  433:    int ret;
+        -:  434:    size_t set_len;
+        -:  435:    const unsigned char *end_set;
+        -:  436:
+        -:  437:    /* don't use recursion, we'd risk stack overflow if not optimized */
+        -:  438:    while( 1 )
+        -:  439:    {
+        -:  440:        /*
+        -:  441:         * parse SET
+        -:  442:         */
+    #####:  443:        if( ( ret = mbedtls_asn1_get_tag( p, end, &set_len,
+        -:  444:                MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SET ) ) != 0 )
+    #####:  445:            return( MBEDTLS_ERR_X509_INVALID_NAME + ret );
+        -:  446:
+    #####:  447:        end_set  = *p + set_len;
+        -:  448:
+        -:  449:        while( 1 )
+        -:  450:        {
+    #####:  451:            if( ( ret = x509_get_attr_type_value( p, end_set, cur ) ) != 0 )
+    #####:  452:                return( ret );
+        -:  453:
+    #####:  454:            if( *p == end_set )
+    #####:  455:                break;
+        -:  456:
+        -:  457:            /* Mark this item as being no the only one in a set */
+    #####:  458:            cur->next_merged = 1;
+        -:  459:
+    #####:  460:            cur->next = mbedtls_calloc( 1, sizeof( mbedtls_x509_name ) );
+        -:  461:
+    #####:  462:            if( cur->next == NULL )
+    #####:  463:                return( MBEDTLS_ERR_X509_ALLOC_FAILED );
+        -:  464:
+    #####:  465:            cur = cur->next;
+        -:  466:        }
+        -:  467:
+        -:  468:        /*
+        -:  469:         * continue until end of SEQUENCE is reached
+        -:  470:         */
+    #####:  471:        if( *p == end )
+    #####:  472:            return( 0 );
+        -:  473:
+    #####:  474:        cur->next = mbedtls_calloc( 1, sizeof( mbedtls_x509_name ) );
+        -:  475:
+    #####:  476:        if( cur->next == NULL )
+    #####:  477:            return( MBEDTLS_ERR_X509_ALLOC_FAILED );
+        -:  478:
+    #####:  479:        cur = cur->next;
+        -:  480:    }
+        -:  481:}
+        -:  482:
+    #####:  483:static int x509_parse_int( unsigned char **p, size_t n, int *res )
+        -:  484:{
+    #####:  485:    *res = 0;
+        -:  486:
+    #####:  487:    for( ; n > 0; --n )
+        -:  488:    {
+    #####:  489:        if( ( **p < '0') || ( **p > '9' ) )
+    #####:  490:            return ( MBEDTLS_ERR_X509_INVALID_DATE );
+        -:  491:
+    #####:  492:        *res *= 10;
+    #####:  493:        *res += ( *(*p)++ - '0' );
+        -:  494:    }
+        -:  495:
+    #####:  496:    return( 0 );
+        -:  497:}
+        -:  498:
+    #####:  499:static int x509_date_is_valid(const mbedtls_x509_time *t )
+        -:  500:{
+    #####:  501:    int ret = MBEDTLS_ERR_X509_INVALID_DATE;
+        -:  502:    int month_len;
+        -:  503:
+    #####:  504:    CHECK_RANGE( 0, 9999, t->year );
+    #####:  505:    CHECK_RANGE( 0, 23,   t->hour );
+    #####:  506:    CHECK_RANGE( 0, 59,   t->min  );
+    #####:  507:    CHECK_RANGE( 0, 59,   t->sec  );
+        -:  508:
+    #####:  509:    switch( t->mon )
+        -:  510:    {
+    #####:  511:        case 1: case 3: case 5: case 7: case 8: case 10: case 12:
+    #####:  512:            month_len = 31;
+    #####:  513:            break;
+    #####:  514:        case 4: case 6: case 9: case 11:
+    #####:  515:            month_len = 30;
+    #####:  516:            break;
+    #####:  517:        case 2:
+    #####:  518:            if( ( !( t->year % 4 ) && t->year % 100 ) ||
+    #####:  519:                !( t->year % 400 ) )
+    #####:  520:                month_len = 29;
+        -:  521:            else
+    #####:  522:                month_len = 28;
+    #####:  523:            break;
+    #####:  524:        default:
+    #####:  525:            return( ret );
+        -:  526:    }
+    #####:  527:    CHECK_RANGE( 1, month_len, t->day );
+        -:  528:
+    #####:  529:    return( 0 );
+        -:  530:}
+        -:  531:
+        -:  532:/*
+        -:  533: * Parse an ASN1_UTC_TIME (yearlen=2) or ASN1_GENERALIZED_TIME (yearlen=4)
+        -:  534: * field.
+        -:  535: */
+    #####:  536:static int x509_parse_time( unsigned char **p, size_t len, size_t yearlen,
+        -:  537:                            mbedtls_x509_time *tm )
+        -:  538:{
+        -:  539:    int ret;
+        -:  540:
+        -:  541:    /*
+        -:  542:     * Minimum length is 10 or 12 depending on yearlen
+        -:  543:     */
+    #####:  544:    if ( len < yearlen + 8 )
+    #####:  545:        return ( MBEDTLS_ERR_X509_INVALID_DATE );
+    #####:  546:    len -= yearlen + 8;
+        -:  547:
+        -:  548:    /*
+        -:  549:     * Parse year, month, day, hour, minute
+        -:  550:     */
+    #####:  551:    CHECK( x509_parse_int( p, yearlen, &tm->year ) );
+    #####:  552:    if ( 2 == yearlen )
+        -:  553:    {
+    #####:  554:        if ( tm->year < 50 )
+    #####:  555:            tm->year += 100;
+        -:  556:
+    #####:  557:        tm->year += 1900;
+        -:  558:    }
+        -:  559:
+    #####:  560:    CHECK( x509_parse_int( p, 2, &tm->mon ) );
+    #####:  561:    CHECK( x509_parse_int( p, 2, &tm->day ) );
+    #####:  562:    CHECK( x509_parse_int( p, 2, &tm->hour ) );
+    #####:  563:    CHECK( x509_parse_int( p, 2, &tm->min ) );
+        -:  564:
+        -:  565:    /*
+        -:  566:     * Parse seconds if present
+        -:  567:     */
+    #####:  568:    if ( len >= 2 )
+        -:  569:    {
+    #####:  570:        CHECK( x509_parse_int( p, 2, &tm->sec ) );
+    #####:  571:        len -= 2;
+        -:  572:    }
+        -:  573:    else
+    #####:  574:        return ( MBEDTLS_ERR_X509_INVALID_DATE );
+        -:  575:
+        -:  576:    /*
+        -:  577:     * Parse trailing 'Z' if present
+        -:  578:     */
+    #####:  579:    if ( 1 == len && 'Z' == **p )
+        -:  580:    {
+    #####:  581:        (*p)++;
+    #####:  582:        len--;
+        -:  583:    }
+        -:  584:
+        -:  585:    /*
+        -:  586:     * We should have parsed all characters at this point
+        -:  587:     */
+    #####:  588:    if ( 0 != len )
+    #####:  589:        return ( MBEDTLS_ERR_X509_INVALID_DATE );
+        -:  590:
+    #####:  591:    CHECK( x509_date_is_valid( tm ) );
+        -:  592:
+    #####:  593:    return ( 0 );
+        -:  594:}
+        -:  595:
+        -:  596:/*
+        -:  597: *  Time ::= CHOICE {
+        -:  598: *       utcTime        UTCTime,
+        -:  599: *       generalTime    GeneralizedTime }
+        -:  600: */
+    #####:  601:int mbedtls_x509_get_time( unsigned char **p, const unsigned char *end,
+        -:  602:                           mbedtls_x509_time *tm )
+        -:  603:{
+        -:  604:    int ret;
+        -:  605:    size_t len, year_len;
+        -:  606:    unsigned char tag;
+        -:  607:
+    #####:  608:    if( ( end - *p ) < 1 )
+    #####:  609:        return( MBEDTLS_ERR_X509_INVALID_DATE +
+        -:  610:                MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  611:
+    #####:  612:    tag = **p;
+        -:  613:
+    #####:  614:    if( tag == MBEDTLS_ASN1_UTC_TIME )
+    #####:  615:        year_len = 2;
+    #####:  616:    else if( tag == MBEDTLS_ASN1_GENERALIZED_TIME )
+    #####:  617:        year_len = 4;
+        -:  618:    else
+    #####:  619:        return( MBEDTLS_ERR_X509_INVALID_DATE +
+        -:  620:                MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        -:  621:
+    #####:  622:    (*p)++;
+    #####:  623:    ret = mbedtls_asn1_get_len( p, end, &len );
+        -:  624:
+    #####:  625:    if( ret != 0 )
+    #####:  626:        return( MBEDTLS_ERR_X509_INVALID_DATE + ret );
+        -:  627:
+    #####:  628:    return x509_parse_time( p, len, year_len, tm );
+        -:  629:}
+        -:  630:
+    #####:  631:int mbedtls_x509_get_sig( unsigned char **p, const unsigned char *end, mbedtls_x509_buf *sig )
+        -:  632:{
+        -:  633:    int ret;
+        -:  634:    size_t len;
+        -:  635:    int tag_type;
+        -:  636:
+    #####:  637:    if( ( end - *p ) < 1 )
+    #####:  638:        return( MBEDTLS_ERR_X509_INVALID_SIGNATURE +
+        -:  639:                MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  640:
+    #####:  641:    tag_type = **p;
+        -:  642:
+    #####:  643:    if( ( ret = mbedtls_asn1_get_bitstring_null( p, end, &len ) ) != 0 )
+    #####:  644:        return( MBEDTLS_ERR_X509_INVALID_SIGNATURE + ret );
+        -:  645:
+    #####:  646:    sig->tag = tag_type;
+    #####:  647:    sig->len = len;
+    #####:  648:    sig->p = *p;
+        -:  649:
+    #####:  650:    *p += len;
+        -:  651:
+    #####:  652:    return( 0 );
+        -:  653:}
+        -:  654:
+        -:  655:/*
+        -:  656: * Get signature algorithm from alg OID and optional parameters
+        -:  657: */
+    #####:  658:int mbedtls_x509_get_sig_alg( const mbedtls_x509_buf *sig_oid, const mbedtls_x509_buf *sig_params,
+        -:  659:                      mbedtls_md_type_t *md_alg, mbedtls_pk_type_t *pk_alg,
+        -:  660:                      void **sig_opts )
+        -:  661:{
+        -:  662:    int ret;
+        -:  663:
+    #####:  664:    if( *sig_opts != NULL )
+    #####:  665:        return( MBEDTLS_ERR_X509_BAD_INPUT_DATA );
+        -:  666:
+    #####:  667:    if( ( ret = mbedtls_oid_get_sig_alg( sig_oid, md_alg, pk_alg ) ) != 0 )
+    #####:  668:        return( MBEDTLS_ERR_X509_UNKNOWN_SIG_ALG + ret );
+        -:  669:
+        -:  670:#if defined(MBEDTLS_X509_RSASSA_PSS_SUPPORT)
+        -:  671:    if( *pk_alg == MBEDTLS_PK_RSASSA_PSS )
+        -:  672:    {
+        -:  673:        mbedtls_pk_rsassa_pss_options *pss_opts;
+        -:  674:
+        -:  675:        pss_opts = mbedtls_calloc( 1, sizeof( mbedtls_pk_rsassa_pss_options ) );
+        -:  676:        if( pss_opts == NULL )
+        -:  677:            return( MBEDTLS_ERR_X509_ALLOC_FAILED );
+        -:  678:
+        -:  679:        ret = mbedtls_x509_get_rsassa_pss_params( sig_params,
+        -:  680:                                          md_alg,
+        -:  681:                                          &pss_opts->mgf1_hash_id,
+        -:  682:                                          &pss_opts->expected_salt_len );
+        -:  683:        if( ret != 0 )
+        -:  684:        {
+        -:  685:            mbedtls_free( pss_opts );
+        -:  686:            return( ret );
+        -:  687:        }
+        -:  688:
+        -:  689:        *sig_opts = (void *) pss_opts;
+        -:  690:    }
+        -:  691:    else
+        -:  692:#endif /* MBEDTLS_X509_RSASSA_PSS_SUPPORT */
+        -:  693:    {
+        -:  694:        /* Make sure parameters are absent or NULL */
+    #####:  695:        if( ( sig_params->tag != MBEDTLS_ASN1_NULL && sig_params->tag != 0 ) ||
+    #####:  696:              sig_params->len != 0 )
+    #####:  697:        return( MBEDTLS_ERR_X509_INVALID_ALG );
+        -:  698:    }
+        -:  699:
+    #####:  700:    return( 0 );
+        -:  701:}
+        -:  702:
+        -:  703:/*
+        -:  704: * X.509 Extensions (No parsing of extensions, pointer should
+        -:  705: * be either manually updated or extensions should be parsed!)
+        -:  706: */
+    #####:  707:int mbedtls_x509_get_ext( unsigned char **p, const unsigned char *end,
+        -:  708:                  mbedtls_x509_buf *ext, int tag )
+        -:  709:{
+        -:  710:    int ret;
+        -:  711:    size_t len;
+        -:  712:
+    #####:  713:    if( *p == end )
+    #####:  714:        return( 0 );
+        -:  715:
+    #####:  716:    ext->tag = **p;
+        -:  717:
+    #####:  718:    if( ( ret = mbedtls_asn1_get_tag( p, end, &ext->len,
+        -:  719:            MBEDTLS_ASN1_CONTEXT_SPECIFIC | MBEDTLS_ASN1_CONSTRUCTED | tag ) ) != 0 )
+    #####:  720:        return( ret );
+        -:  721:
+    #####:  722:    ext->p = *p;
+    #####:  723:    end = *p + ext->len;
+        -:  724:
+        -:  725:    /*
+        -:  726:     * Extensions  ::=  SEQUENCE SIZE (1..MAX) OF Extension
+        -:  727:     *
+        -:  728:     * Extension  ::=  SEQUENCE  {
+        -:  729:     *      extnID      OBJECT IDENTIFIER,
+        -:  730:     *      critical    BOOLEAN DEFAULT FALSE,
+        -:  731:     *      extnValue   OCTET STRING  }
+        -:  732:     */
+    #####:  733:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len,
+        -:  734:            MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
+    #####:  735:        return( MBEDTLS_ERR_X509_INVALID_EXTENSIONS + ret );
+        -:  736:
+    #####:  737:    if( end != *p + len )
+    #####:  738:        return( MBEDTLS_ERR_X509_INVALID_EXTENSIONS +
+        -:  739:                MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  740:
+    #####:  741:    return( 0 );
+        -:  742:}
+        -:  743:
+        -:  744:/*
+        -:  745: * Store the name in printable form into buf; no more
+        -:  746: * than size characters will be written
+        -:  747: */
+    #####:  748:int mbedtls_x509_dn_gets( char *buf, size_t size, const mbedtls_x509_name *dn )
+        -:  749:{
+        -:  750:    int ret;
+        -:  751:    size_t i, n;
+    #####:  752:    unsigned char c, merge = 0;
+        -:  753:    const mbedtls_x509_name *name;
+    #####:  754:    const char *short_name = NULL;
+        -:  755:    char s[MBEDTLS_X509_MAX_DN_NAME_SIZE], *p;
+        -:  756:
+    #####:  757:    memset( s, 0, sizeof( s ) );
+        -:  758:
+    #####:  759:    name = dn;
+    #####:  760:    p = buf;
+    #####:  761:    n = size;
+        -:  762:
+    #####:  763:    while( name != NULL )
+        -:  764:    {
+    #####:  765:        if( !name->oid.p )
+        -:  766:        {
+    #####:  767:            name = name->next;
+    #####:  768:            continue;
+        -:  769:        }
+        -:  770:
+    #####:  771:        if( name != dn )
+        -:  772:        {
+    #####:  773:            ret = mbedtls_snprintf( p, n, merge ? " + " : ", " );
+    #####:  774:            MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  775:        }
+        -:  776:
+    #####:  777:        ret = mbedtls_oid_get_attr_short_name( &name->oid, &short_name );
+        -:  778:
+    #####:  779:        if( ret == 0 )
+    #####:  780:            ret = mbedtls_snprintf( p, n, "%s=", short_name );
+        -:  781:        else
+    #####:  782:            ret = mbedtls_snprintf( p, n, "\?\?=" );
+    #####:  783:        MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  784:
+    #####:  785:        for( i = 0; i < name->val.len; i++ )
+        -:  786:        {
+    #####:  787:            if( i >= sizeof( s ) - 1 )
+    #####:  788:                break;
+        -:  789:
+    #####:  790:            c = name->val.p[i];
+    #####:  791:            if( c < 32 || c == 127 || ( c > 128 && c < 160 ) )
+    #####:  792:                 s[i] = '?';
+    #####:  793:            else s[i] = c;
+        -:  794:        }
+    #####:  795:        s[i] = '\0';
+    #####:  796:        ret = mbedtls_snprintf( p, n, "%s", s );
+    #####:  797:        MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  798:
+    #####:  799:        merge = name->next_merged;
+    #####:  800:        name = name->next;
+        -:  801:    }
+        -:  802:
+    #####:  803:    return( (int) ( size - n ) );
+        -:  804:}
+        -:  805:
+        -:  806:/*
+        -:  807: * Store the serial in printable form into buf; no more
+        -:  808: * than size characters will be written
+        -:  809: */
+    #####:  810:int mbedtls_x509_serial_gets( char *buf, size_t size, const mbedtls_x509_buf *serial )
+        -:  811:{
+        -:  812:    int ret;
+        -:  813:    size_t i, n, nr;
+        -:  814:    char *p;
+        -:  815:
+    #####:  816:    p = buf;
+    #####:  817:    n = size;
+        -:  818:
+    #####:  819:    nr = ( serial->len <= 32 )
+    #####:  820:        ? serial->len  : 28;
+        -:  821:
+    #####:  822:    for( i = 0; i < nr; i++ )
+        -:  823:    {
+    #####:  824:        if( i == 0 && nr > 1 && serial->p[i] == 0x0 )
+    #####:  825:            continue;
+        -:  826:
+    #####:  827:        ret = mbedtls_snprintf( p, n, "%02X%s",
+    #####:  828:                serial->p[i], ( i < nr - 1 ) ? ":" : "" );
+    #####:  829:        MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  830:    }
+        -:  831:
+    #####:  832:    if( nr != serial->len )
+        -:  833:    {
+    #####:  834:        ret = mbedtls_snprintf( p, n, "...." );
+    #####:  835:        MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  836:    }
+        -:  837:
+    #####:  838:    return( (int) ( size - n ) );
+        -:  839:}
+        -:  840:
+        -:  841:/*
+        -:  842: * Helper for writing signature algorithms
+        -:  843: */
+    #####:  844:int mbedtls_x509_sig_alg_gets( char *buf, size_t size, const mbedtls_x509_buf *sig_oid,
+        -:  845:                       mbedtls_pk_type_t pk_alg, mbedtls_md_type_t md_alg,
+        -:  846:                       const void *sig_opts )
+        -:  847:{
+        -:  848:    int ret;
+    #####:  849:    char *p = buf;
+    #####:  850:    size_t n = size;
+    #####:  851:    const char *desc = NULL;
+        -:  852:
+    #####:  853:    ret = mbedtls_oid_get_sig_alg_desc( sig_oid, &desc );
+    #####:  854:    if( ret != 0 )
+    #####:  855:        ret = mbedtls_snprintf( p, n, "???"  );
+        -:  856:    else
+    #####:  857:        ret = mbedtls_snprintf( p, n, "%s", desc );
+    #####:  858:    MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  859:
+        -:  860:#if defined(MBEDTLS_X509_RSASSA_PSS_SUPPORT)
+        -:  861:    if( pk_alg == MBEDTLS_PK_RSASSA_PSS )
+        -:  862:    {
+        -:  863:        const mbedtls_pk_rsassa_pss_options *pss_opts;
+        -:  864:        const mbedtls_md_info_t *md_info, *mgf_md_info;
+        -:  865:
+        -:  866:        pss_opts = (const mbedtls_pk_rsassa_pss_options *) sig_opts;
+        -:  867:
+        -:  868:        md_info = mbedtls_md_info_from_type( md_alg );
+        -:  869:        mgf_md_info = mbedtls_md_info_from_type( pss_opts->mgf1_hash_id );
+        -:  870:
+        -:  871:        ret = mbedtls_snprintf( p, n, " (%s, MGF1-%s, 0x%02X)",
+        -:  872:                              md_info ? mbedtls_md_get_name( md_info ) : "???",
+        -:  873:                              mgf_md_info ? mbedtls_md_get_name( mgf_md_info ) : "???",
+        -:  874:                              pss_opts->expected_salt_len );
+        -:  875:        MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  876:    }
+        -:  877:#else
+        -:  878:    ((void) pk_alg);
+        -:  879:    ((void) md_alg);
+        -:  880:    ((void) sig_opts);
+        -:  881:#endif /* MBEDTLS_X509_RSASSA_PSS_SUPPORT */
+        -:  882:
+    #####:  883:    return( (int)( size - n ) );
+        -:  884:}
+        -:  885:
+        -:  886:/*
+        -:  887: * Helper for writing "RSA key size", "EC key size", etc
+        -:  888: */
+    #####:  889:int mbedtls_x509_key_size_helper( char *buf, size_t buf_size, const char *name )
+        -:  890:{
+    #####:  891:    char *p = buf;
+    #####:  892:    size_t n = buf_size;
+        -:  893:    int ret;
+        -:  894:
+    #####:  895:    ret = mbedtls_snprintf( p, n, "%s key size", name );
+    #####:  896:    MBEDTLS_X509_SAFE_SNPRINTF;
+        -:  897:
+    #####:  898:    return( 0 );
+        -:  899:}
+        -:  900:
+        -:  901:#if defined(MBEDTLS_HAVE_TIME_DATE)
+        -:  902:/*
+        -:  903: * Set the time structure to the current time.
+        -:  904: * Return 0 on success, non-zero on failure.
+        -:  905: */
+        -:  906:#if defined(_WIN32) && !defined(EFIX64) && !defined(EFI32)
+        -:  907:static int x509_get_current_time( mbedtls_x509_time *now )
+        -:  908:{
+        -:  909:    SYSTEMTIME st;
+        -:  910:
+        -:  911:    GetSystemTime( &st );
+        -:  912:
+        -:  913:    now->year = st.wYear;
+        -:  914:    now->mon  = st.wMonth;
+        -:  915:    now->day  = st.wDay;
+        -:  916:    now->hour = st.wHour;
+        -:  917:    now->min  = st.wMinute;
+        -:  918:    now->sec  = st.wSecond;
+        -:  919:
+        -:  920:    return( 0 );
+        -:  921:}
+        -:  922:#else
+        -:  923:static int x509_get_current_time( mbedtls_x509_time *now )
+        -:  924:{
+        -:  925:    struct tm *lt;
+        -:  926:    mbedtls_time_t tt;
+        -:  927:    int ret = 0;
+        -:  928:
+        -:  929:#if defined(MBEDTLS_THREADING_C)
+        -:  930:    if( mbedtls_mutex_lock( &mbedtls_threading_gmtime_mutex ) != 0 )
+        -:  931:        return( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
+        -:  932:#endif
+        -:  933:
+        -:  934:    tt = mbedtls_time( NULL );
+        -:  935:    lt = gmtime( &tt );
+        -:  936:
+        -:  937:    if( lt == NULL )
+        -:  938:        ret = -1;
+        -:  939:    else
+        -:  940:    {
+        -:  941:        now->year = lt->tm_year + 1900;
+        -:  942:        now->mon  = lt->tm_mon  + 1;
+        -:  943:        now->day  = lt->tm_mday;
+        -:  944:        now->hour = lt->tm_hour;
+        -:  945:        now->min  = lt->tm_min;
+        -:  946:        now->sec  = lt->tm_sec;
+        -:  947:    }
+        -:  948:
+        -:  949:#if defined(MBEDTLS_THREADING_C)
+        -:  950:    if( mbedtls_mutex_unlock( &mbedtls_threading_gmtime_mutex ) != 0 )
+        -:  951:        return( MBEDTLS_ERR_THREADING_MUTEX_ERROR );
+        -:  952:#endif
+        -:  953:
+        -:  954:    return( ret );
+        -:  955:}
+        -:  956:#endif /* _WIN32 && !EFIX64 && !EFI32 */
+        -:  957:
+        -:  958:/*
+        -:  959: * Return 0 if before <= after, 1 otherwise
+        -:  960: */
+        -:  961:static int x509_check_time( const mbedtls_x509_time *before, const mbedtls_x509_time *after )
+        -:  962:{
+        -:  963:    if( before->year  > after->year )
+        -:  964:        return( 1 );
+        -:  965:
+        -:  966:    if( before->year == after->year &&
+        -:  967:        before->mon   > after->mon )
+        -:  968:        return( 1 );
+        -:  969:
+        -:  970:    if( before->year == after->year &&
+        -:  971:        before->mon  == after->mon  &&
+        -:  972:        before->day   > after->day )
+        -:  973:        return( 1 );
+        -:  974:
+        -:  975:    if( before->year == after->year &&
+        -:  976:        before->mon  == after->mon  &&
+        -:  977:        before->day  == after->day  &&
+        -:  978:        before->hour  > after->hour )
+        -:  979:        return( 1 );
+        -:  980:
+        -:  981:    if( before->year == after->year &&
+        -:  982:        before->mon  == after->mon  &&
+        -:  983:        before->day  == after->day  &&
+        -:  984:        before->hour == after->hour &&
+        -:  985:        before->min   > after->min  )
+        -:  986:        return( 1 );
+        -:  987:
+        -:  988:    if( before->year == after->year &&
+        -:  989:        before->mon  == after->mon  &&
+        -:  990:        before->day  == after->day  &&
+        -:  991:        before->hour == after->hour &&
+        -:  992:        before->min  == after->min  &&
+        -:  993:        before->sec   > after->sec  )
+        -:  994:        return( 1 );
+        -:  995:
+        -:  996:    return( 0 );
+        -:  997:}
+        -:  998:
+        -:  999:int mbedtls_x509_time_is_past( const mbedtls_x509_time *to )
+        -: 1000:{
+        -: 1001:    mbedtls_x509_time now;
+        -: 1002:
+        -: 1003:    if( x509_get_current_time( &now ) != 0 )
+        -: 1004:        return( 1 );
+        -: 1005:
+        -: 1006:    return( x509_check_time( &now, to ) );
+        -: 1007:}
+        -: 1008:
+        -: 1009:int mbedtls_x509_time_is_future( const mbedtls_x509_time *from )
+        -: 1010:{
+        -: 1011:    mbedtls_x509_time now;
+        -: 1012:
+        -: 1013:    if( x509_get_current_time( &now ) != 0 )
+        -: 1014:        return( 1 );
+        -: 1015:
+        -: 1016:    return( x509_check_time( from, &now ) );
+        -: 1017:}
+        -: 1018:
+        -: 1019:#else  /* MBEDTLS_HAVE_TIME_DATE */
+        -: 1020:
+    #####: 1021:int mbedtls_x509_time_is_past( const mbedtls_x509_time *to )
+        -: 1022:{
+        -: 1023:    ((void) to);
+    #####: 1024:    return( 0 );
+        -: 1025:}
+        -: 1026:
+    #####: 1027:int mbedtls_x509_time_is_future( const mbedtls_x509_time *from )
+        -: 1028:{
+        -: 1029:    ((void) from);
+    #####: 1030:    return( 0 );
+        -: 1031:}
+        -: 1032:#endif /* MBEDTLS_HAVE_TIME_DATE */
+        -: 1033:
+        -: 1034:#if defined(MBEDTLS_SELF_TEST)
+        -: 1035:
+        -: 1036:#include "mbedtls/x509_crt.h"
+        -: 1037:#include "mbedtls/certs.h"
+        -: 1038:
+        -: 1039:/*
+        -: 1040: * Checkup routine
+        -: 1041: */
+        -: 1042:int mbedtls_x509_self_test( int verbose )
+        -: 1043:{
+        -: 1044:#if defined(MBEDTLS_CERTS_C) && defined(MBEDTLS_SHA256_C)
+        -: 1045:    int ret;
+        -: 1046:    uint32_t flags;
+        -: 1047:    mbedtls_x509_crt cacert;
+        -: 1048:    mbedtls_x509_crt clicert;
+        -: 1049:
+        -: 1050:    if( verbose != 0 )
+        -: 1051:        mbedtls_printf( "  X.509 certificate load: " );
+        -: 1052:
+        -: 1053:    mbedtls_x509_crt_init( &clicert );
+        -: 1054:
+        -: 1055:    ret = mbedtls_x509_crt_parse( &clicert, (const unsigned char *) mbedtls_test_cli_crt,
+        -: 1056:                           mbedtls_test_cli_crt_len );
+        -: 1057:    if( ret != 0 )
+        -: 1058:    {
+        -: 1059:        if( verbose != 0 )
+        -: 1060:            mbedtls_printf( "failed\n" );
+        -: 1061:
+        -: 1062:        return( ret );
+        -: 1063:    }
+        -: 1064:
+        -: 1065:    mbedtls_x509_crt_init( &cacert );
+        -: 1066:
+        -: 1067:    ret = mbedtls_x509_crt_parse( &cacert, (const unsigned char *) mbedtls_test_ca_crt,
+        -: 1068:                          mbedtls_test_ca_crt_len );
+        -: 1069:    if( ret != 0 )
+        -: 1070:    {
+        -: 1071:        if( verbose != 0 )
+        -: 1072:            mbedtls_printf( "failed\n" );
+        -: 1073:
+        -: 1074:        return( ret );
+        -: 1075:    }
+        -: 1076:
+        -: 1077:    if( verbose != 0 )
+        -: 1078:        mbedtls_printf( "passed\n  X.509 signature verify: ");
+        -: 1079:
+        -: 1080:    ret = mbedtls_x509_crt_verify( &clicert, &cacert, NULL, NULL, &flags, NULL, NULL );
+        -: 1081:    if( ret != 0 )
+        -: 1082:    {
+        -: 1083:        if( verbose != 0 )
+        -: 1084:            mbedtls_printf( "failed\n" );
+        -: 1085:
+        -: 1086:        return( ret );
+        -: 1087:    }
+        -: 1088:
+        -: 1089:    if( verbose != 0 )
+        -: 1090:        mbedtls_printf( "passed\n\n");
+        -: 1091:
+        -: 1092:    mbedtls_x509_crt_free( &cacert  );
+        -: 1093:    mbedtls_x509_crt_free( &clicert );
+        -: 1094:
+        -: 1095:    return( 0 );
+        -: 1096:#else
+        -: 1097:    ((void) verbose);
+        -: 1098:    return( 0 );
+        -: 1099:#endif /* MBEDTLS_CERTS_C && MBEDTLS_SHA1_C */
+        -: 1100:}
+        -: 1101:
+        -: 1102:#endif /* MBEDTLS_SELF_TEST */
+        -: 1103:
+        -: 1104:#endif /* MBEDTLS_X509_USE_C */

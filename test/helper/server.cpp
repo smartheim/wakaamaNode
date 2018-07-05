@@ -81,7 +81,7 @@ void Lwm2mServer::init(bool useDtls) {
     // Install a monitoring callback for the server lwm2m context.
     // We check for the COAP_201_CREATED and COAP_202_DELETED events
     lwm2m_set_monitoring_callback(server_context, prv_monitor_callback, this);
-    server_bound_sockets = lwm2m_network_init(server_context,
+    int server_bound_sockets = lwm2m_network_init(server_context,
                                               useDtls ? LWM2M_DEFAULT_SECURE_SERVER_PORT : LWM2M_DEFAULT_SERVER_PORT);
     ASSERT_LE(1, server_bound_sockets);
     ASSERT_TRUE(server_context->userData!=NULL);
@@ -91,11 +91,6 @@ void Lwm2mServer::init(bool useDtls) {
         lwm2m_server_dtls_psk(server_context,PUBLICID,PSK,PSK_LEN);
     
     server_running = true;
-    #ifdef TAP_SERVER_ADDR //lwip
-    // listen on the second lwip network interface for the server
-    server_bound_sockets = 1;
-    lwm2m_network_force_interface(server_context, lwip_network_get_interface(server_bound_sockets));
-    #endif
 
     #ifdef POSIX_NETWORK
     pipe(pfds);

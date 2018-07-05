@@ -85,16 +85,6 @@ void lwm2m_network_close(lwm2m_context_t * contextP);
 intptr_t lwm2m_network_native_sock(lwm2m_context_t * contextP, unsigned sock_no);
 
 /**
- * @brief Force the network stack to use the given network interface
- * This is useful for testing purposes. The routing table will be ignored
- * and the given interface will be used for outgoing traffic.
- * @param contextP The wakaama context.
- * @param interface A generic value which can be used to point to a network
- * interface. The interpretation depends on the network backend.
- */
-void lwm2m_network_force_interface(lwm2m_context_t * contextP, void* interface);
-
-/**
  * @brief Blocks until new data is available on the sockets
  *
  * This is only available on systems that have an epoll API call

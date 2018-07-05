@@ -1,0 +1,591 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/network/mbedtls/library/md_wrap.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/network/mbedtls/library/md_wrap.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/**
+        -:    2: * \file md_wrap.c
+        -:    3: *
+        -:    4: * \brief Generic message digest wrapper for mbed TLS
+        -:    5: *
+        -:    6: * \author Adriaan de Jong <dejong@fox-it.com>
+        -:    7: *
+        -:    8: *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+        -:    9: *  SPDX-License-Identifier: Apache-2.0
+        -:   10: *
+        -:   11: *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+        -:   12: *  not use this file except in compliance with the License.
+        -:   13: *  You may obtain a copy of the License at
+        -:   14: *
+        -:   15: *  http://www.apache.org/licenses/LICENSE-2.0
+        -:   16: *
+        -:   17: *  Unless required by applicable law or agreed to in writing, software
+        -:   18: *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+        -:   19: *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   20: *  See the License for the specific language governing permissions and
+        -:   21: *  limitations under the License.
+        -:   22: *
+        -:   23: *  This file is part of mbed TLS (https://tls.mbed.org)
+        -:   24: */
+        -:   25:
+        -:   26:#if !defined(MBEDTLS_CONFIG_FILE)
+        -:   27:#include "mbedtls/config.h"
+        -:   28:#else
+        -:   29:#include MBEDTLS_CONFIG_FILE
+        -:   30:#endif
+        -:   31:
+        -:   32:#if defined(MBEDTLS_MD_C)
+        -:   33:
+        -:   34:#include "mbedtls/md_internal.h"
+        -:   35:
+        -:   36:#if defined(MBEDTLS_MD2_C)
+        -:   37:#include "mbedtls/md2.h"
+        -:   38:#endif
+        -:   39:
+        -:   40:#if defined(MBEDTLS_MD4_C)
+        -:   41:#include "mbedtls/md4.h"
+        -:   42:#endif
+        -:   43:
+        -:   44:#if defined(MBEDTLS_MD5_C)
+        -:   45:#include "mbedtls/md5.h"
+        -:   46:#endif
+        -:   47:
+        -:   48:#if defined(MBEDTLS_RIPEMD160_C)
+        -:   49:#include "mbedtls/ripemd160.h"
+        -:   50:#endif
+        -:   51:
+        -:   52:#if defined(MBEDTLS_SHA1_C)
+        -:   53:#include "mbedtls/sha1.h"
+        -:   54:#endif
+        -:   55:
+        -:   56:#if defined(MBEDTLS_SHA256_C)
+        -:   57:#include "mbedtls/sha256.h"
+        -:   58:#endif
+        -:   59:
+        -:   60:#if defined(MBEDTLS_SHA512_C)
+        -:   61:#include "mbedtls/sha512.h"
+        -:   62:#endif
+        -:   63:
+        -:   64:#if defined(MBEDTLS_PLATFORM_C)
+        -:   65:#include "mbedtls/platform.h"
+        -:   66:#else
+        -:   67:#include <stdlib.h>
+        -:   68:#define mbedtls_calloc    calloc
+        -:   69:#define mbedtls_free       free
+        -:   70:#endif
+        -:   71:
+        -:   72:#if defined(MBEDTLS_MD2_C)
+        -:   73:
+        -:   74:static int md2_starts_wrap( void *ctx )
+        -:   75:{
+        -:   76:    return( mbedtls_md2_starts_ret( (mbedtls_md2_context *) ctx ) );
+        -:   77:}
+        -:   78:
+        -:   79:static int md2_update_wrap( void *ctx, const unsigned char *input,
+        -:   80:                             size_t ilen )
+        -:   81:{
+        -:   82:    return( mbedtls_md2_update_ret( (mbedtls_md2_context *) ctx, input, ilen ) );
+        -:   83:}
+        -:   84:
+        -:   85:static int md2_finish_wrap( void *ctx, unsigned char *output )
+        -:   86:{
+        -:   87:    return( mbedtls_md2_finish_ret( (mbedtls_md2_context *) ctx, output ) );
+        -:   88:}
+        -:   89:
+        -:   90:static void *md2_ctx_alloc( void )
+        -:   91:{
+        -:   92:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_md2_context ) );
+        -:   93:
+        -:   94:    if( ctx != NULL )
+        -:   95:        mbedtls_md2_init( (mbedtls_md2_context *) ctx );
+        -:   96:
+        -:   97:    return( ctx );
+        -:   98:}
+        -:   99:
+        -:  100:static void md2_ctx_free( void *ctx )
+        -:  101:{
+        -:  102:    mbedtls_md2_free( (mbedtls_md2_context *) ctx );
+        -:  103:    mbedtls_free( ctx );
+        -:  104:}
+        -:  105:
+        -:  106:static void md2_clone_wrap( void *dst, const void *src )
+        -:  107:{
+        -:  108:    mbedtls_md2_clone( (mbedtls_md2_context *) dst,
+        -:  109:                 (const mbedtls_md2_context *) src );
+        -:  110:}
+        -:  111:
+        -:  112:static int md2_process_wrap( void *ctx, const unsigned char *data )
+        -:  113:{
+        -:  114:    ((void) data);
+        -:  115:
+        -:  116:    return( mbedtls_internal_md2_process( (mbedtls_md2_context *) ctx ) );
+        -:  117:}
+        -:  118:
+        -:  119:const mbedtls_md_info_t mbedtls_md2_info = {
+        -:  120:    MBEDTLS_MD_MD2,
+        -:  121:    "MD2",
+        -:  122:    16,
+        -:  123:    16,
+        -:  124:    md2_starts_wrap,
+        -:  125:    md2_update_wrap,
+        -:  126:    md2_finish_wrap,
+        -:  127:    mbedtls_md2_ret,
+        -:  128:    md2_ctx_alloc,
+        -:  129:    md2_ctx_free,
+        -:  130:    md2_clone_wrap,
+        -:  131:    md2_process_wrap,
+        -:  132:};
+        -:  133:
+        -:  134:#endif /* MBEDTLS_MD2_C */
+        -:  135:
+        -:  136:#if defined(MBEDTLS_MD4_C)
+        -:  137:
+        -:  138:static int md4_starts_wrap( void *ctx )
+        -:  139:{
+        -:  140:    return( mbedtls_md4_starts_ret( (mbedtls_md4_context *) ctx ) );
+        -:  141:}
+        -:  142:
+        -:  143:static int md4_update_wrap( void *ctx, const unsigned char *input,
+        -:  144:                             size_t ilen )
+        -:  145:{
+        -:  146:    return( mbedtls_md4_update_ret( (mbedtls_md4_context *) ctx, input, ilen ) );
+        -:  147:}
+        -:  148:
+        -:  149:static int md4_finish_wrap( void *ctx, unsigned char *output )
+        -:  150:{
+        -:  151:    return( mbedtls_md4_finish_ret( (mbedtls_md4_context *) ctx, output ) );
+        -:  152:}
+        -:  153:
+        -:  154:static void *md4_ctx_alloc( void )
+        -:  155:{
+        -:  156:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_md4_context ) );
+        -:  157:
+        -:  158:    if( ctx != NULL )
+        -:  159:        mbedtls_md4_init( (mbedtls_md4_context *) ctx );
+        -:  160:
+        -:  161:    return( ctx );
+        -:  162:}
+        -:  163:
+        -:  164:static void md4_ctx_free( void *ctx )
+        -:  165:{
+        -:  166:    mbedtls_md4_free( (mbedtls_md4_context *) ctx );
+        -:  167:    mbedtls_free( ctx );
+        -:  168:}
+        -:  169:
+        -:  170:static void md4_clone_wrap( void *dst, const void *src )
+        -:  171:{
+        -:  172:    mbedtls_md4_clone( (mbedtls_md4_context *) dst,
+        -:  173:                       (const mbedtls_md4_context *) src );
+        -:  174:}
+        -:  175:
+        -:  176:static int md4_process_wrap( void *ctx, const unsigned char *data )
+        -:  177:{
+        -:  178:    return( mbedtls_internal_md4_process( (mbedtls_md4_context *) ctx, data ) );
+        -:  179:}
+        -:  180:
+        -:  181:const mbedtls_md_info_t mbedtls_md4_info = {
+        -:  182:    MBEDTLS_MD_MD4,
+        -:  183:    "MD4",
+        -:  184:    16,
+        -:  185:    64,
+        -:  186:    md4_starts_wrap,
+        -:  187:    md4_update_wrap,
+        -:  188:    md4_finish_wrap,
+        -:  189:    mbedtls_md4_ret,
+        -:  190:    md4_ctx_alloc,
+        -:  191:    md4_ctx_free,
+        -:  192:    md4_clone_wrap,
+        -:  193:    md4_process_wrap,
+        -:  194:};
+        -:  195:
+        -:  196:#endif /* MBEDTLS_MD4_C */
+        -:  197:
+        -:  198:#if defined(MBEDTLS_MD5_C)
+        -:  199:
+    #####:  200:static int md5_starts_wrap( void *ctx )
+        -:  201:{
+    #####:  202:    return( mbedtls_md5_starts_ret( (mbedtls_md5_context *) ctx ) );
+        -:  203:}
+        -:  204:
+    #####:  205:static int md5_update_wrap( void *ctx, const unsigned char *input,
+        -:  206:                             size_t ilen )
+        -:  207:{
+    #####:  208:    return( mbedtls_md5_update_ret( (mbedtls_md5_context *) ctx, input, ilen ) );
+        -:  209:}
+        -:  210:
+    #####:  211:static int md5_finish_wrap( void *ctx, unsigned char *output )
+        -:  212:{
+    #####:  213:    return( mbedtls_md5_finish_ret( (mbedtls_md5_context *) ctx, output ) );
+        -:  214:}
+        -:  215:
+    #####:  216:static void *md5_ctx_alloc( void )
+        -:  217:{
+    #####:  218:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_md5_context ) );
+        -:  219:
+    #####:  220:    if( ctx != NULL )
+    #####:  221:        mbedtls_md5_init( (mbedtls_md5_context *) ctx );
+        -:  222:
+    #####:  223:    return( ctx );
+        -:  224:}
+        -:  225:
+    #####:  226:static void md5_ctx_free( void *ctx )
+        -:  227:{
+    #####:  228:    mbedtls_md5_free( (mbedtls_md5_context *) ctx );
+    #####:  229:    mbedtls_free( ctx );
+    #####:  230:}
+        -:  231:
+    #####:  232:static void md5_clone_wrap( void *dst, const void *src )
+        -:  233:{
+    #####:  234:    mbedtls_md5_clone( (mbedtls_md5_context *) dst,
+        -:  235:                       (const mbedtls_md5_context *) src );
+    #####:  236:}
+        -:  237:
+    #####:  238:static int md5_process_wrap( void *ctx, const unsigned char *data )
+        -:  239:{
+    #####:  240:    return( mbedtls_internal_md5_process( (mbedtls_md5_context *) ctx, data ) );
+        -:  241:}
+        -:  242:
+        -:  243:const mbedtls_md_info_t mbedtls_md5_info = {
+        -:  244:    MBEDTLS_MD_MD5,
+        -:  245:    "MD5",
+        -:  246:    16,
+        -:  247:    64,
+        -:  248:    md5_starts_wrap,
+        -:  249:    md5_update_wrap,
+        -:  250:    md5_finish_wrap,
+        -:  251:    mbedtls_md5_ret,
+        -:  252:    md5_ctx_alloc,
+        -:  253:    md5_ctx_free,
+        -:  254:    md5_clone_wrap,
+        -:  255:    md5_process_wrap,
+        -:  256:};
+        -:  257:
+        -:  258:#endif /* MBEDTLS_MD5_C */
+        -:  259:
+        -:  260:#if defined(MBEDTLS_RIPEMD160_C)
+        -:  261:
+        -:  262:static int ripemd160_starts_wrap( void *ctx )
+        -:  263:{
+        -:  264:    return( mbedtls_ripemd160_starts_ret( (mbedtls_ripemd160_context *) ctx ) );
+        -:  265:}
+        -:  266:
+        -:  267:static int ripemd160_update_wrap( void *ctx, const unsigned char *input,
+        -:  268:                                   size_t ilen )
+        -:  269:{
+        -:  270:    return( mbedtls_ripemd160_update_ret( (mbedtls_ripemd160_context *) ctx,
+        -:  271:                                          input, ilen ) );
+        -:  272:}
+        -:  273:
+        -:  274:static int ripemd160_finish_wrap( void *ctx, unsigned char *output )
+        -:  275:{
+        -:  276:    return( mbedtls_ripemd160_finish_ret( (mbedtls_ripemd160_context *) ctx,
+        -:  277:                                          output ) );
+        -:  278:}
+        -:  279:
+        -:  280:static void *ripemd160_ctx_alloc( void )
+        -:  281:{
+        -:  282:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_ripemd160_context ) );
+        -:  283:
+        -:  284:    if( ctx != NULL )
+        -:  285:        mbedtls_ripemd160_init( (mbedtls_ripemd160_context *) ctx );
+        -:  286:
+        -:  287:    return( ctx );
+        -:  288:}
+        -:  289:
+        -:  290:static void ripemd160_ctx_free( void *ctx )
+        -:  291:{
+        -:  292:    mbedtls_ripemd160_free( (mbedtls_ripemd160_context *) ctx );
+        -:  293:    mbedtls_free( ctx );
+        -:  294:}
+        -:  295:
+        -:  296:static void ripemd160_clone_wrap( void *dst, const void *src )
+        -:  297:{
+        -:  298:    mbedtls_ripemd160_clone( (mbedtls_ripemd160_context *) dst,
+        -:  299:                       (const mbedtls_ripemd160_context *) src );
+        -:  300:}
+        -:  301:
+        -:  302:static int ripemd160_process_wrap( void *ctx, const unsigned char *data )
+        -:  303:{
+        -:  304:    return( mbedtls_internal_ripemd160_process(
+        -:  305:                                (mbedtls_ripemd160_context *) ctx, data ) );
+        -:  306:}
+        -:  307:
+        -:  308:const mbedtls_md_info_t mbedtls_ripemd160_info = {
+        -:  309:    MBEDTLS_MD_RIPEMD160,
+        -:  310:    "RIPEMD160",
+        -:  311:    20,
+        -:  312:    64,
+        -:  313:    ripemd160_starts_wrap,
+        -:  314:    ripemd160_update_wrap,
+        -:  315:    ripemd160_finish_wrap,
+        -:  316:    mbedtls_ripemd160_ret,
+        -:  317:    ripemd160_ctx_alloc,
+        -:  318:    ripemd160_ctx_free,
+        -:  319:    ripemd160_clone_wrap,
+        -:  320:    ripemd160_process_wrap,
+        -:  321:};
+        -:  322:
+        -:  323:#endif /* MBEDTLS_RIPEMD160_C */
+        -:  324:
+        -:  325:#if defined(MBEDTLS_SHA1_C)
+        -:  326:
+    #####:  327:static int sha1_starts_wrap( void *ctx )
+        -:  328:{
+    #####:  329:    return( mbedtls_sha1_starts_ret( (mbedtls_sha1_context *) ctx ) );
+        -:  330:}
+        -:  331:
+    #####:  332:static int sha1_update_wrap( void *ctx, const unsigned char *input,
+        -:  333:                              size_t ilen )
+        -:  334:{
+    #####:  335:    return( mbedtls_sha1_update_ret( (mbedtls_sha1_context *) ctx,
+        -:  336:                                     input, ilen ) );
+        -:  337:}
+        -:  338:
+    #####:  339:static int sha1_finish_wrap( void *ctx, unsigned char *output )
+        -:  340:{
+    #####:  341:    return( mbedtls_sha1_finish_ret( (mbedtls_sha1_context *) ctx, output ) );
+        -:  342:}
+        -:  343:
+    #####:  344:static void *sha1_ctx_alloc( void )
+        -:  345:{
+    #####:  346:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_sha1_context ) );
+        -:  347:
+    #####:  348:    if( ctx != NULL )
+    #####:  349:        mbedtls_sha1_init( (mbedtls_sha1_context *) ctx );
+        -:  350:
+    #####:  351:    return( ctx );
+        -:  352:}
+        -:  353:
+    #####:  354:static void sha1_clone_wrap( void *dst, const void *src )
+        -:  355:{
+    #####:  356:    mbedtls_sha1_clone( (mbedtls_sha1_context *) dst,
+        -:  357:                  (const mbedtls_sha1_context *) src );
+    #####:  358:}
+        -:  359:
+    #####:  360:static void sha1_ctx_free( void *ctx )
+        -:  361:{
+    #####:  362:    mbedtls_sha1_free( (mbedtls_sha1_context *) ctx );
+    #####:  363:    mbedtls_free( ctx );
+    #####:  364:}
+        -:  365:
+    #####:  366:static int sha1_process_wrap( void *ctx, const unsigned char *data )
+        -:  367:{
+    #####:  368:    return( mbedtls_internal_sha1_process( (mbedtls_sha1_context *) ctx,
+        -:  369:                                           data ) );
+        -:  370:}
+        -:  371:
+        -:  372:const mbedtls_md_info_t mbedtls_sha1_info = {
+        -:  373:    MBEDTLS_MD_SHA1,
+        -:  374:    "SHA1",
+        -:  375:    20,
+        -:  376:    64,
+        -:  377:    sha1_starts_wrap,
+        -:  378:    sha1_update_wrap,
+        -:  379:    sha1_finish_wrap,
+        -:  380:    mbedtls_sha1_ret,
+        -:  381:    sha1_ctx_alloc,
+        -:  382:    sha1_ctx_free,
+        -:  383:    sha1_clone_wrap,
+        -:  384:    sha1_process_wrap,
+        -:  385:};
+        -:  386:
+        -:  387:#endif /* MBEDTLS_SHA1_C */
+        -:  388:
+        -:  389:/*
+        -:  390: * Wrappers for generic message digests
+        -:  391: */
+        -:  392:#if defined(MBEDTLS_SHA256_C)
+        -:  393:
+    #####:  394:static int sha224_starts_wrap( void *ctx )
+        -:  395:{
+    #####:  396:    return( mbedtls_sha256_starts_ret( (mbedtls_sha256_context *) ctx, 1 ) );
+        -:  397:}
+        -:  398:
+    #####:  399:static int sha224_update_wrap( void *ctx, const unsigned char *input,
+        -:  400:                                size_t ilen )
+        -:  401:{
+    #####:  402:    return( mbedtls_sha256_update_ret( (mbedtls_sha256_context *) ctx,
+        -:  403:                                       input, ilen ) );
+        -:  404:}
+        -:  405:
+    #####:  406:static int sha224_finish_wrap( void *ctx, unsigned char *output )
+        -:  407:{
+    #####:  408:    return( mbedtls_sha256_finish_ret( (mbedtls_sha256_context *) ctx,
+        -:  409:                                       output ) );
+        -:  410:}
+        -:  411:
+    #####:  412:static int sha224_wrap( const unsigned char *input, size_t ilen,
+        -:  413:                        unsigned char *output )
+        -:  414:{
+    #####:  415:    return( mbedtls_sha256_ret( input, ilen, output, 1 ) );
+        -:  416:}
+        -:  417:
+    #####:  418:static void *sha224_ctx_alloc( void )
+        -:  419:{
+    #####:  420:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_sha256_context ) );
+        -:  421:
+    #####:  422:    if( ctx != NULL )
+    #####:  423:        mbedtls_sha256_init( (mbedtls_sha256_context *) ctx );
+        -:  424:
+    #####:  425:    return( ctx );
+        -:  426:}
+        -:  427:
+    #####:  428:static void sha224_ctx_free( void *ctx )
+        -:  429:{
+    #####:  430:    mbedtls_sha256_free( (mbedtls_sha256_context *) ctx );
+    #####:  431:    mbedtls_free( ctx );
+    #####:  432:}
+        -:  433:
+    #####:  434:static void sha224_clone_wrap( void *dst, const void *src )
+        -:  435:{
+    #####:  436:    mbedtls_sha256_clone( (mbedtls_sha256_context *) dst,
+        -:  437:                    (const mbedtls_sha256_context *) src );
+    #####:  438:}
+        -:  439:
+    #####:  440:static int sha224_process_wrap( void *ctx, const unsigned char *data )
+        -:  441:{
+    #####:  442:    return( mbedtls_internal_sha256_process( (mbedtls_sha256_context *) ctx,
+        -:  443:                                             data ) );
+        -:  444:}
+        -:  445:
+        -:  446:const mbedtls_md_info_t mbedtls_sha224_info = {
+        -:  447:    MBEDTLS_MD_SHA224,
+        -:  448:    "SHA224",
+        -:  449:    28,
+        -:  450:    64,
+        -:  451:    sha224_starts_wrap,
+        -:  452:    sha224_update_wrap,
+        -:  453:    sha224_finish_wrap,
+        -:  454:    sha224_wrap,
+        -:  455:    sha224_ctx_alloc,
+        -:  456:    sha224_ctx_free,
+        -:  457:    sha224_clone_wrap,
+        -:  458:    sha224_process_wrap,
+        -:  459:};
+        -:  460:
+    #####:  461:static int sha256_starts_wrap( void *ctx )
+        -:  462:{
+    #####:  463:    return( mbedtls_sha256_starts_ret( (mbedtls_sha256_context *) ctx, 0 ) );
+        -:  464:}
+        -:  465:
+    #####:  466:static int sha256_wrap( const unsigned char *input, size_t ilen,
+        -:  467:                        unsigned char *output )
+        -:  468:{
+    #####:  469:    return( mbedtls_sha256_ret( input, ilen, output, 0 ) );
+        -:  470:}
+        -:  471:
+        -:  472:const mbedtls_md_info_t mbedtls_sha256_info = {
+        -:  473:    MBEDTLS_MD_SHA256,
+        -:  474:    "SHA256",
+        -:  475:    32,
+        -:  476:    64,
+        -:  477:    sha256_starts_wrap,
+        -:  478:    sha224_update_wrap,
+        -:  479:    sha224_finish_wrap,
+        -:  480:    sha256_wrap,
+        -:  481:    sha224_ctx_alloc,
+        -:  482:    sha224_ctx_free,
+        -:  483:    sha224_clone_wrap,
+        -:  484:    sha224_process_wrap,
+        -:  485:};
+        -:  486:
+        -:  487:#endif /* MBEDTLS_SHA256_C */
+        -:  488:
+        -:  489:#if defined(MBEDTLS_SHA512_C)
+        -:  490:
+    #####:  491:static int sha384_starts_wrap( void *ctx )
+        -:  492:{
+    #####:  493:    return( mbedtls_sha512_starts_ret( (mbedtls_sha512_context *) ctx, 1 ) );
+        -:  494:}
+        -:  495:
+    #####:  496:static int sha384_update_wrap( void *ctx, const unsigned char *input,
+        -:  497:                               size_t ilen )
+        -:  498:{
+    #####:  499:    return( mbedtls_sha512_update_ret( (mbedtls_sha512_context *) ctx,
+        -:  500:                                       input, ilen ) );
+        -:  501:}
+        -:  502:
+    #####:  503:static int sha384_finish_wrap( void *ctx, unsigned char *output )
+        -:  504:{
+    #####:  505:    return( mbedtls_sha512_finish_ret( (mbedtls_sha512_context *) ctx,
+        -:  506:                                       output ) );
+        -:  507:}
+        -:  508:
+    #####:  509:static int sha384_wrap( const unsigned char *input, size_t ilen,
+        -:  510:                        unsigned char *output )
+        -:  511:{
+    #####:  512:    return( mbedtls_sha512_ret( input, ilen, output, 1 ) );
+        -:  513:}
+        -:  514:
+    #####:  515:static void *sha384_ctx_alloc( void )
+        -:  516:{
+    #####:  517:    void *ctx = mbedtls_calloc( 1, sizeof( mbedtls_sha512_context ) );
+        -:  518:
+    #####:  519:    if( ctx != NULL )
+    #####:  520:        mbedtls_sha512_init( (mbedtls_sha512_context *) ctx );
+        -:  521:
+    #####:  522:    return( ctx );
+        -:  523:}
+        -:  524:
+    #####:  525:static void sha384_ctx_free( void *ctx )
+        -:  526:{
+    #####:  527:    mbedtls_sha512_free( (mbedtls_sha512_context *) ctx );
+    #####:  528:    mbedtls_free( ctx );
+    #####:  529:}
+        -:  530:
+    #####:  531:static void sha384_clone_wrap( void *dst, const void *src )
+        -:  532:{
+    #####:  533:    mbedtls_sha512_clone( (mbedtls_sha512_context *) dst,
+        -:  534:                    (const mbedtls_sha512_context *) src );
+    #####:  535:}
+        -:  536:
+    #####:  537:static int sha384_process_wrap( void *ctx, const unsigned char *data )
+        -:  538:{
+    #####:  539:    return( mbedtls_internal_sha512_process( (mbedtls_sha512_context *) ctx,
+        -:  540:                                             data ) );
+        -:  541:}
+        -:  542:
+        -:  543:const mbedtls_md_info_t mbedtls_sha384_info = {
+        -:  544:    MBEDTLS_MD_SHA384,
+        -:  545:    "SHA384",
+        -:  546:    48,
+        -:  547:    128,
+        -:  548:    sha384_starts_wrap,
+        -:  549:    sha384_update_wrap,
+        -:  550:    sha384_finish_wrap,
+        -:  551:    sha384_wrap,
+        -:  552:    sha384_ctx_alloc,
+        -:  553:    sha384_ctx_free,
+        -:  554:    sha384_clone_wrap,
+        -:  555:    sha384_process_wrap,
+        -:  556:};
+        -:  557:
+    #####:  558:static int sha512_starts_wrap( void *ctx )
+        -:  559:{
+    #####:  560:    return( mbedtls_sha512_starts_ret( (mbedtls_sha512_context *) ctx, 0 ) );
+        -:  561:}
+        -:  562:
+    #####:  563:static int sha512_wrap( const unsigned char *input, size_t ilen,
+        -:  564:                        unsigned char *output )
+        -:  565:{
+    #####:  566:    return( mbedtls_sha512_ret( input, ilen, output, 0 ) );
+        -:  567:}
+        -:  568:
+        -:  569:const mbedtls_md_info_t mbedtls_sha512_info = {
+        -:  570:    MBEDTLS_MD_SHA512,
+        -:  571:    "SHA512",
+        -:  572:    64,
+        -:  573:    128,
+        -:  574:    sha512_starts_wrap,
+        -:  575:    sha384_update_wrap,
+        -:  576:    sha384_finish_wrap,
+        -:  577:    sha512_wrap,
+        -:  578:    sha384_ctx_alloc,
+        -:  579:    sha384_ctx_free,
+        -:  580:    sha384_clone_wrap,
+        -:  581:    sha384_process_wrap,
+        -:  582:};
+        -:  583:
+        -:  584:#endif /* MBEDTLS_SHA512_C */
+        -:  585:
+        -:  586:#endif /* MBEDTLS_MD_C */

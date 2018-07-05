@@ -1,0 +1,130 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/wakaama/list.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/wakaama/list.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: *
+        -:    3: * Copyright (c) 2013 Intel Corporation and others.
+        -:    4: * All rights reserved. This program and the accompanying materials
+        -:    5: * are made available under the terms of the Eclipse Public License v1.0
+        -:    6: * and Eclipse Distribution License v1.0 which accompany this distribution.
+        -:    7: *
+        -:    8: * The Eclipse Public License is available at
+        -:    9: *    http://www.eclipse.org/legal/epl-v10.html
+        -:   10: * The Eclipse Distribution License is available at
+        -:   11: *    http://www.eclipse.org/org/documents/edl-v10.php.
+        -:   12: *
+        -:   13: * Contributors:
+        -:   14: *    David Navarro, Intel Corporation - initial API and implementation
+        -:   15: *    
+        -:   16: *******************************************************************************/
+        -:   17:
+        -:   18:#include "internals.h"
+        -:   19:
+        -:   20:
+    #####:   21:lwm2m_list_t * lwm2m_list_add(lwm2m_list_t * head,
+        -:   22:                              lwm2m_list_t * node)
+        -:   23:{
+        -:   24:    lwm2m_list_t * target;
+        -:   25:
+    #####:   26:    if (NULL == head) return node;
+        -:   27:
+    #####:   28:    if (head->id > node->id)
+        -:   29:    {
+    #####:   30:        node->next = head;
+    #####:   31:        return node;
+        -:   32:    }
+        -:   33:
+    #####:   34:    target = head;
+    #####:   35:    while (NULL != target->next && target->next->id < node->id)
+        -:   36:    {
+    #####:   37:        target = target->next;
+        -:   38:    }
+        -:   39:
+    #####:   40:    node->next = target->next;
+    #####:   41:    target->next = node;
+        -:   42:
+    #####:   43:    return head;
+        -:   44:}
+        -:   45:
+        -:   46:
+    #####:   47:lwm2m_list_t * lwm2m_list_find(lwm2m_list_t * head,
+        -:   48:                               uint16_t id)
+        -:   49:{
+    #####:   50:    while (NULL != head && head->id < id)
+        -:   51:    {
+    #####:   52:        head = head->next;
+        -:   53:    }
+        -:   54:
+    #####:   55:    if (NULL != head && head->id == id) return head;
+        -:   56:
+    #####:   57:    return NULL;
+        -:   58:}
+        -:   59:
+        -:   60:
+    #####:   61:lwm2m_list_t * lwm2m_list_remove(lwm2m_list_t * head,
+        -:   62:                                 uint16_t id,
+        -:   63:                                 lwm2m_list_t ** nodeP)
+        -:   64:{
+        -:   65:    lwm2m_list_t * target;
+        -:   66:
+    #####:   67:    if (head == NULL)
+        -:   68:    {
+    #####:   69:        if (nodeP) *nodeP = NULL;
+    #####:   70:        return NULL;
+        -:   71:    }
+        -:   72:
+    #####:   73:    if (head->id == id)
+        -:   74:    {
+    #####:   75:        if (nodeP) *nodeP = head;
+    #####:   76:        return head->next;
+        -:   77:    }
+        -:   78:
+    #####:   79:    target = head;
+    #####:   80:    while (NULL != target->next && target->next->id < id)
+        -:   81:    {
+    #####:   82:        target = target->next;
+        -:   83:    }
+        -:   84:
+    #####:   85:    if (NULL != target->next && target->next->id == id)
+        -:   86:    {
+    #####:   87:        if (nodeP) *nodeP = target->next;
+    #####:   88:        target->next = target->next->next;
+        -:   89:    }
+        -:   90:    else
+        -:   91:    {
+    #####:   92:        if (nodeP) *nodeP = NULL;
+        -:   93:    }
+        -:   94:
+    #####:   95:    return head;
+        -:   96:}
+        -:   97:
+    #####:   98:uint16_t lwm2m_list_newId(lwm2m_list_t * head)
+        -:   99:{
+        -:  100:    uint16_t id;
+        -:  101:    lwm2m_list_t * target;
+        -:  102:
+    #####:  103:    id = 0;
+    #####:  104:    target = head;
+        -:  105:
+    #####:  106:    while (target != NULL && id == target->id)
+        -:  107:    {
+    #####:  108:        id = target->id + 1;
+    #####:  109:        target = target->next;
+        -:  110:    }
+        -:  111:
+    #####:  112:    return id;
+        -:  113:}
+        -:  114:
+    #####:  115:void lwm2m_list_free(lwm2m_list_t * head)
+        -:  116:{
+    #####:  117:    if (head != NULL)
+        -:  118:    {
+        -:  119:        lwm2m_list_t * nextP;
+        -:  120:
+    #####:  121:        nextP = head->next;
+    #####:  122:        lwm2m_free(head);
+    #####:  123:        lwm2m_list_free(nextP);
+        -:  124:    }
+    #####:  125:}

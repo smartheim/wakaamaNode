@@ -1,0 +1,1084 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/wakaama/observe.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/wakaama/observe.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: *
+        -:    3: * Copyright (c) 2013, 2014 Intel Corporation and others.
+        -:    4: * All rights reserved. This program and the accompanying materials
+        -:    5: * are made available under the terms of the Eclipse Public License v1.0
+        -:    6: * and Eclipse Distribution License v1.0 which accompany this distribution.
+        -:    7: *
+        -:    8: * The Eclipse Public License is available at
+        -:    9: *    http://www.eclipse.org/legal/epl-v10.html
+        -:   10: * The Eclipse Distribution License is available at
+        -:   11: *    http://www.eclipse.org/org/documents/edl-v10.php.
+        -:   12: *
+        -:   13: * Contributors:
+        -:   14: *    David Navarro, Intel Corporation - initial API and implementation
+        -:   15: *    Toby Jaffey - Please refer to git log
+        -:   16: *    Bosch Software Innovations GmbH - Please refer to git log
+        -:   17: *
+        -:   18: *******************************************************************************/
+        -:   19:
+        -:   20:/*
+        -:   21: Copyright (c) 2013, 2014 Intel Corporation
+        -:   22:
+        -:   23: Redistribution and use in source and binary forms, with or without modification,
+        -:   24: are permitted provided that the following conditions are met:
+        -:   25:
+        -:   26:     * Redistributions of source code must retain the above copyright notice,
+        -:   27:       this list of conditions and the following disclaimer.
+        -:   28:     * Redistributions in binary form must reproduce the above copyright notice,
+        -:   29:       this list of conditions and the following disclaimer in the documentation
+        -:   30:       and/or other materials provided with the distribution.
+        -:   31:     * Neither the name of Intel Corporation nor the names of its contributors
+        -:   32:       may be used to endorse or promote products derived from this software
+        -:   33:       without specific prior written permission.
+        -:   34:
+        -:   35: THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+        -:   36: ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+        -:   37: WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+        -:   38: IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+        -:   39: INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        -:   40: BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+        -:   41: DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+        -:   42: LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+        -:   43: OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+        -:   44: THE POSSIBILITY OF SUCH DAMAGE.
+        -:   45:
+        -:   46: David Navarro <david.navarro@intel.com>
+        -:   47:
+        -:   48:*/
+        -:   49:
+        -:   50:#include "internals.h"
+        -:   51:#include <stdio.h>
+        -:   52:
+        -:   53:
+        -:   54:#ifdef LWM2M_CLIENT_MODE
+    #####:   55:static lwm2m_observed_t * prv_findObserved(lwm2m_context_t * contextP,
+        -:   56:                                           lwm2m_uri_t * uriP)
+        -:   57:{
+        -:   58:    lwm2m_observed_t * targetP;
+        -:   59:
+    #####:   60:    targetP = contextP->observedList;
+    #####:   61:    while (targetP != NULL
+    #####:   62:        && (targetP->uri.objectId != uriP->objectId
+    #####:   63:         || targetP->uri.flag != uriP->flag
+    #####:   64:         || (LWM2M_URI_IS_SET_INSTANCE(uriP) && targetP->uri.instanceId != uriP->instanceId)
+    #####:   65:         || (LWM2M_URI_IS_SET_RESOURCE(uriP) && targetP->uri.resourceId != uriP->resourceId)))
+        -:   66:    {
+    #####:   67:        targetP = targetP->next;
+        -:   68:    }
+        -:   69:
+    #####:   70:    return targetP;
+        -:   71:}
+        -:   72:
+    #####:   73:static void prv_unlinkObserved(lwm2m_context_t * contextP,
+        -:   74:                               lwm2m_observed_t * observedP)
+        -:   75:{
+    #####:   76:    if (contextP->observedList == observedP)
+        -:   77:    {
+    #####:   78:        contextP->observedList = contextP->observedList->next;
+        -:   79:    }
+        -:   80:    else
+        -:   81:    {
+        -:   82:        lwm2m_observed_t * parentP;
+        -:   83:
+    #####:   84:        parentP = contextP->observedList;
+    #####:   85:        while (parentP->next != NULL
+    #####:   86:            && parentP->next != observedP)
+        -:   87:        {
+    #####:   88:            parentP = parentP->next;
+        -:   89:        }
+    #####:   90:        if (parentP->next != NULL)
+        -:   91:        {
+    #####:   92:            parentP->next = parentP->next->next;
+        -:   93:        }
+        -:   94:    }
+    #####:   95:}
+        -:   96:
+    #####:   97:static lwm2m_watcher_t * prv_findWatcher(lwm2m_observed_t * observedP,
+        -:   98:                                         lwm2m_server_t * serverP)
+        -:   99:{
+        -:  100:    lwm2m_watcher_t * targetP;
+        -:  101:
+    #####:  102:    targetP = observedP->watcherList;
+    #####:  103:    while (targetP != NULL
+    #####:  104:        && targetP->server != serverP)
+        -:  105:    {
+    #####:  106:        targetP = targetP->next;
+        -:  107:    }
+        -:  108:
+    #####:  109:    return targetP;
+        -:  110:}
+        -:  111:
+    #####:  112:static lwm2m_watcher_t * prv_getWatcher(lwm2m_context_t * contextP,
+        -:  113:                                        lwm2m_uri_t * uriP,
+        -:  114:                                        lwm2m_server_t * serverP)
+        -:  115:{
+        -:  116:    lwm2m_observed_t * observedP;
+        -:  117:    bool allocatedObserver;
+        -:  118:    lwm2m_watcher_t * watcherP;
+        -:  119:
+    #####:  120:    allocatedObserver = false;
+        -:  121:
+    #####:  122:    observedP = prv_findObserved(contextP, uriP);
+    #####:  123:    if (observedP == NULL)
+        -:  124:    {
+    #####:  125:        observedP = (lwm2m_observed_t *)lwm2m_malloc(sizeof(lwm2m_observed_t));
+    #####:  126:        if (observedP == NULL) return NULL;
+    #####:  127:        allocatedObserver = true;
+    #####:  128:        memset(observedP, 0, sizeof(lwm2m_observed_t));
+    #####:  129:        memcpy(&(observedP->uri), uriP, sizeof(lwm2m_uri_t));
+    #####:  130:        observedP->next = contextP->observedList;
+    #####:  131:        contextP->observedList = observedP;
+        -:  132:    }
+        -:  133:
+    #####:  134:    watcherP = prv_findWatcher(observedP, serverP);
+    #####:  135:    if (watcherP == NULL)
+        -:  136:    {
+    #####:  137:        watcherP = (lwm2m_watcher_t *)lwm2m_malloc(sizeof(lwm2m_watcher_t));
+    #####:  138:        if (watcherP == NULL)
+        -:  139:        {
+    #####:  140:            if (allocatedObserver == true)
+        -:  141:            {
+    #####:  142:                lwm2m_free(observedP);
+        -:  143:            }
+    #####:  144:            return NULL;
+        -:  145:        }
+    #####:  146:        memset(watcherP, 0, sizeof(lwm2m_watcher_t));
+    #####:  147:        watcherP->active = false;
+    #####:  148:        watcherP->server = serverP;
+    #####:  149:        watcherP->next = observedP->watcherList;
+    #####:  150:        observedP->watcherList = watcherP;
+        -:  151:    }
+        -:  152:
+    #####:  153:    return watcherP;
+        -:  154:}
+        -:  155:
+    #####:  156:uint8_t observe_handleRequest(lwm2m_context_t * contextP,
+        -:  157:                              lwm2m_uri_t * uriP,
+        -:  158:                              lwm2m_server_t * serverP,
+        -:  159:                              int size,
+        -:  160:                              lwm2m_data_t * dataP,
+        -:  161:                              coap_packet_t * message,
+        -:  162:                              coap_packet_t * response)
+        -:  163:{
+        -:  164:    lwm2m_observed_t * observedP;
+        -:  165:    lwm2m_watcher_t * watcherP;
+        -:  166:    uint32_t count;
+        -:  167:
+        -:  168:    LOG_ARG("Code: %02X, server status: %s", message->code, STR_STATUS(serverP->status));
+        -:  169:    LOG_URI(uriP);
+        -:  170:
+    #####:  171:    coap_get_header_observe(message, &count);
+        -:  172:
+    #####:  173:    switch (count)
+        -:  174:    {
+    #####:  175:    case 0:
+    #####:  176:        if (!LWM2M_URI_IS_SET_INSTANCE(uriP) && LWM2M_URI_IS_SET_RESOURCE(uriP)) return COAP_400_BAD_REQUEST;
+    #####:  177:        if (message->token_len == 0) return COAP_400_BAD_REQUEST;
+        -:  178:
+    #####:  179:        watcherP = prv_getWatcher(contextP, uriP, serverP);
+    #####:  180:        if (watcherP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
+        -:  181:
+    #####:  182:        watcherP->tokenLen = message->token_len;
+    #####:  183:        memcpy(watcherP->token, message->token, message->token_len);
+    #####:  184:        watcherP->active = true;
+    #####:  185:        watcherP->lastTime = lwm2m_gettime();
+    #####:  186:        watcherP->lastMid = response->mid;
+    #####:  187:        if (IS_OPTION(message, COAP_OPTION_ACCEPT))
+        -:  188:        {
+    #####:  189:            watcherP->format = utils_convertMediaType(message->accept[0]);
+        -:  190:        }
+        -:  191:        else
+        -:  192:        {
+    #####:  193:            watcherP->format = LWM2M_CONTENT_TLV;
+        -:  194:        }
+        -:  195:
+    #####:  196:        if (LWM2M_URI_IS_SET_RESOURCE(uriP))
+        -:  197:        {
+    #####:  198:            switch (dataP->type)
+        -:  199:            {
+    #####:  200:            case LWM2M_TYPE_INTEGER:
+    #####:  201:                if (1 != lwm2m_data_decode_int(dataP, &(watcherP->lastValue.asInteger))) return COAP_500_INTERNAL_SERVER_ERROR;
+    #####:  202:                break;
+    #####:  203:            case LWM2M_TYPE_FLOAT:
+    #####:  204:                if (1 != lwm2m_data_decode_float(dataP, &(watcherP->lastValue.asFloat))) return COAP_500_INTERNAL_SERVER_ERROR;
+    #####:  205:                break;
+    #####:  206:            default:
+    #####:  207:                break;
+        -:  208:            }
+    #####:  209:        }
+        -:  210:
+    #####:  211:        coap_set_header_observe(response, watcherP->counter++);
+        -:  212:
+    #####:  213:        return COAP_205_CONTENT;
+        -:  214:
+    #####:  215:    case 1:
+        -:  216:        // cancellation
+    #####:  217:        observedP = prv_findObserved(contextP, uriP);
+    #####:  218:        if (observedP)
+        -:  219:        {
+    #####:  220:            watcherP = prv_findWatcher(observedP, serverP);
+    #####:  221:            if (watcherP)
+        -:  222:            {
+    #####:  223:                observe_cancel(contextP, watcherP->lastMid, serverP->sessionH);
+        -:  224:            }
+        -:  225:        }
+    #####:  226:        return COAP_205_CONTENT;
+        -:  227:
+    #####:  228:    default:
+    #####:  229:        return COAP_400_BAD_REQUEST;
+        -:  230:    }
+        -:  231:}
+        -:  232:
+    #####:  233:void observe_cancel(lwm2m_context_t * contextP,
+        -:  234:                    uint16_t mid,
+        -:  235:                    void * fromSessionH)
+        -:  236:{
+        -:  237:    lwm2m_observed_t * observedP;
+        -:  238:
+        -:  239:    LOG_ARG("mid: %d", mid);
+        -:  240:
+    #####:  241:    for (observedP = contextP->observedList;
+        -:  242:         observedP != NULL;
+    #####:  243:         observedP = observedP->next)
+        -:  244:    {
+    #####:  245:        lwm2m_watcher_t * targetP = NULL;
+        -:  246:
+    #####:  247:        if (observedP->watcherList->lastMid == mid
+    #####:  248:         && lwm2m_session_is_equal(observedP->watcherList->server->sessionH, fromSessionH, contextP->userData))
+        -:  249:        {
+    #####:  250:            targetP = observedP->watcherList;
+    #####:  251:            observedP->watcherList = observedP->watcherList->next;
+        -:  252:        }
+        -:  253:        else
+        -:  254:        {
+        -:  255:            lwm2m_watcher_t * parentP;
+        -:  256:
+    #####:  257:            parentP = observedP->watcherList;
+    #####:  258:            while (parentP->next != NULL
+    #####:  259:                && (parentP->next->lastMid != mid
+    #####:  260:                 || !lwm2m_session_is_equal(parentP->next->server->sessionH, fromSessionH, contextP->userData)))
+        -:  261:            {
+    #####:  262:                parentP = parentP->next;
+        -:  263:            }
+    #####:  264:            if (parentP->next != NULL)
+        -:  265:            {
+    #####:  266:                targetP = parentP->next;
+    #####:  267:                parentP->next = parentP->next->next;
+        -:  268:            }
+        -:  269:        }
+    #####:  270:        if (targetP != NULL)
+        -:  271:        {
+    #####:  272:            if (targetP->parameters != NULL) lwm2m_free(targetP->parameters);
+    #####:  273:            lwm2m_free(targetP);
+    #####:  274:            if (observedP->watcherList == NULL)
+        -:  275:            {
+    #####:  276:                prv_unlinkObserved(contextP, observedP);
+    #####:  277:                lwm2m_free(observedP);
+        -:  278:            }
+    #####:  279:            return;
+        -:  280:        }
+        -:  281:    }
+        -:  282:}
+        -:  283:
+    #####:  284:void observe_clear(lwm2m_context_t * contextP,
+        -:  285:                   lwm2m_uri_t * uriP)
+        -:  286:{
+        -:  287:    lwm2m_observed_t * observedP;
+        -:  288:
+        -:  289:    LOG_URI(uriP);
+        -:  290:
+    #####:  291:    observedP = contextP->observedList;
+    #####:  292:    while(observedP != NULL)
+        -:  293:    {
+    #####:  294:        if (observedP->uri.objectId == uriP->objectId
+    #####:  295:            && (LWM2M_URI_IS_SET_INSTANCE(uriP) == false
+    #####:  296:                || observedP->uri.instanceId == uriP->instanceId))
+    #####:  297:        {
+        -:  298:            lwm2m_observed_t * nextP;
+        -:  299:            lwm2m_watcher_t * watcherP;
+        -:  300:
+    #####:  301:            nextP = observedP->next;
+        -:  302:
+    #####:  303:            for (watcherP = observedP->watcherList; watcherP != NULL; watcherP = watcherP->next)
+        -:  304:            {
+    #####:  305:                if (watcherP->parameters != NULL) lwm2m_free(watcherP->parameters);
+        -:  306:            }
+    #####:  307:            LWM2M_LIST_FREE(observedP->watcherList);
+        -:  308:
+    #####:  309:            prv_unlinkObserved(contextP, observedP);
+    #####:  310:            lwm2m_free(observedP);
+        -:  311:
+    #####:  312:            observedP = nextP;
+        -:  313:        }
+        -:  314:        else
+        -:  315:        {
+    #####:  316:            observedP = observedP->next;
+        -:  317:        }
+        -:  318:    }
+    #####:  319:}
+        -:  320:
+    #####:  321:uint8_t observe_setParameters(lwm2m_context_t * contextP,
+        -:  322:                              lwm2m_uri_t * uriP,
+        -:  323:                              lwm2m_server_t * serverP,
+        -:  324:                              lwm2m_attributes_t * attrP)
+        -:  325:{
+        -:  326:    uint8_t result;
+        -:  327:    lwm2m_watcher_t * watcherP;
+        -:  328:
+        -:  329:    LOG_URI(uriP);
+        -:  330:    LOG_ARG("toSet: %08X, toClear: %08X, minPeriod: %d, maxPeriod: %d, greaterThan: %f, lessThan: %f, step: %f",
+        -:  331:            attrP->toSet, attrP->toClear, attrP->minPeriod, attrP->maxPeriod, attrP->greaterThan, attrP->lessThan, attrP->step);
+        -:  332:
+    #####:  333:    if (!LWM2M_URI_IS_SET_INSTANCE(uriP) && LWM2M_URI_IS_SET_RESOURCE(uriP)) return COAP_400_BAD_REQUEST;
+        -:  334:
+    #####:  335:    result = object_checkReadable(contextP, uriP, attrP);
+    #####:  336:    if (COAP_205_CONTENT != result) return result;
+        -:  337:
+    #####:  338:    watcherP = prv_getWatcher(contextP, uriP, serverP);
+    #####:  339:    if (watcherP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
+        -:  340:
+        -:  341:    // Check rule “lt” value + 2*”stp” values < “gt” value
+    #####:  342:    if ((((attrP->toSet | (watcherP->parameters?watcherP->parameters->toSet:0)) & ~attrP->toClear) & ATTR_FLAG_NUMERIC) == ATTR_FLAG_NUMERIC)
+        -:  343:    {
+        -:  344:        float gt;
+        -:  345:        float lt;
+        -:  346:        float stp;
+        -:  347:
+    #####:  348:        if (0 != (attrP->toSet & LWM2M_ATTR_FLAG_GREATER_THAN))
+        -:  349:        {
+    #####:  350:            gt = attrP->greaterThan;
+        -:  351:        }
+        -:  352:        else
+        -:  353:        {
+    #####:  354:            gt = watcherP->parameters->greaterThan;
+        -:  355:        }
+    #####:  356:        if (0 != (attrP->toSet & LWM2M_ATTR_FLAG_LESS_THAN))
+        -:  357:        {
+    #####:  358:            lt = attrP->lessThan;
+        -:  359:        }
+        -:  360:        else
+        -:  361:        {
+    #####:  362:            lt = watcherP->parameters->lessThan;
+        -:  363:        }
+    #####:  364:        if (0 != (attrP->toSet & LWM2M_ATTR_FLAG_STEP))
+        -:  365:        {
+    #####:  366:            stp = attrP->step;
+        -:  367:        }
+        -:  368:        else
+        -:  369:        {
+    #####:  370:            stp = watcherP->parameters->step;
+        -:  371:        }
+        -:  372:
+    #####:  373:        if (lt + (2 * stp) >= gt) return COAP_400_BAD_REQUEST;
+        -:  374:    }
+        -:  375:
+    #####:  376:    if (watcherP->parameters == NULL)
+        -:  377:    {
+    #####:  378:        if (attrP->toSet != 0)
+        -:  379:        {
+    #####:  380:            watcherP->parameters = (lwm2m_attributes_t *)lwm2m_malloc(sizeof(lwm2m_attributes_t));
+    #####:  381:            if (watcherP->parameters == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
+    #####:  382:            memcpy(watcherP->parameters, attrP, sizeof(lwm2m_attributes_t));
+        -:  383:        }
+        -:  384:    }
+        -:  385:    else
+        -:  386:    {
+    #####:  387:        watcherP->parameters->toSet &= ~attrP->toClear;
+    #####:  388:        if (attrP->toSet & LWM2M_ATTR_FLAG_MIN_PERIOD)
+        -:  389:        {
+    #####:  390:            watcherP->parameters->minPeriod = attrP->minPeriod;
+        -:  391:        }
+    #####:  392:        if (attrP->toSet & LWM2M_ATTR_FLAG_MAX_PERIOD)
+        -:  393:        {
+    #####:  394:            watcherP->parameters->maxPeriod = attrP->maxPeriod;
+        -:  395:        }
+    #####:  396:        if (attrP->toSet & LWM2M_ATTR_FLAG_GREATER_THAN)
+        -:  397:        {
+    #####:  398:            watcherP->parameters->greaterThan = attrP->greaterThan;
+        -:  399:        }
+    #####:  400:        if (attrP->toSet & LWM2M_ATTR_FLAG_LESS_THAN)
+        -:  401:        {
+    #####:  402:            watcherP->parameters->lessThan = attrP->lessThan;
+        -:  403:        }
+    #####:  404:        if (attrP->toSet & LWM2M_ATTR_FLAG_STEP)
+        -:  405:        {
+    #####:  406:            watcherP->parameters->step = attrP->step;
+        -:  407:        }
+        -:  408:    }
+        -:  409:
+        -:  410:    LOG_ARG("Final toSet: %08X, minPeriod: %d, maxPeriod: %d, greaterThan: %f, lessThan: %f, step: %f",
+        -:  411:            watcherP->parameters->toSet, watcherP->parameters->minPeriod, watcherP->parameters->maxPeriod, watcherP->parameters->greaterThan, watcherP->parameters->lessThan, watcherP->parameters->step);
+        -:  412:
+    #####:  413:    return COAP_204_CHANGED;
+        -:  414:}
+        -:  415:
+    #####:  416:lwm2m_observed_t * observe_findByUri(lwm2m_context_t * contextP,
+        -:  417:                                     lwm2m_uri_t * uriP)
+        -:  418:{
+        -:  419:    lwm2m_observed_t * targetP;
+        -:  420:
+        -:  421:    LOG_URI(uriP);
+    #####:  422:    targetP = contextP->observedList;
+    #####:  423:    while (targetP != NULL)
+        -:  424:    {
+    #####:  425:        if (targetP->uri.objectId == uriP->objectId)
+        -:  426:        {
+    #####:  427:            if ((!LWM2M_URI_IS_SET_INSTANCE(uriP) && !LWM2M_URI_IS_SET_INSTANCE(&(targetP->uri)))
+    #####:  428:             || (LWM2M_URI_IS_SET_INSTANCE(uriP) && LWM2M_URI_IS_SET_INSTANCE(&(targetP->uri)) && (uriP->instanceId == targetP->uri.instanceId)))
+        -:  429:             {
+    #####:  430:                 if ((!LWM2M_URI_IS_SET_RESOURCE(uriP) && !LWM2M_URI_IS_SET_RESOURCE(&(targetP->uri)))
+    #####:  431:                     || (LWM2M_URI_IS_SET_RESOURCE(uriP) && LWM2M_URI_IS_SET_RESOURCE(&(targetP->uri)) && (uriP->resourceId == targetP->uri.resourceId)))
+        -:  432:                 {
+        -:  433:                     LOG_ARG("Found one with%s observers.", targetP->watcherList ? "" : " no");
+        -:  434:                     LOG_URI(&(targetP->uri));
+    #####:  435:                     return targetP;
+        -:  436:                 }
+        -:  437:             }
+        -:  438:        }
+    #####:  439:        targetP = targetP->next;
+        -:  440:    }
+        -:  441:
+        -:  442:    LOG("Found nothing");
+    #####:  443:    return NULL;
+        -:  444:}
+        -:  445:
+    #####:  446:void lwm2m_resource_value_changed(lwm2m_context_t * contextP,
+        -:  447:                                  lwm2m_uri_t * uriP)
+        -:  448:{
+        -:  449:    lwm2m_observed_t * targetP;
+        -:  450:
+        -:  451:    LOG_URI(uriP);
+    #####:  452:    targetP = contextP->observedList;
+    #####:  453:    while (targetP != NULL)
+        -:  454:    {
+    #####:  455:        if (targetP->uri.objectId == uriP->objectId)
+        -:  456:        {
+    #####:  457:            if (!LWM2M_URI_IS_SET_INSTANCE(uriP)
+    #####:  458:             || (targetP->uri.flag & LWM2M_URI_FLAG_INSTANCE_ID) == 0
+    #####:  459:             || uriP->instanceId == targetP->uri.instanceId)
+        -:  460:            {
+    #####:  461:                if (!LWM2M_URI_IS_SET_RESOURCE(uriP)
+    #####:  462:                 || (targetP->uri.flag & LWM2M_URI_FLAG_RESOURCE_ID) == 0
+    #####:  463:                 || uriP->resourceId == targetP->uri.resourceId)
+        -:  464:                {
+        -:  465:                    lwm2m_watcher_t * watcherP;
+        -:  466:
+        -:  467:                    LOG("Found an observation");
+        -:  468:                    LOG_URI(&(targetP->uri));
+        -:  469:
+    #####:  470:                    for (watcherP = targetP->watcherList ; watcherP != NULL ; watcherP = watcherP->next)
+        -:  471:                    {
+    #####:  472:                        if (watcherP->active == true)
+        -:  473:                        {
+        -:  474:                            LOG("Tagging a watcher");
+    #####:  475:                            watcherP->update = true;
+        -:  476:                        }
+        -:  477:                    }
+        -:  478:                }
+        -:  479:            }
+        -:  480:        }
+    #####:  481:        targetP = targetP->next;
+        -:  482:    }
+    #####:  483:}
+        -:  484:
+    #####:  485:void observe_step(lwm2m_context_t * contextP,
+        -:  486:                  time_t currentTime,
+        -:  487:                  time_t * timeoutP)
+        -:  488:{
+        -:  489:    lwm2m_observed_t * targetP;
+        -:  490:
+    #####:  491:    for (targetP = contextP->observedList ; targetP != NULL ; targetP = targetP->next)
+        -:  492:    {
+        -:  493:        lwm2m_watcher_t * watcherP;
+    #####:  494:        uint8_t * buffer = NULL;
+    #####:  495:        size_t length = 0;
+    #####:  496:        lwm2m_data_t * dataP = NULL;
+    #####:  497:        int size = 0;
+    #####:  498:        double floatValue = 0;
+    #####:  499:        int64_t integerValue = 0;
+    #####:  500:        bool storeValue = false;
+        -:  501:        coap_packet_t message[1];
+        -:  502:        time_t interval;
+        -:  503:
+        -:  504:        LOG_URI(&(targetP->uri));
+    #####:  505:        if (LWM2M_URI_IS_SET_RESOURCE(&targetP->uri))
+        -:  506:        {
+    #####:  507:            if (COAP_205_CONTENT != object_readData(contextP, &targetP->uri, &size, &dataP)) continue;
+    #####:  508:            switch (dataP->type)
+        -:  509:            {
+    #####:  510:            case LWM2M_TYPE_INTEGER:
+    #####:  511:                if (1 != lwm2m_data_decode_int(dataP, &integerValue))
+        -:  512:                {
+    #####:  513:                    lwm2m_data_free(size, dataP);
+    #####:  514:                    continue;
+        -:  515:                }
+    #####:  516:                storeValue = true;
+    #####:  517:                break;
+    #####:  518:            case LWM2M_TYPE_FLOAT:
+    #####:  519:                if (1 != lwm2m_data_decode_float(dataP, &floatValue))
+        -:  520:                {
+    #####:  521:                    lwm2m_data_free(size, dataP);
+    #####:  522:                    continue;
+        -:  523:                }
+    #####:  524:                storeValue = true;
+    #####:  525:                break;
+    #####:  526:            default:
+    #####:  527:                break;
+        -:  528:            }
+    #####:  529:        }
+    #####:  530:        for (watcherP = targetP->watcherList ; watcherP != NULL ; watcherP = watcherP->next)
+        -:  531:        {
+    #####:  532:            if (watcherP->active == true)
+        -:  533:            {
+    #####:  534:                bool notify = false;
+        -:  535:
+    #####:  536:                if (watcherP->update == true)
+        -:  537:                {
+        -:  538:                    // value changed, should we notify the server ?
+        -:  539:
+    #####:  540:                    if (watcherP->parameters == NULL || watcherP->parameters->toSet == 0)
+        -:  541:                    {
+        -:  542:                        // no conditions
+    #####:  543:                        notify = true;
+        -:  544:                        LOG("Notify with no conditions");
+        -:  545:                        LOG_URI(&(targetP->uri));
+        -:  546:                    }
+        -:  547:
+    #####:  548:                    if (notify == false
+    #####:  549:                     && watcherP->parameters != NULL
+    #####:  550:                     && (watcherP->parameters->toSet & ATTR_FLAG_NUMERIC) != 0)
+        -:  551:                    {
+    #####:  552:                        if ((watcherP->parameters->toSet & LWM2M_ATTR_FLAG_LESS_THAN) != 0)
+        -:  553:                        {
+        -:  554:                            LOG("Checking lower threshold");
+        -:  555:                            // Did we cross the lower threshold ?
+    #####:  556:                            switch (dataP->type)
+        -:  557:                            {
+    #####:  558:                            case LWM2M_TYPE_INTEGER:
+    #####:  559:                                if ((integerValue <= watcherP->parameters->lessThan
+    #####:  560:                                  && watcherP->lastValue.asInteger > watcherP->parameters->lessThan)
+    #####:  561:                                 || (integerValue >= watcherP->parameters->lessThan
+    #####:  562:                                  && watcherP->lastValue.asInteger < watcherP->parameters->lessThan))
+        -:  563:                                {
+        -:  564:                                    LOG("Notify on lower threshold crossing");
+    #####:  565:                                    notify = true;
+        -:  566:                                }
+    #####:  567:                                break;
+    #####:  568:                            case LWM2M_TYPE_FLOAT:
+    #####:  569:                                if ((floatValue <= watcherP->parameters->lessThan
+    #####:  570:                                  && watcherP->lastValue.asFloat > watcherP->parameters->lessThan)
+    #####:  571:                                 || (floatValue >= watcherP->parameters->lessThan
+    #####:  572:                                  && watcherP->lastValue.asFloat < watcherP->parameters->lessThan))
+        -:  573:                                {
+        -:  574:                                    LOG("Notify on lower threshold crossing");
+    #####:  575:                                    notify = true;
+        -:  576:                                }
+    #####:  577:                                break;
+    #####:  578:                            default:
+    #####:  579:                                break;
+        -:  580:                            }
+    #####:  581:                        }
+    #####:  582:                        if ((watcherP->parameters->toSet & LWM2M_ATTR_FLAG_GREATER_THAN) != 0)
+        -:  583:                        {
+        -:  584:                            LOG("Checking upper threshold");
+        -:  585:                            // Did we cross the upper threshold ?
+    #####:  586:                            switch (dataP->type)
+        -:  587:                            {
+    #####:  588:                            case LWM2M_TYPE_INTEGER:
+    #####:  589:                                if ((integerValue <= watcherP->parameters->greaterThan
+    #####:  590:                                  && watcherP->lastValue.asInteger > watcherP->parameters->greaterThan)
+    #####:  591:                                 || (integerValue >= watcherP->parameters->greaterThan
+    #####:  592:                                  && watcherP->lastValue.asInteger < watcherP->parameters->greaterThan))
+        -:  593:                                {
+        -:  594:                                    LOG("Notify on lower upper crossing");
+    #####:  595:                                    notify = true;
+        -:  596:                                }
+    #####:  597:                                break;
+    #####:  598:                            case LWM2M_TYPE_FLOAT:
+    #####:  599:                                if ((floatValue <= watcherP->parameters->greaterThan
+    #####:  600:                                  && watcherP->lastValue.asFloat > watcherP->parameters->greaterThan)
+    #####:  601:                                 || (floatValue >= watcherP->parameters->greaterThan
+    #####:  602:                                  && watcherP->lastValue.asFloat < watcherP->parameters->greaterThan))
+        -:  603:                                {
+        -:  604:                                    LOG("Notify on lower upper crossing");
+    #####:  605:                                    notify = true;
+        -:  606:                                }
+    #####:  607:                                break;
+    #####:  608:                            default:
+    #####:  609:                                break;
+        -:  610:                            }
+    #####:  611:                        }
+    #####:  612:                        if ((watcherP->parameters->toSet & LWM2M_ATTR_FLAG_STEP) != 0)
+        -:  613:                        {
+        -:  614:                            LOG("Checking step");
+        -:  615:
+    #####:  616:                            switch (dataP->type)
+        -:  617:                            {
+    #####:  618:                            case LWM2M_TYPE_INTEGER:
+        -:  619:                            {
+        -:  620:                                int64_t diff;
+        -:  621:
+    #####:  622:                                diff = integerValue - watcherP->lastValue.asInteger;
+    #####:  623:                                if ((diff < 0 && (0 - diff) >= watcherP->parameters->step)
+    #####:  624:                                 || (diff >= 0 && diff >= watcherP->parameters->step))
+        -:  625:                                {
+        -:  626:                                    LOG("Notify on step condition");
+    #####:  627:                                    notify = true;
+        -:  628:                                }
+        -:  629:                            }
+    #####:  630:                                break;
+    #####:  631:                            case LWM2M_TYPE_FLOAT:
+        -:  632:                            {
+        -:  633:                                double diff;
+        -:  634:
+    #####:  635:                                diff = floatValue - watcherP->lastValue.asFloat;
+    #####:  636:                                if ((diff < 0 && (0 - diff) >= watcherP->parameters->step)
+    #####:  637:                                 || (diff >= 0 && diff >= watcherP->parameters->step))
+        -:  638:                                {
+        -:  639:                                    LOG("Notify on step condition");
+    #####:  640:                                    notify = true;
+        -:  641:                                }
+        -:  642:                            }
+    #####:  643:                                break;
+    #####:  644:                            default:
+    #####:  645:                                break;
+        -:  646:                            }
+    #####:  647:                        }
+        -:  648:                    }
+        -:  649:
+    #####:  650:                    if (watcherP->parameters != NULL
+    #####:  651:                     && (watcherP->parameters->toSet & LWM2M_ATTR_FLAG_MIN_PERIOD) != 0)
+        -:  652:                    {
+        -:  653:                        LOG_ARG("Checking minimal period (%d s)", watcherP->parameters->minPeriod);
+        -:  654:
+    #####:  655:                        if (watcherP->lastTime + watcherP->parameters->minPeriod > currentTime)
+        -:  656:                        {
+        -:  657:                            // Minimum Period did not elapse yet
+    #####:  658:                            interval = watcherP->lastTime + watcherP->parameters->minPeriod - currentTime;
+    #####:  659:                            if (*timeoutP > interval) *timeoutP = interval;
+    #####:  660:                            notify = false;
+        -:  661:                        }
+        -:  662:                        else
+        -:  663:                        {
+        -:  664:                            LOG("Notify on minimal period");
+    #####:  665:                            notify = true;
+        -:  666:                        }
+        -:  667:                    }
+        -:  668:                }
+        -:  669:
+        -:  670:                // Is the Maximum Period reached ?
+    #####:  671:                if (notify == false
+    #####:  672:                 && watcherP->parameters != NULL
+    #####:  673:                 && (watcherP->parameters->toSet & LWM2M_ATTR_FLAG_MAX_PERIOD) != 0)
+        -:  674:                {
+        -:  675:                    LOG_ARG("Checking maximal period (%d s)", watcherP->parameters->maxPeriod);
+        -:  676:
+    #####:  677:                    if (watcherP->lastTime + watcherP->parameters->maxPeriod <= currentTime)
+        -:  678:                    {
+        -:  679:                        LOG("Notify on maximal period");
+    #####:  680:                        notify = true;
+        -:  681:                    }
+        -:  682:                }
+        -:  683:
+    #####:  684:                if (notify == true)
+        -:  685:                {
+    #####:  686:                    if (buffer == NULL)
+        -:  687:                    {
+    #####:  688:                        if (dataP != NULL)
+        -:  689:                        {
+        -:  690:                            int res;
+        -:  691:
+    #####:  692:                            res = lwm2m_data_serialize(&targetP->uri, size, dataP, &(watcherP->format), &buffer);
+    #####:  693:                            if (res < 0)
+        -:  694:                            {
+    #####:  695:                                break;
+        -:  696:                            }
+        -:  697:                            else
+        -:  698:                            {
+    #####:  699:                                length = (size_t)res;
+        -:  700:                            }
+        -:  701:
+        -:  702:                        }
+        -:  703:                        else
+        -:  704:                        {
+    #####:  705:                            if (COAP_205_CONTENT != object_read(contextP, &targetP->uri, &(watcherP->format), &buffer, &length))
+        -:  706:                            {
+    #####:  707:                                buffer = NULL;
+    #####:  708:                                break;
+        -:  709:                            }
+        -:  710:                        }
+    #####:  711:                        coap_init_message(message, COAP_TYPE_NON, COAP_205_CONTENT, 0);
+    #####:  712:                        coap_set_header_content_type(message, watcherP->format);
+    #####:  713:                        coap_set_payload(message, buffer, length);
+        -:  714:                    }
+    #####:  715:                    watcherP->lastTime = currentTime;
+    #####:  716:                    watcherP->lastMid = contextP->nextMID++;
+    #####:  717:                    message->mid = watcherP->lastMid;
+    #####:  718:                    coap_set_header_token(message, watcherP->token, watcherP->tokenLen);
+    #####:  719:                    coap_set_header_observe(message, watcherP->counter++);
+    #####:  720:                    (void)message_send(contextP, message, watcherP->server->sessionH);
+    #####:  721:                    watcherP->update = false;
+        -:  722:                }
+        -:  723:
+        -:  724:                // Store this value
+    #####:  725:                if (notify == true && storeValue == true)
+        -:  726:                {
+    #####:  727:                    switch (dataP->type)
+        -:  728:                    {
+    #####:  729:                    case LWM2M_TYPE_INTEGER:
+    #####:  730:                        watcherP->lastValue.asInteger = integerValue;
+    #####:  731:                        break;
+    #####:  732:                    case LWM2M_TYPE_FLOAT:
+    #####:  733:                        watcherP->lastValue.asFloat = floatValue;
+    #####:  734:                        break;
+    #####:  735:                    default:
+    #####:  736:                        break;
+        -:  737:                    }
+    #####:  738:                }
+        -:  739:
+    #####:  740:                if (watcherP->parameters != NULL && (watcherP->parameters->toSet & LWM2M_ATTR_FLAG_MAX_PERIOD) != 0)
+        -:  741:                {
+        -:  742:                    // update timers
+    #####:  743:                    interval = watcherP->lastTime + watcherP->parameters->maxPeriod - currentTime;
+    #####:  744:                    if (*timeoutP > interval) *timeoutP = interval;
+        -:  745:                }
+        -:  746:            }
+        -:  747:        }
+    #####:  748:        if (dataP != NULL) lwm2m_data_free(size, dataP);
+    #####:  749:        if (buffer != NULL) lwm2m_free(buffer);
+        -:  750:    }
+    #####:  751:}
+        -:  752:
+        -:  753:#endif
+        -:  754:
+        -:  755:#ifdef LWM2M_SERVER_MODE
+        -:  756:
+        -:  757:typedef struct
+        -:  758:{
+        -:  759:    lwm2m_observation_t * observationP;
+        -:  760:    lwm2m_result_callback_t callbackP;
+        -:  761:    void * userDataP;
+        -:  762:} cancellation_data_t;
+        -:  763:
+    #####:  764:static lwm2m_observation_t * prv_findObservationByURI(lwm2m_client_t * clientP,
+        -:  765:                                                      lwm2m_uri_t * uriP)
+        -:  766:{
+        -:  767:    lwm2m_observation_t * targetP;
+        -:  768:
+    #####:  769:    targetP = clientP->observationList;
+    #####:  770:    while (targetP != NULL)
+        -:  771:    {
+    #####:  772:        if (targetP->uri.objectId == uriP->objectId
+    #####:  773:         && targetP->uri.flag == uriP->flag
+    #####:  774:         && targetP->uri.instanceId == uriP->instanceId
+    #####:  775:         && targetP->uri.resourceId == uriP->resourceId)
+        -:  776:        {
+    #####:  777:            return targetP;
+        -:  778:        }
+        -:  779:
+    #####:  780:        targetP = targetP->next;
+        -:  781:    }
+        -:  782:
+    #####:  783:    return targetP;
+        -:  784:}
+        -:  785:
+    #####:  786:void observe_remove(lwm2m_observation_t * observationP)
+        -:  787:{
+        -:  788:    LOG("Entering");
+    #####:  789:    observationP->clientP->observationList = (lwm2m_observation_t *) LWM2M_LIST_RM(observationP->clientP->observationList, observationP->id, NULL);
+    #####:  790:    lwm2m_free(observationP);
+    #####:  791:}
+        -:  792:
+    #####:  793:static void prv_obsRequestCallback(lwm2m_transaction_t * transacP,
+        -:  794:                                   void * message)
+        -:  795:{
+    #####:  796:    lwm2m_observation_t * observationP = (lwm2m_observation_t *)transacP->userData;
+    #####:  797:    coap_packet_t * packet = (coap_packet_t *)message;
+        -:  798:    uint8_t code;
+        -:  799:
+    #####:  800:    switch (observationP->status)
+        -:  801:    {
+    #####:  802:    case STATE_DEREG_PENDING:
+        -:  803:        // Observation was canceled by the user.
+    #####:  804:        observe_remove(observationP);
+    #####:  805:        return;
+        -:  806:
+    #####:  807:    case STATE_REG_PENDING:
+    #####:  808:        observationP->status = STATE_REGISTERED;
+    #####:  809:        break;
+        -:  810:
+    #####:  811:    default:
+    #####:  812:        break;
+        -:  813:    }
+        -:  814:
+    #####:  815:    if (message == NULL)
+        -:  816:    {
+    #####:  817:        code = COAP_503_SERVICE_UNAVAILABLE;
+        -:  818:    }
+    #####:  819:    else if (packet->code == COAP_205_CONTENT
+    #####:  820:         && !IS_OPTION(packet, COAP_OPTION_OBSERVE))
+        -:  821:    {
+    #####:  822:        code = COAP_405_METHOD_NOT_ALLOWED;
+        -:  823:    }
+        -:  824:    else
+        -:  825:    {
+    #####:  826:        code = packet->code;
+        -:  827:    }
+        -:  828:
+    #####:  829:    if (code != COAP_205_CONTENT)
+        -:  830:    {
+    #####:  831:        observationP->callback(observationP->clientP->internalID,
+        -:  832:                               &observationP->uri,
+        -:  833:                               code,
+        -:  834:                               LWM2M_CONTENT_TEXT, NULL, 0,
+        -:  835:                               observationP->userData);
+    #####:  836:        observe_remove(observationP);
+        -:  837:    }
+        -:  838:    else
+        -:  839:    {
+    #####:  840:        observationP->callback(observationP->clientP->internalID,
+        -:  841:                               &observationP->uri,
+        -:  842:                               0,
+    #####:  843:                               packet->content_type, packet->payload, packet->payload_len,
+        -:  844:                               observationP->userData);
+        -:  845:    }
+        -:  846:}
+        -:  847:
+        -:  848:
+    #####:  849:static void prv_obsCancelRequestCallback(lwm2m_transaction_t * transacP,
+        -:  850:                                         void * message)
+        -:  851:{
+    #####:  852:    cancellation_data_t * cancelP = (cancellation_data_t *)transacP->userData;
+    #####:  853:    coap_packet_t * packet = (coap_packet_t *)message;
+        -:  854:    uint8_t code;
+        -:  855:
+    #####:  856:    if (message == NULL)
+        -:  857:    {
+    #####:  858:        code = COAP_503_SERVICE_UNAVAILABLE;
+        -:  859:    }
+        -:  860:    else
+        -:  861:    {
+    #####:  862:        code = packet->code;
+        -:  863:    }
+        -:  864:
+    #####:  865:    if (code != COAP_205_CONTENT)
+        -:  866:    {
+    #####:  867:        cancelP->callbackP(cancelP->observationP->clientP->internalID,
+    #####:  868:                           &cancelP->observationP->uri,
+        -:  869:                           code,
+        -:  870:                           LWM2M_CONTENT_TEXT, NULL, 0,
+        -:  871:                           cancelP->userDataP);
+        -:  872:    }
+        -:  873:    else
+        -:  874:    {
+    #####:  875:        cancelP->callbackP(cancelP->observationP->clientP->internalID,
+    #####:  876:                           &cancelP->observationP->uri,
+        -:  877:                           0,
+    #####:  878:                           packet->content_type, packet->payload, packet->payload_len,
+        -:  879:                           cancelP->userDataP);
+        -:  880:    }
+        -:  881:
+    #####:  882:    observe_remove(cancelP->observationP);
+        -:  883:
+    #####:  884:    lwm2m_free(cancelP);
+    #####:  885:}
+        -:  886:
+        -:  887:
+    #####:  888:int lwm2m_observe(lwm2m_context_t * contextP,
+        -:  889:                  uint16_t clientID,
+        -:  890:                  lwm2m_uri_t * uriP,
+        -:  891:                  lwm2m_result_callback_t callback,
+        -:  892:                  void * userData)
+        -:  893:{
+        -:  894:    lwm2m_client_t * clientP;
+        -:  895:    lwm2m_transaction_t * transactionP;
+        -:  896:    lwm2m_observation_t * observationP;
+        -:  897:    uint8_t token[4];
+        -:  898:
+        -:  899:    LOG_ARG("clientID: %d", clientID);
+        -:  900:    LOG_URI(uriP);
+        -:  901:
+    #####:  902:    if (!LWM2M_URI_IS_SET_INSTANCE(uriP) && LWM2M_URI_IS_SET_RESOURCE(uriP)) return COAP_400_BAD_REQUEST;
+        -:  903:
+    #####:  904:    clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)contextP->clientList, clientID);
+    #####:  905:    if (clientP == NULL) return COAP_404_NOT_FOUND;
+        -:  906:
+    #####:  907:    for (observationP = clientP->observationList; observationP != NULL; observationP = observationP->next)
+        -:  908:    {
+    #####:  909:        if (uriP->objectId == observationP->uri.objectId
+    #####:  910:            && (LWM2M_URI_IS_SET_INSTANCE(uriP) == false
+    #####:  911:                || observationP->uri.instanceId == uriP->instanceId)
+    #####:  912:            && (LWM2M_URI_IS_SET_RESOURCE(uriP) == false
+    #####:  913:                || observationP->uri.resourceId == uriP->resourceId))
+        -:  914:        {
+        -:  915:            break;
+        -:  916:        }
+        -:  917:    }
+    #####:  918:    if (observationP == NULL)
+        -:  919:    {
+    #####:  920:        observationP = (lwm2m_observation_t *)lwm2m_malloc(sizeof(lwm2m_observation_t));
+    #####:  921:        if (observationP == NULL) return COAP_500_INTERNAL_SERVER_ERROR;
+    #####:  922:        memset(observationP, 0, sizeof(lwm2m_observation_t));
+        -:  923:
+    #####:  924:        observationP->id = lwm2m_list_newId((lwm2m_list_t *)clientP->observationList);
+    #####:  925:        memcpy(&observationP->uri, uriP, sizeof(lwm2m_uri_t));
+    #####:  926:        observationP->clientP = clientP;
+        -:  927:
+    #####:  928:        observationP->clientP->observationList = (lwm2m_observation_t *)LWM2M_LIST_ADD(observationP->clientP->observationList, observationP);
+        -:  929:    }
+    #####:  930:    observationP->status = STATE_REG_PENDING;
+    #####:  931:    observationP->callback = callback;
+    #####:  932:    observationP->userData = userData;
+        -:  933:
+    #####:  934:    token[0] = clientP->internalID >> 8;
+    #####:  935:    token[1] = clientP->internalID & 0xFF;
+    #####:  936:    token[2] = observationP->id >> 8;
+    #####:  937:    token[3] = observationP->id & 0xFF;
+        -:  938:
+    #####:  939:    transactionP = transaction_new(clientP->sessionH, COAP_GET, clientP->altPath, uriP, contextP->nextMID++, 4, token);
+    #####:  940:    if (transactionP == NULL)
+        -:  941:    {
+    #####:  942:        observationP->clientP->observationList = (lwm2m_observation_t *)LWM2M_LIST_RM(observationP->clientP->observationList, observationP->id, NULL);
+    #####:  943:        lwm2m_free(observationP);
+    #####:  944:        return COAP_500_INTERNAL_SERVER_ERROR;
+        -:  945:    }
+        -:  946:
+    #####:  947:    coap_set_header_observe(transactionP->message, 0);
+    #####:  948:    if (clientP->supportJSON == true)
+        -:  949:    {
+    #####:  950:        coap_set_header_accept(transactionP->message, LWM2M_CONTENT_JSON);
+        -:  951:    }
+        -:  952:    else
+        -:  953:    {
+    #####:  954:        coap_set_header_accept(transactionP->message, LWM2M_CONTENT_TLV);
+        -:  955:    }
+        -:  956:
+    #####:  957:    transactionP->callback = prv_obsRequestCallback;
+    #####:  958:    transactionP->userData = (void *)observationP;
+        -:  959:
+    #####:  960:    contextP->transactionList = (lwm2m_transaction_t *)LWM2M_LIST_ADD(contextP->transactionList, transactionP);
+        -:  961:
+    #####:  962:    return transaction_send(contextP, transactionP);
+        -:  963:}
+        -:  964:
+    #####:  965:int lwm2m_observe_cancel(lwm2m_context_t * contextP,
+        -:  966:                         uint16_t clientID,
+        -:  967:                         lwm2m_uri_t * uriP,
+        -:  968:                         lwm2m_result_callback_t callback,
+        -:  969:                         void * userData)
+        -:  970:{
+        -:  971:    lwm2m_client_t * clientP;
+        -:  972:    lwm2m_observation_t * observationP;
+        -:  973:
+        -:  974:    LOG_ARG("clientID: %d", clientID);
+        -:  975:    LOG_URI(uriP);
+        -:  976:
+    #####:  977:    clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)contextP->clientList, clientID);
+    #####:  978:    if (clientP == NULL) return COAP_404_NOT_FOUND;
+        -:  979:
+    #####:  980:    observationP = prv_findObservationByURI(clientP, uriP);
+    #####:  981:    if (observationP == NULL) return COAP_404_NOT_FOUND;
+        -:  982:
+    #####:  983:    switch (observationP->status)
+        -:  984:    {
+    #####:  985:    case STATE_REGISTERED:
+        -:  986:    {
+        -:  987:        lwm2m_transaction_t * transactionP;
+        -:  988:        cancellation_data_t * cancelP;
+        -:  989:        uint8_t token[4];
+        -:  990:
+    #####:  991:        token[0] = clientP->internalID >> 8;
+    #####:  992:        token[1] = clientP->internalID & 0xFF;
+    #####:  993:        token[2] = observationP->id >> 8;
+    #####:  994:        token[3] = observationP->id & 0xFF;
+        -:  995:
+    #####:  996:        transactionP = transaction_new(clientP->sessionH, COAP_GET, clientP->altPath, uriP, contextP->nextMID++, 4, token);
+    #####:  997:        if (transactionP == NULL)
+        -:  998:        {
+    #####:  999:            return COAP_500_INTERNAL_SERVER_ERROR;
+        -: 1000:        }
+    #####: 1001:        cancelP = (cancellation_data_t *)lwm2m_malloc(sizeof(cancellation_data_t));
+    #####: 1002:        if (cancelP == NULL)
+        -: 1003:        {
+    #####: 1004:            lwm2m_free(transactionP);
+    #####: 1005:            return COAP_500_INTERNAL_SERVER_ERROR;
+        -: 1006:        }
+        -: 1007:
+    #####: 1008:        coap_set_header_observe(transactionP->message, 1);
+        -: 1009:
+    #####: 1010:        cancelP->observationP = observationP;
+    #####: 1011:        cancelP->callbackP = callback;
+    #####: 1012:        cancelP->userDataP = userData;
+        -: 1013:
+    #####: 1014:        transactionP->callback = prv_obsCancelRequestCallback;
+    #####: 1015:        transactionP->userData = (void *)cancelP;
+        -: 1016:
+    #####: 1017:        contextP->transactionList = (lwm2m_transaction_t *)LWM2M_LIST_ADD(contextP->transactionList, transactionP);
+        -: 1018:
+    #####: 1019:        return transaction_send(contextP, transactionP);
+        -: 1020:    }
+        -: 1021:
+    #####: 1022:    case STATE_REG_PENDING:
+    #####: 1023:        observationP->status = STATE_DEREG_PENDING;
+    #####: 1024:        break;
+        -: 1025:
+    #####: 1026:    default:
+        -: 1027:        // Should not happen
+    #####: 1028:        break;
+        -: 1029:    }
+        -: 1030:
+    #####: 1031:    return COAP_NO_ERROR;
+        -: 1032:}
+        -: 1033:
+    #####: 1034:bool observe_handleNotify(lwm2m_context_t * contextP,
+        -: 1035:                           void * fromSessionH,
+        -: 1036:                           coap_packet_t * message,
+        -: 1037:        				   coap_packet_t * response)
+        -: 1038:{
+        -: 1039:    uint8_t * tokenP;
+        -: 1040:    int token_len;
+        -: 1041:    uint16_t clientID;
+        -: 1042:    uint16_t obsID;
+        -: 1043:    lwm2m_client_t * clientP;
+        -: 1044:    lwm2m_observation_t * observationP;
+        -: 1045:    uint32_t count;
+        -: 1046:
+        -: 1047:    LOG("Entering");
+    #####: 1048:    token_len = coap_get_header_token(message, (const uint8_t **)&tokenP);
+    #####: 1049:    if (token_len != sizeof(uint32_t)) return false;
+        -: 1050:
+    #####: 1051:    if (1 != coap_get_header_observe(message, &count)) return false;
+        -: 1052:
+    #####: 1053:    clientID = (tokenP[0] << 8) | tokenP[1];
+    #####: 1054:    obsID = (tokenP[2] << 8) | tokenP[3];
+        -: 1055:
+    #####: 1056:    clientP = (lwm2m_client_t *)lwm2m_list_find((lwm2m_list_t *)contextP->clientList, clientID);
+    #####: 1057:    if (clientP == NULL) return false;
+        -: 1058:
+    #####: 1059:    observationP = (lwm2m_observation_t *)lwm2m_list_find((lwm2m_list_t *)clientP->observationList, obsID);
+    #####: 1060:    if (observationP == NULL)
+        -: 1061:    {
+    #####: 1062:        coap_init_message(response, COAP_TYPE_RST, 0, message->mid);
+    #####: 1063:        message_send(contextP, response, fromSessionH);
+        -: 1064:    }
+        -: 1065:    else
+        -: 1066:    {
+    #####: 1067:        if (message->type == COAP_TYPE_CON ) {
+    #####: 1068:            coap_init_message(response, COAP_TYPE_ACK, 0, message->mid);
+    #####: 1069:            message_send(contextP, response, fromSessionH);
+        -: 1070:        }
+    #####: 1071:        observationP->callback(clientID,
+        -: 1072:                               &observationP->uri,
+        -: 1073:                               (int)count,
+    #####: 1074:                               message->content_type, message->payload, message->payload_len,
+        -: 1075:                               observationP->userData);
+        -: 1076:    }
+    #####: 1077:    return true;
+        -: 1078:}
+        -: 1079:#endif

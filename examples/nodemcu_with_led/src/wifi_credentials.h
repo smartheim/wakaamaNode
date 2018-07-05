@@ -1,2 +1,2 @@
-#define WIFI_SSID "network-name"
-#define WIFI_PASS "pass-to-network"
+#define WIFI_SSID "StrengGeheim"
+#define WIFI_PASS "elch1fahne"

@@ -1,0 +1,90 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/macro_helper.h
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/objects.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:#pragma once 
+        -:    2:/**
+        -:    3: * This file contains some helper templates and macros.
+        -:    4: * - offset_of(&Object::member)
+        -:    5: * - is_base_of_template<Derived, Base> with Base<N> and N -> int
+        -:    6: */
+        -:    7:
+        -:    8:#include <type_traits>
+        -:    9:#include <functional>
+        -:   10:
+        -:   11:template<class T>
+        -:   12:struct remove_member_pointer {
+        -:   13:  typedef T type;
+        -:   14:};
+        -:   15:
+        -:   16:template<class Parent, class T>
+        -:   17:struct remove_member_pointer<T Parent::*> {
+        -:   18:  typedef T type;
+        -:   19:};
+        -:   20:
+        -:   21:template<class T>
+        -:   22:struct baseof_member_pointer {
+        -:   23:  typedef T type;
+        -:   24:};
+        -:   25:
+        -:   26:template<class Parent, class T>
+        -:   27:struct baseof_member_pointer<T Parent::*> {
+        -:   28:  typedef Parent type;
+        -:   29:};
+        -:   30:
+        -:   31:template <template <int...> class C, int...Ts>
+        -:   32:std::true_type is_base_of_template_impl(const C<Ts...>*);
+        -:   33:
+        -:   34:template <template <int...> class C>
+        -:   35:std::false_type is_base_of_template_impl(...);
+        -:   36:
+        -:   37:template <typename T, template <int...> class C>
+        -:   38:using is_base_of_template = decltype(is_base_of_template_impl<C>(std::declval<T*>()));
+        -:   39:
+        -:   40:template <template <typename...> class C, typename...Ts>
+        -:   41:std::true_type is_base_of_template_impl_f(const C<Ts...>*);
+        -:   42:
+        -:   43:template <template <typename...> class C>
+        -:   44:std::false_type is_base_of_template_impl_f(...);
+        -:   45:
+        -:   46:template <typename T, template <typename...> class C>
+        -:   47:using is_base_of_template_f = decltype(is_base_of_template_impl_f<C>(std::declval<T*>()));
+        -:   48:
+        -:   49:// We need to determine the offset of c++ class members.
+        -:   50:// That's not an easy task to do in compile time.
+        -:   51:// This mixture of templates and a macro works for clang with some
+        -:   52:// compiler warnings, which we ignore. Gcc is not entirely standard
+        -:   53:// conform by allowing dynamic_casts in constant expressions.
+        -:   54:#ifdef __GNUC__
+        -:   55:template <typename T1, typename T2>
+        -:   56:struct offset_of_impl {
+        -:   57:    static T2 object;
+    #####:   58:    static constexpr uintptr_t offset(T1 T2::*member) {
+    #####:   59:        return uintptr_t(&(offset_of_impl<T1, T2>::object.*member)) - uintptr_t(&offset_of_impl<T1, T2>::object);
+        -:   60:    }
+        -:   61:};
+        -:   62:template <typename T1, typename T2>
+        -:   63:T2 offset_of_impl<T1, T2>::object;
+        -:   64:
+        -:   65:template <typename T1, typename T2>
+    #####:   66:inline constexpr uintptr_t offset_of(T1 T2::*member) {
+    #####:   67:    return offset_of_impl<T1, T2>::offset(member);
+        -:   68:}
+        -:   69:#endif
+        -:   70:#ifdef __clang__
+        -:   71:#pragma GCC diagnostic push
+        -:   72:#pragma clang diagnostic ignored "-Wundefined-var-template"
+        -:   73:template<typename T> struct declval_helper { static T value; };
+        -:   74:
+        -:   75:#define fold(x) (__builtin_constant_p(x) ? (x) : (x))
+        -:   76:template<typename T, typename Z, Z T::*MPtr>
+        -:   77:struct offset_helper {
+        -:   78:    using TV = declval_helper<T>;
+        -:   79:    char for_sizeof[(char *)&(TV::value.*MPtr) - (char *)&TV::value];
+        -:   80:};
+        -:   81:#pragma GCC diagnostic pop
+        -:   82:
+        -:   83:#define offset_of(TYPE) sizeof(offset_helper<baseof_member_pointer<decltype(TYPE)>::type,remove_member_pointer<decltype(TYPE)>::type,TYPE>::for_sizeof)
+        -:   84:#endif
+        -:   85:

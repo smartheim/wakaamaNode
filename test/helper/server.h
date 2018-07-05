@@ -41,7 +41,6 @@ public:
 private:
     std::thread* thread = nullptr;
     std::mutex* mutex;
-    int server_bound_sockets;
     int client_updated = 0;
     volatile bool server_running;
     #ifdef POSIX_NETWORK

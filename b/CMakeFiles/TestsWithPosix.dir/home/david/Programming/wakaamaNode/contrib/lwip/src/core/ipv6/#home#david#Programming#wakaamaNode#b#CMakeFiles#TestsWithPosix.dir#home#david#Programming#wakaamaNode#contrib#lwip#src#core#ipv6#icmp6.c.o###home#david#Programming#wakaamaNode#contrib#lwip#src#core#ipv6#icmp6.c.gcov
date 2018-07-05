@@ -1,0 +1,355 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/contrib/lwip/src/core/ipv6/icmp6.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/contrib/lwip/src/core/ipv6/icmp6.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/**
+        -:    2: * @file
+        -:    3: *
+        -:    4: * IPv6 version of ICMP, as per RFC 4443.
+        -:    5: */
+        -:    6:
+        -:    7:/*
+        -:    8: * Copyright (c) 2010 Inico Technologies Ltd.
+        -:    9: * All rights reserved.
+        -:   10: *
+        -:   11: * Redistribution and use in source and binary forms, with or without modification,
+        -:   12: * are permitted provided that the following conditions are met:
+        -:   13: *
+        -:   14: * 1. Redistributions of source code must retain the above copyright notice,
+        -:   15: *    this list of conditions and the following disclaimer.
+        -:   16: * 2. Redistributions in binary form must reproduce the above copyright notice,
+        -:   17: *    this list of conditions and the following disclaimer in the documentation
+        -:   18: *    and/or other materials provided with the distribution.
+        -:   19: * 3. The name of the author may not be used to endorse or promote products
+        -:   20: *    derived from this software without specific prior written permission.
+        -:   21: *
+        -:   22: * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        -:   23: * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        -:   24: * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+        -:   25: * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+        -:   26: * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+        -:   27: * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+        -:   28: * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+        -:   29: * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+        -:   30: * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+        -:   31: * OF SUCH DAMAGE.
+        -:   32: *
+        -:   33: * This file is part of the lwIP TCP/IP stack.
+        -:   34: *
+        -:   35: * Author: Ivan Delamer <delamer@inicotech.com>
+        -:   36: *
+        -:   37: *
+        -:   38: * Please coordinate changes and requests with Ivan Delamer
+        -:   39: * <delamer@inicotech.com>
+        -:   40: */
+        -:   41:
+        -:   42:#include "lwip/opt.h"
+        -:   43:
+        -:   44:#if LWIP_ICMP6 && LWIP_IPV6 /* don't build if not configured for use in lwipopts.h */
+        -:   45:
+        -:   46:#include "lwip/icmp6.h"
+        -:   47:#include "lwip/prot/icmp6.h"
+        -:   48:#include "lwip/ip6.h"
+        -:   49:#include "lwip/ip6_addr.h"
+        -:   50:#include "lwip/inet_chksum.h"
+        -:   51:#include "lwip/pbuf.h"
+        -:   52:#include "lwip/netif.h"
+        -:   53:#include "lwip/nd6.h"
+        -:   54:#include "lwip/mld6.h"
+        -:   55:#include "lwip/ip.h"
+        -:   56:#include "lwip/stats.h"
+        -:   57:
+        -:   58:#include <string.h>
+        -:   59:
+        -:   60:#ifndef LWIP_ICMP6_DATASIZE
+        -:   61:#define LWIP_ICMP6_DATASIZE   8
+        -:   62:#endif
+        -:   63:#if LWIP_ICMP6_DATASIZE == 0
+        -:   64:#define LWIP_ICMP6_DATASIZE   8
+        -:   65:#endif
+        -:   66:
+        -:   67:/* Forward declarations */
+        -:   68:static void icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type);
+        -:   69:
+        -:   70:
+        -:   71:/**
+        -:   72: * Process an input ICMPv6 message. Called by ip6_input.
+        -:   73: *
+        -:   74: * Will generate a reply for echo requests. Other messages are forwarded
+        -:   75: * to nd6_input, or mld6_input.
+        -:   76: *
+        -:   77: * @param p the mld packet, p->payload pointing to the icmpv6 header
+        -:   78: * @param inp the netif on which this packet was received
+        -:   79: */
+        -:   80:void
+    #####:   81:icmp6_input(struct pbuf *p, struct netif *inp)
+        -:   82:{
+        -:   83:  struct icmp6_hdr *icmp6hdr;
+        -:   84:  struct pbuf *r;
+        -:   85:  const ip6_addr_t *reply_src;
+        -:   86:
+        -:   87:  ICMP6_STATS_INC(icmp6.recv);
+        -:   88:
+        -:   89:  /* Check that ICMPv6 header fits in payload */
+    #####:   90:  if (p->len < sizeof(struct icmp6_hdr)) {
+        -:   91:    /* drop short packets */
+    #####:   92:    pbuf_free(p);
+        -:   93:    ICMP6_STATS_INC(icmp6.lenerr);
+        -:   94:    ICMP6_STATS_INC(icmp6.drop);
+    #####:   95:    return;
+        -:   96:  }
+        -:   97:
+    #####:   98:  icmp6hdr = (struct icmp6_hdr *)p->payload;
+        -:   99:
+        -:  100:#if CHECKSUM_CHECK_ICMP6
+        -:  101:  IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_ICMP6) {
+    #####:  102:    if (ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->tot_len, ip6_current_src_addr(),
+        -:  103:                          ip6_current_dest_addr()) != 0) {
+        -:  104:      /* Checksum failed */
+    #####:  105:      pbuf_free(p);
+        -:  106:      ICMP6_STATS_INC(icmp6.chkerr);
+        -:  107:      ICMP6_STATS_INC(icmp6.drop);
+    #####:  108:      return;
+        -:  109:    }
+        -:  110:  }
+        -:  111:#endif /* CHECKSUM_CHECK_ICMP6 */
+        -:  112:
+    #####:  113:  switch (icmp6hdr->type) {
+    #####:  114:  case ICMP6_TYPE_NA: /* Neighbor advertisement */
+        -:  115:  case ICMP6_TYPE_NS: /* Neighbor solicitation */
+        -:  116:  case ICMP6_TYPE_RA: /* Router advertisement */
+        -:  117:  case ICMP6_TYPE_RD: /* Redirect */
+        -:  118:  case ICMP6_TYPE_PTB: /* Packet too big */
+    #####:  119:    nd6_input(p, inp);
+    #####:  120:    return;
+        -:  121:    break;
+    #####:  122:  case ICMP6_TYPE_RS:
+        -:  123:#if LWIP_IPV6_FORWARD
+        -:  124:    /* @todo implement router functionality */
+        -:  125:#endif
+    #####:  126:    break;
+        -:  127:#if LWIP_IPV6_MLD
+    #####:  128:  case ICMP6_TYPE_MLQ:
+        -:  129:  case ICMP6_TYPE_MLR:
+        -:  130:  case ICMP6_TYPE_MLD:
+    #####:  131:    mld6_input(p, inp);
+    #####:  132:    return;
+        -:  133:    break;
+        -:  134:#endif
+    #####:  135:  case ICMP6_TYPE_EREQ:
+        -:  136:#if !LWIP_MULTICAST_PING
+        -:  137:    /* multicast destination address? */
+    #####:  138:    if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
+        -:  139:      /* drop */
+    #####:  140:      pbuf_free(p);
+        -:  141:      ICMP6_STATS_INC(icmp6.drop);
+    #####:  142:      return;
+        -:  143:    }
+        -:  144:#endif /* LWIP_MULTICAST_PING */
+        -:  145:
+        -:  146:    /* Allocate reply. */
+    #####:  147:    r = pbuf_alloc(PBUF_IP, p->tot_len, PBUF_RAM);
+    #####:  148:    if (r == NULL) {
+        -:  149:      /* drop */
+    #####:  150:      pbuf_free(p);
+        -:  151:      ICMP6_STATS_INC(icmp6.memerr);
+    #####:  152:      return;
+        -:  153:    }
+        -:  154:
+        -:  155:    /* Copy echo request. */
+    #####:  156:    if (pbuf_copy(r, p) != ERR_OK) {
+        -:  157:      /* drop */
+    #####:  158:      pbuf_free(p);
+    #####:  159:      pbuf_free(r);
+        -:  160:      ICMP6_STATS_INC(icmp6.err);
+    #####:  161:      return;
+        -:  162:    }
+        -:  163:
+        -:  164:    /* Determine reply source IPv6 address. */
+        -:  165:#if LWIP_MULTICAST_PING
+        -:  166:    if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
+        -:  167:      reply_src = ip_2_ip6(ip6_select_source_address(inp, ip6_current_src_addr()));
+        -:  168:      if (reply_src == NULL) {
+        -:  169:        /* drop */
+        -:  170:        pbuf_free(p);
+        -:  171:        pbuf_free(r);
+        -:  172:        ICMP6_STATS_INC(icmp6.rterr);
+        -:  173:        return;
+        -:  174:      }
+        -:  175:    }
+        -:  176:    else
+        -:  177:#endif /* LWIP_MULTICAST_PING */
+        -:  178:    {
+    #####:  179:      reply_src = ip6_current_dest_addr();
+        -:  180:    }
+        -:  181:
+        -:  182:    /* Set fields in reply. */
+    #####:  183:    ((struct icmp6_echo_hdr *)(r->payload))->type = ICMP6_TYPE_EREP;
+    #####:  184:    ((struct icmp6_echo_hdr *)(r->payload))->chksum = 0;
+        -:  185:#if CHECKSUM_GEN_ICMP6
+        -:  186:    IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP6) {
+    #####:  187:      ((struct icmp6_echo_hdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
+    #####:  188:          IP6_NEXTH_ICMP6, r->tot_len, reply_src, ip6_current_src_addr());
+        -:  189:    }
+        -:  190:#endif /* CHECKSUM_GEN_ICMP6 */
+        -:  191:
+        -:  192:    /* Send reply. */
+        -:  193:    ICMP6_STATS_INC(icmp6.xmit);
+    #####:  194:    ip6_output_if(r, reply_src, ip6_current_src_addr(),
+        -:  195:        LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, inp);
+    #####:  196:    pbuf_free(r);
+        -:  197:
+    #####:  198:    break;
+    #####:  199:  default:
+        -:  200:    ICMP6_STATS_INC(icmp6.proterr);
+        -:  201:    ICMP6_STATS_INC(icmp6.drop);
+    #####:  202:    break;
+        -:  203:  }
+        -:  204:
+    #####:  205:  pbuf_free(p);
+        -:  206:}
+        -:  207:
+        -:  208:
+        -:  209:/**
+        -:  210: * Send an icmpv6 'destination unreachable' packet.
+        -:  211: *
+        -:  212: * @param p the input packet for which the 'unreachable' should be sent,
+        -:  213: *          p->payload pointing to the IPv6 header
+        -:  214: * @param c ICMPv6 code for the unreachable type
+        -:  215: */
+        -:  216:void
+    #####:  217:icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
+        -:  218:{
+    #####:  219:  icmp6_send_response(p, c, 0, ICMP6_TYPE_DUR);
+    #####:  220:}
+        -:  221:
+        -:  222:/**
+        -:  223: * Send an icmpv6 'packet too big' packet.
+        -:  224: *
+        -:  225: * @param p the input packet for which the 'packet too big' should be sent,
+        -:  226: *          p->payload pointing to the IPv6 header
+        -:  227: * @param mtu the maximum mtu that we can accept
+        -:  228: */
+        -:  229:void
+    #####:  230:icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
+        -:  231:{
+    #####:  232:  icmp6_send_response(p, 0, mtu, ICMP6_TYPE_PTB);
+    #####:  233:}
+        -:  234:
+        -:  235:/**
+        -:  236: * Send an icmpv6 'time exceeded' packet.
+        -:  237: *
+        -:  238: * @param p the input packet for which the 'unreachable' should be sent,
+        -:  239: *          p->payload pointing to the IPv6 header
+        -:  240: * @param c ICMPv6 code for the time exceeded type
+        -:  241: */
+        -:  242:void
+    #####:  243:icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
+        -:  244:{
+    #####:  245:  icmp6_send_response(p, c, 0, ICMP6_TYPE_TE);
+    #####:  246:}
+        -:  247:
+        -:  248:/**
+        -:  249: * Send an icmpv6 'parameter problem' packet.
+        -:  250: *
+        -:  251: * @param p the input packet for which the 'param problem' should be sent,
+        -:  252: *          p->payload pointing to the IP header
+        -:  253: * @param c ICMPv6 code for the param problem type
+        -:  254: * @param pointer the pointer to the byte where the parameter is found
+        -:  255: */
+        -:  256:void
+    #####:  257:icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
+        -:  258:{
+    #####:  259:  icmp6_send_response(p, c, pointer, ICMP6_TYPE_PP);
+    #####:  260:}
+        -:  261:
+        -:  262:/**
+        -:  263: * Send an ICMPv6 packet in response to an incoming packet.
+        -:  264: *
+        -:  265: * @param p the input packet for which the response should be sent,
+        -:  266: *          p->payload pointing to the IPv6 header
+        -:  267: * @param code Code of the ICMPv6 header
+        -:  268: * @param data Additional 32-bit parameter in the ICMPv6 header
+        -:  269: * @param type Type of the ICMPv6 header
+        -:  270: */
+        -:  271:static void
+    #####:  272:icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
+        -:  273:{
+        -:  274:  struct pbuf *q;
+        -:  275:  struct icmp6_hdr *icmp6hdr;
+        -:  276:  const ip6_addr_t *reply_src;
+        -:  277:  ip6_addr_t *reply_dest;
+        -:  278:  ip6_addr_t reply_src_local, reply_dest_local;
+        -:  279:  struct ip6_hdr *ip6hdr;
+        -:  280:  struct netif *netif;
+        -:  281:
+        -:  282:  /* ICMPv6 header + IPv6 header + data */
+    #####:  283:  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE,
+        -:  284:                 PBUF_RAM);
+    #####:  285:  if (q == NULL) {
+        -:  286:    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMPv6 packet.\n"));
+        -:  287:    ICMP6_STATS_INC(icmp6.memerr);
+    #####:  288:    return;
+        -:  289:  }
+    #####:  290:  LWIP_ASSERT("check that first pbuf can hold icmp 6message",
+        -:  291:             (q->len >= (sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE)));
+        -:  292:
+    #####:  293:  icmp6hdr = (struct icmp6_hdr *)q->payload;
+    #####:  294:  icmp6hdr->type = type;
+    #####:  295:  icmp6hdr->code = code;
+    #####:  296:  icmp6hdr->data = data;
+        -:  297:
+        -:  298:  /* copy fields from original packet */
+    #####:  299:  SMEMCPY((u8_t *)q->payload + sizeof(struct icmp6_hdr), (u8_t *)p->payload,
+        -:  300:          IP6_HLEN + LWIP_ICMP6_DATASIZE);
+        -:  301:
+        -:  302:  /* Get the destination address and netif for this ICMP message. */
+    #####:  303:  if ((ip_current_netif() == NULL) ||
+    #####:  304:      ((code == ICMP6_TE_FRAG) && (type == ICMP6_TYPE_TE))) {
+        -:  305:    /* Special case, as ip6_current_xxx is either NULL, or points
+        -:  306:     * to a different packet than the one that expired.
+        -:  307:     * We must use the addresses that are stored in the expired packet. */
+    #####:  308:    ip6hdr = (struct ip6_hdr *)p->payload;
+        -:  309:    /* copy from packed address to aligned address */
+    #####:  310:    ip6_addr_copy(reply_dest_local, ip6hdr->src);
+    #####:  311:    ip6_addr_copy(reply_src_local, ip6hdr->dest);
+    #####:  312:    reply_dest = &reply_dest_local;
+    #####:  313:    reply_src = &reply_src_local;
+    #####:  314:    netif = ip6_route(reply_src, reply_dest);
+    #####:  315:    if (netif == NULL) {
+        -:  316:      /* drop */
+    #####:  317:      pbuf_free(q);
+        -:  318:      ICMP6_STATS_INC(icmp6.rterr);
+    #####:  319:      return;
+        -:  320:    }
+        -:  321:  }
+        -:  322:  else {
+    #####:  323:    netif = ip_current_netif();
+    #####:  324:    reply_dest = ip6_current_src_addr();
+        -:  325:
+        -:  326:    /* Select an address to use as source. */
+    #####:  327:    reply_src = ip_2_ip6(ip6_select_source_address(netif, reply_dest));
+    #####:  328:    if (reply_src == NULL) {
+        -:  329:      /* drop */
+    #####:  330:      pbuf_free(q);
+        -:  331:      ICMP6_STATS_INC(icmp6.rterr);
+    #####:  332:      return;
+        -:  333:    }
+        -:  334:  }
+        -:  335:
+        -:  336:  /* calculate checksum */
+    #####:  337:  icmp6hdr->chksum = 0;
+        -:  338:#if CHECKSUM_GEN_ICMP6
+        -:  339:  IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
+    #####:  340:    icmp6hdr->chksum = ip6_chksum_pseudo(q, IP6_NEXTH_ICMP6, q->tot_len,
+        -:  341:      reply_src, reply_dest);
+        -:  342:  }
+        -:  343:#endif /* CHECKSUM_GEN_ICMP6 */
+        -:  344:
+        -:  345:  ICMP6_STATS_INC(icmp6.xmit);
+    #####:  346:  ip6_output_if(q, reply_src, reply_dest, LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
+    #####:  347:  pbuf_free(q);
+        -:  348:}
+        -:  349:
+        -:  350:#endif /* LWIP_ICMP6 && LWIP_IPV6 */

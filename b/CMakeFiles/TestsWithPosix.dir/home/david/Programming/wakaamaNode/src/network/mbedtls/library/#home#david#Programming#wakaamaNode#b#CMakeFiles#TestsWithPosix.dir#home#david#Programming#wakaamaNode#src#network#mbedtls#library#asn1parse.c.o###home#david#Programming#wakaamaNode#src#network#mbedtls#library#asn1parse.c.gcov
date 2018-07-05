@@ -1,0 +1,394 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/network/mbedtls/library/asn1parse.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/network/mbedtls/library/asn1parse.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: *  Generic ASN.1 parsing
+        -:    3: *
+        -:    4: *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+        -:    5: *  SPDX-License-Identifier: Apache-2.0
+        -:    6: *
+        -:    7: *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+        -:    8: *  not use this file except in compliance with the License.
+        -:    9: *  You may obtain a copy of the License at
+        -:   10: *
+        -:   11: *  http://www.apache.org/licenses/LICENSE-2.0
+        -:   12: *
+        -:   13: *  Unless required by applicable law or agreed to in writing, software
+        -:   14: *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+        -:   15: *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   16: *  See the License for the specific language governing permissions and
+        -:   17: *  limitations under the License.
+        -:   18: *
+        -:   19: *  This file is part of mbed TLS (https://tls.mbed.org)
+        -:   20: */
+        -:   21:
+        -:   22:#if !defined(MBEDTLS_CONFIG_FILE)
+        -:   23:#include "mbedtls/config.h"
+        -:   24:#else
+        -:   25:#include MBEDTLS_CONFIG_FILE
+        -:   26:#endif
+        -:   27:
+        -:   28:#if defined(MBEDTLS_ASN1_PARSE_C)
+        -:   29:
+        -:   30:#include "mbedtls/asn1.h"
+        -:   31:#include "mbedtls/platform_util.h"
+        -:   32:
+        -:   33:#include <string.h>
+        -:   34:
+        -:   35:#if defined(MBEDTLS_BIGNUM_C)
+        -:   36:#include "mbedtls/bignum.h"
+        -:   37:#endif
+        -:   38:
+        -:   39:#if defined(MBEDTLS_PLATFORM_C)
+        -:   40:#include "mbedtls/platform.h"
+        -:   41:#else
+        -:   42:#include <stdlib.h>
+        -:   43:#define mbedtls_calloc    calloc
+        -:   44:#define mbedtls_free       free
+        -:   45:#endif
+        -:   46:
+        -:   47:/*
+        -:   48: * ASN.1 DER decoding routines
+        -:   49: */
+    #####:   50:int mbedtls_asn1_get_len( unsigned char **p,
+        -:   51:                  const unsigned char *end,
+        -:   52:                  size_t *len )
+        -:   53:{
+    #####:   54:    if( ( end - *p ) < 1 )
+    #####:   55:        return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:   56:
+    #####:   57:    if( ( **p & 0x80 ) == 0 )
+    #####:   58:        *len = *(*p)++;
+        -:   59:    else
+        -:   60:    {
+    #####:   61:        switch( **p & 0x7F )
+        -:   62:        {
+    #####:   63:        case 1:
+    #####:   64:            if( ( end - *p ) < 2 )
+    #####:   65:                return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:   66:
+    #####:   67:            *len = (*p)[1];
+    #####:   68:            (*p) += 2;
+    #####:   69:            break;
+        -:   70:
+    #####:   71:        case 2:
+    #####:   72:            if( ( end - *p ) < 3 )
+    #####:   73:                return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:   74:
+    #####:   75:            *len = ( (size_t)(*p)[1] << 8 ) | (*p)[2];
+    #####:   76:            (*p) += 3;
+    #####:   77:            break;
+        -:   78:
+    #####:   79:        case 3:
+    #####:   80:            if( ( end - *p ) < 4 )
+    #####:   81:                return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:   82:
+    #####:   83:            *len = ( (size_t)(*p)[1] << 16 ) |
+    #####:   84:                   ( (size_t)(*p)[2] << 8  ) | (*p)[3];
+    #####:   85:            (*p) += 4;
+    #####:   86:            break;
+        -:   87:
+    #####:   88:        case 4:
+    #####:   89:            if( ( end - *p ) < 5 )
+    #####:   90:                return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:   91:
+    #####:   92:            *len = ( (size_t)(*p)[1] << 24 ) | ( (size_t)(*p)[2] << 16 ) |
+    #####:   93:                   ( (size_t)(*p)[3] << 8  ) |           (*p)[4];
+    #####:   94:            (*p) += 5;
+    #####:   95:            break;
+        -:   96:
+    #####:   97:        default:
+    #####:   98:            return( MBEDTLS_ERR_ASN1_INVALID_LENGTH );
+        -:   99:        }
+        -:  100:    }
+        -:  101:
+    #####:  102:    if( *len > (size_t) ( end - *p ) )
+    #####:  103:        return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  104:
+    #####:  105:    return( 0 );
+        -:  106:}
+        -:  107:
+    #####:  108:int mbedtls_asn1_get_tag( unsigned char **p,
+        -:  109:                  const unsigned char *end,
+        -:  110:                  size_t *len, int tag )
+        -:  111:{
+    #####:  112:    if( ( end - *p ) < 1 )
+    #####:  113:        return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  114:
+    #####:  115:    if( **p != tag )
+    #####:  116:        return( MBEDTLS_ERR_ASN1_UNEXPECTED_TAG );
+        -:  117:
+    #####:  118:    (*p)++;
+        -:  119:
+    #####:  120:    return( mbedtls_asn1_get_len( p, end, len ) );
+        -:  121:}
+        -:  122:
+    #####:  123:int mbedtls_asn1_get_bool( unsigned char **p,
+        -:  124:                   const unsigned char *end,
+        -:  125:                   int *val )
+        -:  126:{
+        -:  127:    int ret;
+        -:  128:    size_t len;
+        -:  129:
+    #####:  130:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len, MBEDTLS_ASN1_BOOLEAN ) ) != 0 )
+    #####:  131:        return( ret );
+        -:  132:
+    #####:  133:    if( len != 1 )
+    #####:  134:        return( MBEDTLS_ERR_ASN1_INVALID_LENGTH );
+        -:  135:
+    #####:  136:    *val = ( **p != 0 ) ? 1 : 0;
+    #####:  137:    (*p)++;
+        -:  138:
+    #####:  139:    return( 0 );
+        -:  140:}
+        -:  141:
+    #####:  142:int mbedtls_asn1_get_int( unsigned char **p,
+        -:  143:                  const unsigned char *end,
+        -:  144:                  int *val )
+        -:  145:{
+        -:  146:    int ret;
+        -:  147:    size_t len;
+        -:  148:
+    #####:  149:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len, MBEDTLS_ASN1_INTEGER ) ) != 0 )
+    #####:  150:        return( ret );
+        -:  151:
+    #####:  152:    if( len == 0 || len > sizeof( int ) || ( **p & 0x80 ) != 0 )
+    #####:  153:        return( MBEDTLS_ERR_ASN1_INVALID_LENGTH );
+        -:  154:
+    #####:  155:    *val = 0;
+        -:  156:
+    #####:  157:    while( len-- > 0 )
+        -:  158:    {
+    #####:  159:        *val = ( *val << 8 ) | **p;
+    #####:  160:        (*p)++;
+        -:  161:    }
+        -:  162:
+    #####:  163:    return( 0 );
+        -:  164:}
+        -:  165:
+        -:  166:#if defined(MBEDTLS_BIGNUM_C)
+    #####:  167:int mbedtls_asn1_get_mpi( unsigned char **p,
+        -:  168:                  const unsigned char *end,
+        -:  169:                  mbedtls_mpi *X )
+        -:  170:{
+        -:  171:    int ret;
+        -:  172:    size_t len;
+        -:  173:
+    #####:  174:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len, MBEDTLS_ASN1_INTEGER ) ) != 0 )
+    #####:  175:        return( ret );
+        -:  176:
+    #####:  177:    ret = mbedtls_mpi_read_binary( X, *p, len );
+        -:  178:
+    #####:  179:    *p += len;
+        -:  180:
+    #####:  181:    return( ret );
+        -:  182:}
+        -:  183:#endif /* MBEDTLS_BIGNUM_C */
+        -:  184:
+    #####:  185:int mbedtls_asn1_get_bitstring( unsigned char **p, const unsigned char *end,
+        -:  186:                        mbedtls_asn1_bitstring *bs)
+        -:  187:{
+        -:  188:    int ret;
+        -:  189:
+        -:  190:    /* Certificate type is a single byte bitstring */
+    #####:  191:    if( ( ret = mbedtls_asn1_get_tag( p, end, &bs->len, MBEDTLS_ASN1_BIT_STRING ) ) != 0 )
+    #####:  192:        return( ret );
+        -:  193:
+        -:  194:    /* Check length, subtract one for actual bit string length */
+    #####:  195:    if( bs->len < 1 )
+    #####:  196:        return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+    #####:  197:    bs->len -= 1;
+        -:  198:
+        -:  199:    /* Get number of unused bits, ensure unused bits <= 7 */
+    #####:  200:    bs->unused_bits = **p;
+    #####:  201:    if( bs->unused_bits > 7 )
+    #####:  202:        return( MBEDTLS_ERR_ASN1_INVALID_LENGTH );
+    #####:  203:    (*p)++;
+        -:  204:
+        -:  205:    /* Get actual bitstring */
+    #####:  206:    bs->p = *p;
+    #####:  207:    *p += bs->len;
+        -:  208:
+    #####:  209:    if( *p != end )
+    #####:  210:        return( MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  211:
+    #####:  212:    return( 0 );
+        -:  213:}
+        -:  214:
+        -:  215:/*
+        -:  216: * Get a bit string without unused bits
+        -:  217: */
+    #####:  218:int mbedtls_asn1_get_bitstring_null( unsigned char **p, const unsigned char *end,
+        -:  219:                             size_t *len )
+        -:  220:{
+        -:  221:    int ret;
+        -:  222:
+    #####:  223:    if( ( ret = mbedtls_asn1_get_tag( p, end, len, MBEDTLS_ASN1_BIT_STRING ) ) != 0 )
+    #####:  224:        return( ret );
+        -:  225:
+    #####:  226:    if( (*len)-- < 2 || *(*p)++ != 0 )
+    #####:  227:        return( MBEDTLS_ERR_ASN1_INVALID_DATA );
+        -:  228:
+    #####:  229:    return( 0 );
+        -:  230:}
+        -:  231:
+        -:  232:
+        -:  233:
+        -:  234:/*
+        -:  235: *  Parses and splits an ASN.1 "SEQUENCE OF <tag>"
+        -:  236: */
+    #####:  237:int mbedtls_asn1_get_sequence_of( unsigned char **p,
+        -:  238:                          const unsigned char *end,
+        -:  239:                          mbedtls_asn1_sequence *cur,
+        -:  240:                          int tag)
+        -:  241:{
+        -:  242:    int ret;
+        -:  243:    size_t len;
+        -:  244:    mbedtls_asn1_buf *buf;
+        -:  245:
+        -:  246:    /* Get main sequence tag */
+    #####:  247:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len,
+        -:  248:            MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
+    #####:  249:        return( ret );
+        -:  250:
+    #####:  251:    if( *p + len != end )
+    #####:  252:        return( MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  253:
+    #####:  254:    while( *p < end )
+        -:  255:    {
+    #####:  256:        buf = &(cur->buf);
+    #####:  257:        buf->tag = **p;
+        -:  258:
+    #####:  259:        if( ( ret = mbedtls_asn1_get_tag( p, end, &buf->len, tag ) ) != 0 )
+    #####:  260:            return( ret );
+        -:  261:
+    #####:  262:        buf->p = *p;
+    #####:  263:        *p += buf->len;
+        -:  264:
+        -:  265:        /* Allocate and assign next pointer */
+    #####:  266:        if( *p < end )
+        -:  267:        {
+    #####:  268:            cur->next = (mbedtls_asn1_sequence*)mbedtls_calloc( 1,
+        -:  269:                                            sizeof( mbedtls_asn1_sequence ) );
+        -:  270:
+    #####:  271:            if( cur->next == NULL )
+    #####:  272:                return( MBEDTLS_ERR_ASN1_ALLOC_FAILED );
+        -:  273:
+    #####:  274:            cur = cur->next;
+        -:  275:        }
+        -:  276:    }
+        -:  277:
+        -:  278:    /* Set final sequence entry's next pointer to NULL */
+    #####:  279:    cur->next = NULL;
+        -:  280:
+    #####:  281:    if( *p != end )
+    #####:  282:        return( MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  283:
+    #####:  284:    return( 0 );
+        -:  285:}
+        -:  286:
+    #####:  287:int mbedtls_asn1_get_alg( unsigned char **p,
+        -:  288:                  const unsigned char *end,
+        -:  289:                  mbedtls_asn1_buf *alg, mbedtls_asn1_buf *params )
+        -:  290:{
+        -:  291:    int ret;
+        -:  292:    size_t len;
+        -:  293:
+    #####:  294:    if( ( ret = mbedtls_asn1_get_tag( p, end, &len,
+        -:  295:            MBEDTLS_ASN1_CONSTRUCTED | MBEDTLS_ASN1_SEQUENCE ) ) != 0 )
+    #####:  296:        return( ret );
+        -:  297:
+    #####:  298:    if( ( end - *p ) < 1 )
+    #####:  299:        return( MBEDTLS_ERR_ASN1_OUT_OF_DATA );
+        -:  300:
+    #####:  301:    alg->tag = **p;
+    #####:  302:    end = *p + len;
+        -:  303:
+    #####:  304:    if( ( ret = mbedtls_asn1_get_tag( p, end, &alg->len, MBEDTLS_ASN1_OID ) ) != 0 )
+    #####:  305:        return( ret );
+        -:  306:
+    #####:  307:    alg->p = *p;
+    #####:  308:    *p += alg->len;
+        -:  309:
+    #####:  310:    if( *p == end )
+        -:  311:    {
+    #####:  312:        mbedtls_platform_zeroize( params, sizeof(mbedtls_asn1_buf) );
+    #####:  313:        return( 0 );
+        -:  314:    }
+        -:  315:
+    #####:  316:    params->tag = **p;
+    #####:  317:    (*p)++;
+        -:  318:
+    #####:  319:    if( ( ret = mbedtls_asn1_get_len( p, end, &params->len ) ) != 0 )
+    #####:  320:        return( ret );
+        -:  321:
+    #####:  322:    params->p = *p;
+    #####:  323:    *p += params->len;
+        -:  324:
+    #####:  325:    if( *p != end )
+    #####:  326:        return( MBEDTLS_ERR_ASN1_LENGTH_MISMATCH );
+        -:  327:
+    #####:  328:    return( 0 );
+        -:  329:}
+        -:  330:
+    #####:  331:int mbedtls_asn1_get_alg_null( unsigned char **p,
+        -:  332:                       const unsigned char *end,
+        -:  333:                       mbedtls_asn1_buf *alg )
+        -:  334:{
+        -:  335:    int ret;
+        -:  336:    mbedtls_asn1_buf params;
+        -:  337:
+    #####:  338:    memset( &params, 0, sizeof(mbedtls_asn1_buf) );
+        -:  339:
+    #####:  340:    if( ( ret = mbedtls_asn1_get_alg( p, end, alg, &params ) ) != 0 )
+    #####:  341:        return( ret );
+        -:  342:
+    #####:  343:    if( ( params.tag != MBEDTLS_ASN1_NULL && params.tag != 0 ) || params.len != 0 )
+    #####:  344:        return( MBEDTLS_ERR_ASN1_INVALID_DATA );
+        -:  345:
+    #####:  346:    return( 0 );
+        -:  347:}
+        -:  348:
+    #####:  349:void mbedtls_asn1_free_named_data( mbedtls_asn1_named_data *cur )
+        -:  350:{
+    #####:  351:    if( cur == NULL )
+    #####:  352:        return;
+        -:  353:
+    #####:  354:    mbedtls_free( cur->oid.p );
+    #####:  355:    mbedtls_free( cur->val.p );
+        -:  356:
+    #####:  357:    mbedtls_platform_zeroize( cur, sizeof( mbedtls_asn1_named_data ) );
+        -:  358:}
+        -:  359:
+    #####:  360:void mbedtls_asn1_free_named_data_list( mbedtls_asn1_named_data **head )
+        -:  361:{
+        -:  362:    mbedtls_asn1_named_data *cur;
+        -:  363:
+    #####:  364:    while( ( cur = *head ) != NULL )
+        -:  365:    {
+    #####:  366:        *head = cur->next;
+    #####:  367:        mbedtls_asn1_free_named_data( cur );
+    #####:  368:        mbedtls_free( cur );
+        -:  369:    }
+    #####:  370:}
+        -:  371:
+    #####:  372:mbedtls_asn1_named_data *mbedtls_asn1_find_named_data( mbedtls_asn1_named_data *list,
+        -:  373:                                       const char *oid, size_t len )
+        -:  374:{
+    #####:  375:    while( list != NULL )
+        -:  376:    {
+    #####:  377:        if( list->oid.len == len &&
+    #####:  378:            memcmp( list->oid.p, oid, len ) == 0 )
+        -:  379:        {
+    #####:  380:            break;
+        -:  381:        }
+        -:  382:
+    #####:  383:        list = list->next;
+        -:  384:    }
+        -:  385:
+    #####:  386:    return( list );
+        -:  387:}
+        -:  388:
+        -:  389:#endif /* MBEDTLS_ASN1_PARSE_C */

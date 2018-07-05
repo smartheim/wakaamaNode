@@ -1,0 +1,261 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/network/mbedtls/library/ssl_cookie.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/network/mbedtls/library/ssl_cookie.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: *  DTLS cookie callbacks implementation
+        -:    3: *
+        -:    4: *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+        -:    5: *  SPDX-License-Identifier: Apache-2.0
+        -:    6: *
+        -:    7: *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+        -:    8: *  not use this file except in compliance with the License.
+        -:    9: *  You may obtain a copy of the License at
+        -:   10: *
+        -:   11: *  http://www.apache.org/licenses/LICENSE-2.0
+        -:   12: *
+        -:   13: *  Unless required by applicable law or agreed to in writing, software
+        -:   14: *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+        -:   15: *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   16: *  See the License for the specific language governing permissions and
+        -:   17: *  limitations under the License.
+        -:   18: *
+        -:   19: *  This file is part of mbed TLS (https://tls.mbed.org)
+        -:   20: */
+        -:   21:/*
+        -:   22: * These session callbacks use a simple chained list
+        -:   23: * to store and retrieve the session information.
+        -:   24: */
+        -:   25:
+        -:   26:#if !defined(MBEDTLS_CONFIG_FILE)
+        -:   27:#include "mbedtls/config.h"
+        -:   28:#else
+        -:   29:#include MBEDTLS_CONFIG_FILE
+        -:   30:#endif
+        -:   31:
+        -:   32:#if defined(MBEDTLS_SSL_COOKIE_C)
+        -:   33:
+        -:   34:#if defined(MBEDTLS_PLATFORM_C)
+        -:   35:#include "mbedtls/platform.h"
+        -:   36:#else
+        -:   37:#define mbedtls_calloc    calloc
+        -:   38:#define mbedtls_free      free
+        -:   39:#endif
+        -:   40:
+        -:   41:#include "mbedtls/ssl_cookie.h"
+        -:   42:#include "mbedtls/ssl_internal.h"
+        -:   43:#include "mbedtls/platform_util.h"
+        -:   44:
+        -:   45:#include <string.h>
+        -:   46:
+        -:   47:/*
+        -:   48: * If DTLS is in use, then at least one of SHA-1, SHA-256, SHA-512 is
+        -:   49: * available. Try SHA-256 first, 512 wastes resources since we need to stay
+        -:   50: * with max 32 bytes of cookie for DTLS 1.0
+        -:   51: */
+        -:   52:#if defined(MBEDTLS_SHA256_C)
+        -:   53:#define COOKIE_MD           MBEDTLS_MD_SHA224
+        -:   54:#define COOKIE_MD_OUTLEN    32
+        -:   55:#define COOKIE_HMAC_LEN     28
+        -:   56:#elif defined(MBEDTLS_SHA512_C)
+        -:   57:#define COOKIE_MD           MBEDTLS_MD_SHA384
+        -:   58:#define COOKIE_MD_OUTLEN    48
+        -:   59:#define COOKIE_HMAC_LEN     28
+        -:   60:#elif defined(MBEDTLS_SHA1_C)
+        -:   61:#define COOKIE_MD           MBEDTLS_MD_SHA1
+        -:   62:#define COOKIE_MD_OUTLEN    20
+        -:   63:#define COOKIE_HMAC_LEN     20
+        -:   64:#else
+        -:   65:#error "DTLS hello verify needs SHA-1 or SHA-2"
+        -:   66:#endif
+        -:   67:
+        -:   68:/*
+        -:   69: * Cookies are formed of a 4-bytes timestamp (or serial number) and
+        -:   70: * an HMAC of timestemp and client ID.
+        -:   71: */
+        -:   72:#define COOKIE_LEN      ( 4 + COOKIE_HMAC_LEN )
+        -:   73:
+    #####:   74:void mbedtls_ssl_cookie_init( mbedtls_ssl_cookie_ctx *ctx )
+        -:   75:{
+    #####:   76:    mbedtls_md_init( &ctx->hmac_ctx );
+        -:   77:#if !defined(MBEDTLS_HAVE_TIME)
+    #####:   78:    ctx->serial = 0;
+        -:   79:#endif
+    #####:   80:    ctx->timeout = MBEDTLS_SSL_COOKIE_TIMEOUT;
+        -:   81:
+        -:   82:#if defined(MBEDTLS_THREADING_C)
+        -:   83:    mbedtls_mutex_init( &ctx->mutex );
+        -:   84:#endif
+    #####:   85:}
+        -:   86:
+    #####:   87:void mbedtls_ssl_cookie_set_timeout( mbedtls_ssl_cookie_ctx *ctx, unsigned long delay )
+        -:   88:{
+    #####:   89:    ctx->timeout = delay;
+    #####:   90:}
+        -:   91:
+    #####:   92:void mbedtls_ssl_cookie_free( mbedtls_ssl_cookie_ctx *ctx )
+        -:   93:{
+    #####:   94:    mbedtls_md_free( &ctx->hmac_ctx );
+        -:   95:
+        -:   96:#if defined(MBEDTLS_THREADING_C)
+        -:   97:    mbedtls_mutex_free( &ctx->mutex );
+        -:   98:#endif
+        -:   99:
+    #####:  100:    mbedtls_platform_zeroize( ctx, sizeof( mbedtls_ssl_cookie_ctx ) );
+    #####:  101:}
+        -:  102:
+    #####:  103:int mbedtls_ssl_cookie_setup( mbedtls_ssl_cookie_ctx *ctx,
+        -:  104:                      int (*f_rng)(void *, unsigned char *, size_t),
+        -:  105:                      void *p_rng )
+        -:  106:{
+        -:  107:    int ret;
+        -:  108:    unsigned char key[COOKIE_MD_OUTLEN];
+        -:  109:
+    #####:  110:    if( ( ret = f_rng( p_rng, key, sizeof( key ) ) ) != 0 )
+    #####:  111:        return( ret );
+        -:  112:
+    #####:  113:    ret = mbedtls_md_setup( &ctx->hmac_ctx, mbedtls_md_info_from_type( COOKIE_MD ), 1 );
+    #####:  114:    if( ret != 0 )
+    #####:  115:        return( ret );
+        -:  116:
+    #####:  117:    ret = mbedtls_md_hmac_starts( &ctx->hmac_ctx, key, sizeof( key ) );
+    #####:  118:    if( ret != 0 )
+    #####:  119:        return( ret );
+        -:  120:
+    #####:  121:    mbedtls_platform_zeroize( key, sizeof( key ) );
+        -:  122:
+    #####:  123:    return( 0 );
+        -:  124:}
+        -:  125:
+        -:  126:/*
+        -:  127: * Generate the HMAC part of a cookie
+        -:  128: */
+    #####:  129:static int ssl_cookie_hmac( mbedtls_md_context_t *hmac_ctx,
+        -:  130:                            const unsigned char time[4],
+        -:  131:                            unsigned char **p, unsigned char *end,
+        -:  132:                            const unsigned char *cli_id, size_t cli_id_len )
+        -:  133:{
+        -:  134:    unsigned char hmac_out[COOKIE_MD_OUTLEN];
+        -:  135:
+    #####:  136:    if( (size_t)( end - *p ) < COOKIE_HMAC_LEN )
+    #####:  137:        return( MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL );
+        -:  138:
+    #####:  139:    if( mbedtls_md_hmac_reset(  hmac_ctx ) != 0 ||
+    #####:  140:        mbedtls_md_hmac_update( hmac_ctx, time, 4 ) != 0 ||
+    #####:  141:        mbedtls_md_hmac_update( hmac_ctx, cli_id, cli_id_len ) != 0 ||
+    #####:  142:        mbedtls_md_hmac_finish( hmac_ctx, hmac_out ) != 0 )
+        -:  143:    {
+    #####:  144:        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR );
+        -:  145:    }
+        -:  146:
+    #####:  147:    memcpy( *p, hmac_out, COOKIE_HMAC_LEN );
+    #####:  148:    *p += COOKIE_HMAC_LEN;
+        -:  149:
+    #####:  150:    return( 0 );
+        -:  151:}
+        -:  152:
+        -:  153:/*
+        -:  154: * Generate cookie for DTLS ClientHello verification
+        -:  155: */
+    #####:  156:int mbedtls_ssl_cookie_write( void *p_ctx,
+        -:  157:                      unsigned char **p, unsigned char *end,
+        -:  158:                      const unsigned char *cli_id, size_t cli_id_len )
+        -:  159:{
+        -:  160:    int ret;
+    #####:  161:    mbedtls_ssl_cookie_ctx *ctx = (mbedtls_ssl_cookie_ctx *) p_ctx;
+        -:  162:    unsigned long t;
+        -:  163:
+    #####:  164:    if( ctx == NULL || cli_id == NULL )
+    #####:  165:        return( MBEDTLS_ERR_SSL_BAD_INPUT_DATA );
+        -:  166:
+    #####:  167:    if( (size_t)( end - *p ) < COOKIE_LEN )
+    #####:  168:        return( MBEDTLS_ERR_SSL_BUFFER_TOO_SMALL );
+        -:  169:
+        -:  170:#if defined(MBEDTLS_HAVE_TIME)
+        -:  171:    t = (unsigned long) mbedtls_time( NULL );
+        -:  172:#else
+    #####:  173:    t = ctx->serial++;
+        -:  174:#endif
+        -:  175:
+    #####:  176:    (*p)[0] = (unsigned char)( t >> 24 );
+    #####:  177:    (*p)[1] = (unsigned char)( t >> 16 );
+    #####:  178:    (*p)[2] = (unsigned char)( t >>  8 );
+    #####:  179:    (*p)[3] = (unsigned char)( t       );
+    #####:  180:    *p += 4;
+        -:  181:
+        -:  182:#if defined(MBEDTLS_THREADING_C)
+        -:  183:    if( ( ret = mbedtls_mutex_lock( &ctx->mutex ) ) != 0 )
+        -:  184:        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR + ret );
+        -:  185:#endif
+        -:  186:
+    #####:  187:    ret = ssl_cookie_hmac( &ctx->hmac_ctx, *p - 4,
+        -:  188:                           p, end, cli_id, cli_id_len );
+        -:  189:
+        -:  190:#if defined(MBEDTLS_THREADING_C)
+        -:  191:    if( mbedtls_mutex_unlock( &ctx->mutex ) != 0 )
+        -:  192:        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR +
+        -:  193:                MBEDTLS_ERR_THREADING_MUTEX_ERROR );
+        -:  194:#endif
+        -:  195:
+    #####:  196:    return( ret );
+        -:  197:}
+        -:  198:
+        -:  199:/*
+        -:  200: * Check a cookie
+        -:  201: */
+    #####:  202:int mbedtls_ssl_cookie_check( void *p_ctx,
+        -:  203:                      const unsigned char *cookie, size_t cookie_len,
+        -:  204:                      const unsigned char *cli_id, size_t cli_id_len )
+        -:  205:{
+        -:  206:    unsigned char ref_hmac[COOKIE_HMAC_LEN];
+    #####:  207:    int ret = 0;
+    #####:  208:    unsigned char *p = ref_hmac;
+    #####:  209:    mbedtls_ssl_cookie_ctx *ctx = (mbedtls_ssl_cookie_ctx *) p_ctx;
+        -:  210:    unsigned long cur_time, cookie_time;
+        -:  211:
+    #####:  212:    if( ctx == NULL || cli_id == NULL )
+    #####:  213:        return( MBEDTLS_ERR_SSL_BAD_INPUT_DATA );
+        -:  214:
+    #####:  215:    if( cookie_len != COOKIE_LEN )
+    #####:  216:        return( -1 );
+        -:  217:
+        -:  218:#if defined(MBEDTLS_THREADING_C)
+        -:  219:    if( ( ret = mbedtls_mutex_lock( &ctx->mutex ) ) != 0 )
+        -:  220:        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR + ret );
+        -:  221:#endif
+        -:  222:
+    #####:  223:    if( ssl_cookie_hmac( &ctx->hmac_ctx, cookie,
+        -:  224:                         &p, p + sizeof( ref_hmac ),
+        -:  225:                         cli_id, cli_id_len ) != 0 )
+    #####:  226:        ret = -1;
+        -:  227:
+        -:  228:#if defined(MBEDTLS_THREADING_C)
+        -:  229:    if( mbedtls_mutex_unlock( &ctx->mutex ) != 0 )
+        -:  230:        return( MBEDTLS_ERR_SSL_INTERNAL_ERROR +
+        -:  231:                MBEDTLS_ERR_THREADING_MUTEX_ERROR );
+        -:  232:#endif
+        -:  233:
+    #####:  234:    if( ret != 0 )
+    #####:  235:        return( ret );
+        -:  236:
+    #####:  237:    if( mbedtls_ssl_safer_memcmp( cookie + 4, ref_hmac, sizeof( ref_hmac ) ) != 0 )
+    #####:  238:        return( -1 );
+        -:  239:
+        -:  240:#if defined(MBEDTLS_HAVE_TIME)
+        -:  241:    cur_time = (unsigned long) mbedtls_time( NULL );
+        -:  242:#else
+    #####:  243:    cur_time = ctx->serial;
+        -:  244:#endif
+        -:  245:
+    #####:  246:    cookie_time = ( (unsigned long) cookie[0] << 24 ) |
+    #####:  247:                  ( (unsigned long) cookie[1] << 16 ) |
+    #####:  248:                  ( (unsigned long) cookie[2] <<  8 ) |
+    #####:  249:                  ( (unsigned long) cookie[3]       );
+        -:  250:
+    #####:  251:    if( ctx->timeout != 0 && cur_time - cookie_time > ctx->timeout )
+    #####:  252:        return( -1 );
+        -:  253:
+    #####:  254:    return( 0 );
+        -:  255:}
+        -:  256:#endif /* MBEDTLS_SSL_COOKIE_C */

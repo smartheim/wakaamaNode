@@ -1,0 +1,126 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/add_remove_server_tests.cpp
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/add_remove_server_tests.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:
+        -:   15:#include <gtest/gtest.h>
+        -:   16:#include "lwm2m/c_connect.h"
+        -:   17:#include "lwm2m/objects.h"
+        -:   18:#include "lwm2m/debug.h"
+        -:   19:#include "test_debug.h"
+        -:   20:#include "lwm2m/network.h"
+        -:   21:#include "../src/internal.h"
+        -:   22:#include "with_lwip/lwip_tap_helper.h"
+        -:   23:#include "memory.h"
+        -:   24:
+        -:   25:#include <stdint.h>
+        -:   26:#include <stdio.h>
+        -:   27:
+        -:   28:#include <thread>
+        -:   29:#include <memory>
+        -:   30:#include <algorithm>
+        -:   31:
+        -:   32:extern "C" {
+        -:   33:#include "internals.h"
+        -:   34:}
+        -:   35:
+        -:   36:#define LWM2M_SERVER_ADDR "coap://127.0.0.1:12345"
+        -:   37:
+        -:   38:class AddRemoveServerTests : public testing::Test {
+        -:   39:public:
+        -:   40:    lwm2m_client_context_t client_context{};
+        -:   41:    int client_bound_sockets;
+        -:   42:    int client_updated;
+        -:   43:
+        -:   44:    // Client name and connected client name
+        -:   45:    char* connected_client_name = nullptr;
+        -:   46:    const char* client_name = "testClient";
+        -:   47:
+        -:   48: protected:
+    #####:   49:    virtual void TearDown() {
+    #####:   50:        lwm2m_client_close(&client_context);
+        -:   51:
+    #####:   52:        lwip_network_close();
+        -:   53:
+        -:   54:        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
+        -:   55:                      [](MemoryObserver::MemAreas::value_type it){
+        -:   56:            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
+    #####:   57:        });
+    #####:   58:    }
+        -:   59:
+    #####:   60:    virtual void SetUp() {
+    #####:   61:        memoryObserver.reset();
+        -:   62:        // Necessary for lwip to initialize the memory module
+    #####:   63:        ASSERT_TRUE(lwip_network_init());
+        -:   64:    }
+        -:   65:};
+        -:   66:
+    #####:   67:TEST_F(AddRemoveServerTests, AddRemoveServer) {
+    #####:   68:    ASSERT_GE(lwm2m_client_init(&client_context, client_name), 1);
+        -:   69:
+    #####:   70:    ASSERT_EQ(client_context.securityObject.objID, 0);
+    #####:   71:    ASSERT_EQ(client_context.serverObject.obj.objID, 1);
+    #####:   72:    ASSERT_EQ(client_context.deviceObject.obj.objID, 3);
+        -:   73:
+    #####:   74:    ASSERT_TRUE(lwm2m_add_server(CTX(client_context), 123, LWM2M_SERVER_ADDR, 100, false));
+        -:   75:
+    #####:   76:    ASSERT_EQ(CTX(client_context)->state, STATE_INITIAL);
+        -:   77:
+    #####:   78:    security_instance_t* secInstance = (security_instance_t*)client_context.securityObject.instanceList;
+    #####:   79:    server_instance_t* serverInstance = (server_instance_t*)client_context.serverObject.obj.instanceList;
+        -:   80:
+    #####:   81:    ASSERT_EQ(123, secInstance->shortID);
+    #####:   82:    ASSERT_EQ(123, serverInstance->shortServerId);
+        -:   83:
+    #####:   84:    ASSERT_STREQ(lwm2m_get_server_uri(CTX(client_context), 123), LWM2M_SERVER_ADDR);
+        -:   85:
+        -:   86:    time_t timeout;
+    #####:   87:    int result = lwm2m_step(CTX(client_context), &timeout);
+    #####:   88:    ASSERT_EQ(COAP_NO_ERROR, result);
+    #####:   89:    ASSERT_EQ(STATE_REGISTER_REQUIRED2, CTX(client_context)->state);
+        -:   90:
+    #####:   91:    result = lwm2m_step(CTX(client_context), &timeout);
+    #####:   92:    ASSERT_EQ(COAP_NO_ERROR, result);
+        -:   93:
+    #####:   94:    ASSERT_EQ(STATE_REGISTERING, CTX(client_context)->state);
+        -:   95:
+        -:   96:    lwm2m_server_t * serverListEntry;
+    #####:   97:    serverListEntry = (lwm2m_server_t *)LWM2M_LIST_FIND(CTX(client_context)->serverList, secInstance->instanceId);
+    #####:   98:    ASSERT_TRUE(serverListEntry);
+    #####:   99:    serverListEntry->location = (char*)lwm2m_malloc (1);
+        -:  100:
+        -:  101:    // Now assume registering worked
+    #####:  102:    serverListEntry->status = STATE_REGISTERED;
+        -:  103:
+        -:  104:    // Unregister now
+    #####:  105:    ASSERT_TRUE(lwm2m_unregister_server(CTX(client_context), secInstance->instanceId));
+    #####:  106:    ASSERT_EQ(STATE_DEREG_PENDING, serverListEntry->status);
+    #####:  107:    serverListEntry->status = STATE_DEREGISTERED;
+        -:  108:
+    #####:  109:    lwm2m_remove_unregistered_servers(CTX(client_context));
+        -:  110:
+    #####:  111:    ASSERT_FALSE(client_context.securityObject.instanceList);
+    #####:  112:    ASSERT_FALSE(client_context.serverObject.obj.instanceList);
+    #####:  113:    ASSERT_TRUE(CTX(client_context)->serverList);
+        -:  114:
+    #####:  115:    ASSERT_EQ(CTX(client_context)->state, STATE_INITIAL);
+    #####:  116:    result = lwm2m_step(CTX(client_context), &timeout);
+    #####:  117:    ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
+        -:  118:
+    #####:  119:    ASSERT_EQ(CTX(client_context)->state, STATE_BOOTSTRAP_REQUIRED);
+    #####:  120:    ASSERT_FALSE(CTX(client_context)->serverList);
+        -:  121:}

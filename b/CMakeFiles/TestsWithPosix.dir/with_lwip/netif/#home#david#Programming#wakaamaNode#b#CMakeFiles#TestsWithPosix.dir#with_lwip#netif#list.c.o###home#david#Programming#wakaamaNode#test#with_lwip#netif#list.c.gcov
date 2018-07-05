@@ -1,0 +1,158 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/with_lwip/netif/list.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/with_lwip/netif/list.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+        -:    3: * All rights reserved. 
+        -:    4: * 
+        -:    5: * Redistribution and use in source and binary forms, with or without modification, 
+        -:    6: * are permitted provided that the following conditions are met:
+        -:    7: *
+        -:    8: * 1. Redistributions of source code must retain the above copyright notice,
+        -:    9: *    this list of conditions and the following disclaimer.
+        -:   10: * 2. Redistributions in binary form must reproduce the above copyright notice,
+        -:   11: *    this list of conditions and the following disclaimer in the documentation
+        -:   12: *    and/or other materials provided with the distribution.
+        -:   13: * 3. The name of the author may not be used to endorse or promote products
+        -:   14: *    derived from this software without specific prior written permission. 
+        -:   15: *
+        -:   16: * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+        -:   17: * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+        -:   18: * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+        -:   19: * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+        -:   20: * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
+        -:   21: * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+        -:   22: * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+        -:   23: * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+        -:   24: * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+        -:   25: * OF SUCH DAMAGE.
+        -:   26: *
+        -:   27: * This file is part of the lwIP TCP/IP stack.
+        -:   28: * 
+        -:   29: * Author: Adam Dunkels <adam@sics.se>
+        -:   30: *
+        -:   31: */
+        -:   32:
+        -:   33:
+        -:   34:
+        -:   35:#include <stdlib.h>
+        -:   36:#include <netif/list.h>
+        -:   37:
+        -:   38:
+        -:   39:/*-----------------------------------------------------------------------------------*/
+        -:   40:struct list *
+    #####:   41:list_new(int size)
+        -:   42:{
+        -:   43:  struct list *list;
+    #####:   44:  list = (struct list *)malloc(sizeof(struct list));
+    #####:   45:  list->first = list->last = NULL;
+    #####:   46:  list->size = size;
+    #####:   47:  list->elems = 0;
+    #####:   48:  return list;
+        -:   49:}
+        -:   50:/*-----------------------------------------------------------------------------------*/
+        -:   51:int
+    #####:   52:list_push(struct list *list, void *data)
+        -:   53:{
+        -:   54:  struct elem *elem;
+        -:   55:
+    #####:   56:  if (list->elems < list->size) {
+    #####:   57:    elem = (struct elem *)malloc(sizeof(struct elem));
+    #####:   58:    elem->data = data;
+    #####:   59:    elem->next = NULL;
+    #####:   60:    if (list->last != NULL) {
+    #####:   61:      list->last->next = elem;
+        -:   62:    }
+    #####:   63:    list->last = elem;
+    #####:   64:    if (list->first == NULL) {
+    #####:   65:      list->first = elem;
+        -:   66:    }
+    #####:   67:    list->elems++;
+    #####:   68:    return 1;
+        -:   69:  }
+    #####:   70:  return 0;
+        -:   71:}
+        -:   72:/*-----------------------------------------------------------------------------------*/
+        -:   73:void *
+    #####:   74:list_pop(struct list *list)
+        -:   75:{
+        -:   76:  struct elem *elem;
+        -:   77:  void *data;
+        -:   78:
+    #####:   79:  if (list->elems > 0) {
+    #####:   80:    elem = list->first;
+    #####:   81:    if (elem == list->last) {
+    #####:   82:      list->last = elem->next;
+        -:   83:    }
+    #####:   84:    list->first = elem->next;
+        -:   85:
+    #####:   86:    list->elems--;
+        -:   87:
+    #####:   88:    data = elem->data;
+    #####:   89:    free(elem);
+        -:   90:
+    #####:   91:    return data;
+        -:   92:  }
+    #####:   93:  return NULL;
+        -:   94:}
+        -:   95:/*-----------------------------------------------------------------------------------*/
+        -:   96:void *
+    #####:   97:list_first(struct list *list)
+        -:   98:{
+    #####:   99:  return list->first;
+        -:  100:}
+        -:  101:/*-----------------------------------------------------------------------------------*/
+        -:  102:int
+    #####:  103:list_elems(struct list *list)
+        -:  104:{
+    #####:  105:  return list->elems;
+        -:  106:}
+        -:  107:/*-----------------------------------------------------------------------------------*/
+        -:  108:void
+    #####:  109:list_delete(struct list *list)
+        -:  110:{
+    #####:  111:  while (list_pop(list) != NULL);
+    #####:  112:  free(list);
+    #####:  113:}
+        -:  114:/*-----------------------------------------------------------------------------------*/
+        -:  115:int
+    #####:  116:list_remove(struct list *list, void *elem)
+        -:  117:{
+        -:  118:  struct elem *e, *p;
+        -:  119:
+    #####:  120:  p = NULL;
+    #####:  121:  for(e = list->first; e != NULL; e = e->next) {
+    #####:  122:    if (e->data == elem) {
+    #####:  123:      if (p != NULL) {
+    #####:  124:        p->next = e->next;
+        -:  125:      } else {
+    #####:  126:        list->first = e->next;
+        -:  127:      }
+    #####:  128:      if (list->last == e) {
+    #####:  129:        list->last = p;
+    #####:  130:        if (p != NULL) {
+    #####:  131:          p->next = NULL;
+        -:  132:        }
+        -:  133:      }
+    #####:  134:      free(e);
+    #####:  135:      list->elems--;
+    #####:  136:      return 1;
+        -:  137:    }
+    #####:  138:    p = e;
+        -:  139:  }
+    #####:  140:  return 0;
+        -:  141:}
+        -:  142:/*-----------------------------------------------------------------------------------*/
+        -:  143:void
+    #####:  144:list_map(struct list *list, void (* func)(void *arg))
+        -:  145:{
+        -:  146:  struct elem *e;
+        -:  147:
+    #####:  148:  for(e = list->first; e != NULL; e = e->next) {
+    #####:  149:    func(e->data);
+        -:  150:  }
+    #####:  151:}
+        -:  152:/*-----------------------------------------------------------------------------------*/
+        -:  153:

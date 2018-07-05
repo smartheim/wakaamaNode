@@ -1,0 +1,70 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/with_lwip/perf.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/with_lwip/perf.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+        -:    3: * All rights reserved. 
+        -:    4: * 
+        -:    5: * Redistribution and use in source and binary forms, with or without modification, 
+        -:    6: * are permitted provided that the following conditions are met:
+        -:    7: *
+        -:    8: * 1. Redistributions of source code must retain the above copyright notice,
+        -:    9: *    this list of conditions and the following disclaimer.
+        -:   10: * 2. Redistributions in binary form must reproduce the above copyright notice,
+        -:   11: *    this list of conditions and the following disclaimer in the documentation
+        -:   12: *    and/or other materials provided with the distribution.
+        -:   13: * 3. The name of the author may not be used to endorse or promote products
+        -:   14: *    derived from this software without specific prior written permission. 
+        -:   15: *
+        -:   16: * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
+        -:   17: * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
+        -:   18: * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
+        -:   19: * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
+        -:   20: * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
+        -:   21: * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
+        -:   22: * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
+        -:   23: * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
+        -:   24: * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+        -:   25: * OF SUCH DAMAGE.
+        -:   26: *
+        -:   27: * This file is part of the lwIP TCP/IP stack.
+        -:   28: * 
+        -:   29: * Author: Adam Dunkels <adam@sics.se>
+        -:   30: *
+        -:   31: */
+        -:   32:
+        -:   33:#include "arch/perf.h"
+        -:   34:
+        -:   35:#include <stdio.h>
+        -:   36:
+        -:   37:static FILE *f;
+        -:   38:
+        -:   39:void
+    #####:   40:perf_print(unsigned long c1l, unsigned long c1h,
+        -:   41:	   unsigned long c2l, unsigned long c2h,
+        -:   42:	   char *key)
+        -:   43:{
+        -:   44:  unsigned long sub_ms, sub_ls;
+        -:   45:  
+    #####:   46:  sub_ms = c2h - c1h;
+    #####:   47:  sub_ls = c2l - c1l;
+    #####:   48:  if (c2l < c1l) sub_ms--;
+    #####:   49:  fprintf(f, "%s: %.8lu%.8lu\n", key, sub_ms, sub_ls);
+    #####:   50:  fflush(NULL);
+    #####:   51:}
+        -:   52:
+        -:   53:void
+    #####:   54:perf_print_times(struct tms *start, struct tms *end, char *key)
+        -:   55:{
+    #####:   56:  fprintf(f, "%s: %lu\n", key, end->tms_stime - start->tms_stime);
+    #####:   57:  fflush(NULL);  
+    #####:   58:}
+        -:   59:
+        -:   60:void
+    #####:   61:perf_init(char *fname)
+        -:   62:{
+    #####:   63:  f = fopen(fname, "w");  
+    #####:   64:}
+        -:   65:	

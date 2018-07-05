@@ -1,0 +1,81 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/platform/platform_posix.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/platform/platform_posix.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:typedef int make_iso_compilers_happy; // if not POSIX
+        -:   15:
+        -:   16:#if (defined(_WIN32) || defined(__unix__) || defined(POSIX))
+        -:   17:
+        -:   18:#include "../wakaama/liblwm2m.h"
+        -:   19:#include <stdlib.h>
+        -:   20:#include <string.h>
+        -:   21:#include <stdio.h>
+        -:   22:#include <stdarg.h>
+        -:   23:#include <sys/time.h>
+        -:   24:
+        -:   25:#ifndef LWM2M_WITHOUT_ALLOC_FREE
+        -:   26:void* __attribute__((weak)) lwm2m_malloc(size_t s)
+        -:   27:{
+        -:   28:    return malloc(s);
+        -:   29:}
+        -:   30:
+        -:   31:void __attribute__((weak)) lwm2m_free(void * p)
+        -:   32:{
+        -:   33:    free(p);
+        -:   34:}
+        -:   35:
+        -:   36:char* __attribute__((weak)) lwm2m_strdup(const char * str)
+        -:   37:{
+        -:   38:    return strdup(str);
+        -:   39:}
+        -:   40:#endif
+        -:   41:
+    #####:   42:int lwm2m_strncmp(const char * s1,
+        -:   43:                     const char * s2,
+        -:   44:                     size_t n)
+        -:   45:{
+    #####:   46:    return strncmp(s1, s2, n);
+        -:   47:}
+        -:   48:
+    #####:   49:time_t __attribute__((weak)) lwm2m_gettime(void)
+        -:   50:{
+        -:   51:    struct timeval tv;
+        -:   52:
+    #####:   53:    if (0 != gettimeofday(&tv, NULL))
+        -:   54:    {
+    #####:   55:        return -1;
+        -:   56:    }
+        -:   57:
+    #####:   58:    return tv.tv_sec;
+        -:   59:}
+        -:   60:
+        -:   61:#ifdef LWM2M_WITH_LOGS
+        -:   62:void __attribute__((weak)) lwm2m_printf(const char * format, ...)
+        -:   63:{
+        -:   64:    va_list ap;
+        -:   65:
+        -:   66:    va_start(ap, format);
+        -:   67:
+        -:   68:    vfprintf(stderr, format, ap);
+        -:   69:
+        -:   70:    va_end(ap);
+        -:   71:}
+        -:   72:#else
+    #####:   73:void __attribute__((weak)) lwm2m_printf(const char * format, ...) {}
+        -:   74:#endif
+        -:   75:
+        -:   76:#endif

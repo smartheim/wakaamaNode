@@ -1,0 +1,378 @@
+        -:    0:Source:/usr/include/c++/8/bits/std_mutex.h
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/connect_server_tests.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:// std::mutex implementation -*- C++ -*-
+        -:    2:
+        -:    3:// Copyright (C) 2003-2018 Free Software Foundation, Inc.
+        -:    4://
+        -:    5:// This file is part of the GNU ISO C++ Library.  This library is free
+        -:    6:// software; you can redistribute it and/or modify it under the
+        -:    7:// terms of the GNU General Public License as published by the
+        -:    8:// Free Software Foundation; either version 3, or (at your option)
+        -:    9:// any later version.
+        -:   10:
+        -:   11:// This library is distributed in the hope that it will be useful,
+        -:   12:// but WITHOUT ANY WARRANTY; without even the implied warranty of
+        -:   13:// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+        -:   14:// GNU General Public License for more details.
+        -:   15:
+        -:   16:// Under Section 7 of GPL version 3, you are granted additional
+        -:   17:// permissions described in the GCC Runtime Library Exception, version
+        -:   18:// 3.1, as published by the Free Software Foundation.
+        -:   19:
+        -:   20:// You should have received a copy of the GNU General Public License and
+        -:   21:// a copy of the GCC Runtime Library Exception along with this program;
+        -:   22:// see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
+        -:   23:// <http://www.gnu.org/licenses/>.
+        -:   24:
+        -:   25:/** @file bits/std_mutex.h
+        -:   26: *  This is an internal header file, included by other library headers.
+        -:   27: *  Do not attempt to use it directly. @headername{mutex}
+        -:   28: */
+        -:   29:
+        -:   30:#ifndef _GLIBCXX_MUTEX_H
+        -:   31:#define _GLIBCXX_MUTEX_H 1
+        -:   32:
+        -:   33:#pragma GCC system_header
+        -:   34:
+        -:   35:#if __cplusplus < 201103L
+        -:   36:# include <bits/c++0x_warning.h>
+        -:   37:#else
+        -:   38:
+        -:   39:#include <system_error>
+        -:   40:#include <bits/functexcept.h>
+        -:   41:#include <bits/gthr.h>
+        -:   42:#include <bits/move.h> // for std::swap
+        -:   43:
+        -:   44:#ifdef _GLIBCXX_USE_C99_STDINT_TR1
+        -:   45:
+        -:   46:namespace std _GLIBCXX_VISIBILITY(default)
+        -:   47:{
+        -:   48:_GLIBCXX_BEGIN_NAMESPACE_VERSION
+        -:   49:
+        -:   50:  /**
+        -:   51:   * @defgroup mutexes Mutexes
+        -:   52:   * @ingroup concurrency
+        -:   53:   *
+        -:   54:   * Classes for mutex support.
+        -:   55:   * @{
+        -:   56:   */
+        -:   57:
+        -:   58:#ifdef _GLIBCXX_HAS_GTHREADS
+        -:   59:  // Common base class for std::mutex and std::timed_mutex
+        -:   60:  class __mutex_base
+        -:   61:  {
+        -:   62:  protected:
+        -:   63:    typedef __gthread_mutex_t			__native_type;
+        -:   64:
+        -:   65:#ifdef __GTHREAD_MUTEX_INIT
+        -:   66:    __native_type  _M_mutex = __GTHREAD_MUTEX_INIT;
+        -:   67:
+        -:   68:    constexpr __mutex_base() noexcept = default;
+        -:   69:#else
+        -:   70:    __native_type  _M_mutex;
+        -:   71:
+        -:   72:    __mutex_base() noexcept
+        -:   73:    {
+        -:   74:      // XXX EAGAIN, ENOMEM, EPERM, EBUSY(may), EINVAL(may)
+        -:   75:      __GTHREAD_MUTEX_INIT_FUNCTION(&_M_mutex);
+        -:   76:    }
+        -:   77:
+        -:   78:    ~__mutex_base() noexcept { __gthread_mutex_destroy(&_M_mutex); }
+        -:   79:#endif
+        -:   80:
+        -:   81:    __mutex_base(const __mutex_base&) = delete;
+        -:   82:    __mutex_base& operator=(const __mutex_base&) = delete;
+        -:   83:  };
+        -:   84:
+        -:   85:  /// The standard mutex type.
+        -:   86:  class mutex : private __mutex_base
+        -:   87:  {
+        -:   88:  public:
+        -:   89:    typedef __native_type* 			native_handle_type;
+        -:   90:
+        -:   91:#ifdef __GTHREAD_MUTEX_INIT
+        -:   92:    constexpr
+        -:   93:#endif
+        -:   94:    mutex() noexcept = default;
+        -:   95:    ~mutex() = default;
+        -:   96:
+        -:   97:    mutex(const mutex&) = delete;
+        -:   98:    mutex& operator=(const mutex&) = delete;
+        -:   99:
+        -:  100:    void
+    #####:  101:    lock()
+        -:  102:    {
+    #####:  103:      int __e = __gthread_mutex_lock(&_M_mutex);
+        -:  104:
+        -:  105:      // EINVAL, EAGAIN, EBUSY, EINVAL, EDEADLK(may)
+    #####:  106:      if (__e)
+    #####:  107:	__throw_system_error(__e);
+    #####:  108:    }
+        -:  109:
+        -:  110:    bool
+        -:  111:    try_lock() noexcept
+        -:  112:    {
+        -:  113:      // XXX EINVAL, EAGAIN, EBUSY
+        -:  114:      return !__gthread_mutex_trylock(&_M_mutex);
+        -:  115:    }
+        -:  116:
+        -:  117:    void
+    #####:  118:    unlock()
+        -:  119:    {
+        -:  120:      // XXX EINVAL, EAGAIN, EPERM
+    #####:  121:      __gthread_mutex_unlock(&_M_mutex);
+    #####:  122:    }
+        -:  123:
+        -:  124:    native_handle_type
+        -:  125:    native_handle() noexcept
+        -:  126:    { return &_M_mutex; }
+        -:  127:  };
+        -:  128:
+        -:  129:#endif // _GLIBCXX_HAS_GTHREADS
+        -:  130:
+        -:  131:  /// Do not acquire ownership of the mutex.
+        -:  132:  struct defer_lock_t { explicit defer_lock_t() = default; };
+        -:  133:
+        -:  134:  /// Try to acquire ownership of the mutex without blocking.
+        -:  135:  struct try_to_lock_t { explicit try_to_lock_t() = default; };
+        -:  136:
+        -:  137:  /// Assume the calling thread has already obtained mutex ownership
+        -:  138:  /// and manage it.
+        -:  139:  struct adopt_lock_t { explicit adopt_lock_t() = default; };
+        -:  140:
+        -:  141:  /// Tag used to prevent a scoped lock from acquiring ownership of a mutex.
+        -:  142:  _GLIBCXX17_INLINE constexpr defer_lock_t	defer_lock { };
+        -:  143:
+        -:  144:  /// Tag used to prevent a scoped lock from blocking if a mutex is locked.
+        -:  145:  _GLIBCXX17_INLINE constexpr try_to_lock_t	try_to_lock { };
+        -:  146:
+        -:  147:  /// Tag used to make a scoped lock take ownership of a locked mutex.
+        -:  148:  _GLIBCXX17_INLINE constexpr adopt_lock_t	adopt_lock { };
+        -:  149:
+        -:  150:  /** @brief A simple scoped lock type.
+        -:  151:   *
+        -:  152:   * A lock_guard controls mutex ownership within a scope, releasing
+        -:  153:   * ownership in the destructor.
+        -:  154:   */
+        -:  155:  template<typename _Mutex>
+        -:  156:    class lock_guard
+        -:  157:    {
+        -:  158:    public:
+        -:  159:      typedef _Mutex mutex_type;
+        -:  160:
+    #####:  161:      explicit lock_guard(mutex_type& __m) : _M_device(__m)
+    #####:  162:      { _M_device.lock(); }
+        -:  163:
+        -:  164:      lock_guard(mutex_type& __m, adopt_lock_t) noexcept : _M_device(__m)
+        -:  165:      { } // calling thread owns mutex
+        -:  166:
+    #####:  167:      ~lock_guard()
+    #####:  168:      { _M_device.unlock(); }
+        -:  169:
+        -:  170:      lock_guard(const lock_guard&) = delete;
+        -:  171:      lock_guard& operator=(const lock_guard&) = delete;
+        -:  172:
+        -:  173:    private:
+        -:  174:      mutex_type&  _M_device;
+        -:  175:    };
+        -:  176:
+        -:  177:  /** @brief A movable scoped lock type.
+        -:  178:   *
+        -:  179:   * A unique_lock controls mutex ownership within a scope. Ownership of the
+        -:  180:   * mutex can be delayed until after construction and can be transferred
+        -:  181:   * to another unique_lock by move construction or move assignment. If a
+        -:  182:   * mutex lock is owned when the destructor runs ownership will be released.
+        -:  183:   */
+        -:  184:  template<typename _Mutex>
+        -:  185:    class unique_lock
+        -:  186:    {
+        -:  187:    public:
+        -:  188:      typedef _Mutex mutex_type;
+        -:  189:
+        -:  190:      unique_lock() noexcept
+        -:  191:      : _M_device(0), _M_owns(false)
+        -:  192:      { }
+        -:  193:
+        -:  194:      explicit unique_lock(mutex_type& __m)
+        -:  195:      : _M_device(std::__addressof(__m)), _M_owns(false)
+        -:  196:      {
+        -:  197:	lock();
+        -:  198:	_M_owns = true;
+        -:  199:      }
+        -:  200:
+        -:  201:      unique_lock(mutex_type& __m, defer_lock_t) noexcept
+        -:  202:      : _M_device(std::__addressof(__m)), _M_owns(false)
+        -:  203:      { }
+        -:  204:
+        -:  205:      unique_lock(mutex_type& __m, try_to_lock_t)
+        -:  206:      : _M_device(std::__addressof(__m)), _M_owns(_M_device->try_lock())
+        -:  207:      { }
+        -:  208:
+        -:  209:      unique_lock(mutex_type& __m, adopt_lock_t) noexcept
+        -:  210:      : _M_device(std::__addressof(__m)), _M_owns(true)
+        -:  211:      {
+        -:  212:	// XXX calling thread owns mutex
+        -:  213:      }
+        -:  214:
+        -:  215:      template<typename _Clock, typename _Duration>
+        -:  216:	unique_lock(mutex_type& __m,
+        -:  217:		    const chrono::time_point<_Clock, _Duration>& __atime)
+        -:  218:	: _M_device(std::__addressof(__m)),
+        -:  219:	  _M_owns(_M_device->try_lock_until(__atime))
+        -:  220:	{ }
+        -:  221:
+        -:  222:      template<typename _Rep, typename _Period>
+        -:  223:	unique_lock(mutex_type& __m,
+        -:  224:		    const chrono::duration<_Rep, _Period>& __rtime)
+        -:  225:	: _M_device(std::__addressof(__m)),
+        -:  226:	  _M_owns(_M_device->try_lock_for(__rtime))
+        -:  227:	{ }
+        -:  228:
+        -:  229:      ~unique_lock()
+        -:  230:      {
+        -:  231:	if (_M_owns)
+        -:  232:	  unlock();
+        -:  233:      }
+        -:  234:
+        -:  235:      unique_lock(const unique_lock&) = delete;
+        -:  236:      unique_lock& operator=(const unique_lock&) = delete;
+        -:  237:
+        -:  238:      unique_lock(unique_lock&& __u) noexcept
+        -:  239:      : _M_device(__u._M_device), _M_owns(__u._M_owns)
+        -:  240:      {
+        -:  241:	__u._M_device = 0;
+        -:  242:	__u._M_owns = false;
+        -:  243:      }
+        -:  244:
+        -:  245:      unique_lock& operator=(unique_lock&& __u) noexcept
+        -:  246:      {
+        -:  247:	if(_M_owns)
+        -:  248:	  unlock();
+        -:  249:
+        -:  250:	unique_lock(std::move(__u)).swap(*this);
+        -:  251:
+        -:  252:	__u._M_device = 0;
+        -:  253:	__u._M_owns = false;
+        -:  254:
+        -:  255:	return *this;
+        -:  256:      }
+        -:  257:
+        -:  258:      void
+        -:  259:      lock()
+        -:  260:      {
+        -:  261:	if (!_M_device)
+        -:  262:	  __throw_system_error(int(errc::operation_not_permitted));
+        -:  263:	else if (_M_owns)
+        -:  264:	  __throw_system_error(int(errc::resource_deadlock_would_occur));
+        -:  265:	else
+        -:  266:	  {
+        -:  267:	    _M_device->lock();
+        -:  268:	    _M_owns = true;
+        -:  269:	  }
+        -:  270:      }
+        -:  271:
+        -:  272:      bool
+        -:  273:      try_lock()
+        -:  274:      {
+        -:  275:	if (!_M_device)
+        -:  276:	  __throw_system_error(int(errc::operation_not_permitted));
+        -:  277:	else if (_M_owns)
+        -:  278:	  __throw_system_error(int(errc::resource_deadlock_would_occur));
+        -:  279:	else
+        -:  280:	  {
+        -:  281:	    _M_owns = _M_device->try_lock();
+        -:  282:	    return _M_owns;
+        -:  283:	  }
+        -:  284:      }
+        -:  285:
+        -:  286:      template<typename _Clock, typename _Duration>
+        -:  287:	bool
+        -:  288:	try_lock_until(const chrono::time_point<_Clock, _Duration>& __atime)
+        -:  289:	{
+        -:  290:	  if (!_M_device)
+        -:  291:	    __throw_system_error(int(errc::operation_not_permitted));
+        -:  292:	  else if (_M_owns)
+        -:  293:	    __throw_system_error(int(errc::resource_deadlock_would_occur));
+        -:  294:	  else
+        -:  295:	    {
+        -:  296:	      _M_owns = _M_device->try_lock_until(__atime);
+        -:  297:	      return _M_owns;
+        -:  298:	    }
+        -:  299:	}
+        -:  300:
+        -:  301:      template<typename _Rep, typename _Period>
+        -:  302:	bool
+        -:  303:	try_lock_for(const chrono::duration<_Rep, _Period>& __rtime)
+        -:  304:	{
+        -:  305:	  if (!_M_device)
+        -:  306:	    __throw_system_error(int(errc::operation_not_permitted));
+        -:  307:	  else if (_M_owns)
+        -:  308:	    __throw_system_error(int(errc::resource_deadlock_would_occur));
+        -:  309:	  else
+        -:  310:	    {
+        -:  311:	      _M_owns = _M_device->try_lock_for(__rtime);
+        -:  312:	      return _M_owns;
+        -:  313:	    }
+        -:  314:	 }
+        -:  315:
+        -:  316:      void
+        -:  317:      unlock()
+        -:  318:      {
+        -:  319:	if (!_M_owns)
+        -:  320:	  __throw_system_error(int(errc::operation_not_permitted));
+        -:  321:	else if (_M_device)
+        -:  322:	  {
+        -:  323:	    _M_device->unlock();
+        -:  324:	    _M_owns = false;
+        -:  325:	  }
+        -:  326:      }
+        -:  327:
+        -:  328:      void
+        -:  329:      swap(unique_lock& __u) noexcept
+        -:  330:      {
+        -:  331:	std::swap(_M_device, __u._M_device);
+        -:  332:	std::swap(_M_owns, __u._M_owns);
+        -:  333:      }
+        -:  334:
+        -:  335:      mutex_type*
+        -:  336:      release() noexcept
+        -:  337:      {
+        -:  338:	mutex_type* __ret = _M_device;
+        -:  339:	_M_device = 0;
+        -:  340:	_M_owns = false;
+        -:  341:	return __ret;
+        -:  342:      }
+        -:  343:
+        -:  344:      bool
+        -:  345:      owns_lock() const noexcept
+        -:  346:      { return _M_owns; }
+        -:  347:
+        -:  348:      explicit operator bool() const noexcept
+        -:  349:      { return owns_lock(); }
+        -:  350:
+        -:  351:      mutex_type*
+        -:  352:      mutex() const noexcept
+        -:  353:      { return _M_device; }
+        -:  354:
+        -:  355:    private:
+        -:  356:      mutex_type*	_M_device;
+        -:  357:      bool		_M_owns; // XXX use atomic_bool
+        -:  358:    };
+        -:  359:
+        -:  360:  /// Swap overload for unique_lock objects.
+        -:  361:  template<typename _Mutex>
+        -:  362:    inline void
+        -:  363:    swap(unique_lock<_Mutex>& __x, unique_lock<_Mutex>& __y) noexcept
+        -:  364:    { __x.swap(__y); }
+        -:  365:
+        -:  366:  // @} group mutexes
+        -:  367:_GLIBCXX_END_NAMESPACE_VERSION
+        -:  368:} // namespace
+        -:  369:#endif // _GLIBCXX_USE_C99_STDINT_TR1
+        -:  370:
+        -:  371:#endif // C++11
+        -:  372:
+        -:  373:#endif // _GLIBCXX_MUTEX_H

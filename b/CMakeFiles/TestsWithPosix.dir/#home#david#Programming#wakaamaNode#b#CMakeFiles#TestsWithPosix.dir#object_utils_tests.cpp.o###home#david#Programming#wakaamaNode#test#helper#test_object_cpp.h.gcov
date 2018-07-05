@@ -1,0 +1,148 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/test/helper/test_object_cpp.h
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/object_utils_tests.cpp.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*******************************************************************************
+        -:    2: * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+        -:    3: *
+        -:    4: * Permission is hereby granted, free of charge, to any person obtaining a copy
+        -:    5: * of this software and associated documentation files (the "Software"), to deal
+        -:    6: * in the Software without restriction, including without limitation the rights
+        -:    7: * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        -:    8: * copies of the Software, and to permit persons to whom the Software is
+        -:    9: * furnished to do so, subject to the following conditions:
+        -:   10: *
+        -:   11: * The above copyright notice and this permission notice shall be included in
+        -:   12: * all copies or substantial portions of the Software.
+        -:   13: */
+        -:   14:#pragma once
+        -:   15:
+        -:   16:#include "lwm2m/objects.h"
+        -:   17:
+        -:   18:/*
+        -:   19: * Implements an object for testing purpose
+        -:   20: *
+        -:   21: *                 Multiple
+        -:   22: * Object |  ID  | Instances | Mandatoty |
+        -:   23: *  Test  | 1024 |    Yes    |    No     |
+        -:   24: *
+        -:   25: *  Ressources:
+        -:   26: *              Supported    Multiple
+        -:   27: *  Name        | ID | Operations | Instances | Mandatory |  Type   | Range | Units |      Description      |
+        -:   28: *  test_u8     |  0 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   29: *  test_i8     |  1 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   30: *  test_u16    |  2 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   31: *  test_i16    |  3 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   32: *  test_u32    |  4 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   33: *  test_i32    |  5 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   34: *  test_i64    |  6 |    R/W     |    No     |    Yes    | Integer |       |       |                       |
+        -:   35: *  test_double |  7 |    R/W     |    No     |    Yes    | Float   |       |       |                       |
+        -:   36: *  test_bool   |  8 |    R/W     |    No     |    Yes    | Bool    |       |       |                       |
+        -:   37: *  test_str    |  9 |     R      |    No     |    Yes    | String  |       |       | read only string      |
+        -:   38: *  test_str_pre| 10 |    R/W     |    No     |    Yes    | String  |       |       | prealloc string       |
+        -:   39: *  test_opaque | 11 |    R/W     |    No     |    Yes    | String  |       |       | Opaque string         |
+        -:   40: *  test_opaq_pr| 12 |    R/W     |    No     |    Yes    | String  |       |       | Opaque string         |
+        -:   41: *  exec        | 13 |     E      |    No     |    Yes    |         |       |       |                       |
+        -:   42: *  exec_callbac| 14 |     E      |    No     |    Yes    |         |       |       | Callback execute      |
+        -:   43: *  test_i8_fun | 15 |     R      |    No     |    Yes    | Integer |       |       | int8 from function    |
+        -:   44: *  test_u32_fun| 16 |     R      |    No     |    Yes    | Integer |       |       | int32 from function   |
+        -:   45: *  test_str_fun| 17 |     R      |    No     |    Yes    | String  |       |       | string from function  |
+        -:   46: *  test_rw_fun | 18 |     RW     |    No     |    Yes    | String  |       |       | R/W from/to function  |
+        -:   47: *
+        -:   48: */
+        -:   49:
+        -:   50:struct TestInheritance : public Opaque<20>{  };
+        -:   51:
+        -:   52:struct MyTestObjectInstance : public Lwm2mObjectInstance {
+        -:   53:    uint8_t test_u8=  0x0F;
+        -:   54:    int8_t  test_i8=  -0x0F;
+        -:   55:    uint16_t test_u16 = 0x0FFF;
+        -:   56:    int16_t  test_i16 = -0x0FFF;
+        -:   57:    uint32_t test_u32 = 0x0FFFFFFF;
+        -:   58:    int32_t  test_i32 = -0x0FFFFFFF;
+        -:   59:    int64_t  test_i64 = -0x0FFFFFFFFFFFF;
+        -:   60:
+        -:   61:    double   test_double = 0.12;
+        -:   62:    bool test_bool = true;
+        -:   63:    const char* test_str = "test";
+        -:   64:
+        -:   65:    PreallocString<20> test_str_prealloc;
+        -:   66:    OpaqueIndirect test_opaque{0,4,(uint8_t*)"test"};
+        -:   67:    Opaque<20> test_opaque_prealloc;
+        -:   68:    TestInheritance test_inheritance;
+        -:   69:
+        -:   70:    Executable test_execute_fun;
+        -:   71:    IndirectRead<int8_t> test_read_fun_int8;
+        -:   72:    IndirectRead<uint32_t> test_read_fun_uint32;
+        -:   73:    IndirectRead<const char*> test_read_fun_string;
+        -:   74:
+        -:   75:    IndirectWrite<const char*> test_write_fun_string;
+        -:   76:    IndirectReadWrite<const char*> test_readWrite_fun_string;
+        -:   77:
+    #####:   78:    MyTestObjectInstance() = default;
+    #####:   79:    MyTestObjectInstance(Executable test_execute_fun,
+        -:   80:                         IndirectRead<int8_t> test_read_fun_int8,
+        -:   81:                         IndirectRead<uint32_t> test_read_fun_uint32,
+        -:   82:                         IndirectRead<const char*> test_read_fun_string,
+        -:   83:                         IndirectWrite<const char*> test_write_fun_string,
+        -:   84:                         IndirectReadWrite<const char*> test_readWrite_fun_string)
+    #####:   85:        : test_execute_fun(test_execute_fun), test_read_fun_int8(test_read_fun_int8),
+        -:   86:        test_read_fun_uint32(test_read_fun_uint32),test_read_fun_string(test_read_fun_string),
+    #####:   87:        test_write_fun_string(test_write_fun_string),test_readWrite_fun_string(test_readWrite_fun_string) {
+    #####:   88:        test_str_prealloc.copy("test");
+    #####:   89:        test_opaque_prealloc.copy("ab\0\nab",6);
+    #####:   90:    }
+        -:   91:};
+        -:   92:
+        -:   93:#pragma pack(push,1)
+        -:   94:struct MyTestObjectSecond: public Lwm2mObject<1024, MyTestObjectSecond, MyTestObjectInstance> {
+        -:   95:    Resource(0, &MyTestObjectInstance::test_u8, O_RES_RW) test_u8;
+        -:   96:    Resource(1, &MyTestObjectInstance::test_i8, O_RES_RW) test_i8;
+        -:   97:    Resource(2, &MyTestObjectInstance::test_u16, O_RES_RW) test_u16;
+        -:   98:    Resource(3, &MyTestObjectInstance::test_i16, O_RES_RW) test_i16;
+        -:   99:    Resource(4, &MyTestObjectInstance::test_u32, O_RES_RW) test_u32;
+        -:  100:    Resource(5, &MyTestObjectInstance::test_i32, O_RES_RW) test_i32;
+        -:  101:    Resource(6, &MyTestObjectInstance::test_i64, O_RES_RW) test_i64;
+        -:  102:};
+        -:  103:#pragma pack(pop)
+        -:  104:
+        -:  105:#pragma pack(push,1)
+        -:  106:struct MyTestObject: public Lwm2mObject<1024, MyTestObject, MyTestObjectInstance> {
+        -:  107:    Resource(0, &MyTestObjectInstance::test_u8, O_RES_RW) test_u8;
+        -:  108:    Resource(1, &MyTestObjectInstance::test_i8, O_RES_RW) test_i8;
+        -:  109:    Resource(2, &MyTestObjectInstance::test_u16, O_RES_RW) test_u16;
+        -:  110:    Resource(3, &MyTestObjectInstance::test_i16, O_RES_RW) test_i16;
+        -:  111:    Resource(4, &MyTestObjectInstance::test_u32, O_RES_RW) test_u32;
+        -:  112:    Resource(5, &MyTestObjectInstance::test_i32, O_RES_RW) test_i32;
+        -:  113:    Resource(6, &MyTestObjectInstance::test_i64, O_RES_RW) test_i64;
+        -:  114:
+        -:  115:    Resource(7, &MyTestObjectInstance::test_double, O_RES_RW) test_double;
+        -:  116:
+        -:  117:    Resource(8, &MyTestObjectInstance::test_bool, O_RES_RW) test_bool;
+        -:  118:
+        -:  119:    Resource(9, &MyTestObjectInstance::test_str, O_RES_R) test_str;
+        -:  120:
+        -:  121:    Resource(10, &MyTestObjectInstance::test_str_prealloc, O_RES_RW) test_str_prealloc;
+        -:  122:
+        -:  123:    Resource(11, &MyTestObjectInstance::test_opaque, O_RES_RW) test_opaque;
+        -:  124:    Resource(12, &MyTestObjectInstance::test_opaque_prealloc, O_RES_RW) test_opaque_prealloc;
+        -:  125:
+        -:  126:    Resource(13, &MyTestObjectInstance::test_execute_fun) test_execute_fun;
+        -:  127:    Resource(14, &MyTestObjectInstance::test_read_fun_int8) test_read_fun_int8;
+        -:  128:    Resource(15, &MyTestObjectInstance::test_read_fun_uint32) test_read_fun_uint32;
+        -:  129:    Resource(16, &MyTestObjectInstance::test_read_fun_string) test_read_fun_string;
+        -:  130:
+        -:  131:    Resource(17, &MyTestObjectInstance::test_write_fun_string) test_write_fun_string;
+        -:  132:    Resource(18, &MyTestObjectInstance::test_readWrite_fun_string) test_readWrite_fun_string;
+        -:  133:
+        -:  134:    Resource(19, &MyTestObjectInstance::test_inheritance, O_RES_RW) test_inheritance;
+        -:  135:
+    #####:  136:    MyTestObject() {
+    #####:  137:        verifyWrite = ([](MyTestObjectInstance* i, uint16_t res_id) {
+        -:  138:            if(res_id==7 && (i->test_double > 1.0 || i->test_double < 0.0)) return false;
+        -:  139:            return true;
+    #####:  140:        });
+    #####:  141:    }
+        -:  142:};
+        -:  143:#pragma pack(pop)

@@ -1,0 +1,537 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/network/mbedtls/library/sha1.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/network/mbedtls/library/sha1.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/*
+        -:    2: *  FIPS-180-1 compliant SHA-1 implementation
+        -:    3: *
+        -:    4: *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+        -:    5: *  SPDX-License-Identifier: Apache-2.0
+        -:    6: *
+        -:    7: *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+        -:    8: *  not use this file except in compliance with the License.
+        -:    9: *  You may obtain a copy of the License at
+        -:   10: *
+        -:   11: *  http://www.apache.org/licenses/LICENSE-2.0
+        -:   12: *
+        -:   13: *  Unless required by applicable law or agreed to in writing, software
+        -:   14: *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+        -:   15: *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   16: *  See the License for the specific language governing permissions and
+        -:   17: *  limitations under the License.
+        -:   18: *
+        -:   19: *  This file is part of mbed TLS (https://tls.mbed.org)
+        -:   20: */
+        -:   21:/*
+        -:   22: *  The SHA-1 standard was published by NIST in 1993.
+        -:   23: *
+        -:   24: *  http://www.itl.nist.gov/fipspubs/fip180-1.htm
+        -:   25: */
+        -:   26:
+        -:   27:#if !defined(MBEDTLS_CONFIG_FILE)
+        -:   28:#include "mbedtls/config.h"
+        -:   29:#else
+        -:   30:#include MBEDTLS_CONFIG_FILE
+        -:   31:#endif
+        -:   32:
+        -:   33:#if defined(MBEDTLS_SHA1_C)
+        -:   34:
+        -:   35:#include "mbedtls/sha1.h"
+        -:   36:#include "mbedtls/platform_util.h"
+        -:   37:
+        -:   38:#include <string.h>
+        -:   39:
+        -:   40:#if defined(MBEDTLS_SELF_TEST)
+        -:   41:#if defined(MBEDTLS_PLATFORM_C)
+        -:   42:#include "mbedtls/platform.h"
+        -:   43:#else
+        -:   44:#include <stdio.h>
+        -:   45:#define mbedtls_printf printf
+        -:   46:#endif /* MBEDTLS_PLATFORM_C */
+        -:   47:#endif /* MBEDTLS_SELF_TEST */
+        -:   48:
+        -:   49:#if !defined(MBEDTLS_SHA1_ALT)
+        -:   50:
+        -:   51:/*
+        -:   52: * 32-bit integer manipulation macros (big endian)
+        -:   53: */
+        -:   54:#ifndef GET_UINT32_BE
+        -:   55:#define GET_UINT32_BE(n,b,i)                            \
+        -:   56:{                                                       \
+        -:   57:    (n) = ( (uint32_t) (b)[(i)    ] << 24 )             \
+        -:   58:        | ( (uint32_t) (b)[(i) + 1] << 16 )             \
+        -:   59:        | ( (uint32_t) (b)[(i) + 2] <<  8 )             \
+        -:   60:        | ( (uint32_t) (b)[(i) + 3]       );            \
+        -:   61:}
+        -:   62:#endif
+        -:   63:
+        -:   64:#ifndef PUT_UINT32_BE
+        -:   65:#define PUT_UINT32_BE(n,b,i)                            \
+        -:   66:{                                                       \
+        -:   67:    (b)[(i)    ] = (unsigned char) ( (n) >> 24 );       \
+        -:   68:    (b)[(i) + 1] = (unsigned char) ( (n) >> 16 );       \
+        -:   69:    (b)[(i) + 2] = (unsigned char) ( (n) >>  8 );       \
+        -:   70:    (b)[(i) + 3] = (unsigned char) ( (n)       );       \
+        -:   71:}
+        -:   72:#endif
+        -:   73:
+    #####:   74:void mbedtls_sha1_init( mbedtls_sha1_context *ctx )
+        -:   75:{
+    #####:   76:    memset( ctx, 0, sizeof( mbedtls_sha1_context ) );
+    #####:   77:}
+        -:   78:
+    #####:   79:void mbedtls_sha1_free( mbedtls_sha1_context *ctx )
+        -:   80:{
+    #####:   81:    if( ctx == NULL )
+    #####:   82:        return;
+        -:   83:
+    #####:   84:    mbedtls_platform_zeroize( ctx, sizeof( mbedtls_sha1_context ) );
+        -:   85:}
+        -:   86:
+    #####:   87:void mbedtls_sha1_clone( mbedtls_sha1_context *dst,
+        -:   88:                         const mbedtls_sha1_context *src )
+        -:   89:{
+    #####:   90:    *dst = *src;
+    #####:   91:}
+        -:   92:
+        -:   93:/*
+        -:   94: * SHA-1 context setup
+        -:   95: */
+    #####:   96:int mbedtls_sha1_starts_ret( mbedtls_sha1_context *ctx )
+        -:   97:{
+    #####:   98:    ctx->total[0] = 0;
+    #####:   99:    ctx->total[1] = 0;
+        -:  100:
+    #####:  101:    ctx->state[0] = 0x67452301;
+    #####:  102:    ctx->state[1] = 0xEFCDAB89;
+    #####:  103:    ctx->state[2] = 0x98BADCFE;
+    #####:  104:    ctx->state[3] = 0x10325476;
+    #####:  105:    ctx->state[4] = 0xC3D2E1F0;
+        -:  106:
+    #####:  107:    return( 0 );
+        -:  108:}
+        -:  109:
+        -:  110:#if !defined(MBEDTLS_DEPRECATED_REMOVED)
+    #####:  111:void mbedtls_sha1_starts( mbedtls_sha1_context *ctx )
+        -:  112:{
+    #####:  113:    mbedtls_sha1_starts_ret( ctx );
+    #####:  114:}
+        -:  115:#endif
+        -:  116:
+        -:  117:#if !defined(MBEDTLS_SHA1_PROCESS_ALT)
+    #####:  118:int mbedtls_internal_sha1_process( mbedtls_sha1_context *ctx,
+        -:  119:                                   const unsigned char data[64] )
+        -:  120:{
+        -:  121:    uint32_t temp, W[16], A, B, C, D, E;
+        -:  122:
+    #####:  123:    GET_UINT32_BE( W[ 0], data,  0 );
+    #####:  124:    GET_UINT32_BE( W[ 1], data,  4 );
+    #####:  125:    GET_UINT32_BE( W[ 2], data,  8 );
+    #####:  126:    GET_UINT32_BE( W[ 3], data, 12 );
+    #####:  127:    GET_UINT32_BE( W[ 4], data, 16 );
+    #####:  128:    GET_UINT32_BE( W[ 5], data, 20 );
+    #####:  129:    GET_UINT32_BE( W[ 6], data, 24 );
+    #####:  130:    GET_UINT32_BE( W[ 7], data, 28 );
+    #####:  131:    GET_UINT32_BE( W[ 8], data, 32 );
+    #####:  132:    GET_UINT32_BE( W[ 9], data, 36 );
+    #####:  133:    GET_UINT32_BE( W[10], data, 40 );
+    #####:  134:    GET_UINT32_BE( W[11], data, 44 );
+    #####:  135:    GET_UINT32_BE( W[12], data, 48 );
+    #####:  136:    GET_UINT32_BE( W[13], data, 52 );
+    #####:  137:    GET_UINT32_BE( W[14], data, 56 );
+    #####:  138:    GET_UINT32_BE( W[15], data, 60 );
+        -:  139:
+        -:  140:#define S(x,n) ((x << n) | ((x & 0xFFFFFFFF) >> (32 - n)))
+        -:  141:
+        -:  142:#define R(t)                                            \
+        -:  143:(                                                       \
+        -:  144:    temp = W[( t -  3 ) & 0x0F] ^ W[( t - 8 ) & 0x0F] ^ \
+        -:  145:           W[( t - 14 ) & 0x0F] ^ W[  t       & 0x0F],  \
+        -:  146:    ( W[t & 0x0F] = S(temp,1) )                         \
+        -:  147:)
+        -:  148:
+        -:  149:#define P(a,b,c,d,e,x)                                  \
+        -:  150:{                                                       \
+        -:  151:    e += S(a,5) + F(b,c,d) + K + x; b = S(b,30);        \
+        -:  152:}
+        -:  153:
+    #####:  154:    A = ctx->state[0];
+    #####:  155:    B = ctx->state[1];
+    #####:  156:    C = ctx->state[2];
+    #####:  157:    D = ctx->state[3];
+    #####:  158:    E = ctx->state[4];
+        -:  159:
+        -:  160:#define F(x,y,z) (z ^ (x & (y ^ z)))
+        -:  161:#define K 0x5A827999
+        -:  162:
+    #####:  163:    P( A, B, C, D, E, W[0]  );
+    #####:  164:    P( E, A, B, C, D, W[1]  );
+    #####:  165:    P( D, E, A, B, C, W[2]  );
+    #####:  166:    P( C, D, E, A, B, W[3]  );
+    #####:  167:    P( B, C, D, E, A, W[4]  );
+    #####:  168:    P( A, B, C, D, E, W[5]  );
+    #####:  169:    P( E, A, B, C, D, W[6]  );
+    #####:  170:    P( D, E, A, B, C, W[7]  );
+    #####:  171:    P( C, D, E, A, B, W[8]  );
+    #####:  172:    P( B, C, D, E, A, W[9]  );
+    #####:  173:    P( A, B, C, D, E, W[10] );
+    #####:  174:    P( E, A, B, C, D, W[11] );
+    #####:  175:    P( D, E, A, B, C, W[12] );
+    #####:  176:    P( C, D, E, A, B, W[13] );
+    #####:  177:    P( B, C, D, E, A, W[14] );
+    #####:  178:    P( A, B, C, D, E, W[15] );
+    #####:  179:    P( E, A, B, C, D, R(16) );
+    #####:  180:    P( D, E, A, B, C, R(17) );
+    #####:  181:    P( C, D, E, A, B, R(18) );
+    #####:  182:    P( B, C, D, E, A, R(19) );
+        -:  183:
+        -:  184:#undef K
+        -:  185:#undef F
+        -:  186:
+        -:  187:#define F(x,y,z) (x ^ y ^ z)
+        -:  188:#define K 0x6ED9EBA1
+        -:  189:
+    #####:  190:    P( A, B, C, D, E, R(20) );
+    #####:  191:    P( E, A, B, C, D, R(21) );
+    #####:  192:    P( D, E, A, B, C, R(22) );
+    #####:  193:    P( C, D, E, A, B, R(23) );
+    #####:  194:    P( B, C, D, E, A, R(24) );
+    #####:  195:    P( A, B, C, D, E, R(25) );
+    #####:  196:    P( E, A, B, C, D, R(26) );
+    #####:  197:    P( D, E, A, B, C, R(27) );
+    #####:  198:    P( C, D, E, A, B, R(28) );
+    #####:  199:    P( B, C, D, E, A, R(29) );
+    #####:  200:    P( A, B, C, D, E, R(30) );
+    #####:  201:    P( E, A, B, C, D, R(31) );
+    #####:  202:    P( D, E, A, B, C, R(32) );
+    #####:  203:    P( C, D, E, A, B, R(33) );
+    #####:  204:    P( B, C, D, E, A, R(34) );
+    #####:  205:    P( A, B, C, D, E, R(35) );
+    #####:  206:    P( E, A, B, C, D, R(36) );
+    #####:  207:    P( D, E, A, B, C, R(37) );
+    #####:  208:    P( C, D, E, A, B, R(38) );
+    #####:  209:    P( B, C, D, E, A, R(39) );
+        -:  210:
+        -:  211:#undef K
+        -:  212:#undef F
+        -:  213:
+        -:  214:#define F(x,y,z) ((x & y) | (z & (x | y)))
+        -:  215:#define K 0x8F1BBCDC
+        -:  216:
+    #####:  217:    P( A, B, C, D, E, R(40) );
+    #####:  218:    P( E, A, B, C, D, R(41) );
+    #####:  219:    P( D, E, A, B, C, R(42) );
+    #####:  220:    P( C, D, E, A, B, R(43) );
+    #####:  221:    P( B, C, D, E, A, R(44) );
+    #####:  222:    P( A, B, C, D, E, R(45) );
+    #####:  223:    P( E, A, B, C, D, R(46) );
+    #####:  224:    P( D, E, A, B, C, R(47) );
+    #####:  225:    P( C, D, E, A, B, R(48) );
+    #####:  226:    P( B, C, D, E, A, R(49) );
+    #####:  227:    P( A, B, C, D, E, R(50) );
+    #####:  228:    P( E, A, B, C, D, R(51) );
+    #####:  229:    P( D, E, A, B, C, R(52) );
+    #####:  230:    P( C, D, E, A, B, R(53) );
+    #####:  231:    P( B, C, D, E, A, R(54) );
+    #####:  232:    P( A, B, C, D, E, R(55) );
+    #####:  233:    P( E, A, B, C, D, R(56) );
+    #####:  234:    P( D, E, A, B, C, R(57) );
+    #####:  235:    P( C, D, E, A, B, R(58) );
+    #####:  236:    P( B, C, D, E, A, R(59) );
+        -:  237:
+        -:  238:#undef K
+        -:  239:#undef F
+        -:  240:
+        -:  241:#define F(x,y,z) (x ^ y ^ z)
+        -:  242:#define K 0xCA62C1D6
+        -:  243:
+    #####:  244:    P( A, B, C, D, E, R(60) );
+    #####:  245:    P( E, A, B, C, D, R(61) );
+    #####:  246:    P( D, E, A, B, C, R(62) );
+    #####:  247:    P( C, D, E, A, B, R(63) );
+    #####:  248:    P( B, C, D, E, A, R(64) );
+    #####:  249:    P( A, B, C, D, E, R(65) );
+    #####:  250:    P( E, A, B, C, D, R(66) );
+    #####:  251:    P( D, E, A, B, C, R(67) );
+    #####:  252:    P( C, D, E, A, B, R(68) );
+    #####:  253:    P( B, C, D, E, A, R(69) );
+    #####:  254:    P( A, B, C, D, E, R(70) );
+    #####:  255:    P( E, A, B, C, D, R(71) );
+    #####:  256:    P( D, E, A, B, C, R(72) );
+    #####:  257:    P( C, D, E, A, B, R(73) );
+    #####:  258:    P( B, C, D, E, A, R(74) );
+    #####:  259:    P( A, B, C, D, E, R(75) );
+    #####:  260:    P( E, A, B, C, D, R(76) );
+    #####:  261:    P( D, E, A, B, C, R(77) );
+    #####:  262:    P( C, D, E, A, B, R(78) );
+    #####:  263:    P( B, C, D, E, A, R(79) );
+        -:  264:
+        -:  265:#undef K
+        -:  266:#undef F
+        -:  267:
+    #####:  268:    ctx->state[0] += A;
+    #####:  269:    ctx->state[1] += B;
+    #####:  270:    ctx->state[2] += C;
+    #####:  271:    ctx->state[3] += D;
+    #####:  272:    ctx->state[4] += E;
+        -:  273:
+    #####:  274:    return( 0 );
+        -:  275:}
+        -:  276:
+        -:  277:#if !defined(MBEDTLS_DEPRECATED_REMOVED)
+    #####:  278:void mbedtls_sha1_process( mbedtls_sha1_context *ctx,
+        -:  279:                           const unsigned char data[64] )
+        -:  280:{
+    #####:  281:    mbedtls_internal_sha1_process( ctx, data );
+    #####:  282:}
+        -:  283:#endif
+        -:  284:#endif /* !MBEDTLS_SHA1_PROCESS_ALT */
+        -:  285:
+        -:  286:/*
+        -:  287: * SHA-1 process buffer
+        -:  288: */
+    #####:  289:int mbedtls_sha1_update_ret( mbedtls_sha1_context *ctx,
+        -:  290:                             const unsigned char *input,
+        -:  291:                             size_t ilen )
+        -:  292:{
+        -:  293:    int ret;
+        -:  294:    size_t fill;
+        -:  295:    uint32_t left;
+        -:  296:
+    #####:  297:    if( ilen == 0 )
+    #####:  298:        return( 0 );
+        -:  299:
+    #####:  300:    left = ctx->total[0] & 0x3F;
+    #####:  301:    fill = 64 - left;
+        -:  302:
+    #####:  303:    ctx->total[0] += (uint32_t) ilen;
+    #####:  304:    ctx->total[0] &= 0xFFFFFFFF;
+        -:  305:
+    #####:  306:    if( ctx->total[0] < (uint32_t) ilen )
+    #####:  307:        ctx->total[1]++;
+        -:  308:
+    #####:  309:    if( left && ilen >= fill )
+        -:  310:    {
+    #####:  311:        memcpy( (void *) (ctx->buffer + left), input, fill );
+        -:  312:
+    #####:  313:        if( ( ret = mbedtls_internal_sha1_process( ctx, ctx->buffer ) ) != 0 )
+    #####:  314:            return( ret );
+        -:  315:
+    #####:  316:        input += fill;
+    #####:  317:        ilen  -= fill;
+    #####:  318:        left = 0;
+        -:  319:    }
+        -:  320:
+    #####:  321:    while( ilen >= 64 )
+        -:  322:    {
+    #####:  323:        if( ( ret = mbedtls_internal_sha1_process( ctx, input ) ) != 0 )
+    #####:  324:            return( ret );
+        -:  325:
+    #####:  326:        input += 64;
+    #####:  327:        ilen  -= 64;
+        -:  328:    }
+        -:  329:
+    #####:  330:    if( ilen > 0 )
+    #####:  331:        memcpy( (void *) (ctx->buffer + left), input, ilen );
+        -:  332:
+    #####:  333:    return( 0 );
+        -:  334:}
+        -:  335:
+        -:  336:#if !defined(MBEDTLS_DEPRECATED_REMOVED)
+    #####:  337:void mbedtls_sha1_update( mbedtls_sha1_context *ctx,
+        -:  338:                          const unsigned char *input,
+        -:  339:                          size_t ilen )
+        -:  340:{
+    #####:  341:    mbedtls_sha1_update_ret( ctx, input, ilen );
+    #####:  342:}
+        -:  343:#endif
+        -:  344:
+        -:  345:static const unsigned char sha1_padding[64] =
+        -:  346:{
+        -:  347: 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -:  348:    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -:  349:    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+        -:  350:    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        -:  351:};
+        -:  352:
+        -:  353:/*
+        -:  354: * SHA-1 final digest
+        -:  355: */
+    #####:  356:int mbedtls_sha1_finish_ret( mbedtls_sha1_context *ctx,
+        -:  357:                             unsigned char output[20] )
+        -:  358:{
+        -:  359:    int ret;
+        -:  360:    uint32_t last, padn;
+        -:  361:    uint32_t high, low;
+        -:  362:    unsigned char msglen[8];
+        -:  363:
+    #####:  364:    high = ( ctx->total[0] >> 29 )
+    #####:  365:         | ( ctx->total[1] <<  3 );
+    #####:  366:    low  = ( ctx->total[0] <<  3 );
+        -:  367:
+    #####:  368:    PUT_UINT32_BE( high, msglen, 0 );
+    #####:  369:    PUT_UINT32_BE( low,  msglen, 4 );
+        -:  370:
+    #####:  371:    last = ctx->total[0] & 0x3F;
+    #####:  372:    padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
+        -:  373:
+    #####:  374:    if( ( ret = mbedtls_sha1_update_ret( ctx, sha1_padding, padn ) ) != 0 )
+    #####:  375:        return( ret );
+    #####:  376:    if( ( ret = mbedtls_sha1_update_ret( ctx, msglen, 8 ) ) != 0 )
+    #####:  377:        return( ret );
+        -:  378:
+    #####:  379:    PUT_UINT32_BE( ctx->state[0], output,  0 );
+    #####:  380:    PUT_UINT32_BE( ctx->state[1], output,  4 );
+    #####:  381:    PUT_UINT32_BE( ctx->state[2], output,  8 );
+    #####:  382:    PUT_UINT32_BE( ctx->state[3], output, 12 );
+    #####:  383:    PUT_UINT32_BE( ctx->state[4], output, 16 );
+        -:  384:
+    #####:  385:    return( 0 );
+        -:  386:}
+        -:  387:
+        -:  388:#if !defined(MBEDTLS_DEPRECATED_REMOVED)
+    #####:  389:void mbedtls_sha1_finish( mbedtls_sha1_context *ctx,
+        -:  390:                          unsigned char output[20] )
+        -:  391:{
+    #####:  392:    mbedtls_sha1_finish_ret( ctx, output );
+    #####:  393:}
+        -:  394:#endif
+        -:  395:
+        -:  396:#endif /* !MBEDTLS_SHA1_ALT */
+        -:  397:
+        -:  398:/*
+        -:  399: * output = SHA-1( input buffer )
+        -:  400: */
+    #####:  401:int mbedtls_sha1_ret( const unsigned char *input,
+        -:  402:                      size_t ilen,
+        -:  403:                      unsigned char output[20] )
+        -:  404:{
+        -:  405:    int ret;
+        -:  406:    mbedtls_sha1_context ctx;
+        -:  407:
+    #####:  408:    mbedtls_sha1_init( &ctx );
+        -:  409:
+    #####:  410:    if( ( ret = mbedtls_sha1_starts_ret( &ctx ) ) != 0 )
+    #####:  411:        goto exit;
+        -:  412:
+    #####:  413:    if( ( ret = mbedtls_sha1_update_ret( &ctx, input, ilen ) ) != 0 )
+    #####:  414:        goto exit;
+        -:  415:
+    #####:  416:    if( ( ret = mbedtls_sha1_finish_ret( &ctx, output ) ) != 0 )
+    #####:  417:        goto exit;
+        -:  418:
+    #####:  419:exit:
+    #####:  420:    mbedtls_sha1_free( &ctx );
+        -:  421:
+    #####:  422:    return( ret );
+        -:  423:}
+        -:  424:
+        -:  425:#if !defined(MBEDTLS_DEPRECATED_REMOVED)
+    #####:  426:void mbedtls_sha1( const unsigned char *input,
+        -:  427:                   size_t ilen,
+        -:  428:                   unsigned char output[20] )
+        -:  429:{
+    #####:  430:    mbedtls_sha1_ret( input, ilen, output );
+    #####:  431:}
+        -:  432:#endif
+        -:  433:
+        -:  434:#if defined(MBEDTLS_SELF_TEST)
+        -:  435:/*
+        -:  436: * FIPS-180-1 test vectors
+        -:  437: */
+        -:  438:static const unsigned char sha1_test_buf[3][57] =
+        -:  439:{
+        -:  440:    { "abc" },
+        -:  441:    { "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq" },
+        -:  442:    { "" }
+        -:  443:};
+        -:  444:
+        -:  445:static const size_t sha1_test_buflen[3] =
+        -:  446:{
+        -:  447:    3, 56, 1000
+        -:  448:};
+        -:  449:
+        -:  450:static const unsigned char sha1_test_sum[3][20] =
+        -:  451:{
+        -:  452:    { 0xA9, 0x99, 0x3E, 0x36, 0x47, 0x06, 0x81, 0x6A, 0xBA, 0x3E,
+        -:  453:      0x25, 0x71, 0x78, 0x50, 0xC2, 0x6C, 0x9C, 0xD0, 0xD8, 0x9D },
+        -:  454:    { 0x84, 0x98, 0x3E, 0x44, 0x1C, 0x3B, 0xD2, 0x6E, 0xBA, 0xAE,
+        -:  455:      0x4A, 0xA1, 0xF9, 0x51, 0x29, 0xE5, 0xE5, 0x46, 0x70, 0xF1 },
+        -:  456:    { 0x34, 0xAA, 0x97, 0x3C, 0xD4, 0xC4, 0xDA, 0xA4, 0xF6, 0x1E,
+        -:  457:      0xEB, 0x2B, 0xDB, 0xAD, 0x27, 0x31, 0x65, 0x34, 0x01, 0x6F }
+        -:  458:};
+        -:  459:
+        -:  460:/*
+        -:  461: * Checkup routine
+        -:  462: */
+        -:  463:int mbedtls_sha1_self_test( int verbose )
+        -:  464:{
+        -:  465:    int i, j, buflen, ret = 0;
+        -:  466:    unsigned char buf[1024];
+        -:  467:    unsigned char sha1sum[20];
+        -:  468:    mbedtls_sha1_context ctx;
+        -:  469:
+        -:  470:    mbedtls_sha1_init( &ctx );
+        -:  471:
+        -:  472:    /*
+        -:  473:     * SHA-1
+        -:  474:     */
+        -:  475:    for( i = 0; i < 3; i++ )
+        -:  476:    {
+        -:  477:        if( verbose != 0 )
+        -:  478:            mbedtls_printf( "  SHA-1 test #%d: ", i + 1 );
+        -:  479:
+        -:  480:        if( ( ret = mbedtls_sha1_starts_ret( &ctx ) ) != 0 )
+        -:  481:            goto fail;
+        -:  482:
+        -:  483:        if( i == 2 )
+        -:  484:        {
+        -:  485:            memset( buf, 'a', buflen = 1000 );
+        -:  486:
+        -:  487:            for( j = 0; j < 1000; j++ )
+        -:  488:            {
+        -:  489:                ret = mbedtls_sha1_update_ret( &ctx, buf, buflen );
+        -:  490:                if( ret != 0 )
+        -:  491:                    goto fail;
+        -:  492:            }
+        -:  493:        }
+        -:  494:        else
+        -:  495:        {
+        -:  496:            ret = mbedtls_sha1_update_ret( &ctx, sha1_test_buf[i],
+        -:  497:                                           sha1_test_buflen[i] );
+        -:  498:            if( ret != 0 )
+        -:  499:                goto fail;
+        -:  500:        }
+        -:  501:
+        -:  502:        if( ( ret = mbedtls_sha1_finish_ret( &ctx, sha1sum ) ) != 0 )
+        -:  503:            goto fail;
+        -:  504:
+        -:  505:        if( memcmp( sha1sum, sha1_test_sum[i], 20 ) != 0 )
+        -:  506:        {
+        -:  507:            ret = 1;
+        -:  508:            goto fail;
+        -:  509:        }
+        -:  510:
+        -:  511:        if( verbose != 0 )
+        -:  512:            mbedtls_printf( "passed\n" );
+        -:  513:    }
+        -:  514:
+        -:  515:    if( verbose != 0 )
+        -:  516:        mbedtls_printf( "\n" );
+        -:  517:
+        -:  518:    goto exit;
+        -:  519:
+        -:  520:fail:
+        -:  521:    if( verbose != 0 )
+        -:  522:        mbedtls_printf( "failed\n" );
+        -:  523:
+        -:  524:exit:
+        -:  525:    mbedtls_sha1_free( &ctx );
+        -:  526:
+        -:  527:    return( ret );
+        -:  528:}
+        -:  529:
+        -:  530:#endif /* MBEDTLS_SELF_TEST */
+        -:  531:
+        -:  532:#endif /* MBEDTLS_SHA1_C */

@@ -1,0 +1,664 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/src/network/mbedtls/include/mbedtls/ssl_internal.h
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/src/network/mbedtls/library/ssl_tls.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/**
+        -:    2: * \file ssl_internal.h
+        -:    3: *
+        -:    4: * \brief Internal functions shared by the SSL modules
+        -:    5: */
+        -:    6:/*
+        -:    7: *  Copyright (C) 2006-2015, ARM Limited, All Rights Reserved
+        -:    8: *  SPDX-License-Identifier: Apache-2.0
+        -:    9: *
+        -:   10: *  Licensed under the Apache License, Version 2.0 (the "License"); you may
+        -:   11: *  not use this file except in compliance with the License.
+        -:   12: *  You may obtain a copy of the License at
+        -:   13: *
+        -:   14: *  http://www.apache.org/licenses/LICENSE-2.0
+        -:   15: *
+        -:   16: *  Unless required by applicable law or agreed to in writing, software
+        -:   17: *  distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+        -:   18: *  WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+        -:   19: *  See the License for the specific language governing permissions and
+        -:   20: *  limitations under the License.
+        -:   21: *
+        -:   22: *  This file is part of mbed TLS (https://tls.mbed.org)
+        -:   23: */
+        -:   24:#ifndef MBEDTLS_SSL_INTERNAL_H
+        -:   25:#define MBEDTLS_SSL_INTERNAL_H
+        -:   26:
+        -:   27:#include "ssl.h"
+        -:   28:#include "cipher.h"
+        -:   29:
+        -:   30:#if defined(MBEDTLS_MD5_C)
+        -:   31:#include "md5.h"
+        -:   32:#endif
+        -:   33:
+        -:   34:#if defined(MBEDTLS_SHA1_C)
+        -:   35:#include "sha1.h"
+        -:   36:#endif
+        -:   37:
+        -:   38:#if defined(MBEDTLS_SHA256_C)
+        -:   39:#include "sha256.h"
+        -:   40:#endif
+        -:   41:
+        -:   42:#if defined(MBEDTLS_SHA512_C)
+        -:   43:#include "sha512.h"
+        -:   44:#endif
+        -:   45:
+        -:   46:#if defined(MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED)
+        -:   47:#include "ecjpake.h"
+        -:   48:#endif
+        -:   49:
+        -:   50:#if ( defined(__ARMCC_VERSION) || defined(_MSC_VER) ) && \
+        -:   51:    !defined(inline) && !defined(__cplusplus)
+        -:   52:#define inline __inline
+        -:   53:#endif
+        -:   54:
+        -:   55:/* Determine minimum supported version */
+        -:   56:#define MBEDTLS_SSL_MIN_MAJOR_VERSION           MBEDTLS_SSL_MAJOR_VERSION_3
+        -:   57:
+        -:   58:#if defined(MBEDTLS_SSL_PROTO_SSL3)
+        -:   59:#define MBEDTLS_SSL_MIN_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_0
+        -:   60:#else
+        -:   61:#if defined(MBEDTLS_SSL_PROTO_TLS1)
+        -:   62:#define MBEDTLS_SSL_MIN_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_1
+        -:   63:#else
+        -:   64:#if defined(MBEDTLS_SSL_PROTO_TLS1_1)
+        -:   65:#define MBEDTLS_SSL_MIN_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_2
+        -:   66:#else
+        -:   67:#if defined(MBEDTLS_SSL_PROTO_TLS1_2)
+        -:   68:#define MBEDTLS_SSL_MIN_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_3
+        -:   69:#endif /* MBEDTLS_SSL_PROTO_TLS1_2 */
+        -:   70:#endif /* MBEDTLS_SSL_PROTO_TLS1_1 */
+        -:   71:#endif /* MBEDTLS_SSL_PROTO_TLS1   */
+        -:   72:#endif /* MBEDTLS_SSL_PROTO_SSL3   */
+        -:   73:
+        -:   74:#define MBEDTLS_SSL_MIN_VALID_MINOR_VERSION MBEDTLS_SSL_MINOR_VERSION_1
+        -:   75:#define MBEDTLS_SSL_MIN_VALID_MAJOR_VERSION MBEDTLS_SSL_MAJOR_VERSION_3
+        -:   76:
+        -:   77:/* Determine maximum supported version */
+        -:   78:#define MBEDTLS_SSL_MAX_MAJOR_VERSION           MBEDTLS_SSL_MAJOR_VERSION_3
+        -:   79:
+        -:   80:#if defined(MBEDTLS_SSL_PROTO_TLS1_2)
+        -:   81:#define MBEDTLS_SSL_MAX_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_3
+        -:   82:#else
+        -:   83:#if defined(MBEDTLS_SSL_PROTO_TLS1_1)
+        -:   84:#define MBEDTLS_SSL_MAX_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_2
+        -:   85:#else
+        -:   86:#if defined(MBEDTLS_SSL_PROTO_TLS1)
+        -:   87:#define MBEDTLS_SSL_MAX_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_1
+        -:   88:#else
+        -:   89:#if defined(MBEDTLS_SSL_PROTO_SSL3)
+        -:   90:#define MBEDTLS_SSL_MAX_MINOR_VERSION           MBEDTLS_SSL_MINOR_VERSION_0
+        -:   91:#endif /* MBEDTLS_SSL_PROTO_SSL3   */
+        -:   92:#endif /* MBEDTLS_SSL_PROTO_TLS1   */
+        -:   93:#endif /* MBEDTLS_SSL_PROTO_TLS1_1 */
+        -:   94:#endif /* MBEDTLS_SSL_PROTO_TLS1_2 */
+        -:   95:
+        -:   96:#define MBEDTLS_SSL_INITIAL_HANDSHAKE           0
+        -:   97:#define MBEDTLS_SSL_RENEGOTIATION_IN_PROGRESS   1   /* In progress */
+        -:   98:#define MBEDTLS_SSL_RENEGOTIATION_DONE          2   /* Done or aborted */
+        -:   99:#define MBEDTLS_SSL_RENEGOTIATION_PENDING       3   /* Requested (server only) */
+        -:  100:
+        -:  101:/*
+        -:  102: * DTLS retransmission states, see RFC 6347 4.2.4
+        -:  103: *
+        -:  104: * The SENDING state is merged in PREPARING for initial sends,
+        -:  105: * but is distinct for resends.
+        -:  106: *
+        -:  107: * Note: initial state is wrong for server, but is not used anyway.
+        -:  108: */
+        -:  109:#define MBEDTLS_SSL_RETRANS_PREPARING       0
+        -:  110:#define MBEDTLS_SSL_RETRANS_SENDING         1
+        -:  111:#define MBEDTLS_SSL_RETRANS_WAITING         2
+        -:  112:#define MBEDTLS_SSL_RETRANS_FINISHED        3
+        -:  113:
+        -:  114:/*
+        -:  115: * Allow extra bytes for record, authentication and encryption overhead:
+        -:  116: * counter (8) + header (5) + IV(16) + MAC (16-48) + padding (0-256)
+        -:  117: * and allow for a maximum of 1024 of compression expansion if
+        -:  118: * enabled.
+        -:  119: */
+        -:  120:#if defined(MBEDTLS_ZLIB_SUPPORT)
+        -:  121:#define MBEDTLS_SSL_COMPRESSION_ADD          1024
+        -:  122:#else
+        -:  123:#define MBEDTLS_SSL_COMPRESSION_ADD             0
+        -:  124:#endif
+        -:  125:
+        -:  126:#if defined(MBEDTLS_ARC4_C) || defined(MBEDTLS_CIPHER_MODE_CBC)
+        -:  127:/* Ciphersuites using HMAC */
+        -:  128:#if defined(MBEDTLS_SHA512_C)
+        -:  129:#define MBEDTLS_SSL_MAC_ADD                 48  /* SHA-384 used for HMAC */
+        -:  130:#elif defined(MBEDTLS_SHA256_C)
+        -:  131:#define MBEDTLS_SSL_MAC_ADD                 32  /* SHA-256 used for HMAC */
+        -:  132:#else
+        -:  133:#define MBEDTLS_SSL_MAC_ADD                 20  /* SHA-1   used for HMAC */
+        -:  134:#endif
+        -:  135:#else
+        -:  136:/* AEAD ciphersuites: GCM and CCM use a 128 bits tag */
+        -:  137:#define MBEDTLS_SSL_MAC_ADD                 16
+        -:  138:#endif
+        -:  139:
+        -:  140:#if defined(MBEDTLS_CIPHER_MODE_CBC)
+        -:  141:#define MBEDTLS_SSL_PADDING_ADD            256
+        -:  142:#else
+        -:  143:#define MBEDTLS_SSL_PADDING_ADD              0
+        -:  144:#endif
+        -:  145:
+        -:  146:#define MBEDTLS_SSL_PAYLOAD_LEN ( MBEDTLS_SSL_MAX_CONTENT_LEN    \
+        -:  147:                        + MBEDTLS_SSL_COMPRESSION_ADD            \
+        -:  148:                        + MBEDTLS_MAX_IV_LENGTH                  \
+        -:  149:                        + MBEDTLS_SSL_MAC_ADD                    \
+        -:  150:                        + MBEDTLS_SSL_PADDING_ADD                \
+        -:  151:                        )
+        -:  152:
+        -:  153:/*
+        -:  154: * Check that we obey the standard's message size bounds
+        -:  155: */
+        -:  156:
+        -:  157:#if MBEDTLS_SSL_MAX_CONTENT_LEN > 16384
+        -:  158:#error Bad configuration - record content too large.
+        -:  159:#endif
+        -:  160:
+        -:  161:#if MBEDTLS_SSL_PAYLOAD_LEN > 16384 + 2048
+        -:  162:#error Bad configuration - protected record payload too large.
+        -:  163:#endif
+        -:  164:
+        -:  165:/* Note: Even though the TLS record header is only 5 bytes
+        -:  166:   long, we're internally using 8 bytes to store the
+        -:  167:   implicit sequence number. */
+        -:  168:#define MBEDTLS_SSL_HEADER_LEN 13
+        -:  169:
+        -:  170:#define MBEDTLS_SSL_BUFFER_LEN  \
+        -:  171:    ( ( MBEDTLS_SSL_HEADER_LEN ) + ( MBEDTLS_SSL_PAYLOAD_LEN ) )
+        -:  172:
+        -:  173:/*
+        -:  174: * TLS extension flags (for extensions with outgoing ServerHello content
+        -:  175: * that need it (e.g. for RENEGOTIATION_INFO the server already knows because
+        -:  176: * of state of the renegotiation flag, so no indicator is required)
+        -:  177: */
+        -:  178:#define MBEDTLS_TLS_EXT_SUPPORTED_POINT_FORMATS_PRESENT (1 << 0)
+        -:  179:#define MBEDTLS_TLS_EXT_ECJPAKE_KKPP_OK                 (1 << 1)
+        -:  180:
+        -:  181:#ifdef __cplusplus
+        -:  182:extern "C" {
+        -:  183:#endif
+        -:  184:
+        -:  185:#if defined(MBEDTLS_SSL_PROTO_TLS1_2) && \
+        -:  186:    defined(MBEDTLS_KEY_EXCHANGE__WITH_CERT__ENABLED)
+        -:  187:/*
+        -:  188: * Abstraction for a grid of allowed signature-hash-algorithm pairs.
+        -:  189: */
+        -:  190:struct mbedtls_ssl_sig_hash_set_t
+        -:  191:{
+        -:  192:    /* At the moment, we only need to remember a single suitable
+        -:  193:     * hash algorithm per signature algorithm. As long as that's
+        -:  194:     * the case - and we don't need a general lookup function -
+        -:  195:     * we can implement the sig-hash-set as a map from signatures
+        -:  196:     * to hash algorithms. */
+        -:  197:    mbedtls_md_type_t rsa;
+        -:  198:    mbedtls_md_type_t ecdsa;
+        -:  199:};
+        -:  200:#endif /* MBEDTLS_SSL_PROTO_TLS1_2 &&
+        -:  201:          MBEDTLS_KEY_EXCHANGE__WITH_CERT__ENABLED */
+        -:  202:
+        -:  203:/*
+        -:  204: * This structure contains the parameters only needed during handshake.
+        -:  205: */
+        -:  206:struct mbedtls_ssl_handshake_params
+        -:  207:{
+        -:  208:    /*
+        -:  209:     * Handshake specific crypto variables
+        -:  210:     */
+        -:  211:
+        -:  212:#if defined(MBEDTLS_SSL_PROTO_TLS1_2) && \
+        -:  213:    defined(MBEDTLS_KEY_EXCHANGE__WITH_CERT__ENABLED)
+        -:  214:    mbedtls_ssl_sig_hash_set_t hash_algs;             /*!<  Set of suitable sig-hash pairs */
+        -:  215:#endif
+        -:  216:#if defined(MBEDTLS_DHM_C)
+        -:  217:    mbedtls_dhm_context dhm_ctx;                /*!<  DHM key exchange        */
+        -:  218:#endif
+        -:  219:#if defined(MBEDTLS_ECDH_C)
+        -:  220:    mbedtls_ecdh_context ecdh_ctx;              /*!<  ECDH key exchange       */
+        -:  221:#endif
+        -:  222:#if defined(MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED)
+        -:  223:    mbedtls_ecjpake_context ecjpake_ctx;        /*!< EC J-PAKE key exchange */
+        -:  224:#if defined(MBEDTLS_SSL_CLI_C)
+        -:  225:    unsigned char *ecjpake_cache;               /*!< Cache for ClientHello ext */
+        -:  226:    size_t ecjpake_cache_len;                   /*!< Length of cached data */
+        -:  227:#endif
+        -:  228:#endif /* MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED */
+        -:  229:#if defined(MBEDTLS_ECDH_C) || defined(MBEDTLS_ECDSA_C) || \
+        -:  230:    defined(MBEDTLS_KEY_EXCHANGE_ECJPAKE_ENABLED)
+        -:  231:    const mbedtls_ecp_curve_info **curves;      /*!<  Supported elliptic curves */
+        -:  232:#endif
+        -:  233:#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+        -:  234:    unsigned char *psk;                 /*!<  PSK from the callback         */
+        -:  235:    size_t psk_len;                     /*!<  Length of PSK from callback   */
+        -:  236:#endif
+        -:  237:#if defined(MBEDTLS_X509_CRT_PARSE_C)
+        -:  238:    mbedtls_ssl_key_cert *key_cert;     /*!< chosen key/cert pair (server)  */
+        -:  239:#if defined(MBEDTLS_SSL_SERVER_NAME_INDICATION)
+        -:  240:    int sni_authmode;                   /*!< authmode from SNI callback     */
+        -:  241:    mbedtls_ssl_key_cert *sni_key_cert; /*!< key/cert list from SNI         */
+        -:  242:    mbedtls_x509_crt *sni_ca_chain;     /*!< trusted CAs from SNI callback  */
+        -:  243:    mbedtls_x509_crl *sni_ca_crl;       /*!< trusted CAs CRLs from SNI      */
+        -:  244:#endif /* MBEDTLS_SSL_SERVER_NAME_INDICATION */
+        -:  245:#endif /* MBEDTLS_X509_CRT_PARSE_C */
+        -:  246:#if defined(MBEDTLS_SSL_PROTO_DTLS)
+        -:  247:    unsigned int out_msg_seq;           /*!<  Outgoing handshake sequence number */
+        -:  248:    unsigned int in_msg_seq;            /*!<  Incoming handshake sequence number */
+        -:  249:
+        -:  250:    unsigned char *verify_cookie;       /*!<  Cli: HelloVerifyRequest cookie
+        -:  251:                                              Srv: unused                    */
+        -:  252:    unsigned char verify_cookie_len;    /*!<  Cli: cookie length
+        -:  253:                                              Srv: flag for sending a cookie */
+        -:  254:
+        -:  255:    unsigned char *hs_msg;              /*!<  Reassembled handshake message  */
+        -:  256:
+        -:  257:    uint32_t retransmit_timeout;        /*!<  Current value of timeout       */
+        -:  258:    unsigned char retransmit_state;     /*!<  Retransmission state           */
+        -:  259:    mbedtls_ssl_flight_item *flight;            /*!<  Current outgoing flight        */
+        -:  260:    mbedtls_ssl_flight_item *cur_msg;           /*!<  Current message in flight      */
+        -:  261:    unsigned int in_flight_start_seq;   /*!<  Minimum message sequence in the
+        -:  262:                                              flight being received          */
+        -:  263:    mbedtls_ssl_transform *alt_transform_out;   /*!<  Alternative transform for
+        -:  264:                                              resending messages             */
+        -:  265:    unsigned char alt_out_ctr[8];       /*!<  Alternative record epoch/counter
+        -:  266:                                              for resending messages         */
+        -:  267:#endif /* MBEDTLS_SSL_PROTO_DTLS */
+        -:  268:
+        -:  269:    /*
+        -:  270:     * Checksum contexts
+        -:  271:     */
+        -:  272:#if defined(MBEDTLS_SSL_PROTO_SSL3) || defined(MBEDTLS_SSL_PROTO_TLS1) || \
+        -:  273:    defined(MBEDTLS_SSL_PROTO_TLS1_1)
+        -:  274:       mbedtls_md5_context fin_md5;
+        -:  275:      mbedtls_sha1_context fin_sha1;
+        -:  276:#endif
+        -:  277:#if defined(MBEDTLS_SSL_PROTO_TLS1_2)
+        -:  278:#if defined(MBEDTLS_SHA256_C)
+        -:  279:    mbedtls_sha256_context fin_sha256;
+        -:  280:#endif
+        -:  281:#if defined(MBEDTLS_SHA512_C)
+        -:  282:    mbedtls_sha512_context fin_sha512;
+        -:  283:#endif
+        -:  284:#endif /* MBEDTLS_SSL_PROTO_TLS1_2 */
+        -:  285:
+        -:  286:    void (*update_checksum)(mbedtls_ssl_context *, const unsigned char *, size_t);
+        -:  287:    void (*calc_verify)(mbedtls_ssl_context *, unsigned char *);
+        -:  288:    void (*calc_finished)(mbedtls_ssl_context *, unsigned char *, int);
+        -:  289:    int  (*tls_prf)(const unsigned char *, size_t, const char *,
+        -:  290:                    const unsigned char *, size_t,
+        -:  291:                    unsigned char *, size_t);
+        -:  292:
+        -:  293:    size_t pmslen;                      /*!<  premaster length        */
+        -:  294:
+        -:  295:    unsigned char randbytes[64];        /*!<  random bytes            */
+        -:  296:    unsigned char premaster[MBEDTLS_PREMASTER_SIZE];
+        -:  297:                                        /*!<  premaster secret        */
+        -:  298:
+        -:  299:    int resume;                         /*!<  session resume indicator*/
+        -:  300:    int max_major_ver;                  /*!< max. major version client*/
+        -:  301:    int max_minor_ver;                  /*!< max. minor version client*/
+        -:  302:    int cli_exts;                       /*!< client extension presence*/
+        -:  303:
+        -:  304:#if defined(MBEDTLS_SSL_SESSION_TICKETS)
+        -:  305:    int new_session_ticket;             /*!< use NewSessionTicket?    */
+        -:  306:#endif /* MBEDTLS_SSL_SESSION_TICKETS */
+        -:  307:#if defined(MBEDTLS_SSL_EXTENDED_MASTER_SECRET)
+        -:  308:    int extended_ms;                    /*!< use Extended Master Secret? */
+        -:  309:#endif
+        -:  310:};
+        -:  311:
+        -:  312:/*
+        -:  313: * This structure contains a full set of runtime transform parameters
+        -:  314: * either in negotiation or active.
+        -:  315: */
+        -:  316:struct mbedtls_ssl_transform
+        -:  317:{
+        -:  318:    /*
+        -:  319:     * Session specific crypto layer
+        -:  320:     */
+        -:  321:    const mbedtls_ssl_ciphersuite_t *ciphersuite_info;
+        -:  322:                                        /*!<  Chosen cipersuite_info  */
+        -:  323:    unsigned int keylen;                /*!<  symmetric key length (bytes)  */
+        -:  324:    size_t minlen;                      /*!<  min. ciphertext length  */
+        -:  325:    size_t ivlen;                       /*!<  IV length               */
+        -:  326:    size_t fixed_ivlen;                 /*!<  Fixed part of IV (AEAD) */
+        -:  327:    size_t maclen;                      /*!<  MAC length              */
+        -:  328:
+        -:  329:    unsigned char iv_enc[16];           /*!<  IV (encryption)         */
+        -:  330:    unsigned char iv_dec[16];           /*!<  IV (decryption)         */
+        -:  331:
+        -:  332:#if defined(MBEDTLS_SSL_PROTO_SSL3)
+        -:  333:    /* Needed only for SSL v3.0 secret */
+        -:  334:    unsigned char mac_enc[20];          /*!<  SSL v3.0 secret (enc)   */
+        -:  335:    unsigned char mac_dec[20];          /*!<  SSL v3.0 secret (dec)   */
+        -:  336:#endif /* MBEDTLS_SSL_PROTO_SSL3 */
+        -:  337:
+        -:  338:    mbedtls_md_context_t md_ctx_enc;            /*!<  MAC (encryption)        */
+        -:  339:    mbedtls_md_context_t md_ctx_dec;            /*!<  MAC (decryption)        */
+        -:  340:
+        -:  341:    mbedtls_cipher_context_t cipher_ctx_enc;    /*!<  encryption context      */
+        -:  342:    mbedtls_cipher_context_t cipher_ctx_dec;    /*!<  decryption context      */
+        -:  343:
+        -:  344:    /*
+        -:  345:     * Session specific compression layer
+        -:  346:     */
+        -:  347:#if defined(MBEDTLS_ZLIB_SUPPORT)
+        -:  348:    z_stream ctx_deflate;               /*!<  compression context     */
+        -:  349:    z_stream ctx_inflate;               /*!<  decompression context   */
+        -:  350:#endif
+        -:  351:};
+        -:  352:
+        -:  353:#if defined(MBEDTLS_X509_CRT_PARSE_C)
+        -:  354:/*
+        -:  355: * List of certificate + private key pairs
+        -:  356: */
+        -:  357:struct mbedtls_ssl_key_cert
+        -:  358:{
+        -:  359:    mbedtls_x509_crt *cert;                 /*!< cert                       */
+        -:  360:    mbedtls_pk_context *key;                /*!< private key                */
+        -:  361:    mbedtls_ssl_key_cert *next;             /*!< next key/cert pair         */
+        -:  362:};
+        -:  363:#endif /* MBEDTLS_X509_CRT_PARSE_C */
+        -:  364:
+        -:  365:#if defined(MBEDTLS_SSL_PROTO_DTLS)
+        -:  366:/*
+        -:  367: * List of handshake messages kept around for resending
+        -:  368: */
+        -:  369:struct mbedtls_ssl_flight_item
+        -:  370:{
+        -:  371:    unsigned char *p;       /*!< message, including handshake headers   */
+        -:  372:    size_t len;             /*!< length of p                            */
+        -:  373:    unsigned char type;     /*!< type of the message: handshake or CCS  */
+        -:  374:    mbedtls_ssl_flight_item *next;  /*!< next handshake message(s)              */
+        -:  375:};
+        -:  376:#endif /* MBEDTLS_SSL_PROTO_DTLS */
+        -:  377:
+        -:  378:#if defined(MBEDTLS_SSL_PROTO_TLS1_2) && \
+        -:  379:    defined(MBEDTLS_KEY_EXCHANGE__WITH_CERT__ENABLED)
+        -:  380:
+        -:  381:/* Find an entry in a signature-hash set matching a given hash algorithm. */
+        -:  382:mbedtls_md_type_t mbedtls_ssl_sig_hash_set_find( mbedtls_ssl_sig_hash_set_t *set,
+        -:  383:                                                 mbedtls_pk_type_t sig_alg );
+        -:  384:/* Add a signature-hash-pair to a signature-hash set */
+        -:  385:void mbedtls_ssl_sig_hash_set_add( mbedtls_ssl_sig_hash_set_t *set,
+        -:  386:                                   mbedtls_pk_type_t sig_alg,
+        -:  387:                                   mbedtls_md_type_t md_alg );
+        -:  388:/* Allow exactly one hash algorithm for each signature. */
+        -:  389:void mbedtls_ssl_sig_hash_set_const_hash( mbedtls_ssl_sig_hash_set_t *set,
+        -:  390:                                          mbedtls_md_type_t md_alg );
+        -:  391:
+        -:  392:/* Setup an empty signature-hash set */
+        -:  393:static inline void mbedtls_ssl_sig_hash_set_init( mbedtls_ssl_sig_hash_set_t *set )
+        -:  394:{
+        -:  395:    mbedtls_ssl_sig_hash_set_const_hash( set, MBEDTLS_MD_NONE );
+        -:  396:}
+        -:  397:
+        -:  398:#endif /* MBEDTLS_SSL_PROTO_TLS1_2) &&
+        -:  399:          MBEDTLS_KEY_EXCHANGE__WITH_CERT__ENABLED */
+        -:  400:
+        -:  401:/**
+        -:  402: * \brief           Free referenced items in an SSL transform context and clear
+        -:  403: *                  memory
+        -:  404: *
+        -:  405: * \param transform SSL transform context
+        -:  406: */
+        -:  407:void mbedtls_ssl_transform_free( mbedtls_ssl_transform *transform );
+        -:  408:
+        -:  409:/**
+        -:  410: * \brief           Free referenced items in an SSL handshake context and clear
+        -:  411: *                  memory
+        -:  412: *
+        -:  413: * \param handshake SSL handshake context
+        -:  414: */
+        -:  415:void mbedtls_ssl_handshake_free( mbedtls_ssl_handshake_params *handshake );
+        -:  416:
+        -:  417:int mbedtls_ssl_handshake_client_step( mbedtls_ssl_context *ssl );
+        -:  418:int mbedtls_ssl_handshake_server_step( mbedtls_ssl_context *ssl );
+        -:  419:void mbedtls_ssl_handshake_wrapup( mbedtls_ssl_context *ssl );
+        -:  420:
+        -:  421:int mbedtls_ssl_send_fatal_handshake_failure( mbedtls_ssl_context *ssl );
+        -:  422:
+        -:  423:void mbedtls_ssl_reset_checksum( mbedtls_ssl_context *ssl );
+        -:  424:int mbedtls_ssl_derive_keys( mbedtls_ssl_context *ssl );
+        -:  425:
+        -:  426:int mbedtls_ssl_read_record_layer( mbedtls_ssl_context *ssl );
+        -:  427:int mbedtls_ssl_handle_message_type( mbedtls_ssl_context *ssl );
+        -:  428:int mbedtls_ssl_prepare_handshake_record( mbedtls_ssl_context *ssl );
+        -:  429:void mbedtls_ssl_update_handshake_status( mbedtls_ssl_context *ssl );
+        -:  430:
+        -:  431:/**
+        -:  432: * \brief       Update record layer
+        -:  433: *
+        -:  434: *              This function roughly separates the implementation
+        -:  435: *              of the logic of (D)TLS from the implementation
+        -:  436: *              of the secure transport.
+        -:  437: *
+        -:  438: * \param  ssl  SSL context to use
+        -:  439: *
+        -:  440: * \return      0 or non-zero error code.
+        -:  441: *
+        -:  442: * \note        A clarification on what is called 'record layer' here
+        -:  443: *              is in order, as many sensible definitions are possible:
+        -:  444: *
+        -:  445: *              The record layer takes as input an untrusted underlying
+        -:  446: *              transport (stream or datagram) and transforms it into
+        -:  447: *              a serially multiplexed, secure transport, which
+        -:  448: *              conceptually provides the following:
+        -:  449: *
+        -:  450: *              (1) Three datagram based, content-agnostic transports
+        -:  451: *                  for handshake, alert and CCS messages.
+        -:  452: *              (2) One stream- or datagram-based transport
+        -:  453: *                  for application data.
+        -:  454: *              (3) Functionality for changing the underlying transform
+        -:  455: *                  securing the contents.
+        -:  456: *
+        -:  457: *              The interface to this functionality is given as follows:
+        -:  458: *
+        -:  459: *              a Updating
+        -:  460: *                [Currently implemented by mbedtls_ssl_read_record]
+        -:  461: *
+        -:  462: *                Check if and on which of the four 'ports' data is pending:
+        -:  463: *                Nothing, a controlling datagram of type (1), or application
+        -:  464: *                data (2). In any case data is present, internal buffers
+        -:  465: *                provide access to the data for the user to process it.
+        -:  466: *                Consumption of type (1) datagrams is done automatically
+        -:  467: *                on the next update, invalidating that the internal buffers
+        -:  468: *                for previous datagrams, while consumption of application
+        -:  469: *                data (2) is user-controlled.
+        -:  470: *
+        -:  471: *              b Reading of application data
+        -:  472: *                [Currently manual adaption of ssl->in_offt pointer]
+        -:  473: *
+        -:  474: *                As mentioned in the last paragraph, consumption of data
+        -:  475: *                is different from the automatic consumption of control
+        -:  476: *                datagrams (1) because application data is treated as a stream.
+        -:  477: *
+        -:  478: *              c Tracking availability of application data
+        -:  479: *                [Currently manually through decreasing ssl->in_msglen]
+        -:  480: *
+        -:  481: *                For efficiency and to retain datagram semantics for
+        -:  482: *                application data in case of DTLS, the record layer
+        -:  483: *                provides functionality for checking how much application
+        -:  484: *                data is still available in the internal buffer.
+        -:  485: *
+        -:  486: *              d Changing the transformation securing the communication.
+        -:  487: *
+        -:  488: *              Given an opaque implementation of the record layer in the
+        -:  489: *              above sense, it should be possible to implement the logic
+        -:  490: *              of (D)TLS on top of it without the need to know anything
+        -:  491: *              about the record layer's internals. This is done e.g.
+        -:  492: *              in all the handshake handling functions, and in the
+        -:  493: *              application data reading function mbedtls_ssl_read.
+        -:  494: *
+        -:  495: * \note        The above tries to give a conceptual picture of the
+        -:  496: *              record layer, but the current implementation deviates
+        -:  497: *              from it in some places. For example, our implementation of
+        -:  498: *              the update functionality through mbedtls_ssl_read_record
+        -:  499: *              discards datagrams depending on the current state, which
+        -:  500: *              wouldn't fall under the record layer's responsibility
+        -:  501: *              following the above definition.
+        -:  502: *
+        -:  503: */
+        -:  504:int mbedtls_ssl_read_record( mbedtls_ssl_context *ssl );
+        -:  505:int mbedtls_ssl_fetch_input( mbedtls_ssl_context *ssl, size_t nb_want );
+        -:  506:
+        -:  507:int mbedtls_ssl_write_record( mbedtls_ssl_context *ssl );
+        -:  508:int mbedtls_ssl_flush_output( mbedtls_ssl_context *ssl );
+        -:  509:
+        -:  510:int mbedtls_ssl_parse_certificate( mbedtls_ssl_context *ssl );
+        -:  511:int mbedtls_ssl_write_certificate( mbedtls_ssl_context *ssl );
+        -:  512:
+        -:  513:int mbedtls_ssl_parse_change_cipher_spec( mbedtls_ssl_context *ssl );
+        -:  514:int mbedtls_ssl_write_change_cipher_spec( mbedtls_ssl_context *ssl );
+        -:  515:
+        -:  516:int mbedtls_ssl_parse_finished( mbedtls_ssl_context *ssl );
+        -:  517:int mbedtls_ssl_write_finished( mbedtls_ssl_context *ssl );
+        -:  518:
+        -:  519:void mbedtls_ssl_optimize_checksum( mbedtls_ssl_context *ssl,
+        -:  520:                            const mbedtls_ssl_ciphersuite_t *ciphersuite_info );
+        -:  521:
+        -:  522:#if defined(MBEDTLS_KEY_EXCHANGE__SOME__PSK_ENABLED)
+        -:  523:int mbedtls_ssl_psk_derive_premaster( mbedtls_ssl_context *ssl, mbedtls_key_exchange_type_t key_ex );
+        -:  524:#endif
+        -:  525:
+        -:  526:#if defined(MBEDTLS_PK_C)
+        -:  527:unsigned char mbedtls_ssl_sig_from_pk( mbedtls_pk_context *pk );
+        -:  528:unsigned char mbedtls_ssl_sig_from_pk_alg( mbedtls_pk_type_t type );
+        -:  529:mbedtls_pk_type_t mbedtls_ssl_pk_alg_from_sig( unsigned char sig );
+        -:  530:#endif
+        -:  531:
+        -:  532:mbedtls_md_type_t mbedtls_ssl_md_alg_from_hash( unsigned char hash );
+        -:  533:unsigned char mbedtls_ssl_hash_from_md_alg( int md );
+        -:  534:int mbedtls_ssl_set_calc_verify_md( mbedtls_ssl_context *ssl, int md );
+        -:  535:
+        -:  536:#if defined(MBEDTLS_ECP_C)
+        -:  537:int mbedtls_ssl_check_curve( const mbedtls_ssl_context *ssl, mbedtls_ecp_group_id grp_id );
+        -:  538:#endif
+        -:  539:
+        -:  540:#if defined(MBEDTLS_KEY_EXCHANGE__WITH_CERT__ENABLED)
+        -:  541:int mbedtls_ssl_check_sig_hash( const mbedtls_ssl_context *ssl,
+        -:  542:                                mbedtls_md_type_t md );
+        -:  543:#endif
+        -:  544:
+        -:  545:#if defined(MBEDTLS_X509_CRT_PARSE_C)
+        -:  546:static inline mbedtls_pk_context *mbedtls_ssl_own_key( mbedtls_ssl_context *ssl )
+        -:  547:{
+        -:  548:    mbedtls_ssl_key_cert *key_cert;
+        -:  549:
+        -:  550:    if( ssl->handshake != NULL && ssl->handshake->key_cert != NULL )
+        -:  551:        key_cert = ssl->handshake->key_cert;
+        -:  552:    else
+        -:  553:        key_cert = ssl->conf->key_cert;
+        -:  554:
+        -:  555:    return( key_cert == NULL ? NULL : key_cert->key );
+        -:  556:}
+        -:  557:
+        -:  558:static inline mbedtls_x509_crt *mbedtls_ssl_own_cert( mbedtls_ssl_context *ssl )
+        -:  559:{
+        -:  560:    mbedtls_ssl_key_cert *key_cert;
+        -:  561:
+        -:  562:    if( ssl->handshake != NULL && ssl->handshake->key_cert != NULL )
+        -:  563:        key_cert = ssl->handshake->key_cert;
+        -:  564:    else
+        -:  565:        key_cert = ssl->conf->key_cert;
+        -:  566:
+        -:  567:    return( key_cert == NULL ? NULL : key_cert->cert );
+        -:  568:}
+        -:  569:
+        -:  570:/*
+        -:  571: * Check usage of a certificate wrt extensions:
+        -:  572: * keyUsage, extendedKeyUsage (later), and nSCertType (later).
+        -:  573: *
+        -:  574: * Warning: cert_endpoint is the endpoint of the cert (ie, of our peer when we
+        -:  575: * check a cert we received from them)!
+        -:  576: *
+        -:  577: * Return 0 if everything is OK, -1 if not.
+        -:  578: */
+        -:  579:int mbedtls_ssl_check_cert_usage( const mbedtls_x509_crt *cert,
+        -:  580:                          const mbedtls_ssl_ciphersuite_t *ciphersuite,
+        -:  581:                          int cert_endpoint,
+        -:  582:                          uint32_t *flags );
+        -:  583:#endif /* MBEDTLS_X509_CRT_PARSE_C */
+        -:  584:
+        -:  585:void mbedtls_ssl_write_version( int major, int minor, int transport,
+        -:  586:                        unsigned char ver[2] );
+        -:  587:void mbedtls_ssl_read_version( int *major, int *minor, int transport,
+        -:  588:                       const unsigned char ver[2] );
+        -:  589:
+    #####:  590:static inline size_t mbedtls_ssl_hdr_len( const mbedtls_ssl_context *ssl )
+        -:  591:{
+        -:  592:#if defined(MBEDTLS_SSL_PROTO_DTLS)
+    #####:  593:    if( ssl->conf->transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM )
+    #####:  594:        return( 13 );
+        -:  595:#else
+        -:  596:    ((void) ssl);
+        -:  597:#endif
+    #####:  598:    return( 5 );
+        -:  599:}
+        -:  600:
+    #####:  601:static inline size_t mbedtls_ssl_hs_hdr_len( const mbedtls_ssl_context *ssl )
+        -:  602:{
+        -:  603:#if defined(MBEDTLS_SSL_PROTO_DTLS)
+    #####:  604:    if( ssl->conf->transport == MBEDTLS_SSL_TRANSPORT_DATAGRAM )
+    #####:  605:        return( 12 );
+        -:  606:#else
+        -:  607:    ((void) ssl);
+        -:  608:#endif
+    #####:  609:    return( 4 );
+        -:  610:}
+        -:  611:
+        -:  612:#if defined(MBEDTLS_SSL_PROTO_DTLS)
+        -:  613:void mbedtls_ssl_send_flight_completed( mbedtls_ssl_context *ssl );
+        -:  614:void mbedtls_ssl_recv_flight_completed( mbedtls_ssl_context *ssl );
+        -:  615:int mbedtls_ssl_resend( mbedtls_ssl_context *ssl );
+        -:  616:#endif
+        -:  617:
+        -:  618:/* Visible for testing purposes only */
+        -:  619:#if defined(MBEDTLS_SSL_DTLS_ANTI_REPLAY)
+        -:  620:int mbedtls_ssl_dtls_replay_check( mbedtls_ssl_context *ssl );
+        -:  621:void mbedtls_ssl_dtls_replay_update( mbedtls_ssl_context *ssl );
+        -:  622:#endif
+        -:  623:
+        -:  624:/* constant-time buffer comparison */
+    #####:  625:static inline int mbedtls_ssl_safer_memcmp( const void *a, const void *b, size_t n )
+        -:  626:{
+        -:  627:    size_t i;
+    #####:  628:    volatile const unsigned char *A = (volatile const unsigned char *) a;
+    #####:  629:    volatile const unsigned char *B = (volatile const unsigned char *) b;
+    #####:  630:    volatile unsigned char diff = 0;
+        -:  631:
+    #####:  632:    for( i = 0; i < n; i++ )
+    #####:  633:        diff |= A[i] ^ B[i];
+        -:  634:
+    #####:  635:    return( diff );
+        -:  636:}
+        -:  637:
+        -:  638:#if defined(MBEDTLS_SSL_PROTO_SSL3) || defined(MBEDTLS_SSL_PROTO_TLS1) || \
+        -:  639:    defined(MBEDTLS_SSL_PROTO_TLS1_1)
+        -:  640:int mbedtls_ssl_get_key_exchange_md_ssl_tls( mbedtls_ssl_context *ssl,
+        -:  641:                                        unsigned char *output,
+        -:  642:                                        unsigned char *data, size_t data_len );
+        -:  643:#endif /* MBEDTLS_SSL_PROTO_SSL3 || MBEDTLS_SSL_PROTO_TLS1 || \
+        -:  644:          MBEDTLS_SSL_PROTO_TLS1_1 */
+        -:  645:
+        -:  646:#if defined(MBEDTLS_SSL_PROTO_TLS1) || defined(MBEDTLS_SSL_PROTO_TLS1_1) || \
+        -:  647:    defined(MBEDTLS_SSL_PROTO_TLS1_2)
+        -:  648:int mbedtls_ssl_get_key_exchange_md_tls1_2( mbedtls_ssl_context *ssl,
+        -:  649:                                        unsigned char *output,
+        -:  650:                                        unsigned char *data, size_t data_len,
+        -:  651:                                        mbedtls_md_type_t md_alg );
+        -:  652:#endif /* MBEDTLS_SSL_PROTO_TLS1 || MBEDTLS_SSL_PROTO_TLS1_1 || \
+        -:  653:          MBEDTLS_SSL_PROTO_TLS1_2 */
+        -:  654:
+        -:  655:#ifdef __cplusplus
+        -:  656:}
+        -:  657:#endif
+        -:  658:
+        -:  659:#endif /* ssl_internal.h */

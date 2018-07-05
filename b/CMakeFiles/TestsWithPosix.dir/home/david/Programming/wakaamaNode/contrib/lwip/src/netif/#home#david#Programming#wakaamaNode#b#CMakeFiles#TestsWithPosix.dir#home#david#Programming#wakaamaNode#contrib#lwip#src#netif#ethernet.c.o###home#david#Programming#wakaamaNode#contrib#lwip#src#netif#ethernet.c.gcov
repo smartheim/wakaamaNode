@@ -1,0 +1,319 @@
+        -:    0:Source:/home/david/Programming/wakaamaNode/contrib/lwip/src/netif/ethernet.c
+        -:    0:Graph:/home/david/Programming/wakaamaNode/b/CMakeFiles/TestsWithPosix.dir/home/david/Programming/wakaamaNode/contrib/lwip/src/netif/ethernet.c.gcno
+        -:    0:Data:-
+        -:    0:Runs:0
+        -:    0:Programs:0
+        -:    1:/**
+        -:    2: * @file
+        -:    3: * Ethernet common functions
+        -:    4: * 
+        -:    5: * @defgroup ethernet Ethernet
+        -:    6: * @ingroup callbackstyle_api
+        -:    7: */
+        -:    8:
+        -:    9:/*
+        -:   10: * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+        -:   11: * Copyright (c) 2003-2004 Leon Woestenberg <leon.woestenberg@axon.tv>
+        -:   12: * Copyright (c) 2003-2004 Axon Digital Design B.V., The Netherlands.
+        -:   13: * All rights reserved.
+        -:   14: *
+        -:   15: * Redistribution and use in source and binary forms, with or without modification,
+        -:   16: * are permitted provided that the following conditions are met:
+        -:   17: *
+        -:   18: * 1. Redistributions of source code must retain the above copyright notice,
+        -:   19: *    this list of conditions and the following disclaimer.
+        -:   20: * 2. Redistributions in binary form must reproduce the above copyright notice,
+        -:   21: *    this list of conditions and the following disclaimer in the documentation
+        -:   22: *    and/or other materials provided with the distribution.
+        -:   23: * 3. The name of the author may not be used to endorse or promote products
+        -:   24: *    derived from this software without specific prior written permission.
+        -:   25: *
+        -:   26: * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        -:   27: * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        -:   28: * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+        -:   29: * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+        -:   30: * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+        -:   31: * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+        -:   32: * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+        -:   33: * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+        -:   34: * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+        -:   35: * OF SUCH DAMAGE.
+        -:   36: *
+        -:   37: * This file is part of the lwIP TCP/IP stack.
+        -:   38: *
+        -:   39: */
+        -:   40:
+        -:   41:#include "lwip/opt.h"
+        -:   42:
+        -:   43:#if LWIP_ARP || LWIP_ETHERNET
+        -:   44:
+        -:   45:#include "netif/ethernet.h"
+        -:   46:#include "lwip/def.h"
+        -:   47:#include "lwip/stats.h"
+        -:   48:#include "lwip/etharp.h"
+        -:   49:#include "lwip/ip.h"
+        -:   50:#include "lwip/snmp.h"
+        -:   51:
+        -:   52:#include <string.h>
+        -:   53:
+        -:   54:#include "netif/ppp/ppp_opts.h"
+        -:   55:#if PPPOE_SUPPORT
+        -:   56:#include "netif/ppp/pppoe.h"
+        -:   57:#endif /* PPPOE_SUPPORT */
+        -:   58:
+        -:   59:#ifdef LWIP_HOOK_FILENAME
+        -:   60:#include LWIP_HOOK_FILENAME
+        -:   61:#endif
+        -:   62:
+        -:   63:const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
+        -:   64:const struct eth_addr ethzero = {{0,0,0,0,0,0}};
+        -:   65:
+        -:   66:/**
+        -:   67: * @ingroup lwip_nosys
+        -:   68: * Process received ethernet frames. Using this function instead of directly
+        -:   69: * calling ip_input and passing ARP frames through etharp in ethernetif_input,
+        -:   70: * the ARP cache is protected from concurrent access.\n
+        -:   71: * Don't call directly, pass to netif_add() and call netif->input().
+        -:   72: *
+        -:   73: * @param p the received packet, p->payload pointing to the ethernet header
+        -:   74: * @param netif the network interface on which the packet was received
+        -:   75: * 
+        -:   76: * @see LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+        -:   77: * @see ETHARP_SUPPORT_VLAN
+        -:   78: * @see LWIP_HOOK_VLAN_CHECK
+        -:   79: */
+        -:   80:err_t
+    #####:   81:ethernet_input(struct pbuf *p, struct netif *netif)
+        -:   82:{
+        -:   83:  struct eth_hdr* ethhdr;
+        -:   84:  u16_t type;
+        -:   85:#if LWIP_ARP || ETHARP_SUPPORT_VLAN || LWIP_IPV6
+    #####:   86:  s16_t ip_hdr_offset = SIZEOF_ETH_HDR;
+        -:   87:#endif /* LWIP_ARP || ETHARP_SUPPORT_VLAN */
+        -:   88:
+    #####:   89:  if (p->len <= SIZEOF_ETH_HDR) {
+        -:   90:    /* a packet with only an ethernet header (or less) is not valid for us */
+        -:   91:    ETHARP_STATS_INC(etharp.proterr);
+        -:   92:    ETHARP_STATS_INC(etharp.drop);
+        -:   93:    MIB2_STATS_NETIF_INC(netif, ifinerrors);
+    #####:   94:    goto free_and_return;
+        -:   95:  }
+        -:   96:
+        -:   97:  /* points to packet payload, which starts with an Ethernet header */
+    #####:   98:  ethhdr = (struct eth_hdr *)p->payload;
+        -:   99:  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
+        -:  100:    ("ethernet_input: dest:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", src:%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F":%"X8_F", type:%"X16_F"\n",
+        -:  101:     (unsigned)ethhdr->dest.addr[0], (unsigned)ethhdr->dest.addr[1], (unsigned)ethhdr->dest.addr[2],
+        -:  102:     (unsigned)ethhdr->dest.addr[3], (unsigned)ethhdr->dest.addr[4], (unsigned)ethhdr->dest.addr[5],
+        -:  103:     (unsigned)ethhdr->src.addr[0],  (unsigned)ethhdr->src.addr[1],  (unsigned)ethhdr->src.addr[2],
+        -:  104:     (unsigned)ethhdr->src.addr[3],  (unsigned)ethhdr->src.addr[4],  (unsigned)ethhdr->src.addr[5],
+        -:  105:     lwip_htons(ethhdr->type)));
+        -:  106:
+    #####:  107:  type = ethhdr->type;
+        -:  108:#if ETHARP_SUPPORT_VLAN
+        -:  109:  if (type == PP_HTONS(ETHTYPE_VLAN)) {
+        -:  110:    struct eth_vlan_hdr *vlan = (struct eth_vlan_hdr*)(((char*)ethhdr) + SIZEOF_ETH_HDR);
+        -:  111:    if (p->len <= SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) {
+        -:  112:      /* a packet with only an ethernet/vlan header (or less) is not valid for us */
+        -:  113:      ETHARP_STATS_INC(etharp.proterr);
+        -:  114:      ETHARP_STATS_INC(etharp.drop);
+        -:  115:      MIB2_STATS_NETIF_INC(netif, ifinerrors);
+        -:  116:      goto free_and_return;
+        -:  117:    }
+        -:  118:#if defined(LWIP_HOOK_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) /* if not, allow all VLANs */
+        -:  119:#ifdef LWIP_HOOK_VLAN_CHECK
+        -:  120:    if (!LWIP_HOOK_VLAN_CHECK(netif, ethhdr, vlan)) {
+        -:  121:#elif defined(ETHARP_VLAN_CHECK_FN)
+        -:  122:    if (!ETHARP_VLAN_CHECK_FN(ethhdr, vlan)) {
+        -:  123:#elif defined(ETHARP_VLAN_CHECK)
+        -:  124:    if (VLAN_ID(vlan) != ETHARP_VLAN_CHECK) {
+        -:  125:#endif
+        -:  126:      /* silently ignore this packet: not for our VLAN */
+        -:  127:      pbuf_free(p);
+        -:  128:      return ERR_OK;
+        -:  129:    }
+        -:  130:#endif /* defined(LWIP_HOOK_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) */
+        -:  131:    type = vlan->tpid;
+        -:  132:    ip_hdr_offset = SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR;
+        -:  133:  }
+        -:  134:#endif /* ETHARP_SUPPORT_VLAN */
+        -:  135:
+        -:  136:#if LWIP_ARP_FILTER_NETIF
+        -:  137:  netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, lwip_htons(type));
+        -:  138:#endif /* LWIP_ARP_FILTER_NETIF*/
+        -:  139:
+    #####:  140:  if (ethhdr->dest.addr[0] & 1) {
+        -:  141:    /* this might be a multicast or broadcast packet */
+    #####:  142:    if (ethhdr->dest.addr[0] == LL_IP4_MULTICAST_ADDR_0) {
+        -:  143:#if LWIP_IPV4
+    #####:  144:      if ((ethhdr->dest.addr[1] == LL_IP4_MULTICAST_ADDR_1) &&
+    #####:  145:          (ethhdr->dest.addr[2] == LL_IP4_MULTICAST_ADDR_2)) {
+        -:  146:        /* mark the pbuf as link-layer multicast */
+    #####:  147:        p->flags |= PBUF_FLAG_LLMCAST;
+        -:  148:      }
+        -:  149:#endif /* LWIP_IPV4 */
+        -:  150:    }
+        -:  151:#if LWIP_IPV6
+    #####:  152:    else if ((ethhdr->dest.addr[0] == LL_IP6_MULTICAST_ADDR_0) &&
+    #####:  153:             (ethhdr->dest.addr[1] == LL_IP6_MULTICAST_ADDR_1)) {
+        -:  154:        /* mark the pbuf as link-layer multicast */
+    #####:  155:        p->flags |= PBUF_FLAG_LLMCAST;
+        -:  156:    }
+        -:  157:#endif /* LWIP_IPV6 */
+    #####:  158:    else if (eth_addr_cmp(&ethhdr->dest, &ethbroadcast)) {
+        -:  159:      /* mark the pbuf as link-layer broadcast */
+    #####:  160:      p->flags |= PBUF_FLAG_LLBCAST;
+        -:  161:    }
+        -:  162:  }
+        -:  163:
+    #####:  164:  switch (type) {
+        -:  165:#if LWIP_IPV4 && LWIP_ARP
+        -:  166:    /* IP packet? */
+    #####:  167:    case PP_HTONS(ETHTYPE_IP):
+    #####:  168:      if (!(netif->flags & NETIF_FLAG_ETHARP)) {
+    #####:  169:        goto free_and_return;
+        -:  170:      }
+        -:  171:      /* skip Ethernet header */
+    #####:  172:      if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+        -:  173:        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+        -:  174:          ("ethernet_input: IPv4 packet dropped, too short (%"S16_F"/%"S16_F")\n",
+        -:  175:          p->tot_len, ip_hdr_offset));
+        -:  176:        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
+    #####:  177:        goto free_and_return;
+        -:  178:      } else {
+        -:  179:        /* pass to IP layer */
+    #####:  180:        ip4_input(p, netif);
+        -:  181:      }
+    #####:  182:      break;
+        -:  183:
+    #####:  184:    case PP_HTONS(ETHTYPE_ARP):
+    #####:  185:      if (!(netif->flags & NETIF_FLAG_ETHARP)) {
+    #####:  186:        goto free_and_return;
+        -:  187:      }
+        -:  188:      /* skip Ethernet header */
+    #####:  189:      if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+        -:  190:        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+        -:  191:          ("ethernet_input: ARP response packet dropped, too short (%"S16_F"/%"S16_F")\n",
+        -:  192:          p->tot_len, ip_hdr_offset));
+        -:  193:        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("Can't move over header in packet"));
+        -:  194:        ETHARP_STATS_INC(etharp.lenerr);
+        -:  195:        ETHARP_STATS_INC(etharp.drop);
+    #####:  196:        goto free_and_return;
+        -:  197:      } else {
+        -:  198:        /* pass p to ARP module */
+    #####:  199:        etharp_input(p, netif);
+        -:  200:      }
+    #####:  201:      break;
+        -:  202:#endif /* LWIP_IPV4 && LWIP_ARP */
+        -:  203:#if PPPOE_SUPPORT
+        -:  204:    case PP_HTONS(ETHTYPE_PPPOEDISC): /* PPP Over Ethernet Discovery Stage */
+        -:  205:      pppoe_disc_input(netif, p);
+        -:  206:      break;
+        -:  207:
+        -:  208:    case PP_HTONS(ETHTYPE_PPPOE): /* PPP Over Ethernet Session Stage */
+        -:  209:      pppoe_data_input(netif, p);
+        -:  210:      break;
+        -:  211:#endif /* PPPOE_SUPPORT */
+        -:  212:
+        -:  213:#if LWIP_IPV6
+    #####:  214:    case PP_HTONS(ETHTYPE_IPV6): /* IPv6 */
+        -:  215:      /* skip Ethernet header */
+    #####:  216:      if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+        -:  217:        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
+        -:  218:          ("ethernet_input: IPv6 packet dropped, too short (%"S16_F"/%"S16_F")\n",
+        -:  219:          p->tot_len, ip_hdr_offset));
+    #####:  220:        goto free_and_return;
+        -:  221:      } else {
+        -:  222:        /* pass to IPv6 layer */
+    #####:  223:        ip6_input(p, netif);
+        -:  224:      }
+    #####:  225:      break;
+        -:  226:#endif /* LWIP_IPV6 */
+        -:  227:
+    #####:  228:    default:
+        -:  229:#ifdef LWIP_HOOK_UNKNOWN_ETH_PROTOCOL
+        -:  230:      if(LWIP_HOOK_UNKNOWN_ETH_PROTOCOL(p, netif) == ERR_OK) {
+        -:  231:        break;
+        -:  232:      }
+        -:  233:#endif
+        -:  234:      ETHARP_STATS_INC(etharp.proterr);
+        -:  235:      ETHARP_STATS_INC(etharp.drop);
+        -:  236:      MIB2_STATS_NETIF_INC(netif, ifinunknownprotos);
+    #####:  237:      goto free_and_return;
+        -:  238:  }
+        -:  239:
+        -:  240:  /* This means the pbuf is freed or consumed,
+        -:  241:     so the caller doesn't have to free it again */
+    #####:  242:  return ERR_OK;
+        -:  243:
+    #####:  244:free_and_return:
+    #####:  245:  pbuf_free(p);
+    #####:  246:  return ERR_OK;
+        -:  247:}
+        -:  248:
+        -:  249:/**
+        -:  250: * @ingroup ethernet
+        -:  251: * Send an ethernet packet on the network using netif->linkoutput().
+        -:  252: * The ethernet header is filled in before sending.
+        -:  253: *
+        -:  254: * @see LWIP_HOOK_VLAN_SET
+        -:  255: *
+        -:  256: * @param netif the lwIP network interface on which to send the packet
+        -:  257: * @param p the packet to send. pbuf layer must be @ref PBUF_LINK.
+        -:  258: * @param src the source MAC address to be copied into the ethernet header
+        -:  259: * @param dst the destination MAC address to be copied into the ethernet header
+        -:  260: * @param eth_type ethernet type (@ref eth_type)
+        -:  261: * @return ERR_OK if the packet was sent, any other err_t on failure
+        -:  262: */
+        -:  263:err_t
+    #####:  264:ethernet_output(struct netif* netif, struct pbuf* p,
+        -:  265:                const struct eth_addr* src, const struct eth_addr* dst,
+        -:  266:                u16_t eth_type)
+        -:  267:{
+        -:  268:  struct eth_hdr* ethhdr;
+    #####:  269:  u16_t eth_type_be = lwip_htons(eth_type);
+        -:  270:
+        -:  271:#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+        -:  272:  s32_t vlan_prio_vid = LWIP_HOOK_VLAN_SET(netif, p, src, dst, eth_type);
+        -:  273:  if (vlan_prio_vid >= 0) {
+        -:  274:    struct eth_vlan_hdr* vlanhdr;
+        -:  275:
+        -:  276:    LWIP_ASSERT("prio_vid must be <= 0xFFFF", vlan_prio_vid <= 0xFFFF);
+        -:  277:
+        -:  278:    if (pbuf_header(p, SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR) != 0) {
+        -:  279:      goto pbuf_header_failed;
+        -:  280:    }
+        -:  281:    vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)p->payload) + SIZEOF_ETH_HDR);
+        -:  282:    vlanhdr->tpid     = eth_type_be;
+        -:  283:    vlanhdr->prio_vid = lwip_htons((u16_t)vlan_prio_vid);
+        -:  284:
+        -:  285:    eth_type_be = PP_HTONS(ETHTYPE_VLAN);
+        -:  286:  } else
+        -:  287:#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+        -:  288:  {
+    #####:  289:    if (pbuf_header(p, SIZEOF_ETH_HDR) != 0) {
+    #####:  290:      goto pbuf_header_failed;
+        -:  291:    }
+        -:  292:  }
+        -:  293:
+    #####:  294:  ethhdr = (struct eth_hdr*)p->payload;
+    #####:  295:  ethhdr->type = eth_type_be;
+    #####:  296:  ETHADDR32_COPY(&ethhdr->dest, dst);
+    #####:  297:  ETHADDR16_COPY(&ethhdr->src,  src);
+        -:  298:
+    #####:  299:  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethernet_output!",
+        -:  300:    (netif->hwaddr_len == ETH_HWADDR_LEN));
+        -:  301:  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
+        -:  302:    ("ethernet_output: sending packet %p\n", (void *)p));
+        -:  303:
+        -:  304:  /* send the packet */
+    #####:  305:  return netif->linkoutput(netif, p);
+        -:  306:
+    #####:  307:pbuf_header_failed:
+        -:  308:  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
+        -:  309:    ("ethernet_output: could not allocate room for header.\n"));
+        -:  310:  LINK_STATS_INC(link.lenerr);
+    #####:  311:  return ERR_BUF;
+        -:  312:}
+        -:  313:
+        -:  314:#endif /* LWIP_ARP || LWIP_ETHERNET */

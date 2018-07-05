@@ -66,16 +66,6 @@ uint8_t decode_uri(char* uri, char** host, uint16_t* port)
     return r;
 }
 
-void lwm2m_network_force_interface(lwm2m_context_t * contextP, void* interface)
-{
-    network_t* network = (network_t*)contextP->userData;
-    connection_t * connP = (connection_t*)network->connection_list;
-    while (connP != NULL) {
-        connP->addr.net_if_out = interface;
-        connP = (connection_t*)connP->next;
-    }
-}
-
 bool lwm2m_session_is_equal(void * session1,
                             void * session2,
                             void * userData)
