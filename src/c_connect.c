@@ -4,6 +4,7 @@
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
 
+#include <stdlib.h>
 #include <sys/time.h>
 
 

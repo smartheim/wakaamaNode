@@ -204,9 +204,11 @@ bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutIn
         addr_t t;
         t.addr = addr;
         connection_t * connection = internal_connection_find(network, t);
+        #ifdef LWM2M_SERVER_MODE
         if (connection == NULL && network->type == NET_SERVER_PROCESS) {
             connection= internal_create_server_connection(network, t);
         }
+        #endif
         if (!connection) continue;
         connection->sock = &network->socket_handle[c];
         connection->addr = t;

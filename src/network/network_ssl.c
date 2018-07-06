@@ -139,6 +139,7 @@ int init_server_connection_ssl(connection_t* connection, network_t* network) {
                                   mbedtls_ssl_cookie_check,
                                   &network->cookies);
     mbedtls_ssl_set_timer_cb(&connection->ssl,connection,set_delay,get_delay);
+    mbedtls_ssl_conf_read_timeout(&connection->conf, 1500);
     if( ( ret = mbedtls_ssl_setup (&connection->ssl,&connection->conf ) ) != 0 ){
         network_log_error("mbedtls_ssl_config_defaults returned %d\r\n", ret);
     }
@@ -267,6 +268,7 @@ connection_t * internal_configure_ssl(connection_t * connection,
                              mbedtls_net_send, mbedtls_net_recv, NULL );
         mbedtls_ssl_set_timer_cb(&connection->ssl,connection,set_delay,get_delay);
         mbedtls_ssl_setup (&connection->ssl,&connection->conf );
+        mbedtls_ssl_conf_read_timeout(&connection->conf, 1500);
 
         if( ( ret = mbedtls_ssl_handshake( &connection->ssl ) ) != 0 ) {
             if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE){
