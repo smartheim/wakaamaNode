@@ -15,8 +15,8 @@
  *    
  *******************************************************************************/
 
-#include "internals.h"
-
+#include "list.h"
+#include "platform.h"
 
 lwm2m_list_t * lwm2m_list_add(lwm2m_list_t * head,
                               lwm2m_list_t * node)

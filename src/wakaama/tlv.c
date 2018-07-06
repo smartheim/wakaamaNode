@@ -17,12 +17,17 @@
  *    
  *******************************************************************************/
 
-#include "internals.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
 #include <float.h>
+
+#include "internals.h"
+#include "utils.h"
+#include "tlv.h"
+#include "platform.h"
+#include "debug.h"
 
 #ifndef LWM2M_BIG_ENDIAN
 #ifndef LWM2M_LITTLE_ENDIAN

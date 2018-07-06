@@ -50,15 +50,25 @@
  David Navarro <david.navarro@intel.com>
 
 */
-#include "internals.h"
 
-#ifdef LWM2M_CLIENT_MODE
 
 
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+#include "context.h"
+#include "platform.h"
+#include "registration.h"
+#include "lwm2m_client.h"
+#include "errorcodes.h"
+#include "communication.h"
+#include "debug.h"
+#include "internals.h"
+#include "discover.h"
+#include "utils.h"
+
+#ifdef LWM2M_CLIENT_MODE
 
 uint8_t object_checkReadable(lwm2m_context_t * contextP,
                              lwm2m_uri_t * uriP,

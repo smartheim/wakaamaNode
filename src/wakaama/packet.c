@@ -84,14 +84,21 @@ Contains code snippets which are:
 
 */
 
-
+#include "packet.h"
+#include "context.h"
 #include "internals.h"
+#include "debug.h"
+#include "errorcodes.h"
+#include "utils.h"
+#include "registration.h"
+#include "platform.h"
+#include "communication.h"
+#include "lwm2m_client.h"
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <stdio.h>
-
 
 static void handle_reset(lwm2m_context_t * contextP,
                          void * fromSessionH,

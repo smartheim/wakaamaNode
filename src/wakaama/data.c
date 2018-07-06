@@ -17,8 +17,23 @@
 *
 *******************************************************************************/
 
-#include "internals.h"
 #include <float.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <stdint.h>
+#include <stddef.h>
+#include <stdbool.h>
+
+#include "data.h"
+#include "internals.h"
+#include "utils.h"
+#include "tlv.h"
+#include "json.h"
+#include "discover.h"
+#include "platform.h"
+#include "list.h"
+#include "debug.h"
 
 #define LOG_DATA(...) {}
 #define LOG_DATA_ARG(...) {}

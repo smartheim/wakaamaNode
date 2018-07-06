@@ -54,11 +54,20 @@
 
 */
 
-#include "internals.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "internals.h"
+#include "registration.h"
+#include "packet.h"
+#include "platform.h"
+#include "debug.h"
+#include "context.h"
+#include "errorcodes.h"
+#include "utils.h"
+#include "communication.h"
+#include "lwm2m_client.h"
 
 #define MAX_LOCATION_LENGTH 10      // strlen("/rd/65534") + 1
 

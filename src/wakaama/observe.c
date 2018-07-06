@@ -47,9 +47,19 @@
 
 */
 
-#include "internals.h"
 #include <stdio.h>
 
+#include "internals.h"
+#include "registration.h"
+#include "packet.h"
+#include "platform.h"
+#include "debug.h"
+#include "context.h"
+#include "errorcodes.h"
+#include "utils.h"
+#include "communication.h"
+#include "lwm2m_client.h"
+#include "string.h"
 
 #ifdef LWM2M_CLIENT_MODE
 static lwm2m_observed_t * prv_findObserved(lwm2m_context_t * contextP,

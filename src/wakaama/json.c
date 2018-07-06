@@ -16,12 +16,17 @@
  *******************************************************************************/
 
 
-#include "internals.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
 
+#include "json.h"
+#include "internals.h"
+#include "platform.h"
+#include "debug.h"
+#include "utils.h"
+#include "context.h"
 
 #ifdef LWM2M_SUPPORT_JSON
 

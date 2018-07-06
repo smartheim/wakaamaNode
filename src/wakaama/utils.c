@@ -46,12 +46,17 @@
 
 */
 
-#include "internals.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <float.h>
 
+#include "context.h"
+#include "platform.h"
+#include "registration.h"
+#include "lwm2m_client.h"
+#include "errorcodes.h"
+#include "communication.h"
 
 int utils_textToInt(uint8_t * buffer,
                     int length,

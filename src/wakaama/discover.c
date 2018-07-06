@@ -15,8 +15,13 @@
 *
 *******************************************************************************/
 
-
+#include "discover.h"
 #include "internals.h"
+#include "platform.h"
+#include "debug.h"
+#include "utils.h"
+#include "context.h"
+#include "string.h"
 
 #define PRV_LINK_BUFFER_SIZE  1024
 
