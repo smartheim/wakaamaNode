@@ -166,7 +166,7 @@ make the process sleep until udp activity or the next due time:
 
 ```cpp
 void loop() {
-    struct timeval time_to_next_call{20,0};
+    struct timeval time_to_next_call{0,0};
 
     int result = context.process(&time_to_next_call);
     if (result == COAP_505_NO_NETWORK_CONNECTION) {
@@ -183,6 +183,9 @@ void loop() {
     
     // You may go into low power mode on an µC or use context.block_wait() on posix:
     context.block_wait(&next_event);
+    
+    // default block time is 20sec. Might be less
+    time_to_next_call = {20,0};
 }
 
 ```

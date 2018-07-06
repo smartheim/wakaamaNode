@@ -173,12 +173,12 @@ lwm2m_client_context_t context("testClient");
 // Posix and Lwip network support is implemented.
 lwm2m_client_init(&context);
 
+struct timeval tv = {0};
 while(1) {
    // Call the lwm2m state machine (lwm2m_process) periodically. 
    // tv will be used as output variable.
    // The library tells us about the next required call to lwm2m_process().
    // In this simple example we ignore this request.
-   struct timeval tv = {5,0};
    int result = lwm2m_process(CTX(context), &tv);
    // Error handling of `result`.
 }
@@ -231,12 +231,13 @@ To setup the library, you would follow the outlined schema of the following CPP 
 ```cpp
 LwM2MConnect context("testClient");
 
-struct timeval tv{5,0};
+struct timeval tv{0,0};
 while(1) {
    int result = context.process(&tv);
    #ifdef POSIX_NETWORK
    context.block_wait(tv);
    #endif
+   tv = {20,0}; // default block time is 20sec. Might be less
 }
 ```
 

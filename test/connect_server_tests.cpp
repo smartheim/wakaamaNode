@@ -124,13 +124,14 @@ void ConnectServerTests::testServerResRequest(std::mutex& mutex) {
     },this);
 
     int steps=0;
+    struct timeval next_event = {0,0};
     while (steps++ < 15*STEP_FACTOR) {
-        struct timeval next_event = {0,500*1000};
         {
             std::lock_guard<std::mutex> guard(mutex);
             lwm2m_process (CTX(client_context),&next_event);
         }
         lwm2m_block_wait(CTX(client_context),next_event);
+        next_event = {0,500*1000};
         if (!dm_received_json.empty ()) break;
     }
 
@@ -144,14 +145,15 @@ void ConnectServerTests::testDeregister(std::mutex& mutex) {
     // One network_step_blocking is necessary to send/receive the unregister request
     // All further steps make sure, the result does not change.
     int steps = 0;
+    struct timeval next_event = {0,0};
     while (steps++ < 10*STEP_FACTOR) {
         int result;
-        struct timeval next_event = {0,500*1000};
         {
             std::lock_guard<std::mutex> guard(mutex);
             result = lwm2m_process (CTX(client_context),&next_event);
         }
         lwm2m_block_wait(CTX(client_context),next_event);
+        next_event = {0,500*1000};
         if (result == COAP_503_SERVICE_UNAVAILABLE) {
             if (CTX(client_context)->state == STATE_BOOTSTRAP_REQUIRED)
                 break;
@@ -165,7 +167,6 @@ void ConnectServerTests::testDeregister(std::mutex& mutex) {
     lwm2m_remove_unregistered_servers(CTX(client_context));
     steps = 0;
     int result;
-    struct timeval next_event = {0,500*1000};
     {
         std::lock_guard<std::mutex> guard(mutex);
         result = lwm2m_process (CTX(client_context),&next_event);
@@ -185,14 +186,15 @@ void ConnectServerTests::testUpdateRegister(std::mutex& mutex) {
     // One network_step_blocking is necessary to send/receive the update request
     // All further steps make sure, the result does not change.
     int steps = 0;
+    struct timeval next_event = {0,0};
     while (1) {
         int result;
-        struct timeval next_event = {0,500*1000};
         {
             std::lock_guard<std::mutex> guard(mutex);
             result = lwm2m_process (CTX(client_context),&next_event);
         }
         lwm2m_block_wait(CTX(client_context),next_event);
+        next_event = {0,500*1000};
         if (result != COAP_NO_ERROR) {
             prv_print_error(result);
             print_state(CTX(client_context));
@@ -212,13 +214,14 @@ int ConnectServerTests::testHandshake(std::mutex& mutex, bool useDtls) {
     // step debugging if necessary
     int steps = 0;
     int result=COAP_NO_ERROR;
+    struct timeval next_event = {0,0};
     while (steps++ < 20*STEP_FACTOR) {
-        struct timeval next_event = {0,500*1000};
         {
             std::lock_guard<std::mutex> guard(mutex);
             result = lwm2m_process (CTX(client_context),&next_event);
         }
         lwm2m_block_wait(CTX(client_context),next_event);
+        next_event = {0,500*1000};
         if (result == COAP_NO_ERROR) {
             if (useDtls) {
                 network_t* network = static_cast<network_t*>(CTX(client_context)->userData);

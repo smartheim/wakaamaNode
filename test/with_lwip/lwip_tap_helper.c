@@ -226,8 +226,10 @@ int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
     fd_set fdset;
     int ret;
 
+    if (next_event.tv_sec==0 && next_event.tv_usec==0) return 0;
+
     network_t* network = (network_t*)contextP->userData;
-    if (network == NULL || network->connection_list == NULL)
+    if (network == NULL)
         return COAP_505_NO_NETWORK_CONNECTION;
     struct netif* netifP = network->socket_handle[0].net_if_out;
 

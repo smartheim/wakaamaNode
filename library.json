@@ -8,7 +8,7 @@
     },
     "homepage": "https://openhab-nodes.github.io/wakaamaNode",
     "license": "EPL-2.0",
-    "version": "1.0",
+    "version": "1.0.1",
     "authors": {
         "name": "David Gräff",
         "url": "https://openhab-nodes.github.io/wakaamaNode"

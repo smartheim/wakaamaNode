@@ -360,6 +360,8 @@ int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
     struct epoll_event rev;
     const int timeout = (int)next_event.tv_sec*1000+(int)next_event.tv_usec/1000;
 
+    if (!timeout) return 0;
+
     errno=0;
     int nfds = epoll_wait(network->epfd, &rev, 1, timeout);
 

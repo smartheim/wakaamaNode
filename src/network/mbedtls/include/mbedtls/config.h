@@ -55,7 +55,9 @@
  *
  * Comment to disable the use of assembly code.
  */
+#if defined(POSIX) || defined (__WIN32__)
 #define MBEDTLS_HAVE_ASM
+#endif
 
 /**
  * \def MBEDTLS_HAVE_SSE2
@@ -64,7 +66,9 @@
  *
  * Uncomment if the CPU supports SSE2 (IA-32 specific).
  */
-//#define MBEDTLS_HAVE_SSE2
+#if defined(POSIX) || defined (__WIN32__)
+#define MBEDTLS_HAVE_SSE2
+#endif
 
 /**
  * \def MBEDTLS_HAVE_TIME
@@ -75,7 +79,7 @@
  *
  * Comment if your system does not support time functions
  */
-//#define MBEDTLS_HAVE_TIME
+#define MBEDTLS_HAVE_TIME
 
 /**
  * \def MBEDTLS_HAVE_TIME_DATE
@@ -1519,7 +1523,7 @@
  *
  * This modules adds support for the AES-NI instructions on x86-64
  */
-#ifdef __unix__
+#if defined(POSIX) || defined (__WIN32__)
 #define MBEDTLS_AESNI_C
 #endif
 

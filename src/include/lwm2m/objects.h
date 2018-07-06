@@ -135,6 +135,8 @@ class Lwm2mObjectBase {
 public:
     lwm2m_object_t object{};
     VerifyWrite<ObjectInstance> verifyWrite;
+    // Requires 32bit platforms at least and we are wasting some memory on >32bit platforms.
+    // But we need to stay aligned for all following class members defined by child classes.
     struct alignas(alignof (uintptr_t)) Sizes {
         const uint16_t object;
         const uint16_t object_instance;

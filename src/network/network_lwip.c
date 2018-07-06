@@ -210,6 +210,9 @@ int mbedtls_net_recv( void *ctx, unsigned char *buf, size_t len ) {
     len = len > connection->p->tot_len ? connection->p->tot_len : len;
     memcpy(buf, connection->p->payload, len);
     connection_log_io(connection, (int)len, false);
+
+    // Consumed.
+    connection->p = NULL;
     
     return (int)len;
 }
