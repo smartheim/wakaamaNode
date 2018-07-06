@@ -139,16 +139,6 @@ void internal_closeSocket(network_t* network, unsigned socket_handle);
 void internal_network_read(lwm2m_context_t* contextP, void* dest, size_t len, connection_t* connection);
 void internal_network_close(network_t* network);
 
-/**
- * @brief Force the network stack to use the returned network interface.
- *
- * This is useful for testing purposes. The routing table will be ignored
- * and the returned interface will be used for outgoing traffic.
- *
- * @param network The lwm2m network.
- */
-void* internal_assign_network_interface(network_t* network);
-
 bool ip_equal(addr_t a, addr_t b);
 
 #ifdef LWM2M_NETWORK_LOGGING
@@ -177,6 +167,10 @@ void internal_check_timer(lwm2m_context_t *contextP, struct timeval* next_event)
 connection_t * internal_configure_ssl(connection_t * connection, network_t *network, security_instance_t *secInst);
 void internal_close_connection_ssl(network_t* network, connection_t * t);
 void internal_network_close_ssl(network_t* network);
+
+#ifdef LWM2M_SERVER_MODE
+connection_t* internal_create_server_connection(network_t* network, addr_t addr);
+#endif
 
 #ifdef __cplusplus
 }

@@ -76,7 +76,7 @@ bool lwm2m_session_is_equal(void * session1,
 
 #ifdef LWM2M_SERVER_MODE
 
-static inline connection_t* internal_create_server_connection(network_t* network, addr_t addr) {
+connection_t* internal_create_server_connection(network_t* network, addr_t addr) {
     connection_t* connection = (connection_t *)lwm2m_malloc(sizeof(connection_t));
     if (connection == NULL)
     {
@@ -101,7 +101,7 @@ static inline connection_t* internal_create_server_connection(network_t* network
     return connection;
 }
 #else
-static inline connection_t* internal_create_server_connection(network_t* network, addr_t addr) {
+connection_t* internal_create_server_connection(network_t* network, addr_t addr) {
     (void)network;
     (void)addr;
     return NULL;
@@ -115,10 +115,6 @@ connection_t * internal_connection_find(network_t * network, addr_t addr) {
             return connP;
         connP = (connection_t*)connP->next;
     }
-    if (connP == NULL && network->type == NET_SERVER_PROCESS) {
-        return internal_create_server_connection(network, addr);
-    }
-
     return NULL;
 }
 

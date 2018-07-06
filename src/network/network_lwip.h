@@ -23,7 +23,9 @@ typedef struct udp_pcb udp_pcb_t;
 typedef struct _addr_t_ {
     ip_addr_t     addr;
     uint16_t      port;
-    void* net_if_out;
 } addr_t;
 
-typedef udp_pcb_t * sock_t;
+typedef struct _sock_t_ {
+    udp_pcb_t * udp;
+    void* net_if_out;
+} sock_t;

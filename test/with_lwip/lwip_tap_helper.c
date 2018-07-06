@@ -24,6 +24,7 @@ typedef int make_iso_compilers_happy; // if not LWIP
 
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <linux/if.h>
 #include <linux/if_tun.h>
@@ -64,11 +65,14 @@ static void tapif_input(struct netif *netif)
 
     /* Obtain the size of the packet and put it into the "len"
        variable. */
+    errno = 0;
     len = read((intptr_t)netif->state, buf, sizeof(buf));
     if (len == (u16_t)-1) {
+        if(errno==EAGAIN) return;
       perror("read returned -1");
       exit(1);
     }
+    assert(len);
 
     /* We allocate a pbuf chain of pbufs from the pool. */
     p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
@@ -85,7 +89,6 @@ static void tapif_input(struct netif *netif)
     return;
   }
 
-  fprintf(stderr, "read lwip %i\n", len);
   if (netif->input(p, netif) != ERR_OK) {
     LWIP_DEBUGF(NETIF_DEBUG, ("tapif_input: netif input error\n"));
     pbuf_free(p);
@@ -127,6 +130,10 @@ err_t tapif_real_init(int netIfNo)
     if ((intptr_t)netif->state == -1) {
       perror("tapif_init: try running \"modprobe tun\" or rebuilding your kernel with CONFIG_TUN; cannot open "DEVTAP);
       exit(1);
+    }
+    if (fcntl((int)(intptr_t)netif->state, F_SETFL, O_NONBLOCK)==-1){
+        perror("tapif_init: Could not set tap device to non-blocking");
+        exit(1);
     }
 
     struct ifreq ifr;
@@ -191,32 +198,23 @@ bool lwip_network_init(void)
       netif_set_up(&netifs[tapDevices]);
       netif_create_ip6_linklocal_address(&netifs[tapDevices], 1);
   }
+
   return true;
   //netif_set_default(&netifs[tapDevices]);
 }
 
-void* lwip_network_get_interface(int id)
-{
-     struct netif* n = netif_list;
-     for (int c = 1;c>=0 && n;--c)
-     {
-         if (c==id)
-             return n;
-         n = n->next;
-     }
-     return NULL;
-}
-
 bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
     network_t* network = (network_t*)contextP->userData;
-    connection_t* c = network->connection_list;
-    while (c) {
-        fprintf(stderr,"tapif for server: %i\n",network->type);
-        struct netif* netifP = c->addr.net_if_out;
-        if (netifP)
-            tapif_input(netifP);
-        c=c->next;
+
+    // use the first lwip network interface for the client
+    if (network->type == NET_CLIENT_PROCESS){
+        network->socket_handle[0].net_if_out = &netifs[0];
+    }else{
+        network->socket_handle[0].net_if_out = &netifs[1];
     }
+    struct netif* netifP = network->socket_handle[0].net_if_out;
+    assert(netifP);
+    tapif_input(netifP);
 #if NO_SYS==1
     sys_check_timeouts();
 #endif
@@ -231,7 +229,7 @@ int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
     network_t* network = (network_t*)contextP->userData;
     if (network == NULL || network->connection_list == NULL)
         return COAP_505_NO_NETWORK_CONNECTION;
-    struct netif* netifP = network->connection_list->addr.net_if_out;
+    struct netif* netifP = network->socket_handle[0].net_if_out;
 
     FD_ZERO(&fdset);
     FD_SET((intptr_t)netifP->state, &fdset);

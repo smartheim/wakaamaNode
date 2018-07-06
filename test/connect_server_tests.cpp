@@ -30,9 +30,11 @@
 #ifdef TAP_SERVER_ADDR
 #define LWM2M_SERVER_ADDR "coap://" TAP_SERVER_ADDR
 #define LWM2M_SERVER_ADDR_SEC "coaps://" TAP_SERVER_ADDR
+#define STEP_FACTOR 10
 #else
 #define LWM2M_SERVER_ADDR "coap://127.0.0.1"
 #define LWM2M_SERVER_ADDR_SEC "coaps://127.0.0.1"
+#define STEP_FACTOR 1
 #endif
 
 #include <stdint.h>
@@ -46,20 +48,7 @@
 
 extern "C" {
 #include "internals.h"
-
-#ifdef TAP_SERVER_ADDR //lwip
-void* internal_assign_network_interface(network_t* network) {
-    // use the first lwip network interface for the client
-    if (network->type == NET_CLIENT_PROCESS)
-        return lwip_network_get_interface(0);
-    else
-        return lwip_network_get_interface(1);
 }
-#endif
-
-}
-
-
 
 class ConnectServerTests : public testing::Test {
 public:
@@ -135,7 +124,7 @@ void ConnectServerTests::testServerResRequest(std::mutex& mutex) {
     },this);
 
     int steps=0;
-    while (steps++ < 15) {
+    while (steps++ < 15*STEP_FACTOR) {
         struct timeval next_event = {0,500*1000};
         {
             std::lock_guard<std::mutex> guard(mutex);
@@ -155,7 +144,7 @@ void ConnectServerTests::testDeregister(std::mutex& mutex) {
     // One network_step_blocking is necessary to send/receive the unregister request
     // All further steps make sure, the result does not change.
     int steps = 0;
-    while (steps++ < 10) {
+    while (steps++ < 10*STEP_FACTOR) {
         int result;
         struct timeval next_event = {0,500*1000};
         {
@@ -209,7 +198,7 @@ void ConnectServerTests::testUpdateRegister(std::mutex& mutex) {
             print_state(CTX(client_context));
             FAIL() << "Unexpected state";
             break;
-        } else if (++steps>3) {
+        } else if (++steps>3*STEP_FACTOR) {
             break;
         }
     }
@@ -223,7 +212,7 @@ int ConnectServerTests::testHandshake(std::mutex& mutex, bool useDtls) {
     // step debugging if necessary
     int steps = 0;
     int result=COAP_NO_ERROR;
-    while (steps++ < 20) {
+    while (steps++ < 20*STEP_FACTOR) {
         struct timeval next_event = {0,500*1000};
         {
             std::lock_guard<std::mutex> guard(mutex);
@@ -290,6 +279,6 @@ TEST_F(ConnectServerTests, ConnectServer) {
 
 #if defined(LWM2M_WITH_DTLS) && defined(LWM2M_SERVER_MODE)
 TEST_F(ConnectServerTests, ConnectServerDtlsPSK) {
-    //runTest(true);
+    runTest(true);
 }
 #endif

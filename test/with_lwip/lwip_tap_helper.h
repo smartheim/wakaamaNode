@@ -26,8 +26,6 @@ bool lwip_network_init(void);
 // Frees all network ressources, that were acquired in lwip_network_init()
 void lwip_network_close(void);
 
-void* lwip_network_get_interface(int id);
-
 #ifdef __cplusplus
 }
 #endif
