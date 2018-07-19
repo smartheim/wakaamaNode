@@ -289,10 +289,7 @@ protected:
     virtual void TearDown() {
         lwm2m_object_instance_remove(CTX(client_context), test_object, 10);
         lwm2m_client_close(&client_context);
-        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
-                      [](MemoryObserver::MemAreas::value_type it){
-            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
-        });
+        MEMEVAL(FAIL());
     }
 
     virtual void SetUp() {
@@ -342,10 +339,7 @@ protected:
     virtual void TearDown() {
         object.removeInstance(CTX(client_context), 10);
         lwm2m_client_close(&client_context);
-        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
-                      [](MemoryObserver::MemAreas::value_type it){
-            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
-        });
+        MEMEVAL(FAIL());
     }
 
     virtual void SetUp() {

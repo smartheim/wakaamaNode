@@ -17,7 +17,7 @@
 // Implement lwm2m_get_last_error() and lwm2m_reset_last_error().
 #define LWM2M_DEVICE_INFO_WITH_ERRCODE
 
-// Implement lwm2m_gettime() and update the fields  **timezone** and **time_offset**
+// Implement lwm2m_get_local_time() and update the fields  **timezone** and **time_offset**
 // of the device information object.
 #define LWM2M_DEVICE_INFO_WITH_TIME
 

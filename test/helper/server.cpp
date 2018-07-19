@@ -107,24 +107,22 @@ void Lwm2mServer::init(bool useDtls) {
 
 void Lwm2mServer::loop() {
     while (server_running) {
-        struct timeval next_event = {0,50*1000};
         {
             std::lock_guard<std::mutex> guard(*mutex);
-            lwm2m_process (server_context,&next_event);
+            lwm2m_process (server_context);
         }
-        lwm2m_block_wait(server_context,next_event);
+        lwm2m_block_wait(server_context, 50);
     }
     int last10 = 10;
     while (last10--) {
-        struct timeval next_event = {0,5000};
         {
             std::lock_guard<std::mutex> guard(*mutex);
-            lwm2m_process (server_context,&next_event);
+            lwm2m_process (server_context);
             if (!server_context->serverList ||
                     server_context->serverList->status==STATE_DEREGISTERED)
                 break;
         }
-        lwm2m_block_wait(server_context,next_event);
+        lwm2m_block_wait(server_context, 5);
     }
 }
 

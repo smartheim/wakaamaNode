@@ -20,7 +20,7 @@
 
 #define CODE_TO_STRING(X)   case X : return #X
 
-static const char* prv_status_to_string(int status)
+static const char* prv_errorcode_to_string(lwm2m_error_codes_t status)
 {
     switch(status)
     {
@@ -42,16 +42,10 @@ static const char* prv_status_to_string(int status)
     }
 }
 
-void print_status(int status)
-{
-    fprintf(stderr, "%d.%02d (%s)",
-            (status&0xE0)>>5, status&0x1F, prv_status_to_string(status));
-}
-
-void prv_print_error(int status)
+void prv_print_error(lwm2m_context_t *context)
 {
     fprintf(stderr, "Error status: ");
-    print_status(status);
+    prv_errorcode_to_string(context->lastStepError);
     fprintf(stderr, "\r\n");
 }
 
@@ -73,9 +67,8 @@ char * prv_dump_binding(lwm2m_binding_t binding)
         return "UDP plus SMS";
     case BINDING_UQS:
         return "UDP queue mode plus SMS";
-    default:
-        return "";
     }
+    return "";
 }
 
 void prv_dump_client(lwm2m_client_t * targetP)
@@ -111,6 +104,7 @@ void prv_dump_client(lwm2m_client_t * targetP)
 void prv_output_clients(char * buffer,
                                void * user_data)
 {
+    (void)buffer;
     lwm2m_context_t * lwm2mH = (lwm2m_context_t *) user_data;
     lwm2m_client_t * targetP;
 
@@ -132,12 +126,17 @@ void prv_output_clients(char * buffer,
 
 void prv_result_callback(uint16_t clientID,
                                 lwm2m_uri_t * uriP,
-                                int status,
+                                lwm2m_error_codes_t status,
                                 lwm2m_media_type_t format,
                                 uint8_t * data,
                                 int dataLength,
                                 void * userData)
 {
+    (void)format;
+    (void)data;
+    (void)dataLength;
+    (void)userData;
+
     fprintf(stdout, "\r\nClient #%d /%d", clientID, uriP->objectId);
     if (LWM2M_URI_IS_SET_INSTANCE(uriP))
         fprintf(stdout, "/%d", uriP->instanceId);
@@ -146,7 +145,7 @@ void prv_result_callback(uint16_t clientID,
     if (LWM2M_URI_IS_SET_RESOURCE(uriP))
             fprintf(stdout, "/%d", uriP->resourceId);
     fprintf(stdout, " : ");
-    print_status(status);
+    prv_errorcode_to_string(status);
     fprintf(stdout, "\r\n");
 
     //output_data(stdout, format, data, dataLength, 1);
@@ -163,6 +162,10 @@ void prv_notify_callback(uint16_t clientID,
                                 int dataLength,
                                 void * userData)
 {
+    (void)format;
+    (void)data;
+    (void)dataLength;
+    (void)userData;
     fprintf(stdout, "\r\nNotify from client #%d /%d", clientID, uriP->objectId);
     if (LWM2M_URI_IS_SET_INSTANCE(uriP))
         fprintf(stdout, "/%d", uriP->instanceId);

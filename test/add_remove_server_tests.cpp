@@ -18,7 +18,6 @@
 #include "lwm2m/debug.h"
 #include "test_debug.h"
 #include "lwm2m/network.h"
-#include "../src/internal.h"
 #include "with_lwip/lwip_tap_helper.h"
 #include "memory.h"
 
@@ -51,10 +50,7 @@ public:
 
         lwip_network_close();
 
-        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
-                      [](MemoryObserver::MemAreas::value_type it){
-            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
-        });
+        MEMEVAL(FAIL());
     }
 
     virtual void SetUp() {
@@ -84,13 +80,10 @@ TEST_F(AddRemoveServerTests, AddRemoveServer) {
     ASSERT_STREQ(lwm2m_get_server_uri(CTX(client_context), 123), LWM2M_SERVER_ADDR);
 
     time_t timeout;
-    int result = lwm2m_step(CTX(client_context), &timeout);
-    ASSERT_EQ(COAP_NO_ERROR, result);
+    lwm2m_step(CTX(client_context), &timeout);
     ASSERT_EQ(STATE_REGISTER_REQUIRED2, CTX(client_context)->state);
 
-    result = lwm2m_step(CTX(client_context), &timeout);
-    ASSERT_EQ(COAP_NO_ERROR, result);
-
+    lwm2m_step(CTX(client_context), &timeout);
     ASSERT_EQ(STATE_REGISTERING, CTX(client_context)->state);
 
     lwm2m_server_t * serverListEntry;
@@ -113,9 +106,8 @@ TEST_F(AddRemoveServerTests, AddRemoveServer) {
     ASSERT_TRUE(CTX(client_context)->serverList);
 
     ASSERT_EQ(CTX(client_context)->state, STATE_INITIAL);
-    result = lwm2m_step(CTX(client_context), &timeout);
-    ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
-
+    lwm2m_step(CTX(client_context), &timeout);
     ASSERT_EQ(CTX(client_context)->state, STATE_BOOTSTRAP_REQUIRED);
+
     ASSERT_FALSE(CTX(client_context)->serverList);
 }

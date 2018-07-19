@@ -92,7 +92,7 @@ endfunction(prepare_target)
 #####################################################################
 # Use the Lwip network stack on top of linux tapif or windows pcapif
 # instead of the posix sockets library directly
-project(TestsWithLwIP CXX C)
+project(TestsWithLwIP CXX)
 
 add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES}
     ${WAKAAMA_NODE_DIR_SOURCES} ${HELPER_FILES_LWIP} ${BACKWARD_ENABLE})
@@ -105,7 +105,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS}
 
 #####################################################################
 # Use POSIX sockets API for tests
-project(TestsWithPosix CXX C)
+project(TestsWithPosix CXX)
 
 add_executable(${PROJECT_NAME} ${TESTS_FILES} ${GTEST_FILES}
     ${WAKAAMA_NODE_DIR_SOURCES} ${HELPER_FILES} ${HELPER_FILES_LWIP} ${BACKWARD_ENABLE})

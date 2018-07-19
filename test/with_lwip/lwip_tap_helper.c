@@ -203,7 +203,7 @@ bool lwip_network_init(void)
   //netif_set_default(&netifs[tapDevices]);
 }
 
-bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
+bool lwm2m_network_process(lwm2m_context_t * contextP) {
     network_t* network = (network_t*)contextP->userData;
 
     // use the first lwip network interface for the client
@@ -218,14 +218,15 @@ bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_even
 #if NO_SYS==1
     sys_check_timeouts();
 #endif
-    internal_check_timer(contextP, next_event);
+    internal_check_timer(contextP);
     return true;
 }
 
-int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
+int lwm2m_block_wait(lwm2m_context_t * contextP, unsigned timeout_in_msec) {
     fd_set fdset;
     int ret;
 
+    struct timeval next_event = {0, timeout_in_msec*1000};
     if (next_event.tv_sec==0 && next_event.tv_usec==0) return 0;
 
     network_t* network = (network_t*)contextP->userData;

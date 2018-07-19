@@ -22,7 +22,7 @@ extern "C" {
 
 void print_status(int status);
 
-void prv_print_error(int status);
+void prv_print_error(lwm2m_context_t* context);
 
 char * prv_dump_binding(lwm2m_binding_t binding);
 
@@ -34,7 +34,7 @@ void prv_output_clients(char * buffer, void * user_data);
 // For lwm2m_dm_ methods.
 void prv_result_callback(uint16_t clientID,
                                 lwm2m_uri_t * uriP,
-                                int status,
+                                lwm2m_error_codes_t status,
                                 lwm2m_media_type_t format,
                                 uint8_t * data,
                                 int dataLength,

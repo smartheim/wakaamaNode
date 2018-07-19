@@ -20,7 +20,6 @@
 #include "test_debug.h"
 #include "server.h"
 #include "lwm2m/network.h"
-#include "../src/internal.h"
 #include "../src/network/network_common.h"
 #include "with_lwip/lwip_tap_helper.h"
 #include "memory.h"
@@ -70,10 +69,7 @@ public:
 
         lwip_network_close();
 
-        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
-                      [](MemoryObserver::MemAreas::value_type it){
-            FAIL() << it.second.c_str ();
-        });
+        MEMEVAL(FAIL());
     }
 
     virtual void SetUp() {
@@ -105,7 +101,7 @@ public:
     void testServerResRequest(std::mutex& mutex);
     void testDeregister(std::mutex& mutex);
     void testUpdateRegister(std::mutex& mutex);
-    int testHandshake(std::mutex& mutex, bool useDtls);
+    void testHandshake(std::mutex& mutex, bool useDtls);
 };
 
 void ConnectServerTests::testServerResRequest(std::mutex& mutex) {
@@ -124,14 +120,12 @@ void ConnectServerTests::testServerResRequest(std::mutex& mutex) {
     },this);
 
     int steps=0;
-    struct timeval next_event = {0,0};
     while (steps++ < 15*STEP_FACTOR) {
         {
             std::lock_guard<std::mutex> guard(mutex);
-            lwm2m_process (CTX(client_context),&next_event);
+            lwm2m_process (CTX(client_context));
         }
-        lwm2m_block_wait(CTX(client_context),next_event);
-        next_event = {0,500*1000};
+        lwm2m_block_wait(CTX(client_context),500);
         if (!dm_received_json.empty ()) break;
     }
 
@@ -145,34 +139,26 @@ void ConnectServerTests::testDeregister(std::mutex& mutex) {
     // One network_step_blocking is necessary to send/receive the unregister request
     // All further steps make sure, the result does not change.
     int steps = 0;
-    struct timeval next_event = {0,0};
     while (steps++ < 10*STEP_FACTOR) {
-        int result;
         {
             std::lock_guard<std::mutex> guard(mutex);
-            result = lwm2m_process (CTX(client_context),&next_event);
+            lwm2m_process (CTX(client_context));
         }
-        lwm2m_block_wait(CTX(client_context),next_event);
-        next_event = {0,500*1000};
-        if (result == COAP_503_SERVICE_UNAVAILABLE) {
-            if (CTX(client_context)->state == STATE_BOOTSTRAP_REQUIRED)
-                break;
+        lwm2m_block_wait(CTX(client_context),500);
+        if (lwm2m_state(CTX(client_context)) == STATE_BOOTSTRAP_REQUIRED) {
+            break;
         } else {
-            prv_print_error(result);
             print_state(CTX(client_context));
-            ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
         }
     }
 
     lwm2m_remove_unregistered_servers(CTX(client_context));
     steps = 0;
-    int result;
     {
         std::lock_guard<std::mutex> guard(mutex);
-        result = lwm2m_process (CTX(client_context),&next_event);
+        lwm2m_process (CTX(client_context));
     }
 
-    ASSERT_EQ(COAP_503_SERVICE_UNAVAILABLE, result);
     ASSERT_EQ(STATE_BOOTSTRAP_REQUIRED, CTX(client_context)->state);
 }
 
@@ -186,17 +172,14 @@ void ConnectServerTests::testUpdateRegister(std::mutex& mutex) {
     // One network_step_blocking is necessary to send/receive the update request
     // All further steps make sure, the result does not change.
     int steps = 0;
-    struct timeval next_event = {0,0};
     while (1) {
-        int result;
         {
             std::lock_guard<std::mutex> guard(mutex);
-            result = lwm2m_process (CTX(client_context),&next_event);
+            lwm2m_process (CTX(client_context));
         }
-        lwm2m_block_wait(CTX(client_context),next_event);
-        next_event = {0,500*1000};
-        if (result != COAP_NO_ERROR) {
-            prv_print_error(result);
+        lwm2m_block_wait(CTX(client_context),500);
+        if (CTX(client_context)->lastStepError != COAP_NO_ERROR) {
+            prv_print_error(CTX(client_context));
             print_state(CTX(client_context));
             FAIL() << "Unexpected state";
             break;
@@ -209,33 +192,31 @@ void ConnectServerTests::testUpdateRegister(std::mutex& mutex) {
     ASSERT_EQ(STATE_READY, CTX(client_context)->state);
 }
 
-int ConnectServerTests::testHandshake(std::mutex& mutex, bool useDtls) {
+void ConnectServerTests::testHandshake(std::mutex& mutex, bool useDtls) {
     // Client and server threads are doing network_step_blocking() in sequence for easier
     // step debugging if necessary
     int steps = 0;
-    int result=COAP_NO_ERROR;
-    struct timeval next_event = {0,0};
     while (steps++ < 20*STEP_FACTOR) {
         {
             std::lock_guard<std::mutex> guard(mutex);
-            result = lwm2m_process (CTX(client_context),&next_event);
+            lwm2m_process (CTX(client_context));
         }
-        lwm2m_block_wait(CTX(client_context),next_event);
-        next_event = {0,500*1000};
-        if (result == COAP_NO_ERROR) {
+        lwm2m_block_wait(CTX(client_context), 500);
+        if (CTX(client_context)->lastStepError == COAP_NO_ERROR) {
             if (useDtls) {
                 network_t* network = static_cast<network_t*>(CTX(client_context)->userData);
                 // Not in handshake and state is READY -> exit the loop
-                if (!network->inHandshake && CTX(client_context)->state == STATE_READY)
+                if (network->handshakeState==DTLS_NO_HANDSHAKE_IN_PROGRESS &&
+                        CTX(client_context)->state == STATE_READY)
                         break;
             } else if (CTX(client_context)->state == STATE_READY)
                     break;
         } else {
-            prv_print_error(result);
+            prv_print_error(CTX(client_context));
             print_state(CTX(client_context));
         }
     }
-    return result;
+    ASSERT_EQ(COAP_NO_ERROR, CTX(client_context)->lastStepError);
 }
 
 void ConnectServerTests::runTest(bool useDtls) {
@@ -261,10 +242,9 @@ void ConnectServerTests::runTest(bool useDtls) {
                            Lwm2mServer::PSK_LEN);
     }
 
-    int result = testHandshake(mutex, useDtls);
+    testHandshake(mutex, useDtls);
 
     // If everything went well, we have passed the DTLS handshake and coap/lwm2m handshake
-    ASSERT_EQ(COAP_NO_ERROR, result);
     ASSERT_EQ(STATE_READY, CTX(client_context)->state);
     ASSERT_STREQ(server->getConnectClientName ().c_str (), client_name);
 

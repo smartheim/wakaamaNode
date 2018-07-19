@@ -55,8 +55,13 @@ extern "C" {
         factory_reset = true;
     }
 
-    // Return dummy time and overwrite platform implementation (which is declared with __attribute__((weak)))
+    // Return dummy counter value and overwrite platform implementation (which is declared with __attribute__((weak)))
     int64_t lwm2m_gettime() {
+        return 10;
+    }
+
+    // Return dummy local time and overwrite platform implementation (which is declared with __attribute__((weak)))
+    int64_t lwm2m_get_local_time() {
         return 1498765432;
     }
 }
@@ -72,10 +77,7 @@ public:
  protected:
     virtual void TearDown() {
         lwm2m_client_close(&client_context);
-        std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(),
-                      [](MemoryObserver::MemAreas::value_type it){
-            FAIL() << "Entry @ " +std::to_string(it.first) + "\n" + it.second;
-        });
+        MEMEVAL(FAIL());
     }
 
     virtual void SetUp() {

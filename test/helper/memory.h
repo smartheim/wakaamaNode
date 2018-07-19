@@ -32,4 +32,10 @@ public:
     }
 };
 
+#define MEMEVAL(FF) \
+    std::for_each(memoryObserver.memAreas.begin (),memoryObserver.memAreas.end(), \
+                  [](MemoryObserver::MemAreas::value_type it){ \
+        FF << "Entry @ " +std::to_string(it.first) + "\n" + it.second; \
+    });
+
 extern MemoryObserver memoryObserver;
