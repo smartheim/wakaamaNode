@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <inttypes.h>
+#include <assert.h>
 
 #include "json.h"
 #include "internals.h"
@@ -96,7 +97,7 @@ typedef struct
 {
     uint16_t    ids[4];
     _type       type;
-    uint8_t *   value;
+    const uint8_t *   value;
     size_t      valueLen;
 } _record_t;
 
@@ -129,7 +130,7 @@ static int prv_isWhiteSpace(uint8_t sign)
     return 0;
 }
 
-static size_t prv_skipSpace(uint8_t * buffer,
+static size_t prv_skipSpace(const uint8_t * buffer,
                             size_t bufferLen)
 {
     size_t i;
@@ -144,7 +145,7 @@ static size_t prv_skipSpace(uint8_t * buffer,
     return i;
 }
 
-static int prv_split(uint8_t * buffer,
+static int prv_split(const uint8_t * buffer,
                      size_t bufferLen,
                      int * tokenStartP,
                      int * tokenLenP,
@@ -241,7 +242,7 @@ static int prv_split(uint8_t * buffer,
     return (int)index;
 }
 
-static int prv_countItems(uint8_t * buffer,
+static int prv_countItems(const uint8_t * buffer,
                           size_t bufferLen)
 {
     int count;
@@ -289,7 +290,7 @@ error:
     return -1;
 }
 
-static int prv_parseItem(uint8_t * buffer,
+static int prv_parseItem(const uint8_t * buffer,
                          size_t bufferLen,
                          _record_t * recordP)
 {
@@ -439,6 +440,7 @@ static int prv_parseItem(uint8_t * buffer,
         index += next + 1;
     } while (index < bufferLen);
 
+    assert(recordP->type!=_TYPE_UNSET);
     return 0;
 }
 
@@ -642,11 +644,13 @@ static int prv_convertRecord(lwm2m_uri_t * uriP,
         }
         for (i = 0 ; i <= resSegmentIndex ; i++)
         {
-            if (recordArray[index].ids[i] == LWM2M_MAX_ID) goto error;
+            if (recordArray[index].ids[i] == LWM2M_MAX_ID)
+                goto error;
         }
         if (resSegmentIndex < 2)
         {
-            if (recordArray[index].ids[resSegmentIndex + 2] != LWM2M_MAX_ID) goto error;
+            if (recordArray[index].ids[resSegmentIndex + 2] != LWM2M_MAX_ID)
+                goto error;
         }
 
         targetP = prv_findDataItem(rootP, count, recordArray[index].ids[0]);
@@ -670,7 +674,8 @@ static int prv_convertRecord(lwm2m_uri_t * uriP,
                 if (targetP == NULL)
                 {
                     targetP = prv_extendData(parentP);
-                    if (targetP == NULL) goto error;
+                    if (targetP == NULL)
+                        goto error;
                     targetP->id = recordArray[index].ids[i];
                     targetP->type = utils_depthToDatatype(level);
                 }
@@ -681,13 +686,15 @@ static int prv_convertRecord(lwm2m_uri_t * uriP,
             {
                 targetP->type = LWM2M_TYPE_MULTIPLE_RESOURCE;
                 targetP = prv_extendData(targetP);
-                if (targetP == NULL) goto error;
+                if (targetP == NULL)
+                    goto error;
                 targetP->id = recordArray[index].ids[resSegmentIndex + 1];
                 targetP->type = LWM2M_TYPE_UNDEFINED;
             }
         }
 
-        if (true != prv_convertValue(recordArray + index, targetP)) goto error;
+        if (true != prv_convertValue(recordArray + index, targetP))
+            goto error;
     }
 
     return size;
@@ -756,7 +763,7 @@ static int prv_dataStrip(int size,
 }
 
 int json_parse(lwm2m_uri_t * uriP,
-               uint8_t * buffer,
+               const uint8_t * buffer,
                size_t bufferLen,
                lwm2m_data_t ** dataP)
 {
@@ -777,42 +784,54 @@ int json_parse(lwm2m_uri_t * uriP,
     parsedP = NULL;
 
     index = prv_skipSpace(buffer, bufferLen);
-    if (index == bufferLen) return -1;
+    if (index == bufferLen)
+        return -1;
 
-    if (buffer[index] != '{') return -1;
+    if (buffer[index] != '{')
+        return -1;
     do
     {
         _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
-        if (buffer[index] != '"') goto error;
-        if (index++ >= bufferLen) goto error;
+        if (buffer[index] != '"')
+            goto error;
+        if (index++ >= bufferLen)
+            goto error;
         switch (buffer[index])
         {
         case 'e':
         {
             int recordIndex;
 
-            if (bufferLen-index < JSON_MIN_ARRAY_LEN) goto error;
+            if (bufferLen-index < JSON_MIN_ARRAY_LEN)
+                goto error;
             index++;
-            if (buffer[index] != '"') goto error;
-            if (eFound == true) goto error;
+            if (buffer[index] != '"')
+                goto error;
+            if (eFound == true)
+                goto error;
             eFound = true;
 
             _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
-            if (buffer[index] != ':') goto error;
+            if (buffer[index] != ':')
+                goto error;
             _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
-            if (buffer[index] != '[') goto error;
+            if (buffer[index] != '[')
+                goto error;
             _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
             count = prv_countItems(buffer + index, bufferLen - index);
-            if (count <= 0) goto error;
+            if (count <= 0)
+                goto error;
             recordArray = (_record_t*)lwm2m_malloc(count * sizeof(_record_t));
-            if (recordArray == NULL) goto error;
+            if (recordArray == NULL)
+                goto error;
             // at this point we are sure buffer[index] is '{' and all { and } are matching
             recordIndex = 0;
             while (recordIndex < count)
             {
                 int itemLen;
 
-                if (buffer[index] != '{') goto error;
+                if (buffer[index] != '{')
+                    goto error;
                 itemLen = 0;
                 while (buffer[index + itemLen] != '}') itemLen++;
                 if (0 != prv_parseItem(buffer + index + 1, itemLen - 1, recordArray + recordIndex))
@@ -828,7 +847,8 @@ int json_parse(lwm2m_uri_t * uriP,
                     _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
                     break;
                 case ']':
-                    if (recordIndex == count) break;
+                    if (recordIndex == count)
+                        break;
                     // else this is an error
                 default:
                     goto error;
@@ -839,20 +859,24 @@ int json_parse(lwm2m_uri_t * uriP,
         break;
 
         case 'b':
-            if (bufferLen-index < JSON_MIN_BX_LEN) goto error;
+            if (bufferLen-index < JSON_MIN_BX_LEN)
+                goto error;
             index++;
             switch (buffer[index])
             {
             case 't':
                 index++;
-                if (buffer[index] != '"') goto error;
-                if (btFound == true) goto error;
+                if (buffer[index] != '"')
+                    goto error;
+                if (btFound == true)
+                    goto error;
                 btFound = true;
 
                 // TODO: handle timed values
                 // temp: skip this token
                 while(index < bufferLen && buffer[index] != ',' && buffer[index] != '}') index++;
-                if (index == bufferLen) goto error;
+                if (index == bufferLen)
+                    goto error;
                 index--;
                 // end temp
                 break;
@@ -864,8 +888,10 @@ int json_parse(lwm2m_uri_t * uriP,
                     int itemLen;
 
                     index++;
-                    if (buffer[index] != '"') goto error;
-                    if (bnFound == true) goto error;
+                    if (buffer[index] != '"')
+                        goto error;
+                    if (bnFound == true)
+                        goto error;
                     bnFound = true;
                     index -= 3;
                     itemLen = 0;
@@ -875,9 +901,11 @@ int json_parse(lwm2m_uri_t * uriP,
                     {
                         itemLen++;
                     }
-                    if (index + itemLen == bufferLen) goto error;
+                    if (index + itemLen == bufferLen)
+                        goto error;
                     next = prv_split(buffer+index, itemLen, &tokenStart, &tokenLen, &bnStart, &bnLen);
-                    if (next < 0) goto error;
+                    if (next < 0)
+                        goto error;
                     bnStart += index;
                     index += next - 1;
                 }
@@ -894,7 +922,8 @@ int json_parse(lwm2m_uri_t * uriP,
         _GO_TO_NEXT_CHAR(index, buffer, bufferLen);
     } while (buffer[index] == ',');
 
-    if (buffer[index] != '}') goto error;
+    if (buffer[index] != '}')
+        goto error;
 
     if (eFound == true)
     {
@@ -926,19 +955,23 @@ int json_parse(lwm2m_uri_t * uriP,
 
             if (bnLen == 1)
             {
-                if (buffer[bnStart] != '/') goto error;
+                if (buffer[bnStart] != '/')
+                    goto error;
                 baseUriP = NULL;
             }
             else
             {
                 res = lwm2m_stringToUri((char *)buffer + bnStart, bnLen, &baseURI);
-                if (res < 0 || res != bnLen) goto error;
+                if (res < 0 || res != bnLen)
+                    goto error;
                 baseUriP = &baseURI;
             }
         }
 
         count = prv_convertRecord(baseUriP, recordArray, count, &parsedP);
         lwm2m_free(recordArray);
+        if (count==-1)
+            goto error;
         recordArray = NULL;
 
         if (count > 0 && uriP != NULL)
@@ -966,7 +999,8 @@ int json_parse(lwm2m_uri_t * uriP,
                         size = targetP->value.asChildren.count;
                     }
                 }
-                if (resultP == NULL) goto error;
+                if (resultP == NULL)
+                    goto error;
                 if (LWM2M_URI_IS_SET_RESOURCE(uriP))
                 {
                     lwm2m_data_t * resP;

@@ -212,7 +212,7 @@ typedef struct _multi_option_t {
   struct _multi_option_t *next;
   uint8_t is_static;
   uint8_t len;
-  uint8_t *data;
+  const uint8_t *data;
 } multi_option_t;
 
 /* Parsed message struct */

@@ -337,32 +337,31 @@ int lwm2m_remove_object(lwm2m_context_t * contextP,
 #endif
 
 
-int lwm2m_step(lwm2m_context_t * contextP,
+void lwm2m_step(lwm2m_context_t * contextP,
                time_t * timeoutP)
 {
     time_t tv_sec;
-    int result;
 
     tv_sec = lwm2m_gettime();
-    if (tv_sec < 0) return COAP_500_INTERNAL_SERVER_ERROR;
+
+    contextP->lastStepError = COAP_NO_ERROR;
 
 #ifdef LWM2M_CLIENT_MODE
 
 next_step:
     switch (contextP->state)
     {
+    case STATE_EXCEPTIONAL:
+        break;
     case STATE_INITIAL:
-        if (0 != prv_refreshServerList(contextP)) return COAP_503_SERVICE_UNAVAILABLE;
-        if (contextP->serverList != NULL)
-        {
+        contextP->lastStepError = prv_refreshServerList(contextP);
+        if (contextP->serverList != NULL){
             contextP->state = STATE_REGISTER_REQUIRED;
-        }
-        else
-        {
-            // Bootstrapping
+            goto next_step;
+        } else {
             contextP->state = STATE_BOOTSTRAP_REQUIRED;
+            break;
         }
-        goto next_step;
     case STATE_BOOTSTRAP_REQUIRED:
 #ifdef LWM2M_BOOTSTRAP
         if (contextP->bootstrapServerList != NULL)
@@ -374,9 +373,7 @@ next_step:
         }
         else
 #endif
-        {
-            return COAP_503_SERVICE_UNAVAILABLE;
-        }
+        { break; }
 
 #ifdef LWM2M_BOOTSTRAP
     case STATE_BOOTSTRAPPING:
@@ -400,14 +397,21 @@ next_step:
     // This is a two step phase. First a connection is established
     // then the lwm2m handshake starts.
     case STATE_REGISTER_REQUIRED:
-        result = registration_init_connection(contextP);
+        contextP->lastStepError = registration_init_connection(contextP);
+        if(contextP->lastStepError!=0){
+            contextP->state=STATE_EXCEPTIONAL;
+            break;
+        }
         contextP->state = STATE_REGISTER_REQUIRED2;
         *timeoutP = 0;
         break;
 
     case STATE_REGISTER_REQUIRED2:
-        result = registration_start(contextP);
-        if (COAP_NO_ERROR != result) return result;
+        contextP->lastStepError = registration_start(contextP);
+        if(contextP->lastStepError!=0){
+            contextP->state=STATE_EXCEPTIONAL;
+            break;
+        }
         contextP->state = STATE_REGISTERING;
         break;
     case STATE_REGISTERING:
@@ -452,6 +456,4 @@ next_step:
 
     registration_step(contextP, tv_sec, timeoutP);
     transaction_step(contextP, tv_sec, timeoutP);
-
-    return 0;
 }

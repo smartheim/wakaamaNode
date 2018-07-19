@@ -28,5 +28,5 @@
 int lwm2m_decode_TLV(const uint8_t * buffer, size_t buffer_len, lwm2m_data_type_t * oType, uint16_t * oID, size_t * oDataIndex, size_t * oDataLen);
 
 // defined in tlv.c
-int tlv_parse(uint8_t * buffer, size_t bufferLen, lwm2m_data_t ** dataP);
+int tlv_parse(const uint8_t *buffer, size_t bufferLen, lwm2m_data_t ** dataP);
 int tlv_serialize(bool isResourceInstance, int size, lwm2m_data_t * dataP, uint8_t ** bufferP);

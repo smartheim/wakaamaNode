@@ -1,7 +1,5 @@
 # Provides WAKAAMA_SOURCES_DIR and WAKAAMA_SOURCES and WAKAAMA_DEFINITIONS variables.
 # Add LWM2M_WITH_LOGS to compile definitions to enable logging.
-# Set LWM2M_LITTLE_ENDIAN to FALSE or TRUE according to your destination platform or leave
-# it unset to determine endianess automatically.
 
 set(WAKAAMA_SOURCES_DIR ${CMAKE_CURRENT_LIST_DIR})
 
@@ -54,19 +52,4 @@ set(WAKAAMA_SOURCES
     ${WAKAAMA_SOURCES_DIR}/internals.h
 	${CORE_HEADERS}
     ${EXT_SOURCES})
-
-# Automatically determine endianess. This can be overwritten by setting LWM2M_LITTLE_ENDIAN
-# accordingly in a cross compile toolchain file.
-if(NOT DEFINED LWM2M_LITTLE_ENDIAN)
-    include(TestBigEndian)
-    TEST_BIG_ENDIAN(LWM2M_BIG_ENDIAN)
-    if (LWM2M_BIG_ENDIAN)
-         set(LWM2M_LITTLE_ENDIAN FALSE)
-    else()
-         set(LWM2M_LITTLE_ENDIAN TRUE)
-    endif()
-endif()
-if (LWM2M_LITTLE_ENDIAN)
-    set(WAKAAMA_DEFINITIONS ${WAKAAMA_DEFINITIONS} -DLWM2M_LITTLE_ENDIAN)
-endif()
 

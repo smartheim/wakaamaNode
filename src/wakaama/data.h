@@ -76,13 +76,13 @@ typedef enum
 } lwm2m_media_type_t;
 
 lwm2m_data_t * lwm2m_data_new(int size);
-int lwm2m_data_parse(lwm2m_uri_t * uriP, uint8_t * buffer, size_t bufferLen, lwm2m_media_type_t format, lwm2m_data_t ** dataP);
+int lwm2m_data_parse(lwm2m_uri_t * uriP, const uint8_t *buffer, size_t bufferLen, lwm2m_media_type_t format, lwm2m_data_t ** dataP);
 int lwm2m_data_serialize(lwm2m_uri_t * uriP, int size, lwm2m_data_t * dataP, lwm2m_media_type_t * formatP, uint8_t ** bufferP);
 void lwm2m_data_free(int size, lwm2m_data_t * dataP);
 
 void lwm2m_data_encode_string(const char * string, lwm2m_data_t * dataP);
 void lwm2m_data_encode_nstring(const char * string, size_t length, lwm2m_data_t * dataP);
-void lwm2m_data_encode_opaque(uint8_t * buffer, size_t length, lwm2m_data_t * dataP);
+void lwm2m_data_encode_opaque(const uint8_t *buffer, size_t length, lwm2m_data_t * dataP);
 void lwm2m_data_encode_int(int64_t value, lwm2m_data_t * dataP);
 int lwm2m_data_decode_int(const lwm2m_data_t * dataP, int64_t * valueP);
 void lwm2m_data_encode_float(double value, lwm2m_data_t * dataP);

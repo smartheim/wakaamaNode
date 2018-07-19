@@ -30,7 +30,7 @@
 #include <string.h>
 #include <ctype.h>
 
-static int prv_parseNumber(uint8_t * uriString,
+static int prv_parseNumber(const uint8_t * uriString,
                             size_t uriLength,
                             size_t * headP)
 {
@@ -60,7 +60,7 @@ static int prv_parseNumber(uint8_t * uriString,
 }
 
 
-int uri_getNumber(uint8_t * uriString,
+int uri_getNumber(const uint8_t * uriString,
                    size_t uriLength)
 {
     size_t index = 0;

@@ -140,7 +140,7 @@ static int prv_textSerialize(lwm2m_data_t * dataP,
 }
 
 static int prv_setBuffer(lwm2m_data_t * dataP,
-                         uint8_t * buffer,
+                         const uint8_t * buffer,
                          size_t bufferLen)
 {
     dataP->value.asBuffer.buffer = (uint8_t *)lwm2m_malloc(bufferLen);
@@ -217,7 +217,7 @@ void lwm2m_data_encode_string(const char * string,
     }
     else
     {
-        for (len = 0; string[len] != 0; len++);
+        len = strlen(string);
     }
 
     if (len == 0)
@@ -228,7 +228,7 @@ void lwm2m_data_encode_string(const char * string,
     }
     else
     {
-        res = prv_setBuffer(dataP, (uint8_t *)string, len);
+        res = prv_setBuffer(dataP, (const uint8_t *)string, len);
     }
 
     if (res == 1)
@@ -241,7 +241,7 @@ void lwm2m_data_encode_string(const char * string,
     }
 }
 
-void lwm2m_data_encode_opaque(uint8_t * buffer,
+void lwm2m_data_encode_opaque(const uint8_t * buffer,
                               size_t length,
                               lwm2m_data_t * dataP)
 {
@@ -274,7 +274,7 @@ void lwm2m_data_encode_nstring(const char * string,
                                lwm2m_data_t * dataP)
 {
     LOG_DATA_ARG("length: %d, string: \"%s\"", length, string);
-    lwm2m_data_encode_opaque((uint8_t *)string, length, dataP);
+    lwm2m_data_encode_opaque((const uint8_t *)string, length, dataP);
 
     if (dataP->type == LWM2M_TYPE_OPAQUE)
     {
@@ -319,7 +319,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
         {
             int16_t value;
 
-            utils_copyValue(&value, dataP->value.asBuffer.buffer, dataP->value.asBuffer.length);
+            utils_int16Copy(&value, dataP->value.asBuffer.buffer);
 
             *valueP = value;
             result = 1;
@@ -330,7 +330,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
         {
             int32_t value;
 
-            utils_copyValue(&value, dataP->value.asBuffer.buffer, dataP->value.asBuffer.length);
+            utils_int32Copy(&value, dataP->value.asBuffer.buffer);
 
             *valueP = value;
             result = 1;
@@ -338,7 +338,7 @@ int lwm2m_data_decode_int(const lwm2m_data_t * dataP,
         }
 
         case 8:
-            utils_copyValue(valueP, dataP->value.asBuffer.buffer, dataP->value.asBuffer.length);
+            utils_doubleCopy(valueP, dataP->value.asBuffer.buffer);
             result = 1;
             break;
 
@@ -392,7 +392,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
         {
             float temp;
 
-            utils_copyValue(&temp, dataP->value.asBuffer.buffer, dataP->value.asBuffer.length);
+            utils_int32Copy(&temp, dataP->value.asBuffer.buffer);
 
             *valueP = temp;
             result = 1;
@@ -400,7 +400,7 @@ int lwm2m_data_decode_float(const lwm2m_data_t * dataP,
         break;
 
         case 8:
-            utils_copyValue(valueP, dataP->value.asBuffer.buffer, dataP->value.asBuffer.length);
+            utils_doubleCopy(valueP, dataP->value.asBuffer.buffer);
             result = 1;
             break;
 
@@ -535,7 +535,7 @@ void lwm2m_data_encode_instances(lwm2m_data_t * subDataP,
 }
 
 int lwm2m_data_parse(lwm2m_uri_t * uriP,
-                     uint8_t * buffer,
+                     const uint8_t * buffer,
                      size_t bufferLen,
                      lwm2m_media_type_t format,
                      lwm2m_data_t ** dataP)

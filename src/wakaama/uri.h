@@ -51,5 +51,5 @@ typedef enum
 
 // defined in uri.c
 lwm2m_uri_t * uri_decode(char * altPath, multi_option_t *uriPath);
-int uri_getNumber(uint8_t * uriString, size_t uriLength);
+int uri_getNumber(const uint8_t *uriString, size_t uriLength);
 int uri_toString(lwm2m_uri_t * uriP, uint8_t * buffer, size_t bufferLen, uri_depth_t * depthP);

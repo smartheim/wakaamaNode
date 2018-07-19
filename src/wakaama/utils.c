@@ -50,6 +50,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <float.h>
+#include <math.h>
 
 #include "context.h"
 #include "platform.h"
@@ -58,13 +59,13 @@
 #include "errorcodes.h"
 #include "communication.h"
 
-int utils_textToInt(uint8_t * buffer,
-                    int length,
+int utils_textToInt(const uint8_t * buffer,
+                    size_t length,
                     int64_t * dataP)
 {
-    uint64_t result = 0;
+    int64_t result = 0;
     int sign = 1;
-    int i = 0;
+    size_t i = 0;
 
     if (0 == length) return 0;
 
@@ -78,7 +79,7 @@ int utils_textToInt(uint8_t * buffer,
     {
         if ('0' <= buffer[i] && buffer[i] <= '9')
         {
-            if (result > (UINT64_MAX / 10)) return 0;
+            if (result > (INT64_MAX / 10)) return 0;
             result *= 10;
             result += buffer[i] - '0';
         }
@@ -93,7 +94,7 @@ int utils_textToInt(uint8_t * buffer,
 
     if (sign == -1)
     {
-        *dataP = 0 - result;
+        *dataP = -result;
     }
     else
     {
@@ -103,13 +104,13 @@ int utils_textToInt(uint8_t * buffer,
     return 1;
 }
 
-int utils_textToFloat(uint8_t * buffer,
-                      int length,
+int utils_textToFloat(const uint8_t *buffer,
+                      size_t length,
                       double * dataP)
 {
     double result;
     int sign;
-    int i;
+    size_t i;
 
     if (0 == length) return 0;
 
@@ -171,7 +172,7 @@ size_t utils_intToText(int64_t data,
                        uint8_t * string,
                        size_t length)
 {
-    int index;
+    ssize_t index;
     bool minus;
     size_t result;
 
@@ -224,7 +225,8 @@ size_t utils_floatToText(double data,
     int64_t intPart;
     double decPart;
 
-    if (data <= (double)INT64_MIN || data >= (double)INT64_MAX) return 0;
+    if (fabs(data) >= (double)INT64_MAX)
+        return 0;
 
     intPart = (int64_t)data;
     decPart = data - intPart;
@@ -279,7 +281,7 @@ size_t utils_floatToText(double data,
     return intLength + decLength;
 }
 
-lwm2m_binding_t utils_stringToBinding(uint8_t * buffer,
+lwm2m_binding_t utils_stringToBinding(const uint8_t * buffer,
                                       size_t length)
 {
     if (length == 0) return BINDING_UNKNOWN;
@@ -450,25 +452,6 @@ int utils_stringCopy(char * buffer,
     return (int)i;
 }
 
-void utils_copyValue(void * dst,
-                     const void * src,
-                     size_t len)
-{		
-#ifdef LWM2M_BIG_ENDIAN
-    memcpy(dst, src, len);
-#else
-#ifdef LWM2M_LITTLE_ENDIAN
-    size_t i;
-
-    for (i = 0; i < len; i++)
-    {
-        ((uint8_t *)dst)[i] = ((uint8_t *)src)[len - 1 - i];
-    }
-#endif
-#endif
-}
-
-
 #define PRV_B64_PADDING '='
 
 static char b64Alphabet[64] =
@@ -479,7 +462,7 @@ static char b64Alphabet[64] =
     'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
-static void prv_encodeBlock(uint8_t input[3],
+static void prv_encodeBlock(const uint8_t input[3],
                             uint8_t output[4])
 {
     output[0] = b64Alphabet[input[0] >> 2];
@@ -498,8 +481,8 @@ size_t utils_base64GetSize(size_t dataLen)
     return result_len;
 }
 
-size_t utils_base64Encode(uint8_t * dataP,
-                          size_t dataLen, 
+size_t utils_base64Encode(const uint8_t *dataP,
+                          size_t dataLen,
                           uint8_t * bufferP,
                           size_t bufferLen)
 {

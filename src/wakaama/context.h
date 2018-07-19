@@ -11,6 +11,7 @@
 #include "observe.h"
 #include "transaction.h"
 #include "server_clientlist.h"
+#include "errorcodes.h"
 
 #ifdef LWM2M_CLIENT_MODE
 
@@ -22,7 +23,8 @@ typedef enum
     STATE_REGISTER_REQUIRED,
     STATE_REGISTER_REQUIRED2,
     STATE_REGISTERING,
-    STATE_READY
+    STATE_READY,
+    STATE_EXCEPTIONAL
 } lwm2m_client_state_t;
 
 #endif
@@ -33,6 +35,7 @@ struct _lwm2m_context_t
 {
 #ifdef LWM2M_CLIENT_MODE
     lwm2m_client_state_t state;
+    lwm2m_error_codes_t  lastStepError;
     char *               endpointName;
     char *               msisdn;
     char *               altPath;
@@ -62,4 +65,4 @@ lwm2m_context_t * lwm2m_init(void * userData);
 void lwm2m_close(lwm2m_context_t * contextP);
 
 // perform any required pending operation and adjust timeoutP to the maximal time interval to wait in seconds.
-int lwm2m_step(lwm2m_context_t * contextP, time_t * timeoutP);
+void lwm2m_step(lwm2m_context_t * contextP, time_t * timeoutP);

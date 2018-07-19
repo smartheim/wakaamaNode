@@ -276,7 +276,7 @@ coap_add_multi_option(multi_option_t **dst, uint8_t *option, size_t option_len, 
             lwm2m_free(opt);
             return;
         }
-        memcpy(opt->data, option, option_len);
+        memcpy((uint8_t *)opt->data, option, option_len);
     }
 
     if (*dst)
@@ -304,7 +304,7 @@ free_multi_option(multi_option_t *dst)
     dst->next = NULL;
     if (dst->is_static == 0)
     {
-        lwm2m_free(dst->data);
+        lwm2m_free((uint8_t *)dst->data);
     }
     lwm2m_free(dst);
     free_multi_option(n);

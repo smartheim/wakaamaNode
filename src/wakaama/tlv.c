@@ -29,12 +29,6 @@
 #include "platform.h"
 #include "debug.h"
 
-#ifndef LWM2M_BIG_ENDIAN
-#ifndef LWM2M_LITTLE_ENDIAN
-#error Please define LWM2M_BIG_ENDIAN or LWM2M_LITTLE_ENDIAN
-#endif
-#endif
-
 #define _PRV_TLV_TYPE_MASK 0xC0
 #define _PRV_TLV_HEADER_MAX_LENGTH 6
 
@@ -53,7 +47,7 @@ static size_t prv_encodeFloat(double data,
     if ((data < 0.0 - (double)FLT_MAX) || (data >(double)FLT_MAX))
     {
         length = 8;
-        utils_copyValue(data_buffer, &data, 8);
+        utils_doubleCopy(data_buffer, &data);
     }
     else
     {
@@ -61,7 +55,7 @@ static size_t prv_encodeFloat(double data,
 
         length = 4;
         value = (float)data;
-        utils_copyValue(data_buffer, &value, 4);
+        utils_int32Copy(data_buffer, &value);
     }
 
     return length;
@@ -92,12 +86,12 @@ static size_t prv_encodeInt(int64_t data,
 
         value = data;
         length = 4;
-        utils_copyValue(data_buffer, &value, length);
+        utils_int32Copy(data_buffer, &value);
     }
     else if (data >= INT64_MIN && data <= INT64_MAX)
     {
         length = 8;
-        utils_copyValue(data_buffer, &data, length);
+        utils_doubleCopy(data_buffer, &data);
     }
 
     return length;
@@ -306,7 +300,7 @@ int lwm2m_decode_TLV(const uint8_t * buffer,
 }
 
 
-int tlv_parse(uint8_t * buffer,
+int tlv_parse(const uint8_t * buffer,
               size_t bufferLen,
               lwm2m_data_t ** dataP)
 {
@@ -322,7 +316,7 @@ int tlv_parse(uint8_t * buffer,
 
     *dataP = NULL;
 
-    while (0 != (result = lwm2m_decode_TLV((uint8_t*)buffer + index, bufferLen - index, &type, &id, &dataIndex, &dataLen)))
+    while (0 != (result = lwm2m_decode_TLV((const uint8_t*)buffer + index, bufferLen - index, &type, &id, &dataIndex, &dataLen)))
     {
         lwm2m_data_t * newTlvP;
 

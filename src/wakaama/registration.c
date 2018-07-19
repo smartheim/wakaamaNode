@@ -478,9 +478,7 @@ int lwm2m_update_registration(lwm2m_context_t * contextP,
 uint8_t registration_init_connection(lwm2m_context_t * contextP)
 {
     lwm2m_server_t * targetP;
-    uint8_t result;
-
-    result = COAP_NO_ERROR;
+    uint8_t result = COAP_503_SERVICE_UNAVAILABLE;
 
     targetP = contextP->serverList;
     while (targetP != NULL)
@@ -491,7 +489,8 @@ uint8_t registration_init_connection(lwm2m_context_t * contextP)
             if (!targetP->sessionH){
                 result = COAP_CONNECT_FAIL;
                 targetP->status = STATE_REG_FAILED;
-            }
+            } else
+                result = COAP_NO_ERROR;
         }
         targetP = targetP->next;
     }
