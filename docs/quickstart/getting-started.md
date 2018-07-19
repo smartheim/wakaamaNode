@@ -30,12 +30,14 @@ Some build flags can to be provided to enable certain platform codes:
   Windows and Unix/Linux builds automatically pick the posix/windows platform code.
 
 
-## Use CMake build system
-If you target an x86 system, you may use the cmake buildsystem instead.
+## CMake build system
+If you target an non-embedded system like Linux, Mac OS, Windows, you may use the cmake build system instead.
 
 * Download the library https://github.com/Openhab-Nodes/wakaamaNode/archive/master.zip
-* Extract it to `wakaamaNode`.
-* Include the `wakaamaNode/src/src.cmake` file like in the following example:
+* Extract the archive to `wakaamaNode`
+* Include the `wakaamaNode/src/src.cmake` file like in the following example
+* Create and change to your `build` dir.
+* Execute `cmake ../`
 
 ```cmake
 project(YOUR_PROJECT)
@@ -56,7 +58,7 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC ${WAKAAMA_DEFINITIONS})
 
 ## Bare minimum sketch
 
-The following example shows you some key aspects of the library. In particular:
+Some key aspects of the library are shown in the example below. In particular:
 
 * How to connect to a lwm2m server, if enabled with a preshared key DTLS connection. (It is assumed that you are network connected already.)
 * How to set device describing attributes.
@@ -84,7 +86,7 @@ id3311::object lights;
 id3311::instance ledsInstance;
 
 // If this context object goes out of scope, you will be
-// disconnected from all connected servers automatically.
+// automatically disconnected from all connected servers automatically.
 LwM2MConnect context("testClient");
 ```
 
@@ -166,26 +168,24 @@ make the process sleep until udp activity or the next due time:
 
 ```cpp
 void loop() {
-    struct timeval time_to_next_call{0,0};
-
-    int result = context.process(&time_to_next_call);
-    if (result == COAP_505_NO_NETWORK_CONNECTION) {
-        // Couldn't open UDP sockets.
-        // Call lwm2m_network_init again after network is availabe again.
-    } else if (result != 0) {
+    int result = context.process();
+    if (result == COAP_503_SERVICE_UNAVAILABLE)
+        printf("No server added! Call lwm2m_add_server()\n");
+    else if (result == COAP_505_NO_NETWORK_CONNECTION)
+        printf("No sockets open. Reinit the network!\n");
+    else if (result == COAP_506_DTLS_CONNECTION_DENIED)
+        printf("DTLS connection denied. Server may not know PSK for client %s\n", CTX(context)->endpointName);
+    else if (result != 0) {
         // Unexpected error
         print_state(CTX(context));
     }
     // If a server connetion gets lost, the lwm2m state machine will change into
     // BOOTSTRAP_REQUIRED state. The following method will reset the state machine
     // and the next process() call will attempt a reconnect.
-    context.watch_and_reconnect(&time_to_next_call, 5);
+    context.watch_and_reconnect(/*cooldown until reconnect in sec*/5);
     
     // You may go into low power mode on an µC or use context.block_wait() on posix:
-    context.block_wait(&next_event);
-    
-    // default block time is 20sec. Might be less
-    time_to_next_call = {20,0};
+    context.block_wait(/*block time in sec if nothing to do*/20);
 }
 
 ```

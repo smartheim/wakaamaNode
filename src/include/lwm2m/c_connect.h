@@ -19,8 +19,6 @@
 extern "C" {
 #endif
 
-#define COAP_505_NO_NETWORK_CONNECTION    (uint8_t)0xA5
-
 struct timeval;
 
 /**
@@ -53,21 +51,22 @@ void lwm2m_client_close(lwm2m_client_context_t* context);
  * Internally it will process new network packages as well as progress in the wakaamas state machine.
  *
  * @param contextP Wakaama context
- * @param next_event Returns a timeval value that tells you when the next call is due.
- * It does not modify timeval if it already has a value that is sooner than the next due time.
- * @return Returns a wakaama error code (the result value of lwm2m_step())
  */
-int lwm2m_process(lwm2m_context_t * contextP, struct timeval* next_event);
+void lwm2m_process(lwm2m_context_t * contextP);
 
+/**
+ * Return the state machines state.
+ *
+ * @param contextP Wakaama context
+ */
+lwm2m_client_state_t lwm2m_state(lwm2m_context_t * contextP);
 /**
  * Watch server connections and reset the lwm2m state machine to force reconnects,
  * if the current state is STATE_BOOTSTRAP_REQUIRED.
  *
- * @param next_event Uses and returns a timeval value that tells you when the next call is due.
- * It does not modify timeval if it already has a value that is sooner than the next due time.
  * @param reconnectTime Reconnect time in seconds
  */
-void lwm2m_watch_and_reconnect(lwm2m_context_t * contextP, struct timeval* next_event, int reconnectTime);
+void lwm2m_watch_and_reconnect(lwm2m_context_t * contextP, int reconnectTime);
 
 /**
  * Adds a new server to the lwm2m client. The client statemachine will try to connect to this

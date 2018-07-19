@@ -13,10 +13,9 @@
  */
 #pragma once
 #include "../../wakaama/liblwm2m.h"
+#include "../../network_common.h"
 #include "context.h"
 #include <inttypes.h>
-
-struct timeval;
 
 class LwM2MConnect: public lwm2m_client_context_t {
 public:
@@ -44,21 +43,19 @@ public:
      *
      * Internally it will process new network packages as well as progress in the wakaamas state machine.
      *
-     * @param next_event Uses and returns a timeval value that tells you when the next call is due.
-     * It does not modify timeval if it already has a value that is sooner than the next due time.
      * @return Returns a wakaama error code (the result value of step())
      */
-    int process(struct timeval* next_event);
+    void process();
+
 
     /**
-     * Watch server connections and reset the lwm2m state machine to force reconnects,
-     * if the current state is STATE_BOOTSTRAP_REQUIRED.
+     * `lwm2m_process` need to be called periodically and will provide an internal value in seconds when the next call is due.
+     * This function returns a pointer to this due time value. You can modify (decrease) the value if required (`lwm2m_watch_and_reconnect`
+     * and the ssl handshake code are doing this for example). This will cause `lwm2m_block_wait` to return sooner than the given timeout.
      *
-     * @param next_event Uses and returns a timeval value that tells you when the next call is due.
-     * It does not modify timeval if it already has a value that is sooner than the next due time.
-     * @param reconnectTime Reconnect time in seconds
+     * @return A pointer to the next due time in sec
      */
-    void watch_and_reconnect(struct timeval* next_event, int reconnectTime);
+    inline time_t* due_time() {return lwm2m_due_time(&this->context);}
 
     /**
      * @brief Blocks until new data is available on the sockets
@@ -68,10 +65,10 @@ public:
      *
      * Call process() after this method returned.
      *
-     * @param next_event The sleep time until the next event is due
+     * @param timeout_in_sec The sleep time until the next event is due
      * @return Returns the socket number that received a message or 0 if it was a timeout. -1 on error.
      */
-    int block_wait(struct timeval next_event);
+    int block_wait(unsigned timeout_in_sec);
 
     /**
      * Adds a new server to the lwm2m client. The client statemachine will try to connect to this

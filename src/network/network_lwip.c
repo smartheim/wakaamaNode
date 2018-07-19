@@ -62,11 +62,9 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, ui
     return (uint8_t)network->open_listen_sockets;
 }
 
-bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *next_event) {
+bool __attribute__((weak)) lwm2m_network_process(lwm2m_context_t * contextP) {
     (void)contextP;
-    // NOOP for lwip, because udp_recv() registers a callback for incoming packets
-    // and they are processed in udp_raw_recv()
-    internal_check_timer(contextP, next_event);
+    internal_check_timer(contextP);
     return true;
 }
 

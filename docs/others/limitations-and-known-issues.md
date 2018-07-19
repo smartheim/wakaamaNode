@@ -31,5 +31,5 @@ But only if all have finished (successfully or timed out), the lwm2m state machi
 ## Main loop timing
 
 A connection to a lwM2M server or a dtls session may get expired if the libraries main loop method is not called in time.
-Do not `delay()`/`sleep()` or call blocking functions for too long. The `lwm2m_process` method will return a `timeval` value
-in microseconds+seconds to let you know when the next call is due.
+Do not `delay()`/`sleep()` or call blocking functions for too long. The `lwm2m_due_time` function returns a value
+in seconds to let you know when the next call is due.

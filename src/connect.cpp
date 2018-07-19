@@ -1,6 +1,18 @@
+/*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
 #include "lwm2m/connect.h"
 #include "lwm2m/c_connect.h"
-#include "internal.h"
 #include "wakaama/internals.h"
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
@@ -12,13 +24,9 @@ LwM2MConnect::LwM2MConnect(const char * endpointName) : lwm2m_client_context_t{}
 
 LwM2MConnect::~LwM2MConnect() { lwm2m_client_close (this); }
 
-int LwM2MConnect::process(struct timeval* next_event) { return lwm2m_process (&this->context, next_event); }
+void LwM2MConnect::process() { lwm2m_process (&this->context); }
 
-void LwM2MConnect::watch_and_reconnect(struct timeval* next_event, int reconnectTime) {
-    lwm2m_watch_and_reconnect(&this->context, next_event, reconnectTime);
-}
-
-int LwM2MConnect::block_wait(struct timeval next_event) { return lwm2m_block_wait (&this->context,next_event); }
+int LwM2MConnect::block_wait(unsigned timeout_in_sec) { return lwm2m_block_wait (&this->context, timeout_in_sec); }
 
 
 bool LwM2MConnect::add_server(uint16_t shortServerID,

@@ -8,7 +8,7 @@
     },
     "homepage": "https://openhab-nodes.github.io/wakaamaNode",
     "license": "EPL-2.0",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "authors": {
         "name": "David Gräff",
         "url": "https://openhab-nodes.github.io/wakaamaNode"
@@ -28,8 +28,8 @@
         ]
     },
     "examples": [
-        "examples/linux_win_screen_control/",
-        "examples/linux_win_custom_object_c/",
-        "examples/nodemcu_with_led/"
+        "examples/linux_win_screen_control/src/main.*",
+        "examples/linux_win_custom_object_c/src/main.*",
+        "examples/nodemcu_with_led/src/main.*"
     ]
 }

@@ -15,13 +15,14 @@ set(HEADERS
     ${WAKAAMA_NODE_DIR}/include/lwm2m/object_device.h
     ${WAKAAMA_NODE_DIR}/include/lwm2m/debug.h
     ${WAKAAMA_NODE_DIR}/include/lwm2m/network.h
+    ${WAKAAMA_NODE_DIR}/include/lwm2m/events.h
     ${KNOWN_OBJECTS}
     )
 
 set(PRIVATE_HEADERS
-    ${WAKAAMA_NODE_DIR}/internal.h
     ${WAKAAMA_NODE_DIR}/internal_objects.h
     ${WAKAAMA_NODE_DIR}/macro_helper.h
+    ${WAKAAMA_NODE_DIR}/inplace_function.h
     )
 
 set(PLATFORM_SOURCES "")
@@ -30,6 +31,7 @@ file(GLOB_RECURSE NETWORK_MBEDTLS_H "${WAKAAMA_NODE_DIR}/network/mbedtls/include
 file(GLOB NETWORK_MBEDTLS "${WAKAAMA_NODE_DIR}/network/mbedtls/library/*.c")
 file(GLOB NETWORK_MBEDTLS_PL "${WAKAAMA_NODE_DIR}/network/mbedtls/platform/*.c")
 list(APPEND PLATFORM_SOURCES
+    ${WAKAAMA_NODE_DIR}/network/server_ssl.c
     ${WAKAAMA_NODE_DIR}/network/network_ssl.c
     ${WAKAAMA_NODE_DIR}/network/network_common.c
     ${WAKAAMA_NODE_DIR}/network/network_common.h
@@ -61,6 +63,6 @@ set(WAKAAMA_NODE_DIR_SOURCES
     ${WAKAAMA_NODE_DIR}/c_objects.c
     ${WAKAAMA_NODE_DIR}/c_connect.c
     ${WAKAAMA_NODE_DIR}/connect.cpp
-    ${WAKAAMA_NODE_DIR}/server.c
+    ${WAKAAMA_NODE_DIR}/events.cpp
     )
 

@@ -52,13 +52,9 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, uint16_t localPort);
  * Is automatically called by the connect API, especially lwm2m_process().
  *
  * @param contextP The wakaama context.
- * @param next_event Returns a timeout value that tells you when the next call is due.
- * Does not modify timeout if it already has a value that is sooner than the next due time.
- * For the DTLS handshake to be successful, it is required that you call lwm2m_network_process()
- * when the timeout has happened.
  * @return Return false if no open sockets are available.
  */
-bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval* next_event);
+bool lwm2m_network_process(lwm2m_context_t * contextP);
 
 /**
  * @brief Closes all opened sockets and clean context->userdata.
@@ -93,10 +89,28 @@ intptr_t lwm2m_network_native_sock(lwm2m_context_t * contextP, unsigned sock_no)
  * Call lwm2m_process() after this method returned.
  *
  * @param contextP Wakaama context
- * @param next_event The sleep time until the next event is due
+ * @param timeout_in_msec The sleep time in milliseconds until the next event is due
  * @return Returns the socket number that received a message or 0 if it was a timeout. -1 on error.
  */
-int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event);
+int lwm2m_block_wait(lwm2m_context_t * contextP, unsigned timeout_in_msec);
+
+#ifdef LWM2M_WITH_DTLS
+#include "mbedtls/ssl.h"
+
+enum DtlsHandshakeState {
+    // Either no DTLS uri or handshake finished
+    DTLS_NO_HANDSHAKE_IN_PROGRESS,
+    // Handshake in progress
+    DTLS_HANDSHAKE_IN_PROGRESS,
+    // Client denied by server (PSK wrong / identity known but not matching / etc)
+    DTLS_HANDSHAKE_ABORTED,
+    // Timeout
+    DTLS_HANDSHAKE_TIMEOUT,
+};
+
+enum DtlsHandshakeState lwm2m_dtls_handshake_state(lwm2m_context_t *contextP);
+
+#endif
 
 #ifdef __cplusplus
 }

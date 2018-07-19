@@ -22,7 +22,16 @@ Travis CI is executed on every commit. The following functionality is tested:
      * [x] Memory allocations match deallocations
 * [ ] The connect API on LWIP
      * [x] Building the implementation
-     - [ ] A running example with LWIP. **tun/tap is required on travis for this to work**.
+     - [ ] A running example with LWIP. **Not continously tested on travis: tun/tap would be required**.
+* [x] Event dispatcher (C++)
+     * [x] Dispatching events once
+     * [x] Connected, Disconnected, DTLS_failed event delivered
+* [x] LwM2M Data types
+     * [x] TLV
+     * [x] JSON
+     * [x] Convert numbers
+* [x] LwM2M URI handling
+* [x] CoAP/LwM2M Block1
 * [ ] Firmware updates
      * [ ] On linux
      * [ ] On windows

@@ -37,7 +37,8 @@
  */
 
 #include "wakaama/liblwm2m.h"
-#include "internal.h"
+#include "internal_objects.h"
+#include "lwm2m/context.h"
 
 #include <stdlib.h>
 #include <string.h>

@@ -29,7 +29,8 @@
  */
 
 #include "wakaama/liblwm2m.h"
-#include "internal.h"
+#include "internal_objects.h"
+#include "lwm2m/context.h"
 
 bool server_object_write_verify_cb(lwm2m_list_t* instance, uint16_t changed_res_id) {
     server_instance_t* i = (server_instance_t*)instance;

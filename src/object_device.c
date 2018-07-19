@@ -21,10 +21,10 @@
  */
 
 #include "wakaama/liblwm2m.h"
-#include "internal.h"
 #include "lwm2m/c_objects.h"
 #include "lwm2m/c_connect.h"
 #include "lwm2m/object_device.h"
+#include "internal_objects.h"
 
 // Configures the lwm2m device object instance
 #include "wakaama_config.h"
@@ -106,9 +106,11 @@ static uint8_t prv_device_read(uint16_t instanceId,
                 lwm2m_data_encode_int(lwm2m_get_last_error(), dataP);
                 break;
             #endif
+            #ifdef LWM2M_DEVICE_INFO_WITH_TIME
             case RES_O_CURRENT_TIME:
-                lwm2m_data_encode_int((int64_t)lwm2m_gettime(), dataP);
+                lwm2m_data_encode_int((int64_t)lwm2m_get_local_time(), dataP);
                 break;
+            #endif
             default:
                 if (resP->struct_member_offset==0)
                     return COAP_405_METHOD_NOT_ALLOWED;

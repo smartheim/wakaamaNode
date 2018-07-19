@@ -54,31 +54,55 @@ This will not release objects created by lwm2m_object_create.
 ```cpp
 /**
  * @param contextP Wakaama context
- * @param next_event Returns a timeval value that tells you when the next call is due.
- * It does not modify timeval if it already has a value that is sooner than the next due time.
  * @return Returns a wakaama error code (the result value of lwm2m_step())
  */
-int lwm2m_process(lwm2m_context_t * contextP, struct timeval* next_event);
+int lwm2m_process(lwm2m_context_t * contextP);
 ```
-Call this method periodically. Internally it will process new network packages as well as progress in the wakaamas state machine.
+Call this method periodically. Internally it will process new network packages, perform the dtls handshake if necessary, as well as progress in the wakaamas state machine.
 
 !!! info
-    On Posix Systems you can call `lwm2m_block_wait(context, next_event)` to wait for
+    On Posix Systems you can call `lwm2m_block_wait(context, timeout_in_sec)` after *lwm2m_process* to wait for
     either received network packets or for the due time of the next event.
 
 ```cpp
 /**
  * @param contextP Wakaama context
- * @param next_event Uses and returns a timeval value that tells you when the next call is due.
- * It does not modify timeval if it already has a value that is sooner than the next due time.
  * @param reconnectTime Reconnect time in seconds
  */
-void lwm2m_watch_and_reconnect(wm2m_context_t * contextP, struct timeval* next_event, int reconnectTime);
+void lwm2m_watch_and_reconnect(wm2m_context_t * contextP, int reconnectTime);
 ```
 Watch server connections and reset the lwm2m state machine to force reconnects,
 if the current state is STATE_BOOTSTRAP_REQUIRED. Usually you want to call this after `lwm2m_process`
 for automatic reconnection.
 
+```cpp
+/**
+ * @param contextP Wakaama context
+ * @return A pointer to the next due time in sec
+ */
+int* lwm2m_due_time(wm2m_context_t * contextP);
+```
+
+`lwm2m_process` need to be called periodically and will provide an internal value in seconds when the next call is due.
+This function returns a pointer to this due time value. You can modify (decrease) the value if required (`lwm2m_watch_and_reconnect`
+and the ssl handshake code are doing this for example). This will cause `lwm2m_block_wait` to return sooner than the given timeout.
+
+```cpp
+/**
+ * @param contextP Wakaama context
+ * @param timeout_in_sec A timeout value in seconds. The event loop will enter another interation after this time
+ * even if no packet has been received or timer has timed out.
+ * @return Returns the socket number that received a message or 0 if it was a timeout. -1 on error.
+ */
+int lwm2m_block_wait(lwm2m_context_t * contextP, int timeout_in_sec);
+```
+
+Blocks until new data is available on the sockets.
+
+This is implemented for systems that have an epoll API call with POSIX sockets
+(and on Windows with an emulated epoll API) and on LWIP/freertos.
+
+ 
 ```cpp
 /**
  * @param contextP Wakaama context
@@ -92,7 +116,7 @@ bool lwm2m_add_server(lwm2m_context_t *contextP, uint16_t shortServerID,
                       const char* uri, uint32_t lifetime, bool storing);
 ```
 Adds a new server to the lwm2m client. The client statemachine will try to connect to this
-server with the next iteration (usually caused by calling `lwm2m_process()`).
+server with the next iteration (`lwm2m_process()`).
 
 ```cpp
 /**
@@ -113,7 +137,7 @@ You may also remove DTLS information by providing a NULL argument to psk and pub
 
 !!! warning
     If you have specified a "coap://" URI in lwm2m_add_server(...), then
-    publicId and psk will be set to NULL on a connection attempt.
+    publicId and psk will be set to NULL on the next connection attempt.
 
 The LwM2M specification V1.0 says:
 
@@ -173,14 +197,14 @@ lwm2m_client_context_t context("testClient");
 // Posix and Lwip network support is implemented.
 lwm2m_client_init(&context);
 
-struct timeval tv = {0};
 while(1) {
    // Call the lwm2m state machine (lwm2m_process) periodically. 
-   // tv will be used as output variable.
-   // The library tells us about the next required call to lwm2m_process().
-   // In this simple example we ignore this request.
-   int result = lwm2m_process(CTX(context), &tv);
-   // Error handling of `result`.
+   int result = lwm2m_process(CTX(context));
+   /* result error processing ... */
+   lwm2m_watch_and_reconnect(CTX(context), /*cooldown until reconnect in sec*/5);
+   #ifdef POSIX_NETWORK
+   lwm2m_block_wait(CTX(context), /*block time in sec if nothing to do*/20);
+   #endif
 }
 
 // Deregisters from the lwm2m server, frees ressources taken by wakaama.
@@ -203,21 +227,23 @@ public:
     LwM2MConnect(const char * endpointName);
     ~LwM2MConnect();
     
-    int process(struct timeval* next_event);
+    int process();
     
-    int block_wait(struct timeval next_event);
+    int block_wait(int timeout_in_sec);
     
-    void watch_and_reconnect(struct timeval* next_event, int reconnectTime);
+    void watch_and_reconnect(int reconnect_time_in_sec);
+    
+    int* due_time();
 
-    bool add_server(uint16_t shortServerID, const char* uri, uint32_t lifetime, bool storing);
+    bool add_server(uint16_t short_server_id, const char* uri, uint32_t lifetime, bool storing);
 
-    bool use_dtls_psk(uint16_t shortServerID, const char* publicId, const char* psk, unsigned short pskLen);
+    bool use_dtls_psk(uint16_t short_server_id, const char* publicId, const char* psk, unsigned short psk_len);
     
     bool unregister_server(uint16_t security_instance_id);
     
     void remove_unregistered_servers();
     
-    const char* get_server_uri(uint16_t shortServerID);
+    const char* get_server_uri(uint16_t short_server_id);
     
     bool is_connected();
 };
@@ -231,13 +257,13 @@ To setup the library, you would follow the outlined schema of the following CPP 
 ```cpp
 LwM2MConnect context("testClient");
 
-struct timeval tv{0,0};
 while(1) {
-   int result = context.process(&tv);
+   int result = context.process();
+   /* result error processing ... */
+   context.watch_and_reconnect(/*cooldown until reconnect in sec*/5);
    #ifdef POSIX_NETWORK
-   context.block_wait(tv);
+   context.block_wait(/*block time in sec if nothing to do*/20);
    #endif
-   tv = {20,0}; // default block time is 20sec. Might be less
 }
 ```
 

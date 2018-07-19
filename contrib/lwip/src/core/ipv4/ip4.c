@@ -1047,6 +1047,7 @@ void
 ip4_debug_print(struct pbuf *p)
 {
   struct ip_hdr *iphdr = (struct ip_hdr *)p->payload;
+  (void)iphdr;
 
   LWIP_DEBUGF(IP_DEBUG, ("IP header:\n"));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));

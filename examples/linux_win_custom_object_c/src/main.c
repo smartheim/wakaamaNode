@@ -47,7 +47,7 @@ int main()
     lwm2m_add_initialize_object(CTX(context), test_object, false);
     lwm2m_object_instance_add(CTX(context), test_object, get_an_instance());
 
-    uint8_t bound_sockets = lwm2m_client_init (&context,"testClient");
+    uint8_t bound_sockets = lwm2m_client_init (&context, "testClient");
 
     if (bound_sockets == 0)
     {
@@ -85,14 +85,16 @@ int main()
         // Sleep 20sec before doing another main loop run if no packet has been received
         // and lwm2m_process or lwm2m_watch_and_reconnect has no earlier due time.
         tv.tv_sec = 20;
-        result = lwm2m_process(CTX(context), &tv);
+        result = lwm2m_process(CTX(context));
         if (result == COAP_503_SERVICE_UNAVAILABLE)
-            printf("No server found so far\r\n");
+            printf("No server added! Call lwm2m_add_server()\n");
+        else if (result == COAP_505_NO_NETWORK_CONNECTION)
+            fprintf(stderr, "No sockets open. Reinit the network\n");
+        else if (result == COAP_506_DTLS_CONNECTION_DENIED)
+            fprintf(stderr, "DTLS connection denied. Server may not know PSK for client %s\n", CTX(context)->endpointName);
         else if (result != 0)
-            fprintf(stderr, "lwm2m_step() failed: 0x%X\r\n", result);
-        else
-            print_state (CTX(context));
-        lwm2m_watch_and_reconnect(CTX(context),&tv,5);
+            fprintf(stderr, "lwm2m_step() failed: 0x%X\n", result);
+        lwm2m_watch_and_reconnect(CTX(context),5);
     }
 
     printf("finished\n");

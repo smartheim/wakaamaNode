@@ -15,7 +15,6 @@
 #include "lwm2m/c_connect.h"
 #include "lwm2m/network.h"
 #include "lwm2m/debug.h"
-#include "../internal.h"
 #include "network_common.h"
 #include <stdio.h>
 #include <errno.h>
@@ -25,6 +24,7 @@
 typedef int make_iso_compilers_happy; // if not LWM2M_WITH_DTLS
 
 #ifdef LWM2M_WITH_DTLS
+
 
 /**
  * \brief          Set a pair of delays to watch
@@ -44,23 +44,9 @@ static void set_delay( void *data, uint32_t int_ms, uint32_t fin_ms ) {
     connection_t * connection = (connection_t *)data;
     connection->tmr_intermediate_ms = int_ms;
     connection->tmr_final_ms = fin_ms;
-    gettimeofday( &connection->tmr_current, NULL );
 
-    if (!fin_ms) {
-        connection->network->cached_next_timer_connection = NULL;
-        return;
-    }
-
-    connection_t * next_timer_connection = connection->network->cached_next_timer_connection;
-
-    // cached_next_timer_connection always points to the next point in time of all connections
-    if (next_timer_connection) {
-        if (next_timer_connection == connection) return;
-        if (timercmp(&next_timer_connection->tmr_current,&connection->tmr_current,>)) {
-            connection->network->cached_next_timer_connection = connection;
-        }
-    } else
-        connection->network->cached_next_timer_connection = connection;
+    time_t tmr_current = lwm2m_gettime();
+    connection->tmr_current = tmr_current;
 }
 
 /**
@@ -83,16 +69,18 @@ static int get_delay( void *data ){
     if( connection->tmr_final_ms == 0 )
         return( -1 );
 
-    struct timeval now;
-    gettimeofday( &now, NULL );
-    elapsed_ms = (unsigned long)( now.tv_sec  - connection->tmr_current.tv_sec  ) * 1000ul
-          + (unsigned long)( now.tv_usec - connection->tmr_current.tv_usec ) / 1000;
+    time_t tmr_current = lwm2m_gettime();
+    elapsed_ms = (unsigned long)( tmr_current  - connection->tmr_current  ) * 1000ul;
 
     if( elapsed_ms >= connection->tmr_final_ms )
         return( 2 );
 
     if( elapsed_ms >= connection->tmr_intermediate_ms )
         return( 1 );
+
+    // Adjust due_time if necessary
+    if ((uint32_t)connection->network->due_time_ms > connection->tmr_final_ms)
+        connection->network->due_time_ms = connection->tmr_final_ms;
 
     return( 0 );
 }
@@ -139,7 +127,6 @@ int init_server_connection_ssl(connection_t* connection, network_t* network) {
                                   mbedtls_ssl_cookie_check,
                                   &network->cookies);
     mbedtls_ssl_set_timer_cb(&connection->ssl,connection,set_delay,get_delay);
-    mbedtls_ssl_conf_read_timeout(&connection->conf, 1500);
     if( ( ret = mbedtls_ssl_setup (&connection->ssl,&connection->conf ) ) != 0 ){
         network_log_error("mbedtls_ssl_config_defaults returned %d\r\n", ret);
     }
@@ -186,54 +173,33 @@ bool internal_network_ssl_init(network_t* network) {
     return true;
 }
 
-static inline void check_handshake_over(network_t* network,
-                                        bool inHandshake,
-                                        connection_t* connection ) {
-    // If handshake is done after this received packet, compute global handshake flag
-    if (inHandshake && connection->ssl.state == MBEDTLS_SSL_HANDSHAKE_OVER) {
-        connection_t* c = network->connection_list;
-        // Update network->inHandshake connection global flag.
-        // While we are in a handshake, the lwm2m state machine is not called
-        bool inHandshake = false;
-        while (c) {
-            inHandshake |= c->dtls && c->ssl.state!=MBEDTLS_SSL_HANDSHAKE_OVER;
-            c = c->next;
-        }
-        network->inHandshake = inHandshake;
-    }
-}
+void internal_check_timer(lwm2m_context_t *contextP) {
+    network_t* network = network_from_context(contextP);
 
-void internal_check_timer(lwm2m_context_t *contextP, struct timeval* next_event) {
-    network_t* network = (network_t*)contextP->userData;
-    if (!network->cached_next_timer_connection) return;
-
-    struct timeval tmr_current;
-    gettimeofday( &tmr_current, NULL );
-
-    // cached_next_timer_connection always points to the next point in time of all connections
-    if (timercmp(&network->cached_next_timer_connection->tmr_current,&tmr_current,<)) {
-        network->cached_next_timer_connection = NULL;
-        // check all connections
-        connection_t* c = network->connection_list;
-        while (c) {
-            if (get_delay(c)==2){
-                bool inHandshake = c->ssl.state != MBEDTLS_SSL_HANDSHAKE_OVER;
-                int r = mbedtls_ssl_handshake(&c->ssl);
-                check_handshake_over(network, inHandshake, c);
-                if (r<0){
-                    if (r==MBEDTLS_ERR_SSL_WANT_READ)
-                        return;
-                    network_log_error("mbedtls_ssl_handshake failed %i\r\n", r);
+    // check all connections
+    connection_t* c = network->connection_list;
+    while (c) {
+        if (get_delay(c)==2){
+            int r = mbedtls_ssl_handshake(&c->ssl);
+            if (r<0){
+                if (r==MBEDTLS_ERR_SSL_TIMEOUT){
+                    if (c->ssl.state<=MBEDTLS_SSL_CLIENT_HELLO)
+                        network->handshakeState= DTLS_HANDSHAKE_TIMEOUT;
+                    else
+                        network->handshakeState= DTLS_HANDSHAKE_ABORTED;
+                    continue;
                 }
+                if (r==MBEDTLS_ERR_SSL_WANT_READ)
+                    continue;
+                network_log_error("mbedtls_ssl_handshake failed %i\r\n", r);
+            } else {
+                if (!c->dtls || c->ssl.state==MBEDTLS_SSL_HANDSHAKE_OVER){
+                    network->handshakeState= DTLS_NO_HANDSHAKE_IN_PROGRESS;
+                }else
+                    network->handshakeState= DTLS_HANDSHAKE_IN_PROGRESS;
             }
-            c = c->next;
         }
-    } else if (next_event) { // Adjust next_event
-        struct timeval relative_next;
-        timersub(&tmr_current,&network->cached_next_timer_connection->tmr_current,&relative_next);
-        if (timercmp(&relative_next,next_event,<)) {
-            *next_event = relative_next;
-        }
+        c = c->next;
     }
 }
 
@@ -244,6 +210,7 @@ connection_t * internal_configure_ssl(connection_t * connection,
         int ret;
         mbedtls_ssl_init( &connection->ssl );
         mbedtls_ssl_config_init( &connection->conf );
+        mbedtls_ssl_conf_handshake_timeout( &connection->conf,1000,30000 );
         if( ( ret = mbedtls_ssl_config_defaults( &connection->conf,
                         MBEDTLS_SSL_IS_CLIENT,
                         MBEDTLS_SSL_TRANSPORT_DATAGRAM,
@@ -268,28 +235,26 @@ connection_t * internal_configure_ssl(connection_t * connection,
                              mbedtls_net_send, mbedtls_net_recv, NULL );
         mbedtls_ssl_set_timer_cb(&connection->ssl,connection,set_delay,get_delay);
         mbedtls_ssl_setup (&connection->ssl,&connection->conf );
-        mbedtls_ssl_conf_read_timeout(&connection->conf, 1500);
 
+        network->handshakeState = DTLS_HANDSHAKE_IN_PROGRESS;
         if( ( ret = mbedtls_ssl_handshake( &connection->ssl ) ) != 0 ) {
             if (ret != MBEDTLS_ERR_SSL_WANT_READ && ret != MBEDTLS_ERR_SSL_WANT_WRITE){
+                network->handshakeState = DTLS_HANDSHAKE_ABORTED;
                 network_log_error("mbedtls_ssl_handshake failed %x\n", -ret);
                 lwm2m_free(connection);
                 return NULL;
             }
         }
-        network->inHandshake = true;
     }
     return connection;
 }
 
-inline bool internal_in_dtls_handshake(lwm2m_context_t *contextP){
-    network_t* network = (network_t*)contextP->userData;
-    return network->inHandshake;
+enum DtlsHandshakeState lwm2m_dtls_handshake_state(lwm2m_context_t *contextP){
+    network_t* network = network_from_context(contextP);
+    return network->handshakeState;
 }
 
 void internal_close_connection_ssl(network_t* network, connection_t * t) {
-    if (network->cached_next_timer_connection == t)
-        network->cached_next_timer_connection = NULL;
     if(t->dtls){
         mbedtls_ssl_free( &t->ssl );
         mbedtls_ssl_config_free( &t->conf );
@@ -311,11 +276,15 @@ void internal_network_close_ssl(network_t* network) {
 
 void internal_network_read(lwm2m_context_t* contextP, void *dest, size_t len, connection_t *connection) {
     ssize_t r;
-    network_t* network = (network_t*)contextP->userData;
+    network_t* network = network_from_context(contextP);
     if (connection->dtls) {
-        bool inHandshake = connection->ssl.state != MBEDTLS_SSL_HANDSHAKE_OVER;
         r = mbedtls_ssl_read(&connection->ssl, dest, (size_t)len);
-        check_handshake_over(network, inHandshake, connection);
+
+        if (connection->ssl.state==MBEDTLS_SSL_HANDSHAKE_OVER){
+            network->handshakeState= DTLS_NO_HANDSHAKE_IN_PROGRESS;
+        }else
+            network->handshakeState= DTLS_HANDSHAKE_IN_PROGRESS;
+
         if (r==MBEDTLS_ERR_SSL_WANT_READ)
             return;
         if (r<0){

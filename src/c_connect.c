@@ -1,12 +1,24 @@
+/*******************************************************************************
+ * Copyright (c) 2017-2018  David Graeff <david.graeff@web.de>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ */
 #include "lwm2m/c_connect.h"
-#include "internal.h"
 #include "wakaama/internals.h"
 #include "lwm2m/debug.h"
 #include "lwm2m/network.h"
+#include "network/network_common.h"
 
 #include <stdlib.h>
 #include <sys/time.h>
-
 
 void lwm2m_client_close(lwm2m_client_context_t *context) {
     #ifdef LWM2M_WITH_DTLS
@@ -216,19 +228,35 @@ inline bool lwm2m_is_connected(lwm2m_context_t *contextP) {
     return contextP->state == STATE_READY;
 }
 
-inline int lwm2m_process(lwm2m_context_t *contextP, struct timeval *next_event) {
-    if (!lwm2m_network_process(contextP, next_event))
-        return COAP_505_NO_NETWORK_CONNECTION;
-    if (!internal_in_dtls_handshake(contextP))
-        return lwm2m_step(contextP, &next_event->tv_sec);
-    else
-        return COAP_NO_ERROR;
+inline lwm2m_client_state_t lwm2m_state(lwm2m_context_t * contextP){
+    return contextP->state;
 }
 
-void lwm2m_watch_and_reconnect(lwm2m_context_t * contextP, struct timeval* next_event, int reconnectTime) {
+inline void lwm2m_process(lwm2m_context_t *contextP) {
+    lwm2m_network_process(contextP);
+
+#ifdef LWM2M_WITH_DTLS
+    const enum DtlsHandshakeState s = lwm2m_dtls_handshake_state(contextP);
+    switch(s) {
+        case DTLS_NO_HANDSHAKE_IN_PROGRESS:
+            lwm2m_step(contextP, lwm2m_due_time(contextP));
+        break;
+        case DTLS_HANDSHAKE_TIMEOUT:
+            // This is like a lwm2m registration handshake timeout
+            contextP->state = STATE_BOOTSTRAP_REQUIRED;
+        break;
+    default:
+        break;
+}
+#else
+    lwm2m_step(contextP, lwm2m_due_time(contextP));
+#endif
+}
+
+void lwm2m_watch_and_reconnect(lwm2m_context_t * contextP, int reconnectTime) {
     if (contextP->state == STATE_BOOTSTRAP_REQUIRED) {
         // next_event might need to happen earlier
-        if (next_event->tv_sec>reconnectTime) next_event->tv_sec = reconnectTime;
+        if (*lwm2m_due_time(contextP)>reconnectTime) *lwm2m_due_time(contextP) = reconnectTime;
         // main state reset
         contextP->state = STATE_INITIAL;
         // server object state reset

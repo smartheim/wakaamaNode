@@ -48,13 +48,14 @@ int lwm2m_strncmp(const char * s1,
 
 time_t __attribute__((weak)) lwm2m_gettime(void)
 {
+    struct timespec tv;
+    clock_gettime(CLOCK_MONOTONIC, &tv);
+    return tv.tv_sec;
+}
+
+time_t __attribute__((weak)) lwm2m_get_local_time(void) {
     struct timeval tv;
-
-    if (0 != gettimeofday(&tv, NULL))
-    {
-        return -1;
-    }
-
+    gettimeofday (&tv, NULL);
     return tv.tv_sec;
 }
 

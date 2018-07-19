@@ -15,7 +15,6 @@
 #include "lwm2m/c_connect.h"
 #include "lwm2m/network.h"
 #include "lwm2m/debug.h"
-#include "../internal.h"
 #include "network_common.h"
 #include <stdio.h>
 #include <errno.h>
@@ -88,7 +87,7 @@ connection_t* internal_create_server_connection(network_t* network, addr_t addr)
     connection->addr = addr;
 
     #ifdef LWM2M_WITH_DTLS
-    connection->dtls = network->dtls;
+    connection->dtls = network->publicIdLen;
     if (connection->dtls) {
         int ret;
         if ((ret = init_server_connection_ssl (connection,network))!=0){
@@ -134,7 +133,7 @@ uint8_t lwm2m_network_init(lwm2m_context_t * contextP, uint16_t localPort) {
     if (contextP->userData == NULL)
         return 0;
 
-    network_t* network = (network_t*)contextP->userData;
+    network_t* network = network_from_context(contextP);
     memset(network, 0, sizeof(network_t));
 
 #ifdef LWM2M_WITH_DTLS
@@ -283,7 +282,7 @@ void lwm2m_close_connection(void * sessionH,
 void lwm2m_network_close(lwm2m_context_t * contextP) {
     if (!contextP->userData) return;
 
-    network_t* network = (network_t*)contextP->userData;
+    network_t* network = network_from_context(contextP);
 
     // Close all connections that are not already closed by lwm2m_close()
     if ( network->connection_list) {

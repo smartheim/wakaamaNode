@@ -20,7 +20,6 @@ typedef int make_iso_compilers_happy; // if not POSIX_NETWORK
 #include "lwm2m/network.h"
 #include "lwm2m/c_connect.h"
 #include "lwm2m/debug.h"
-#include "../internal.h"
 #include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -99,7 +98,7 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, ui
     for(p = res ; p != NULL && s == -1 ; p = p->ai_next)
         ++network->open_listen_sockets;
 
-    network->epfd = epoll_create(MAX_SOCKETS);
+    network->epfd = epoll_create(LWM2M_MAX_SOCKETS);
 
     network->open_listen_sockets = 0;
     for(p = res ; p != NULL; p = p->ai_next)
@@ -134,7 +133,7 @@ uint8_t internal_init_sockets(lwm2m_context_t * contextP, network_t* network, ui
 
 
 intptr_t lwm2m_network_native_sock(lwm2m_context_t * contextP, unsigned sock_no) {
-    network_t* network = (network_t*)contextP->userData;
+    network_t* network = network_from_context(contextP);
     if (!network) return -1;
     return (intptr_t)network->socket_handle[sock_no].data.fd;
 }
@@ -180,8 +179,8 @@ void connection_log_io(connection_t* connection, int length, bool sending)
 }
 #endif
 
-bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutInSec) {
-    network_t* network = (network_t*)contextP->userData;
+bool lwm2m_network_process(lwm2m_context_t * contextP) {
+    network_t* network = network_from_context(contextP);
     for (unsigned c = 0; c < network->open_listen_sockets; ++c) {
         uint8_t buffer[MAX_PACKET_SIZE];
         size_t numBytes = MAX_PACKET_SIZE;
@@ -216,7 +215,7 @@ bool lwm2m_network_process(lwm2m_context_t * contextP, struct timeval *timeoutIn
         //connection_log_io(connection,r,false);
         internal_network_read(contextP, buffer, numBytes, connection);
     }
-    internal_check_timer(contextP, timeoutInSec);
+    internal_check_timer(contextP);
     return network->open_listen_sockets >= 1;
 }
 
@@ -356,16 +355,18 @@ connection_t * internal_connection_create(network_t* network,
     return connection;
 }
 
-int lwm2m_block_wait(lwm2m_context_t * contextP, struct timeval next_event) {
-    network_t* network = (network_t*)contextP->userData;
+int lwm2m_block_wait(lwm2m_context_t * contextP, unsigned timeout_in_msec) {
+    network_t* network = network_from_context(contextP);
 
     struct epoll_event rev;
-    const int timeout = (int)next_event.tv_sec*1000+(int)next_event.tv_usec/1000;
+    const int due_time_ms = network->due_time_ms;
 
-    if (!timeout) return 0;
+    if (!timeout_in_msec) return 0;
 
     errno=0;
-    int nfds = epoll_wait(network->epfd, &rev, 1, timeout);
+    int nfds = epoll_wait(network->epfd, &rev, 1, due_time_ms);
+
+    network->due_time_ms = timeout_in_msec;
 
     if (nfds < 0 && errno != EINTR) {
         fprintf(stderr, "Error in epoll_wait(): %d %s\r\n", errno, strerror(errno));

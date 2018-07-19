@@ -3,11 +3,6 @@
  To the extent possible under law, the author(s) have dedicated all copyright and related and neighboring rights to this software to the public domain worldwide. This software is distributed without any warranty.
 *****/
 
-#include "lwm2m/connect.h"
-#include "lwm2m/objects.h"
-#include "lwm2m/debug.h"
-#include "lwm2m/network.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -28,8 +23,12 @@
 #include <getopt.h>
 #endif
 
-// For c++ projects with firmware support
-#include "lwm2m/firmware.h"
+#include "lwm2m/firmware.h" // For c++ projects with firmware support
+#include "lwm2m/connect.h"
+#include "lwm2m/objects.h"
+#include "lwm2m/debug.h"
+#include "lwm2m/network.h"
+#include "mbedtls/ssl.h"
 
 #include "lwm2mObjects/3312.h"
 
@@ -71,13 +70,17 @@ void handle_sigint(int signum) {
     g_quit = 1;
 }
 
+time_t lwm2m_get_local_time(void) {
+    return time(nullptr);
+}
+
 int main(int argc, char *argv[])
 {
     // Scan arguments
     std::string host("coaps://leshan.eclipse.org");
     std::string endpoint = "screenControl";
     std::string psk_publicIdentity = "publicid";
-    std::string psk_key = "password";
+    std::string psk_key = "password"; // in hex for leshan: 70617373776f7264
     long timeout = 0;
 
     // We need a different endpoint for an unsecured client,
@@ -118,7 +121,12 @@ int main(int argc, char *argv[])
     KnownObjects::id3312::object screenObject;
     KnownObjects::id3312::instance screenInstance;
 
-    /* We catch Ctrl-C signal for a clean exit */
+    screenInstance.OnTime = 0;
+    screenInstance.Dimmer = 0;
+    screenInstance.PowerFactor = 0.0f;
+    screenInstance.Cumulativeactivepower = 0;
+
+    /* We catch the KILL signal (Ctrl-C) for a clean exit */
     signal(SIGINT, handle_sigint);
     
     lwm2m.deviceInstance.manufacturer = "test manufacturer";
@@ -163,23 +171,37 @@ int main(int argc, char *argv[])
 
     /* We now enter the programs main loop. Abort condition is the g_quit flag (press CTRL+C). */
     while (0 == g_quit){
-        struct timeval next_event = {20,0};
-        result = lwm2m.process(&next_event);
-        lwm2m.watch_and_reconnect(&next_event, 5);
-        if (result!=COAP_NO_ERROR){
+        result = lwm2m.process();
+        if (result == COAP_503_SERVICE_UNAVAILABLE)
+            printf("No server added! Call lwm2m_add_server()\n");
+        else if (result == COAP_505_NO_NETWORK_CONNECTION)
+            fprintf(stderr, "No sockets open. Reinit the network\n");
+        else if (result == COAP_506_DTLS_CONNECTION_DENIED){
+            fprintf(stderr, "DTLS connection denied. Server may not know PSK for client %s\n", CTX(lwm2m)->endpointName);
+            // You need to add the DTLS details like the PSK to your server
+            return -1;
+        } else if (result != 0) {
+            fprintf(stderr, "lwm2m_step() failed: 0x%X\n", result);
             print_state (CTX(lwm2m));
         } else {
-            print_state (CTX(lwm2m));
+            if (lwm2m_dtls_handshake_state (CTX(lwm2m))==DTLS_HANDSHAKE_IN_PROGRESS){
+                fprintf (stderr, "DTLS Handshake in progress. Resend timer: %u s\n",
+                         (unsigned)*lwm2m_due_time (CTX(lwm2m)));
+            }
         }
-        lwm2m.block_wait(next_event);
+
+        //lwm2m.watch_and_reconnect(5);
         if (timeout){
+            lwm2m.block_wait(timeout<100?(unsigned)timeout:100);
             const std::chrono::duration<double> d = std::chrono::system_clock::now()-start;
             if (d.count ()>0.0) {
                 break;
             }
-        }
-    }
+        } else
+            lwm2m.block_wait(20);
 
+        lwm2m_device_res_has_changed (CTX(lwm2m), 13);
+    }
 
     screenObject.unregisterObject(CTX(lwm2m));
 

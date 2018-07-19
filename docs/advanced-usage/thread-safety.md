@@ -1,6 +1,6 @@
-The library itself is not thread safe. You need to push new data into the library
-in the same thread that handles received data. Lwm2m object instances and resources
-may only be manipulated withing the same thread as well. 
+The library itself is not thread safe to save runtime cost.
+You need to push new data into the library in the same thread that handles received data.
+Lwm2m object instances and resources may only be manipulated within the same thread as well. 
 
 ### How to read object instance data from another thread?
 
@@ -12,11 +12,9 @@ Whenever you want to access object instance resources, lock the mutex as well, f
 std::mutex m;
 
 // Changed sources of network/network_posix.c
-inline int lwm2m_process(lwm2m_context_t *contextP, struct timeval *next_event) {
+inline int lwm2m_process(lwm2m_context_t *contextP) {
     std::lock_guard<std::mutex> lock(m);
-    if (!lwm2m_network_process(contextP, next_event))
-        return COAP_505_NO_NETWORK_CONNECTION;
-    return lwm2m_step(contextP, &next_event->tv_sec);
+    ...
 }
 
 void myOtherThreadLoop() {

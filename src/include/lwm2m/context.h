@@ -14,6 +14,10 @@
 #pragma once
 #include "../../internal_objects.h"
 
+#define COAP_505_NO_NETWORK_CONNECTION      (uint8_t)0xA5
+#define COAP_506_DTLS_CONNECTION_DENIED     (uint8_t)0xA6
+#define COAP_299_DTLS_HANDSHAKE_IN_PROGRESS (uint8_t)0x6A
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,7 +27,7 @@ extern "C" {
   * and closed with lwm2m_client_close().
   * Use CTX(client_context) to get a pointer to the `lwm2m_context_t` for most of the APIs.
   */
-typedef struct {
+typedef struct _lwm2m_client_context_t_ {
     lwm2m_context_t context;
     lwm2m_object_t securityObject;
     server_object_t serverObject;
