@@ -33,8 +33,8 @@ extern "C" {
     #endif
 #endif
 
-#ifdef LWM2M_WITH_DTLS
 #include "mbedtls/ssl.h"
+#ifdef LWM2M_WITH_DTLS
 #include "mbedtls/ssl_cookie.h"
 #include "mbedtls/entropy.h"
 #include "mbedtls/ctr_drbg.h"
