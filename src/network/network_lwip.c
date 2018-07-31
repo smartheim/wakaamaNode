@@ -225,7 +225,7 @@ connection_t * internal_connection_create(network_t* network,
                                  uint16_t port)
 {
     ip_addr_t addr;
-    memset((&addr, 0, sizeof(addr_t)));
+    memset(&addr, 0, sizeof(addr_t));
     if (!ipaddr_aton(host, &addr))
     {
         return 0;
