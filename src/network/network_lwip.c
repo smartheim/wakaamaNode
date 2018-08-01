@@ -81,6 +81,7 @@ void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_
 
     // Find connection with given address (or create it in server mode)
     addr_t t;
+    memset((void*)&t, 0, sizeof(addr_t));
     t.port = port;
     t.addr = *addr;
     connection_t * connection = internal_connection_find(network, t);
@@ -224,6 +225,7 @@ connection_t * internal_connection_create(network_t* network,
                                  uint16_t port)
 {
     ip_addr_t addr;
+    memset((void*)&addr, 0, sizeof(addr_t));
     if (!ipaddr_aton(host, &addr))
     {
         return 0;

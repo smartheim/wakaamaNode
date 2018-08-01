@@ -25,6 +25,9 @@ typedef int make_iso_compilers_happy; // if not ESP8266
 #include "os_type.h"
 #include "user_interface.h"
 
+static time_t prev = 0, curr = 0;
+static u32 offset_count = 0;
+
 void * lwm2m_malloc(size_t s)
 {
     return (void*)malloc(s);
@@ -49,8 +52,15 @@ int lwm2m_strncmp(const char * s1,
 
 time_t lwm2m_gettime(void)
 {
+    prev = curr;
     // Convert system time in us to s.
-    return system_get_time()/1000/1000;
+    curr = system_get_time()/1000/1000 + offset_count * 4295;
+    if(prev > curr)
+    {
+        offset_count++;
+	curr+=4295;
+    }
+    return curr;
 }
 
 #ifdef LWM2M_WITH_LOGS
