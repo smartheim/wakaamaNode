@@ -54,11 +54,11 @@ time_t lwm2m_gettime(void)
 {
     prev = curr;
     // Convert system time in us to s.
-    curr = return system_get_time()/1000/1000 + offset_count * 4295;
+    curr = system_get_time()/1000/1000 + offset_count * 4295;
     if(prev > curr)
     {
         offset_count++;
-	curr+-4295;
+	curr+=4295;
     }
     return curr;
 }
