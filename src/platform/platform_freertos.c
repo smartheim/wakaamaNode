@@ -33,7 +33,10 @@ void lwm2m_free(void * p)
 
 char * lwm2m_strdup(const char * str)
 {
-    char *dupStr = (char*)pvPortMalloc(sizeof(str));
+    size_t len = strlen(str);
+    if(!len)
+	return 0;
+    char *dupStr = (char*)pvPortMalloc(len + 1);
     strcpy(dupStr, str);
 	return dupStr;
 }

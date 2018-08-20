@@ -34,7 +34,7 @@ typedef int make_iso_compilers_happy; // if not LWIP
 #include "lwip/dns.h"
 
 // it is either timers.h or since Jul 19, 2016 timeouts.h
-#include "lwip/timeouts.h"
+//#include "lwip/timeouts.h"
 //#include "lwip/timers.h"
 
 void udp_raw_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
