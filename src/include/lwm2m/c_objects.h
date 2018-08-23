@@ -49,7 +49,8 @@ typedef enum _lwm2m_object_util_type_ {
     O_RES_STRING          = 10, ///< Readonly c-string
     O_RES_STRING_PREALLOC = 11, ///< preallocated space. To be used with OpaqueType(N) in C or Opaque<N> in C++.
     O_RES_OPAQUE_INDIRECT = 12, ///< To be used with type OpaqueIndirect
-    O_RES_OPAQUE_PREALLOC = 13  ///< preallocated space. To be used with OpaqueType(N) in C or Opaque<N> in C++.
+    O_RES_OPAQUE_PREALLOC = 13, ///< preallocated space. To be used with OpaqueType(N) in C or Opaque<N> in C++.
+    O_RES_FLOAT = 14
 } lwm2m_object_util_type_t;
 
 typedef enum _lwm2m_object_util_access_ {

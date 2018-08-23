@@ -95,6 +95,9 @@ uint8_t lwm2m_object_assign_single_value(lwm2m_data_t* destination, lwm2m_object
     case O_RES_BOOL:
         lwm2m_data_encode_bool(*((bool*)memberP), destination);
         return COAP_205_CONTENT;
+    case O_RES_FLOAT:
+        lwm2m_data_encode_float(*((float*)memberP), destination);
+        return COAP_205_CONTENT;
     case O_RES_DOUBLE:
         lwm2m_data_encode_float(*((double*)memberP), destination);
         return COAP_205_CONTENT;
@@ -250,6 +253,11 @@ uint8_t prv_write(uint16_t instanceId,
             if (1 != lwm2m_data_decode_bool(&dataArray[i], &temp.b))
                 return COAP_400_BAD_REQUEST;
             writeToMemberOrToMethod(instanceP, resP->access,memberP,temp.b,sizeof(temp.b));
+            break;
+        case O_RES_FLOAT:
+            if (1 != lwm2m_data_decode_float(&dataArray[i], &temp.d))
+                return COAP_400_BAD_REQUEST;
+            writeToMemberOrToMethod(instanceP, resP->access,memberP,temp.d,sizeof(temp.d));
             break;
         case O_RES_DOUBLE:
             if (1 != lwm2m_data_decode_float(&dataArray[i], &temp.d))

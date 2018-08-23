@@ -327,7 +327,7 @@ public:
 template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
 class ResourceRaw<ResID,ObjectInstance,float,offset,Operations> : public lwm2m_object_res_item_t {
 public:
-    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_DOUBLE,offset} {}
+    ResourceRaw() : lwm2m_object_res_item_t {ResID,Operations,O_RES_FLOAT,offset} {}
 };
 
 template<uint16_t ResID, class ObjectInstance, size_t offset, uint8_t Operations>
